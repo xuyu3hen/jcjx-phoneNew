@@ -260,6 +260,17 @@ class ProductApi extends AppApi {
     print(r.data["data"]);
   }
 
+//开工测试
+    void startWork2(
+    List<Map<String, dynamic>>? queryParametrs,
+  ) async {
+    var r = await AppApi.dio.post(
+      "/tasks/taskInstructPackage/startWork",
+      data: queryParametrs,
+    );
+    print(r.data["data"]);
+  }
+
   // 获取动力类型-车型树
   Future<dynamic> getDynamicAndJcType() async {
     var r = await AppApi.dio.get(
