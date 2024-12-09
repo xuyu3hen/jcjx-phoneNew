@@ -1,0 +1,49 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        // {
+        //     "name": "jcjx_phone",
+        //     "request": "launch",
+        //     "type": "dart"
+        // },
+        // {
+        //     "name": "jcjx_phone (profile mode)",
+        //     "request": "launch",
+        //     "type": "dart",
+        //     "flutterMode": "profile"
+        // },
+        // {
+        //     "name": "jcjx_phone (release mode)",
+        //     "request": "launch",
+        //     "type": "dart",
+        //     "flutterMode": "release"
+        // },
+        {
+            "name": "env_dev",
+            "program": "./lib/main_env_dev.dart",
+            "request": "launch",
+            "type": "dart",
+            // "flutterMode": "release",
+            "args": ["--flavor","env_dev"]
+        },
+        {
+            "name": "env_release",
+            "program": "./lib/main_env_release.dart",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",s
+            "args": ["--flavor","env_release"]
+        },
+        {
+            "name": "env_test",
+            "program": "./lib/main_env_test.dart",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release",
+            "args": ["--flavor","env_test"]
+        },
+    ]
+}

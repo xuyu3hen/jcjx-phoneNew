@@ -1,0 +1,14 @@
+{
+    "id": 456789,
+    "materialName": "螺母",
+    "materialCode": "11030030009",
+    "materialModel": "8级",
+    "requireNum":0,
+    "requireData": "2023-06-03",
+    "workorderCode?": "000111",
+    "numUnit?": "EA",
+    "typeCode?": "1",
+    "trainModel?": "E27",
+    "trainNum?": "2018",
+    "teamId?": ""
+}
