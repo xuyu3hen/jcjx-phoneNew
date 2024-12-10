@@ -157,9 +157,19 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
           if (workPackageList.data != null && workPackageList.data!.isNotEmpty)
             Column(
                 children: workPackageList.data!
-                    .map((package) => Container(
-                          margin: EdgeInsets.symmetric(vertical: 4),
-                          padding: EdgeInsets.symmetric(
+                    .map((package) => GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  TaskPackageDetailsPage(package: package),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -196,7 +206,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                                       });
                                     },
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       package.name ?? '',
@@ -207,34 +217,49 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               // 先展示主修、辅修信息的行（此处假设主修、辅修信息暂时不展示，如有需要可根据实际情况添加）
                               Row(
                                 children: [
                                   Expanded(
                                     child: Text(
                                       '开工时间：${package.startTime ?? ''}',
-                                      style: TextStyle(fontSize: 16),
+                                      style: const TextStyle(fontSize: 16),
                                     ),
                                   ),
                                 ],
                               ),
-                              
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '工位：${package.station ?? ''}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'A/B端：${package.ends ?? ''}',
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
                           ),
-                        ))
+                        )))
                     .toList())
           else
             const Center(
               child: Text("暂无作业包信息"),
             ),
-                 if (selectedWorkPackages.isNotEmpty)
-          ElevatedButton(
-            onPressed: () => startWork(selectedWorkPackages),
-            child: const Text('开工'),
-          )
-        else
-          const SizedBox.shrink(),
+          if (selectedWorkPackages.isNotEmpty)
+            ElevatedButton(
+              onPressed: () => startWork(selectedWorkPackages),
+              child: const Text('开工'),
+            )
+          else
+            const SizedBox.shrink(),
         ],
       ),
     );

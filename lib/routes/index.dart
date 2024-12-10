@@ -26,3 +26,4 @@ export 'vehicle28/roll_call/muspecial_call.dart';
 export 'vehicle28/taskpackage/itask_package_list.dart';
 export 'vehicle28/taskpackage/package_viewer.dart';
 export 'vehicle28/taskpackage/unqualified_list.dart';
+export 'production/TaskPackageDetailList.dart';
