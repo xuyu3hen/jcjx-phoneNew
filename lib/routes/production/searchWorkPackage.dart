@@ -55,211 +55,250 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
       decoration: const BoxDecoration(color: Colors.white),
-      child: ListView(
-        children: <Widget>[
-          // 选择器部分
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
+      child: Stack(
+        children: [
+          ListView(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).size.height * 0.1 +
+                    20), // 为开工按钮预留空间，根据按钮高度（屏幕高度10%）加上按钮距底部距离（20像素）设置
             children: <Widget>[
-              ZjcFormSelectCell(
-                title: "修程",
-                text: mainNodeAndProcSelected["name"] ?? "",
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (mainNodeAndProcList.isEmpty) {
-                    showToast("无修程选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: mainNodeAndProcList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择动力类型",
-                      clickCallBack: (selectItem, selectArr) {
-                        print(selectArr);
-                        setState(() {
-                          mainNodeAndProcSelected["name"] = selectItem["name"];
-                          List<Map<String, dynamic>> repairNodecList = [];
-                          print(selectItem["repairMainNodeList"].toString());
-                          selectItem["repairMainNodeList"]?.forEach((element) {
-                            repairNodecList.add(element.toJson());
-                          });
-                          procList = repairNodecList;
-                          print(procList.toString());
-                        });
-                      },
-                    );
-                  }
-                },
+              // 选择器部分
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  ZjcFormSelectCell(
+                    title: "修程",
+                    text: mainNodeAndProcSelected["name"] ?? "",
+                    hintText: "请选择",
+                    showRedStar: true,
+                    clickCallBack: () {
+                      if (mainNodeAndProcList.isEmpty) {
+                        showToast("无修程选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: mainNodeAndProcList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择动力类型",
+                          clickCallBack: (selectItem, selectArr) {
+                            print(selectArr);
+                            setState(() {
+                              mainNodeAndProcSelected["name"] =
+                                  selectItem["name"];
+                              List<Map<String, dynamic>> repairNodecList = [];
+                              print(
+                                  selectItem["repairMainNodeList"].toString());
+                              selectItem["repairMainNodeList"]
+                                  ?.forEach((element) {
+                                repairNodecList.add(element.toJson());
+                              });
+                              procList = repairNodecList;
+                              print(procList.toString());
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  ZjcFormSelectCell(
+                    title: "工序节点",
+                    text: procSelected["name"],
+                    hintText: "请选择",
+                    showRedStar: true,
+                    clickCallBack: () {
+                      if (procList.isEmpty) {
+                        showToast("无工序节点可以选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: procList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择机型",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              print(selectArr);
+                              procSelected["name"] = selectItem["name"];
+                              procSelected["repairMainNodeCode"] =
+                                  selectItem["code"];
+                              getTrainNum();
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  ZjcFormSelectCell(
+                    title: "车号",
+                    text: trainNumSelected["trainNum"],
+                    hintText: "请选择",
+                    showRedStar: true,
+                    clickCallBack: () {
+                      if (trainNumList.isEmpty) {
+                        showToast("无车号可以选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: trainNumList,
+                          labelKey: 'trainNum',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择检修地点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              print(selectArr);
+                              trainNumSelected["trainNum"] =
+                                  selectItem["trainNum"];
+                              trainNumSelected["code"] = selectItem["code"];
+                              getWorkPackage();
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
-              ZjcFormSelectCell(
-                title: "工序节点",
-                text: procSelected["name"],
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (procList.isEmpty) {
-                    showToast("无工序节点可以选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: procList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择机型",
-                      clickCallBack: (selectItem, selectArr) {
-                        setState(() {
-                          print(selectArr);
-                          procSelected["name"] = selectItem["name"];
-                          procSelected["repairMainNodeCode"] =
-                              selectItem["code"];
-                          getTrainNum();
-                        });
-                      },
-                    );
-                  }
-                },
-              ),
-              ZjcFormSelectCell(
-                title: "车号",
-                text: trainNumSelected["trainNum"],
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (trainNumList.isEmpty) {
-                    showToast("无车号可以选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(context,
-                        data: trainNumList,
-                        labelKey: 'trainNum',
-                        valueKey: 'code',
-                        childrenKey: 'children',
-                        title: "选择检修地点",
-                        clickCallBack: (selectItem, selectArr) {
-                      setState(
-                        () {
-                          print(selectArr);
-                          trainNumSelected["trainNum"] = selectItem["trainNum"];
-                          trainNumSelected["code"] = selectItem["code"];
-                          getWorkPackage();
-                        },
-                      );
-                    });
-                  }
-                },
+              // 作业包列表展示部分，使用Expanded让其占据更多空间，便于增大触摸选中区域，同时调整触摸区域相关属性
+              Expanded(
+                child: Column(
+                  children: workPackageList.data != null &&
+                          workPackageList.data!.isNotEmpty
+                      ? workPackageList.data!
+                          .map((package) => GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          TaskPackageDetailsPage(
+                                              package: package),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 30, vertical: 24),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: Colors.blue,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        spreadRadius: 2,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  width: MediaQuery.of(context).size.width - 40,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: Checkbox(
+                                              value: selectedWorkPackages
+                                                  .contains(package),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  if (value!) {
+                                                    selectedWorkPackages
+                                                        .add(package);
+                                                  } else {
+                                                    selectedWorkPackages
+                                                        .remove(package);
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              package.name ?? '',
+                                              style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // 先展示主修、辅修信息的行（此处假设主修、辅修信息暂时不展示，如有需要可根据实际情况添加）
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '开工时间：${package.startTime ?? ''}',
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              '工位：${package.station ?? ''}',
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                              'A/B端：${package.ends ?? ''}',
+                                              style:
+                                                  const TextStyle(fontSize: 18),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ))
+                          .toList()
+                      : [const Center(child: Text("暂无作业包信息"))],
+                ),
               ),
             ],
           ),
-          // 作业包列表展示部分
-          if (workPackageList.data != null && workPackageList.data!.isNotEmpty)
-            Column(
-                children: workPackageList.data!
-                    .map((package) => GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  TaskPackageDetailsPage(package: package),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(
-                              color: Colors.blue,
-                              width: 2,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.3),
-                                spreadRadius: 1,
-                                blurRadius: 3,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          width: MediaQuery.of(context).size.width - 32,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value:
-                                        selectedWorkPackages.contains(package),
-                                    onChanged: (value) {
-                                      setState(() {
-                                        if (value!) {
-                                          selectedWorkPackages.add(package);
-                                        } else {
-                                          selectedWorkPackages.remove(package);
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      package.name ?? '',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              // 先展示主修、辅修信息的行（此处假设主修、辅修信息暂时不展示，如有需要可根据实际情况添加）
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '开工时间：${package.startTime ?? ''}',
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '工位：${package.station ?? ''}',
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      'A/B端：${package.ends ?? ''}',
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        )))
-                    .toList())
-          else
-            const Center(
-              child: Text("暂无作业包信息"),
-            ),
-          if (selectedWorkPackages.isNotEmpty)
-            ElevatedButton(
-              onPressed: () => startWork(selectedWorkPackages),
-              child: const Text('开工'),
-            )
-          else
-            const SizedBox.shrink(),
+          // 使用Positioned将开工按钮悬浮在屏幕底部，且与底部无缝衔接
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: selectedWorkPackages.isNotEmpty
+                ? Center(
+                    child: ElevatedButton(
+                      onPressed: () => startWork(selectedWorkPackages),
+                      style: ButtonStyle(
+                        minimumSize: MaterialStateProperty.all(Size(
+                            MediaQuery.of(context).size.width,
+                            MediaQuery.of(context).size.height * 0.1)),
+                        padding: MaterialStateProperty.all(
+                            EdgeInsets.symmetric(horizontal: 0, vertical: 10)),
+                      ),
+                      child: const Text('开工', style: TextStyle(fontSize: 18)),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -288,7 +327,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
   }
 
   //获取个人作业包
-  void getWorkPackage() async {
+  Future<WorkPackageList> getWorkPackage() async {
     //构建查询作业包参数
     Map<String, dynamic> queryParameters = {
       'trainEntryCode': trainNumSelected["code"],
@@ -296,11 +335,11 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
     //获取作业包
     var r = await ProductApi()
         .getPersonalWorkPackage(queryParametrs: queryParameters);
-
     setState(() {
       workPackageList = r;
       print(workPackageList.toJson());
     });
+    return r;
   }
 
   // 开工
@@ -312,9 +351,17 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
         "startTime": DateTime.now().millisecondsSinceEpoch
       });
     });
+    // 等待开工操作完成
     ProductApi().startWork(startWorkList);
-    setState(() {
-      getWorkPackage();
-    });
+    try {
+      // 获取最新作业包列表数据
+      var updatedWorkPackageList = await getWorkPackage();
+      setState(() {
+        this.workPackageList = updatedWorkPackageList;
+      });
+    } catch (e) {
+      // 处理获取作业包列表出现错误的情况，比如打印错误信息等
+      print('获取作业包列表失败: $e');
+    }
   }
 }

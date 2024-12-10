@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/getWorkPackage/repair.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
@@ -14,286 +15,475 @@ class ProductApi extends AppApi {
   Future<TrainEntryList> getTrainEntry({
     Map<String, dynamic>? queryParametrs, // 分页参数
   }) async {
-    var r = await AppApi.dio.get(
-      "/dispatch/trainEntry/selectAll",
-      queryParameters: queryParametrs,
-    );
-    return TrainEntryList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/selectAll",
+        queryParameters: queryParametrs,
+      );
+      return TrainEntryList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      // 根据具体情况可以选择重新抛出异常，让调用者进一步处理，这里简单返回一个默认值或null（需要根据实际业务调整）
+      return TrainEntryList();
+    }
   }
 
   // 预派工查询
   Future<MainDataStructure> getPreDispatchWork({
     Map<String, dynamic>? queryParametrs, // 分页参数
   }) async {
-    var r = await AppApi.dio.get(
-      "/subparts/workInstructPackageUser/getPackageUserList",
-      queryParameters: queryParametrs,
-    );
-    return MainDataStructure.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/workInstructPackageUser/getPackageUserList",
+        queryParameters: queryParametrs,
+      );
+      return MainDataStructure.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return MainDataStructure(assigned: false, packageUserDTOList: [], station: '');
+    }
   }
 
   // 车号展示
   Future<InnerData> getTrainNum() async {
-    var r = await AppApi.dio
-        .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
-    print(r.data);
-    return InnerData.fromJson(r.data["data"]);
+    try {
+      var r = await AppApi.dio
+          .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
+      print(r.data);
+      return InnerData.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return InnerData(List: null, data: []);
+    }
   }
 
   // 检修地点展示
   Future<TrainLocation> getstopLocation(
     Map<String, dynamic>? queryParametrs,
   ) async {
-    var r = await AppApi.dio.get(
-      "/subparts/stopPosition/selectAll",
-      queryParameters: queryParametrs,
-    );
-    print(r.data["data"]);
-    return TrainLocation.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/stopPosition/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return TrainLocation.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return TrainLocation();
+    }
   }
 
   // 动力类型查询
   Future<DynamicTypeList> getDynamicType({
     Map<String, dynamic>? queryParametrs, // 分页参数
   }) async {
-    var r = await AppApi.dio.get(
-      "/subparts/jcDynamicType/selectAll",
-      queryParameters: queryParametrs,
-    );
-    print((r.data["data"])["data"]["rows"]);
-    return DynamicTypeList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/jcDynamicType/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print((r.data["data"])["data"]["rows"]);
+      return DynamicTypeList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return DynamicTypeList();
+    }
   }
 
   // 机车型号
   Future<JcTypeList> getJcType({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get(
-      "/subparts/jcType/selectAll",
-      queryParameters: queryParametrs,
-    );
-    return JcTypeList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/jcType/selectAll",
+        queryParameters: queryParametrs,
+      );
+      return JcTypeList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return JcTypeList();
+    }
   }
 
   // 获取车号（本质查询检修计划）
   Future<RepairPlanList> getRepairPlanList({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get(
-      "/dispatch/trainEntry/selectAll",
-      queryParameters: queryParametrs,
-    );
-    // log("getRepairPlanList${r.data}");
-    return RepairPlanList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/selectAll",
+        queryParameters: queryParametrs,
+      );
+      // log("getRepairPlanList${r.data}");
+      return RepairPlanList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return RepairPlanList();
+    }
   }
 
   // 修程查询
   Future<RepairProcList> getRepairProc({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get(
-      "/subparts/repairProc/selectAll",
-      queryParameters: queryParametrs,
-    );
-    return RepairProcList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/repairProc/selectAll",
+        queryParameters: queryParametrs,
+      );
+      return RepairProcList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return RepairProcList();
+    }
   }
 
   // 修次查询
   Future<RepairTimesList> getRepairTimes({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get(
-      "/subparts/repairTimes/selectAll",
-      queryParameters: queryParametrs,
-    );
-    return RepairTimesList.fromJson((r.data["data"])["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/repairTimes/selectAll",
+        queryParameters: queryParametrs,
+      );
+      return RepairTimesList.fromJson((r.data["data"])["data"]);
+    } catch (e) {
+      _handleException(e);
+      return RepairTimesList();
+    }
   }
 
   // 新增入段
   Future<dynamic> newTrainEntry({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.post(
-      "/dispatch/trainEntry/save",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
-    return r.data["data"];
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/trainEntry/save",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+      return r.data["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
   }
 
   // 查看领取作业包
   Future<dynamic> getWorkPackage({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get(
-      "/tasks/taskInstructPackage/getCommonPackageList",
-      queryParameters: queryParametrs,
-    );
-    print(r.data["data"]);
-    return WorkPackageList.fromJson(r.data["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getCommonPackageList",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return WorkPackageList.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return WorkPackageList(data: []);
+    }
   }
 
   // 成为主修
   void beMainRepair(
     List<String> queryParametrs,
   ) async {
-    var r = await AppApi.dio2.post(
-      "/tasks/taskInstructPackage/selectPersonalPackage",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
-    // if(r.data["data"]["code"] == "S_F_5003"){
-    // return RepairResponse.fromJson(r.data["data"]);
-    // }else{
-    //   return FaultResponse.fromJson(r.data["data"]);
-    // }
+    try {
+      var r = await AppApi.dio2.post(
+        "/tasks/taskInstructPackage/selectPersonalPackage",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+      // if(r.data["data"]["code"] == "S_F_5003"){
+      // return RepairResponse.fromJson(r.data["data"]);
+      // }else{
+      //   return FaultResponse.fromJson(r.data["data"]);
+      // }
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 取消主修
   void cancelMainRepair(List<String> queryParametrs) async {
-    var r = await AppApi.dio2.post(
-      "/tasks/taskInstructPackage/cancelPersonalPackage",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
+    try {
+      var r = await AppApi.dio2.post(
+        "/tasks/taskInstructPackage/cancelPersonalPackage",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
 
-    // return RepairResponse.fromJson(r.data["data"]);
+      // return RepairResponse.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 成为辅修
   void beAssistantRepair(List<String> queryParametrs) async {
-    var r = await AppApi.dio2.post(
-      "/tasks/taskInstructPackage/selectAssistantPackage",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
+    try {
+      var r = await AppApi.dio2.post(
+        "/tasks/taskInstructPackage/selectAssistantPackage",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
 
-    // return RepairResponse.fromJson(r.data["data"]);
+      // return RepairResponse.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 取消辅修
   void cancelAssistantRepair(List<String> queryParametrs) async {
-    var r = await AppApi.dio2.post(
-      "/tasks/taskInstructPackage/cancelAssistantPackage",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
+    try {
+      var r = await AppApi.dio2.post(
+        "/tasks/taskInstructPackage/cancelAssistantPackage",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
 
-    // return RepairResponse.fromJson(r.data["data"]);
+      // return RepairResponse.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 上传油量照片
   Future<int> uploadOilImg(
       {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
-    FormData formData = FormData.fromMap({
-      "trainEntryCode": queryParametrs!["trainEntryCode"],
-      "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
-    });
-    var r = await AppApi.dio.post("/fileserver/oilInfoFile/uploadFile",
-        data: formData, options: Options(contentType: "multipart/form-data"));
-    log("uploadOilImg${r.data}");
-    return (r.data["code"]);
+    try {
+      FormData formData = FormData.fromMap({
+        "trainEntryCode": queryParametrs!["trainEntryCode"],
+        "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
+      });
+      var r = await AppApi.dio.post("/fileserver/oilInfoFile/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      log("uploadOilImg${r.data}");
+      return (r.data["code"]);
+    } catch (e) {
+      _handleException(e);
+      return -1; // 根据具体情况返回合适的表示错误的值，这里返回 -1 示意上传失败
+    }
   }
 
   // 上传防溜照片
   Future<int> upSlipImg(
       {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
-    FormData formData = FormData.fromMap({
-      "trainEntryCode": queryParametrs!["trainEntryCode"],
-      "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
-    });
-    var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
-        data: formData, options: Options(contentType: "multipart/form-data"));
-    log("upSlipImg${r.data}");
-    return (r.data["code"]);
+    try {
+      FormData formData = FormData.fromMap({
+        "trainEntryCode": queryParametrs!["trainEntryCode"],
+        "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
+      });
+      var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      log("upSlipImg${r.data}");
+      return (r.data["code"]);
+    } catch (e) {
+      _handleException(e);
+      return -1;
+    }
   }
 
   // 图片预览
-  Future<Image> previewImage({
+  Future<Image?> previewImage({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    var r = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
-        queryParameters: queryParametrs);
-    log("previewImage${r.data}");
-    return r.data;
+    try {
+      var r = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
+          queryParameters: queryParametrs);
+      log("previewImage${r.data}");
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      // 根据实际情况返回合适的默认图片或者抛出异常等，这里简单返回null
+      return null;
+    }
   }
 
   // 文件下载
   Future<dynamic> downloadFile({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    log(queryParametrs?["url"]);
-    var r = await AppApi.dio.post("/fileserver/FileOperation/downloadFile",
-        queryParameters: queryParametrs);
-    log("downloadFile${r.data}");
-    return r;
+    try {
+      log(queryParametrs?["url"]);
+      var r = await AppApi.dio.post("/fileserver/FileOperation/downloadFile",
+          queryParameters: queryParametrs);
+      log("downloadFile${r.data}");
+      return r;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
   }
 
   // 查看主流程节点以及工序节点
   Future<MainNodeList> getMainNodeANdProc1() async {
-    var r = await AppApi.dio.get(
-      "/subparts/repairMainNode/getProcessingMainNodeAndProc",
-    );
-    print((r.data["data"])["data"]);
-    return MainNodeList.fromJson(r.data["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/repairMainNode/getProcessingMainNodeAndProc",
+      );
+      print((r.data["data"])["data"]);
+      return MainNodeList.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return MainNodeList(data: []);
+    }
   }
 
   // 获取个人作业包
   Future<dynamic> getPersonalWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {
-    var r = await AppApi.dio.get(
-      "/tasks/taskInstructPackage/getIndividualTaskPackage",
-      queryParameters: queryParametrs,
-    );
-    print(r.data["data"]);
-    return WorkPackageList.fromJson(r.data["data"]);
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getIndividualTaskPackage",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return WorkPackageList.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return WorkPackageList(data: []);
+    }
   }
 
   //开工
   void startWork(
     List<Map<String, dynamic>>? queryParametrs,
   ) async {
-    var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/startWork",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskInstructPackage/startWork",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
-//开工测试
-    void startWork2(
+  //开工测试
+  void startWork2(
     List<Map<String, dynamic>>? queryParametrs,
   ) async {
-    var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/startWork",
-      data: queryParametrs,
-    );
-    print(r.data["data"]);
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskInstructPackage/startWork",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 获取动力类型-车型树
   Future<dynamic> getDynamicAndJcType() async {
-    var r = await AppApi.dio.get(
-      "/subparts/jcDynamicType/getDynamicAndJcType",
-    );
-    // log("getDynamicAndJcType${r.data}");
-    return (r.data["data"])["data"];
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/jcDynamicType/getDynamicAndJcType",
+      );
+      // log("getDynamicAndJcType${r.data}");
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
   }
 
   // 获取修制-修程
   Future<dynamic> getSysAndProc({Map<String, dynamic>? queryParameters}) async {
-    var r = await AppApi.dio.get("/subparts/repairSys/getSysAndProc",
-        queryParameters: queryParameters);
-    // log("getSysAndProc${r.data}");
-    return (r.data["data"])["data"];
+    try {
+      var r = await AppApi.dio.get("/subparts/repairSys/getSysAndProc",
+          queryParameters: queryParameters);
+      // log("getSysAndProc${r.data}");
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
   }
 
   // 获取工序节点
   Future<dynamic> getRepairMainNode(
       {Map<String, dynamic>? queryParameters}) async {
-    var r = await AppApi.dio.get("/subparts/repairMainNode/selectAll",
-        queryParameters: queryParameters);
-    // log("getRepairMainNode${r.data}");
-    return ((r.data["data"])["data"])['rows'];
+    try {
+      var r = await AppApi.dio.get("/subparts/repairMainNode/selectAll",
+          queryParameters: queryParameters);
+      // log("getRepairMainNode${r.data}");
+      return ((r.data["data"])["data"])['rows'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+// 统一异常处理方法
+  void _handleException(dynamic e) {
+    String errorMessage = "";
+    if (e is DioException) {
+      // 根据DioException的不同类型进行更细致的处理，比如网络连接错误、超时等
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+          errorMessage = "网络连接超时，请检查网络设置";
+          break;
+        case DioExceptionType.sendTimeout:
+          errorMessage = "发送请求超时，请稍后重试";
+          break;
+        case DioExceptionType.receiveTimeout:
+          errorMessage = "接收响应超时，请稍后重试";
+          break;
+        case DioExceptionType.badResponse:
+          // 服务器返回了错误状态码，可以根据具体的状态码进行不同提示等
+          if (e.response?.statusCode == 401) {
+            errorMessage = "未授权，请重新登录";
+          } else if (e.response?.statusCode == 403) {
+            errorMessage = "权限不足，无法访问该资源";
+          } else if (e.response?.statusCode == 404) {
+            errorMessage = "请求的资源不存在，请检查请求地址";
+          } else if (e.response!.statusCode! >= 500) {
+            errorMessage = "服务器内部错误，请稍后重试";
+          } else {
+            errorMessage = "服务器返回错误，状态码: ${e.response?.statusCode}";
+          }
+          break;
+        case DioExceptionType.cancel:
+          errorMessage = "请求已被取消";
+          break;
+        case DioExceptionType.badCertificate:
+          errorMessage = "证书验证出现问题，请检查服务器证书配置";
+          break;
+        case DioExceptionType.unknown:
+          errorMessage = "网络出现未知错误，请稍后重试";
+          break;
+        default:
+          errorMessage = "出现未知网络异常，请稍后重试";
+      }
+    } else {
+      // 其他非DioException类型的异常处理，比如文件读取错误等（如果相关方法涉及文件操作等）
+      errorMessage = "出现未知错误，请稍后重试";
+    }
+
+    // 在开发环境下，打印更详细的错误信息，方便排查问题
+    if (kDebugMode) {
+      if (e is DioException && e.response != null) {
+        // 打印请求的URL、请求方法、请求头、请求参数以及响应数据等详细信息
+        log("请求URL: ${e.requestOptions.path}");
+        log("请求方法: ${e.requestOptions.method}");
+        log("请求头: ${e.requestOptions.headers}");
+        log("请求参数: ${e.requestOptions.data}");
+        log("响应Data: ${e.response?.data}");
+      }
+      log("出现异常: $e");
+    }
+
+    // 显示错误提示给用户
+    Fluttertoast.showToast(msg: errorMessage);
   }
 }
