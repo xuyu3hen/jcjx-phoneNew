@@ -25,3 +25,5 @@ export 'enterDepot/trainLocation.dart';
 export 'enterDepot/trainNum.dart';
 export 'prework/MainStructure.dart';
 export 'getWorkPackage/getWorkPackage.dart';
+
+export 'searchWorkPackage/secondPackage.dart'; // 引入用于分组操作的库

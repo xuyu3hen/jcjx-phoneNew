@@ -9,6 +9,7 @@ import 'package:jcjx_phone/models/getWorkPackage/repair.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
 
 import '../index.dart';
+import '../models/searchWorkPackage/secondPackage.dart';
 
 class ProductApi extends AppApi {
   // 入段列车查询
@@ -422,6 +423,22 @@ class ProductApi extends AppApi {
       _handleException(e);
       return [];
     }
+  }
+
+  //获取第二工位作业包
+  Future<SecondPackage> getSecondWorkPackage(
+      {Map<String, dynamic>? queryParametrs}) async {
+    // try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskSecondPackage/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print((r.data["data"])["data"]);
+      return SecondPackage.fromJson((r.data["data"])["data"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return SecondPackage();
+    // }
   }
 
 // 统一异常处理方法

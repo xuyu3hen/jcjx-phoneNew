@@ -242,9 +242,9 @@ TaskContentItem _$TaskContentItemFromJson(Map<String, dynamic> json) =>
       limitUnit: json['limitUnit'] as String?,
       boundaryCaseMin: json['boundaryCaseMin'] as int?,
       boundaryCaseMax: json['boundaryCaseMax'] as int?,
-      originalLimit: json['originalLimit'] as double?,
-      rangeMin: json['rangeMin'] as double?,
-      rangeMax: json['rangeMax'] as double?,
+      originalLimit: (json['originalLimit'] as num?)?.toDouble(),
+      rangeMin: (json['rangeMin'] as num?)?.toDouble(),
+      rangeMax: (json['rangeMax'] as num?)?.toDouble(),
       percentage: json['percentage'] as bool?,
       realValue: (json['realValue'] as num?)?.toDouble(),
     );

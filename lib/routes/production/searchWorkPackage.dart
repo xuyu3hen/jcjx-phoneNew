@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:jcjx_phone/index.dart';
 import 'package:http/http.dart' as http;
 
+import '../../models/searchWorkPackage/secondPackage.dart';
+
 class SearchWorkPackage extends StatefulWidget {
   const SearchWorkPackage({super.key});
 
@@ -30,6 +32,9 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
   );
   // 作业包选择
   List<WorkPackage> selectedWorkPackages = [];
+
+  //第二工位作业包
+  late SecondPackage secondPackage = SecondPackage();
 
   @override
   void initState() {
@@ -169,13 +174,19 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           workPackageList.data!.isNotEmpty
                       ? workPackageList.data!
                           .map((package) => GestureDetector(
-                                onTap: () {
+                                onTap: () async {
+                                  SecondPackage secondPackage =
+                                      await getSecondPackage(
+                                          package.code ?? '');
+                              
+                                  // ignore: use_build_context_synchronously
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           TaskPackageDetailsPage(
-                                              package: package),
+                                              package: package,
+                                              secondPackage: secondPackage),
                                     ),
                                   );
                                 },
@@ -363,5 +374,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
       // 处理获取作业包列表出现错误的情况，比如打印错误信息等
       print('获取作业包列表失败: $e');
     }
+  }
+
+  //获取第二作业包
+  Future<SecondPackage> getSecondPackage(String code) {
+    Map<String, dynamic> queryParameters = {
+      'instructPackageCode': code,
+    };
+    return ProductApi().getSecondWorkPackage(queryParametrs: queryParameters);
   }
 }

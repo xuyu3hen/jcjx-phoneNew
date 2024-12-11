@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TaskContentDetailsPage extends StatelessWidget {
-  final List<dynamic> taskInstructContentList;
+  final List<dynamic>? taskInstructContentList;
 
   TaskContentDetailsPage({required this.taskInstructContentList});
 
@@ -12,22 +12,21 @@ class TaskContentDetailsPage extends StatelessWidget {
         title: Text('作业内容详情'),
       ),
       body: ListView.separated(
-        itemCount: taskInstructContentList.length,
+        itemCount: taskInstructContentList!.length,
         separatorBuilder: (BuildContext context, int index) => Divider(
           color: Colors.grey.shade300,
           height: 1,
         ),
         itemBuilder: (context, index) {
-          final contentItem = taskInstructContentList[index];
+          final contentItem = taskInstructContentList?[index];
           return ListTile(
             title: Text(
-              contentItem.name?? '无作业内容',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+                '${contentItem.name?? ''}-${contentItem.workContent?? ''}',
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                ),
             ),
-            
           );
         },
       ),
