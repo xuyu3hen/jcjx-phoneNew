@@ -21,16 +21,33 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
         getGroupSecondPackageCodeList();
     return Scaffold(
       appBar: AppBar(
-        title: Text('作业包详情'),
+        title: Text('作业项内容'),
       ),
-      body: ListView.builder(
-        itemCount: secondShowPackageList.length,
-        itemBuilder: (context, index) {
-          final secondShowPackage = secondShowPackageList[index];
-          return buildPackageDetailsItem(context, secondShowPackage);
-        },
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: secondShowPackageList.length,
+              itemBuilder: (context, index) {
+                final secondShowPackage = secondShowPackageList[index];
+                return buildPackageDetailsItem(context, secondShowPackage);
+              },
+            ),
+          ),
+          if (_anyPackageChecked())
+            _buildUploadButton(context), 
+        ],
       ),
     );
+  }
+
+  bool _anyPackageChecked() {
+    for (bool checked in _packageCheckedMap.values) {
+      if (checked) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Widget buildPackageDetailsItem(BuildContext context, SecondShowPackage secondShowPackage) {
@@ -45,7 +62,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
           MaterialPageRoute(
             builder: (context) => TaskContentDetailsPage(
               taskInstructContentList: secondShowPackage
-              .taskCertainPackageList?.taskInstructContentList,
+             .taskCertainPackageList?.taskInstructContentList,
             ),
           ),
         );
@@ -63,7 +80,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCheckbox(isChecked, secondShowPackage),
+            _buildCheckbox(secondShowPackage),
             SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -74,6 +91,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color:   getColorFromIndex(secondShowPackage.color?? 0)
                     ),
                   ),
                   SizedBox(height: 8),
@@ -90,7 +108,6 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                   _buildColoredText(
                       'Second Package Node: ${secondShowPackage.secondPackageNode}',
                       secondShowPackage.color),
-                  if (isChecked) _buildUploadButton(context), // 根据勾选状态决定是否显示上传按钮
                 ],
               ),
             ),
@@ -100,21 +117,24 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
     );
   }
 
-  Widget _buildCheckbox(bool isChecked, SecondShowPackage secondShowPackage) {
-    return Checkbox(
-      key: Key(secondShowPackage.toString()),
-      value: isChecked,
-      onChanged: (newValue) {
-        if (newValue!= null) {
-          // 更新当前作业项对应的勾选状态
-          _packageCheckedMap[secondShowPackage] = newValue;
-          setState(() {});
-        }
+  Widget _buildCheckbox(SecondShowPackage secondShowPackage) {
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        return Checkbox(
+          key: Key(secondShowPackage.toString()),
+          value: _packageCheckedMap[secondShowPackage]?? false, 
+          onChanged: (newValue) {
+            if (newValue!= null) {
+              _packageCheckedMap[secondShowPackage] = newValue;
+              setState(() {});
+            }
+          },
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
+          ),
+          materialTapTargetSize: MaterialTapTargetSize.padded,
+        );
       },
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
-      ),
-      materialTapTargetSize: MaterialTapTargetSize.padded,
     );
   }
 
@@ -172,8 +192,31 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   Widget _buildUploadButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        // 这里添加点击上传按钮后的逻辑，比如打开文件选择器等，暂时可以先打印提示信息
-        print('点击了上传作业项图片按钮');
+        // 在这里添加弹出上传界面的逻辑
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('上传作业项图片'),
+              content: Text('即将打开上传界面'),
+              actions: [
+                TextButton(
+                  child: Text('取消'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text('确定'),
+                  onPressed: () {
+                    // 实际的上传逻辑
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
       },
       child: Text('上传作业项图片'),
     );
@@ -234,7 +277,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       case 2:
         return Colors.green;
       case 3:
-        return Colors.yellow;
+        return Colors.blue;
       default:
         return Colors.grey;
     }
