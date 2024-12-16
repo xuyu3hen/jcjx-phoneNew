@@ -126,6 +126,8 @@ TaskCertainPackageList _$TaskCertainPackageListFromJson(
       executorId: json['executorId'] as int?,
       executorName: json['executorName'] as String?,
       secondPackageCode: json['secondPackageCode'] as String?,
+      mutualInspectionPersonnel: json['mutualInspectionPersonnel'] as String?,
+      specialInspectionPersonnel: json['specialInspectionPersonnel'] as String?,
     )
       ..selected = json['selected'] as bool?
       ..expanded = json['expanded'] as bool?;
@@ -160,6 +162,8 @@ Map<String, dynamic> _$TaskCertainPackageListToJson(
       'executorId': instance.executorId,
       'executorName': instance.executorName,
       'secondPackageCode': instance.secondPackageCode,
+      'mutualInspectionPersonnel': instance.mutualInspectionPersonnel,
+      'specialInspectionPersonnel': instance.specialInspectionPersonnel,
       'selected': instance.selected,
       'expanded': instance.expanded,
     };

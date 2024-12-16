@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -41,7 +42,8 @@ class ProductApi extends AppApi {
       return MainDataStructure.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
-      return MainDataStructure(assigned: false, packageUserDTOList: [], station: '');
+      return MainDataStructure(
+          assigned: false, packageUserDTOList: [], station: '');
     }
   }
 
@@ -274,6 +276,25 @@ class ProductApi extends AppApi {
     }
   }
 
+  //上传作业项图片
+  Future<int> uploadCertainPackageImg(
+      {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
+    // try {
+    FormData formData = FormData.fromMap({
+      "certainPackageCodeList": queryParametrs!["certainPackageCodeList"],
+      "uploadFileList": await MultipartFile.fromFile(imagedata!.path),
+      "secondPackageCode": queryParametrs["secondPackageCode"]
+    });
+    var r = await AppApi.dio.post("/fileserver/taskCertainContentFile/uploadFile",
+        data: formData, options: Options(contentType: "multipart/form-data"));
+    log("uploadImg${r.data}");
+    return (r.data["code"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return -1;
+    // }
+  }
+
   // 上传防溜照片
   Future<int> upSlipImg(
       {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
@@ -429,15 +450,30 @@ class ProductApi extends AppApi {
   Future<SecondPackage> getSecondWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {
     // try {
-      var r = await AppApi.dio.get(
-        "/tasks/taskSecondPackage/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print((r.data["data"])["data"]);
-      return SecondPackage.fromJson((r.data["data"])["data"]);
+    var r = await AppApi.dio.get(
+      "/tasks/taskSecondPackage/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return SecondPackage.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
     //   return SecondPackage();
+    // }
+  }
+
+  // 获取用户列表
+  Future<UserList> getUserList(List<int> queryParametrs) async {
+    // try {
+    var r = await AppApi.dio2.post(
+      "/jcjxsystem/sysUser/getUserListByUserIdList",
+      data: queryParametrs,
+    );
+    print(r.data["data"]);
+    return UserList.fromJson(r.data["data"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return UserList(data: []);
     // }
   }
 

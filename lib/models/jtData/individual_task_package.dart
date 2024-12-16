@@ -110,6 +110,8 @@ class TaskCertainPackageList {
     int? executorId;
     String? executorName;
     String? secondPackageCode;
+    String? mutualInspectionPersonnel;
+    String? specialInspectionPersonnel;
 
     bool? selected;
     bool? expanded;
@@ -142,6 +144,8 @@ class TaskCertainPackageList {
         this.executorId,
         this.executorName,
         this.secondPackageCode,
+        this.mutualInspectionPersonnel,
+        this.specialInspectionPersonnel,
     });
 
     factory TaskCertainPackageList.fromJson(Map<String,dynamic> json) => _$TaskCertainPackageListFromJson(json);
