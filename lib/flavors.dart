@@ -27,11 +27,11 @@ class F {
       case Flavor.env_dev:
         return 'http://10.102.72.103:8080';
       case Flavor.env_release:
-        return 'http://10.111.154.85:8080';
+        return 'http://10.102.72.103:8080';
       case Flavor.env_test:
         return 'http://10.102.72.243:8080';
       default:
-        return 'http://10.111.154.85:8080';
+        return 'http://10.102.72.103:8080';
     }
   }
 
@@ -40,11 +40,11 @@ class F {
       case Flavor.env_dev:
         return 'http://10.102.72.103:8080';
       case Flavor.env_release:
-        return 'http://10.111.154.85:8080';
+        return 'http://10.102.72.103:8080';
       case Flavor.env_test:
         return 'http://10.102.72.103:8080';
       default:
-        return 'http://10.111.154.85:8080';
+        return 'http://10.102.72.103:8080';
     }
   }
 

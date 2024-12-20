@@ -128,6 +128,10 @@ TaskCertainPackageList _$TaskCertainPackageListFromJson(
       secondPackageCode: json['secondPackageCode'] as String?,
       mutualInspectionPersonnel: json['mutualInspectionPersonnel'] as String?,
       specialInspectionPersonnel: json['specialInspectionPersonnel'] as String?,
+      mutualInspectionId: json['mutualInspectionId'] as int?,
+      specialInspectionId: json['specialInspectionId'] as int?,
+      mutualInspectionName: json['mutualInspectionName'] as String?,
+      specialInspectionName: json['specialInspectionName'] as String?,
     )
       ..selected = json['selected'] as bool?
       ..expanded = json['expanded'] as bool?;
@@ -164,6 +168,10 @@ Map<String, dynamic> _$TaskCertainPackageListToJson(
       'secondPackageCode': instance.secondPackageCode,
       'mutualInspectionPersonnel': instance.mutualInspectionPersonnel,
       'specialInspectionPersonnel': instance.specialInspectionPersonnel,
+      'mutualInspectionId': instance.mutualInspectionId,
+      'specialInspectionId': instance.specialInspectionId,
+      'mutualInspectionName': instance.mutualInspectionName,
+      'specialInspectionName': instance.specialInspectionName,
       'selected': instance.selected,
       'expanded': instance.expanded,
     };

@@ -295,6 +295,22 @@ class ProductApi extends AppApi {
     // }
   }
 
+  // 完成作业项
+  Future<int> finishCertainPackage(
+      List<TaskCertainPackageList> queryParameters) async {
+    // try {
+      var r = await AppApi.dio2.post(
+          "/tasks/taskCertainPackage/completeTaskCertainPackage",
+          data: queryParameters);
+      log("finishCertainPackage${r.data}");
+      return (r.data["code"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return -1;
+    // }
+  }
+
+
   // 上传防溜照片
   Future<int> upSlipImg(
       {Map<String, dynamic>? queryParametrs, File? imagedata}) async {

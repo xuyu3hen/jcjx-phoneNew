@@ -107,10 +107,10 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                           secondShowPackage.taskCertainPackageList!.complete),
                     ],
                   ),
-                  SizedBox(height: 16),
-                  _buildColoredText(
-                      'Second Package Node: ${secondShowPackage.secondPackageNode}',
-                      secondShowPackage.color),
+                  // SizedBox(height: 16),
+                  // _buildColoredText(
+                  //     'Second Package Node: ${secondShowPackage.secondPackageNode}',
+                  //     secondShowPackage.color),
                 ],
               ),
             ),
@@ -443,6 +443,8 @@ class _NewPageState extends State<NewPage> {
         widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -556,62 +558,54 @@ class _NewPageState extends State<NewPage> {
   }
 
   // 上传照片弹窗
-  Widget uploadDialogComponents(BuildContext context) {
-    return Column(
-      children: [
-        Text("上传作业项图片"),
-        if (_image == null)
-          InkWell(
-            child: Container(
-              constraints: BoxConstraints.tightFor(width: 200, height: 200),
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [Icon(Icons.add_a_photo)],
-              ),
+Widget uploadDialogComponents(BuildContext context) {
+  return Column(
+    children: [
+      Text("上传作业项图片"),
+      if (_image == null)
+        InkWell(
+          child: Container(
+            constraints: BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
+            decoration: BoxDecoration(
+              color: Colors.indigo.shade50,
             ),
-            onTap: () => {showBottomSheet(context)},
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [Icon(Icons.add_a_photo)],
+            ),
           ),
-        if (_image != null)
-          Container(
-            child: Image.file(_image!, height: 200),
-          ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            SizedBox(
-              width: 140,
-              height: 30.0,
-              child: ElevatedButton(
-                onPressed: () => {
-                  if (_image != null)
-                    {
-                      SmartDialog.showLoading(),
-                      uploadPicture(),
-                      SmartDialog.dismiss()
-                    }
-                  else
-                    {showToast("请先选择上传图像")}
-                },
-                child: Text("上传", style: TextStyle(fontSize: 18.0)),
-              ),
-            ),
-            SizedBox(
-              width: 140,
-              height: 30.0,
-              child: ElevatedButton(
-                onPressed: () => {SmartDialog.dismiss(), _image = null},
-                child: Text("取消", style: TextStyle(fontSize: 18.0)),
-              ),
-            ),
-          ],
-        )
-      ],
-    );
-  }
+          onTap: () => {showBottomSheet(context)},
+        ),
+      if (_image!= null)
+        Container(
+          child: Image.file(_image!, height: 400), // 放大图片的显示高度
+        ),
+      SizedBox(height: 20), // 增加一些间距
+      SizedBox(
+        //宽度为屏幕宽
+        width: MediaQuery.of(context).size.width,
+        //高度为屏幕0.1倍
+        height: MediaQuery.of(context).size.height * 0.1,
+        //放在屏幕最下方锁定
+        
+        child: ElevatedButton(
+          onPressed: () => {
+            if (_image!= null) {
+              SmartDialog.showLoading(),
+              uploadPicture(),
+              completeCertainPackage(),
+              SmartDialog.dismiss()
+            } else {
+              showToast("请先选择上传图像")
+            }
+          },
+          child: Text("上传", style: TextStyle(fontSize: 18.0)),
+        ),
+      ),
+    ],
+  );
+}
 
   // 图片来源选择支
   void showBottomSheet(BuildContext context) {
@@ -723,5 +717,30 @@ class _NewPageState extends State<NewPage> {
       SmartDialog.dismiss();
       _image = null;
     }
+  }
+
+  //完成作业项图片上传
+  void completeCertainPackage() async{
+    List<TaskCertainPackageList> list = [];
+    for(SecondShowPackage secondShowPackage in widget.secondPackageList!){
+      secondShowPackage.taskCertainPackageList?.mutualInspectionId = mutualSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionId = specialSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.mutualInspectionName = mutualSelected['nickName'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionName = specialSelected['nickName'];
+      list.add(secondShowPackage.taskCertainPackageList!);
+    }
+    //展示list内容。每个元素值
+    for(TaskCertainPackageList taskCertainPackageList in list){
+      print(taskCertainPackageList.toJson());
+    }
+    var r = await ProductApi().finishCertainPackage(list);
+    if(r == 200){
+      showToast("完成成功");
+    }
+    //退回两次界面 进行刷新
+    Navigator.of(context).pop();
+    
+
+
   }
 }
