@@ -153,15 +153,15 @@ class _LoginRouteState extends State<LoginRoute> {
           //   'username':'admin',
           // }
           // 工长刘扬
-          queryParametrs: {
-            'username': '60599',
-            'password': 'Jxd#6453',
-          }
-          // // 账号密码
           // queryParametrs: {
-          //   'password':_pwdController.text,
-          //   'username':_unameController.text,
+          //   'username': '60599',
+          //   'password': 'Jxd#6453',
           // }
+          // 账号密码
+          queryParametrs: {
+            'password':_pwdController.text,
+            'username':_unameController.text,
+          }
           // 邹晗
           // queryParametrs: {
           //   'password':'Jxd#6453',

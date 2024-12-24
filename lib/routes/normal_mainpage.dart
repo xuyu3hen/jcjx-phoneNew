@@ -169,17 +169,17 @@ class _NormalMainPageState extends State<NormalMainPage> {
               //     height: (MediaQuery.of(context).size.height),
               //   ),
               // ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.fact_check_outlined, color: Colors.amber[300]),
-                  () => Navigator.pushNamed(context, 'preDispatchWork'),
-                  '预派工单',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
+              // SizedBox(
+              //   width: (MediaQuery.of(context).size.width) / 3,
+              //   height: (MediaQuery.of(context).size.width) / 4,
+              //   child: FeatureContainer(
+              //     Icon(Icons.fact_check_outlined, color: Colors.amber[300]),
+              //     () => Navigator.pushNamed(context, 'preDispatchWork'),
+              //     '预派工单',
+              //     width: (MediaQuery.of(context).size.width),
+              //     height: (MediaQuery.of(context).size.height),
+              //   ),
+              // ),
               SizedBox(
                 width: (MediaQuery.of(context).size.width) / 3,
                 height: (MediaQuery.of(context).size.width) / 4,
@@ -188,6 +188,17 @@ class _NormalMainPageState extends State<NormalMainPage> {
                       color: Colors.deepPurple[300]),
                   () => Navigator.pushNamed(context, 'submit28'),
                   '机统28提报',
+                  width: (MediaQuery.of(context).size.width),
+                  height: (MediaQuery.of(context).size.height),
+                ),
+              ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width) / 3,
+                height: (MediaQuery.of(context).size.width) / 4,
+                child: FeatureContainer(
+                  Icon(Icons.build, color: Colors.amber[300]),
+                  () => Navigator.pushNamed(context, 'repairlist'),
+                  '不合格项处置',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
                 ),
@@ -221,11 +232,12 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.build, color: Colors.amber[300]),
-                () => Navigator.pushNamed(context, 'repairlist'),
-                '不合格项处置',
+                Icon(Icons.group_rounded, color: Colors.deepOrange[300]),
+                () => Navigator.pushNamed(context, 'mutuallist'),
+                '互检',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
+                num: mutualNum,
               ),
             ),
           ]),
@@ -233,18 +245,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.group_rounded, color: Colors.deepOrange[300]),
-                  () => Navigator.pushNamed(context, 'mutuallist'),
-                  '互检',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                  num: mutualNum,
-                ),
-              ),
               SizedBox(
                 width: (MediaQuery.of(context).size.width) / 3,
                 height: (MediaQuery.of(context).size.width) / 4,

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:image_picker/image_picker.dart';
+import 'package:jcjx_phone/routes/production/searchWorkPackage.dart';
 
 import '../../index.dart';
 
@@ -441,9 +442,10 @@ class _NewPageState extends State<NewPage> {
     // 将 specialList 转换为 specialListData
     specialListData =
         widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
+      
+    //刷新界面
+    setState(() {});
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -558,54 +560,55 @@ class _NewPageState extends State<NewPage> {
   }
 
   // 上传照片弹窗
-Widget uploadDialogComponents(BuildContext context) {
-  return Column(
-    children: [
-      Text("上传作业项图片"),
-      if (_image == null)
-        InkWell(
-          child: Container(
-            constraints: BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
-            decoration: BoxDecoration(
-              color: Colors.indigo.shade50,
+  Widget uploadDialogComponents(BuildContext context) {
+    return Column(
+      children: [
+        if (_image == null)
+          InkWell(
+            child: Container(
+              constraints:
+                  BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
+              decoration: BoxDecoration(
+                color: Colors.indigo.shade50,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [Icon(Icons.add_a_photo)],
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [Icon(Icons.add_a_photo)],
-            ),
+            onTap: () => {showBottomSheet(context)},
           ),
-          onTap: () => {showBottomSheet(context)},
+        if (_image != null)
+          Container(
+            child: Image.file(_image!, height: 400), // 放大图片的显示高度
+          ),
+        SizedBox(height: 20), // 增加一些间距
+        SizedBox(
+          //宽度为屏幕宽
+          width: MediaQuery.of(context).size.width,
+          //高度为屏幕0.1倍
+          height: MediaQuery.of(context).size.height * 0.1,
+          //放在屏幕最下方锁定
+
+          child: ElevatedButton(
+            onPressed: () => {
+              if (_image != null)
+                {
+                  SmartDialog.showLoading(),
+                  uploadPicture(),
+                  completeCertainPackage(),
+                  SmartDialog.dismiss()
+                }
+              else
+                {showToast("请先选择上传图像")}
+            },
+            child: Text("上传", style: TextStyle(fontSize: 18.0)),
+          ),
         ),
-      if (_image!= null)
-        Container(
-          child: Image.file(_image!, height: 400), // 放大图片的显示高度
-        ),
-      SizedBox(height: 20), // 增加一些间距
-      SizedBox(
-        //宽度为屏幕宽
-        width: MediaQuery.of(context).size.width,
-        //高度为屏幕0.1倍
-        height: MediaQuery.of(context).size.height * 0.1,
-        //放在屏幕最下方锁定
-        
-        child: ElevatedButton(
-          onPressed: () => {
-            if (_image!= null) {
-              SmartDialog.showLoading(),
-              uploadPicture(),
-              completeCertainPackage(),
-              SmartDialog.dismiss()
-            } else {
-              showToast("请先选择上传图像")
-            }
-          },
-          child: Text("上传", style: TextStyle(fontSize: 18.0)),
-        ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   // 图片来源选择支
   void showBottomSheet(BuildContext context) {
@@ -719,28 +722,33 @@ Widget uploadDialogComponents(BuildContext context) {
     }
   }
 
+    static Map<String, WidgetBuilder> routes = {
+    'searchWorkPackage': (BuildContext context) => SearchWorkPackage(),
+  };
+
   //完成作业项图片上传
-  void completeCertainPackage() async{
+  void completeCertainPackage() async {
     List<TaskCertainPackageList> list = [];
-    for(SecondShowPackage secondShowPackage in widget.secondPackageList!){
-      secondShowPackage.taskCertainPackageList?.mutualInspectionId = mutualSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionId = specialSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.mutualInspectionName = mutualSelected['nickName'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionName = specialSelected['nickName'];
+    for (SecondShowPackage secondShowPackage in widget.secondPackageList!) {
+      secondShowPackage.taskCertainPackageList?.mutualInspectionId =
+          mutualSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionId =
+          specialSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.mutualInspectionName =
+          mutualSelected['nickName'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionName =
+          specialSelected['nickName'];
       list.add(secondShowPackage.taskCertainPackageList!);
     }
     //展示list内容。每个元素值
-    for(TaskCertainPackageList taskCertainPackageList in list){
+    for (TaskCertainPackageList taskCertainPackageList in list) {
       print(taskCertainPackageList.toJson());
     }
     var r = await ProductApi().finishCertainPackage(list);
-    if(r == 200){
+    if (r == 200) {
       showToast("完成成功");
+      //进行页面跳转跳转到作业包模块
+      Navigator.of(context).pushNamed('searchWorkPackage');
     }
-    //退回两次界面 进行刷新
-    Navigator.of(context).pop();
-    
-
-
   }
 }
