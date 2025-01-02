@@ -17,6 +17,17 @@ class RepairProcList extends DataList{
   factory RepairProcList.fromJson(Map<String,dynamic> json) => _$RepairProcListFromJson(json);
   @override
   Map<String, dynamic> toJson() => _$RepairProcListToJson(this);
+
+  //toMapList
+  List<Map<String, dynamic>> toMapList() {
+    List<Map<String, dynamic>> list = [];
+    if (rows != null) {
+      for (var i = 0; i < rows!.length; i++) {
+        list.add(rows![i].toJson());
+      }
+    }
+    return list;
+  }
 }
 
 @JsonSerializable()

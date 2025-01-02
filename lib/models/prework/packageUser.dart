@@ -1,5 +1,60 @@
 import 'package:jcjx_phone/models/prework/workInstructPackageUser%20.dart';
 
+class PackageUserData{
+  List<PackageUserList>? packageUserList;
+  PackageUserData({
+    this.packageUserList,
+  });
+  factory PackageUserData.fromJson(Map<String, dynamic> json) {
+    return PackageUserData(
+      packageUserList: (json['packageUserList'] as List)
+        .map((e) => PackageUserList.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'packageUserList': packageUserList!
+        .map((e) => e.toJson())
+        .toList(),
+    };
+  }
+  
+}
+
+class PackageUserList {
+  bool? assigned;
+  List<PackageUserDTO>? packageUserDTOList;
+  String? station;
+
+  PackageUserList({
+    this.assigned,
+    this.packageUserDTOList,
+    this.station,
+  });
+  factory PackageUserList.fromJson(Map<String, dynamic> json) {
+    return PackageUserList(
+      assigned: json['assigned'] as bool,
+      packageUserDTOList: (json['packageUserDTOList'] as List)
+          .map((e) => PackageUserDTO.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      station: json['station'] as String,
+    );
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'assigned': assigned,
+      'packageUserDTOList': packageUserDTOList!
+         .map((e) => e.toJson())
+         .toList(),
+      'station': station,
+    };
+  }
+  //toMapList
+  List<Map<String, dynamic>> toMapList() {
+    return packageUserDTOList?.map((item) => item.toJson()).toList()?? [];
+  }
+}
 class PackageUserDTO {
   bool assigned;
   String packageEternalCode;

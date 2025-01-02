@@ -7,9 +7,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/getWorkPackage/repair.dart';
+import 'package:jcjx_phone/models/prework/RepairSys.dart';
+import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
 
 import '../index.dart';
+import '../models/prework/packageUser.dart';
 import '../models/searchWorkPackage/secondPackage.dart';
 
 class ProductApi extends AppApi {
@@ -143,6 +146,8 @@ class ProductApi extends AppApi {
     }
   }
 
+
+
   // 修次查询
   Future<RepairTimesList> getRepairTimes({
     Map<String, dynamic>? queryParametrs,
@@ -174,6 +179,26 @@ class ProductApi extends AppApi {
       _handleException(e);
       return null;
     }
+  }
+
+  //查询修制
+    Future<RepairSysResponse> selectRepairSys({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    // try {
+    print('code');
+    //get中使用queryParameters，post中使用data
+    print(queryParametrs!['dynamicCode']);
+      var r = await AppApi.dio.get(
+        "/subparts/repairSys/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print((r.data["data"])["data"]);
+      return RepairSysResponse.fromJson((r.data["data"])["data"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return null;
+    // }
   }
 
   // 查看领取作业包
@@ -373,6 +398,36 @@ class ProductApi extends AppApi {
       _handleException(e);
       return MainNodeList(data: []);
     }
+  }
+  //获取班组作业包
+  Future<PackageUserData> getTeamWorkPackage(
+      {Map<String, dynamic>? queryParametrs}) async {
+    // try {
+      var r = await AppApi.dio.get(
+        "/subparts/workInstructPackageUser/getPakcageUserList",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return PackageUserData.fromJson(r.data["data"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return WorkPackageList(data: []);
+    // }
+  }
+  //获取工序节点
+  Future<RepairMainNode> getRepairMainNodeAll(
+      {Map<String, dynamic>? queryParametrs}) async {
+    // try {
+      var r = await AppApi.dio.get(
+        "/subparts/repairMainNode/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print((r.data["data"])["data"]);
+      return RepairMainNode.fromJson((r.data["data"])["data"]);
+    // } catch (e) {
+    //   _handleException(e);
+    //   return RepairMainNode();
+    // }
   }
 
   // 获取个人作业包

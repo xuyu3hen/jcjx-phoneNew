@@ -268,11 +268,13 @@ class JtApi extends AppApi{
   Future<PackageUserList> getPackageUserList({
     Map<String,dynamic>? queryParameters
   }) async {
+    print(queryParameters);
     var r = await AppApi.dio.get(
       "/subparts/workInstructPackageUser/getPackageUserList",
       queryParameters: queryParameters
     );
     // log("getPackageUserList${r.data}");
+    print(r.data['data']);
     return PackageUserList.fromJson(r.data['data']);
   }
 

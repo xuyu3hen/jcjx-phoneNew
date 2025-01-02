@@ -17,6 +17,12 @@ class RepairTimesList extends DataList{
   factory RepairTimesList.fromJson(Map<String,dynamic> json) => _$RepairTimesListFromJson(json);
   @override
   Map<String, dynamic> toJson() => _$RepairTimesListToJson(this);
+
+  //toMapList
+  List<Map<String, dynamic>> toMapList() {
+    return rows?.map((item) => item.toJson()).toList()?? [];
+  }
+
 }
 
 @JsonSerializable()

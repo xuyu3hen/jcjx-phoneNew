@@ -1,6 +1,6 @@
 
 import 'package:jcjx_phone/routes/production/getWorkPackage.dart';
-import 'package:jcjx_phone/routes/production/preDispatchWork.dart';
+
 import 'package:jcjx_phone/routes/production/searchWorkPackage.dart';
 import 'package:jcjx_phone/routes/production/secEnterModify.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
@@ -80,7 +80,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "trainbynode":(context) => const TrainEntryListByNodeCode(),
         "packageviewer":(context) => const PackageViewer(),
         //预派工模块界面
-        "preDispatchWork":(context) => const preDispatchWork(),
+        "preDispatchWork":(context) => const PreDispatchWork(),
         //获取个人作业包模块界面
         "getWorkPackage":(context) => const GetWorkPackage(),
         //查看个人作业包模块界面
