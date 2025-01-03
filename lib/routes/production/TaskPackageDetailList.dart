@@ -748,7 +748,7 @@ class _NewPageState extends State<NewPage> {
     if (r == 200) {
       showToast("完成成功");
       //进行页面跳转跳转到作业包模块
-      Navigator.of(context).pushNamed('searchWorkPackage');
+      //目前目前没有解决跳转问题
     }
   }
 }

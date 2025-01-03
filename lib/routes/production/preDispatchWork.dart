@@ -51,10 +51,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 获取用户信息
   late Permissions permissions;
 
+  late PackageUserDTOList? selectedPackage;
+
   @override
   void initState() {
     super.initState();
     getDynamicType();
+    selectedPackage = null;
   }
 
   @override
@@ -281,63 +284,118 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                       .assistantName ??
                                   ''
                               : '';
-                          return Container(
-                            width: MediaQuery.of(context).size.width,
-                            height: 80, // 减少容器高度
-                            margin: const EdgeInsets.symmetric(vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(color: Colors.blue),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 5), // 调整内边距
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    // 增加序号中文
-                                    Text(
-                                      '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
-                                      style:
-                                          const TextStyle(fontSize: 16), // 放大文字
-                                    ),
-                                    Text(
-                                      '作业包 ${packageUserDTO.packageName ?? ''}',
-                                      style:
-                                          const TextStyle(fontSize: 16), // 放大文字
-                                    ),
-                                    Text(
-                                      '工位 ${station}',
-                                      style:
-                                          const TextStyle(fontSize: 16), // 放大文字
-                                    ),
-                                  ],
+                          return InkWell(
+                            onTap: () {
+                              // 点击事件处理函数，跳转到新的界面
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PreWorkList(
+                                    packageUserDTO: packageUserDTO,
+                                  ),
                                 ),
-                                const SizedBox(height: 5), // 增加行间距
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Text(
-                                      '主修 ${mainRepair}',
-                                      style:
-                                          const TextStyle(fontSize: 16), // 放大文字
+                              );
+                            },
+                            child: Container(
+                              width: MediaQuery.of(context).size.width,
+                              height: 80, // 减少容器高度
+                              margin: const EdgeInsets.symmetric(vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: Colors.blue),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5), // 调整内边距
+                              child: Row(
+                                children: [
+                                  Checkbox(
+                                    value: selectedPackage == packageUserDTO,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        if (value!) {
+                                          selectedPackage = packageUserDTO;
+                                        } else {
+                                          selectedPackage = null;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            // 增加序号中文
+                                            Text(
+                                              '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
+                                              style: const TextStyle(
+                                                  fontSize: 16), // 放大文字
+                                            ),
+                                            Text(
+                                              '作业包 ${packageUserDTO.packageName ?? ''}',
+                                              style: const TextStyle(
+                                                  fontSize: 16), // 放大文字
+                                            ),
+                                            Text(
+                                              '工位 ${station}',
+                                              style: const TextStyle(
+                                                  fontSize: 16), // 放大文字
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 5), // 增加行间距
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Text(
+                                              '主修 ${mainRepair}',
+                                              style: const TextStyle(
+                                                  fontSize: 16), // 放大文字
+                                            ),
+                                            Text(
+                                              '辅修 ${assistant}',
+                                              style: const TextStyle(
+                                                  fontSize: 16), // 放大文字
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      '辅修 ${assistant}',
-                                      style:
-                                          const TextStyle(fontSize: 16), // 放大文字
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }).toList() ??
                         []),
+                    // 弹出的设置施修人按钮
+                    if (selectedPackage != null)
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SetRepairPersonScreen(
+                                  packageUserDTO: selectedPackage!,
+                                ),
+                              ),
+                            );
+                          },
+                          style: ButtonStyle(
+                            
+                            
+                            minimumSize:
+                                MaterialStateProperty.all(Size.fromHeight(50)),
+                            padding: MaterialStateProperty.all(EdgeInsets.zero),
+                          ),
+                          child: const Text('设置施修人'),
+                        ),
+                      )
                   ],
                 ),
               )
@@ -465,5 +523,217 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
         // print(packageUserDTOList!.length);
       });
     }
+  }
+}
+
+class PreWorkList extends StatelessWidget {
+  final PackageUserDTOList packageUserDTO;
+
+  PreWorkList({required this.packageUserDTO});
+
+  @override
+  Widget build(BuildContext context) {
+    // 获取packageUserDTO中workInstructPackageUserList
+    List<WorkInstructPackageUserList>? workInstructPackageUserList =
+        packageUserDTO.workInstructPackageUserList;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('作业项点'),
+      ),
+      body: ListView(
+        children: [
+          // 数据行
+          ...(workInstructPackageUserList?.map((workInstructPackageUser) {
+                String workItem = workInstructPackageUser.name ?? '';
+                String riskLevel = workInstructPackageUser.riskLevel ?? '';
+                String mutualCheck =
+                    workInstructPackageUser.mutualPersonnelName ?? '';
+                String specialCheck =
+                    workInstructPackageUser.specialPersonnelName ?? '';
+                // Bug 修复：添加闭合括号
+                return Container(
+                  width: MediaQuery.of(context).size.width,
+                  height: 80, // 减少容器高度
+                  margin: const EdgeInsets.symmetric(vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: Colors.blue),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 5), // 调整内边距
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Text(
+                            '作业项 ${workItem}',
+                            style: const TextStyle(fontSize: 16), // 放大文字
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5), // 增加行间距
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Text(
+                            '风险等级 ${riskLevel}',
+                            style: const TextStyle(fontSize: 16), // 放大文字
+                          ),
+                          Text(
+                            '互检人员 ${mutualCheck}',
+                            style: const TextStyle(fontSize: 16), // 放大文字
+                          ),
+                          Text(
+                            '专检人员 ${specialCheck}',
+                            style: const TextStyle(fontSize: 16), // 放大文字
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+                // Bug 修复：添加闭合括号
+              }).toList() ??
+              []),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+class SetRepairPersonScreen extends StatefulWidget {
+  final PackageUserDTOList packageUserDTO;
+
+  const SetRepairPersonScreen({Key? key, required this.packageUserDTO})
+      : super(key: key);
+
+  @override
+  _SetRepairPersonScreenState createState() => _SetRepairPersonScreenState();
+}
+
+class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
+  late List<dynamic> userList = [];
+  late List<int> mainUsers = []; // 用于存储主修
+  late List<int> assistantUsers = []; // 用于存储辅修
+
+  // 获取班组成员
+  void getUserList() async {
+    Map<String, dynamic> queryParameters = {
+      'pageNum': 0,
+      'pageSize': 0,
+      'deptId': Global.profile.permissions!.user.deptId
+    };
+    var r = await JtApi().getUserList(queryParametrs: queryParameters);
+    if (r['code'] == 200) {
+      setState(() {
+        userList = r['rows'];
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getUserList(); // 在初始化时调用 getUserList 方法
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<int> nowMainRepairList = [];
+    List<int> nowAssistantRepairList = [];
+
+    // Bug 修复：添加闭合括号
+    WorkInstructPackageUserList item = widget.packageUserDTO.workInstructPackageUserList![0];
+    String repair = item.repairPersonnel!;
+    // repair格式为'1129.1130'将其转化为[1129,1130]
+    if (repair != '') {
+      List<String> repairList = repair.split('.');
+      for (String repair in repairList) {
+        nowMainRepairList.add(int.parse(repair));
+      }
+    }
+    String assistant = item.assistant!;
+    if (assistant != '') {
+      List<String> assistantList = assistant.split('.');
+      for (String assistant in assistantList) {
+        nowAssistantRepairList.add(int.parse(assistant));
+      } // Bug 修复：添加闭合括号
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('设置施修人'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            child: Text("主修"),
+          ),
+          Expanded(
+            child: userList.isNotEmpty
+                ? ListView.builder(
+                    itemCount: userList.length,
+                    itemBuilder: (context, index) {
+                      var user = userList[index];
+                      return CheckboxListTile(
+                        title: Text(user['nickName']),
+                        value: mainUsers.contains(user['userId']),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value!) {
+                              mainUsers.add(user['userId']);
+                            } else {
+                              mainUsers.remove(user['userId']);
+                            }
+                          });
+                        },
+                        // 添加其他需要展示的用户信息
+                      );
+                    },
+                  )
+                : const CircularProgressIndicator(), // 显示加载指示器
+          ),
+          Container(
+            child: Text("辅修"),
+          ),
+          Expanded(
+            child: userList.isNotEmpty
+                ? ListView.builder(
+                    itemCount: userList.length,
+                    itemBuilder: (context, index) {
+                      var user = userList[index];
+                      return CheckboxListTile(
+                        title: Text(user['nickName']),
+                        value: assistantUsers.contains(user['userId']),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value!) {
+                              assistantUsers.add(user['userId']);
+                            } else {
+                              assistantUsers.remove(user['userId']);
+                            }
+                          });
+                        },
+                        // 添加其他需要展示的用户信息
+                      );
+                    },
+                  )
+                : const CircularProgressIndicator(), // 显示加载指示器
+          ),
+        ],
+      ),
+      // 最底部放一个提交按钮
+      floatingActionButton: FloatingActionButton(
+        tooltip: '提交',
+        onPressed: () {
+          // 在这里处理提交按钮的点击事件
+        },
+        child: const Icon(Icons.check),
+      ),
+    );
   }
 }

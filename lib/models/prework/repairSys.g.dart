@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'RepairSys.dart';
+part of 'repairSys.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

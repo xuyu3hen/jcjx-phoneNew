@@ -103,7 +103,7 @@ class JtApi extends AppApi{
       "/system/user/list",
       queryParameters: queryParametrs,
     );
-    // log("getUserList${r.data}");
+    log("getUserList${r.data}");
     return (r.data);
   }
 

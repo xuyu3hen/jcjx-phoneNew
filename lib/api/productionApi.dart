@@ -7,7 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/getWorkPackage/repair.dart';
-import 'package:jcjx_phone/models/prework/RepairSys.dart';
+import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
 
