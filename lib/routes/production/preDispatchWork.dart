@@ -387,8 +387,6 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                             );
                           },
                           style: ButtonStyle(
-                            
-                            
                             minimumSize:
                                 MaterialStateProperty.all(Size.fromHeight(50)),
                             padding: MaterialStateProperty.all(EdgeInsets.zero),
@@ -603,8 +601,6 @@ class PreWorkList extends StatelessWidget {
   }
 }
 
-
-
 class SetRepairPersonScreen extends StatefulWidget {
   final PackageUserDTOList packageUserDTO;
 
@@ -619,6 +615,10 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
   late List<dynamic> userList = [];
   late List<int> mainUsers = []; // 用于存储主修
   late List<int> assistantUsers = []; // 用于存储辅修
+  //存储主修名称
+  late List<String> mainUsersName = [];
+  //存储辅修名称
+  late List<String> assistantUsersName = [];
 
   // 获取班组成员
   void getUserList() async {
@@ -643,24 +643,27 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<int> nowMainRepairList = [];
-    List<int> nowAssistantRepairList = [];
-
     // Bug 修复：添加闭合括号
-    WorkInstructPackageUserList item = widget.packageUserDTO.workInstructPackageUserList![0];
+    WorkInstructPackageUserList item =
+        widget.packageUserDTO.workInstructPackageUserList![0];
     String repair = item.repairPersonnel!;
+    //打印repair
+
     // repair格式为'1129.1130'将其转化为[1129,1130]
     if (repair != '') {
-      List<String> repairList = repair.split('.');
-      for (String repair in repairList) {
-        nowMainRepairList.add(int.parse(repair));
+      List<String> repairList = repair.split(',');
+      for (String item1 in repairList) {
+        print(item1);
+        mainUsers.add(int.parse(item1));
       }
     }
     String assistant = item.assistant!;
+    print(assistant);
     if (assistant != '') {
-      List<String> assistantList = assistant.split('.');
+      List<String> assistantList = assistant.split(',');
       for (String assistant in assistantList) {
-        nowAssistantRepairList.add(int.parse(assistant));
+        print(assistant);
+        assistantUsers.add(int.parse(assistant));
       } // Bug 修复：添加闭合括号
     }
 
@@ -686,8 +689,10 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                           setState(() {
                             if (value!) {
                               mainUsers.add(user['userId']);
+                              mainUsersName.add(user['nickName']);
                             } else {
                               mainUsers.remove(user['userId']);
+                              mainUsersName.remove(user['nickName']);
                             }
                           });
                         },
@@ -726,14 +731,40 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
           ),
         ],
       ),
-      // 最底部放一个提交按钮
+      // 最底部放一个保存按钮
       floatingActionButton: FloatingActionButton(
-        tooltip: '提交',
+        tooltip: '保存', // 修改提示文本为“保存”
         onPressed: () {
-          // 在这里处理提交按钮的点击事件
+          // 在这里处理保存按钮的点击事件
+          save();
         },
-        child: const Icon(Icons.check),
+        child: const Icon(Icons.save), // 修改图标为保存图标
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // 将按钮位置设置为右下角
+
     );
+  }
+
+  //保存施修人
+  void save() async {
+    // 遍历mainUsers和assistantUsers，将其转化为字符串
+    String mainUsersStr = mainUsers.join(',');
+    String assistantUsersStr = assistantUsers.join(',');
+    //名称转换为字符串
+    String mainUsersNameStr = mainUsersName.join(',');
+    String assistantUsersNameStr = assistantUsersName.join(',');
+    //对所有作业项遍
+    //将结果转换为List<Map<String, dynamic>>
+    List<Map<String, dynamic>> list = [];
+    for (WorkInstructPackageUserList item
+        in widget.packageUserDTO.workInstructPackageUserList!) {
+      item.repairPersonnel = mainUsersStr;
+      item.assistant = assistantUsersStr;
+      item.repairPersonnelName = mainUsersNameStr;
+      item.assistantName = assistantUsersNameStr;
+      list.add(item.toJson());
+    }
+    ProductApi().saveAssociated(list);
+    Navigator.pop(context);
   }
 }

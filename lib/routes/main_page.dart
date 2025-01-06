@@ -1,6 +1,7 @@
 
 import 'package:jcjx_phone/routes/production/getWorkPackage.dart';
 
+
 import 'package:jcjx_phone/routes/production/searchWorkPackage.dart';
 import 'package:jcjx_phone/routes/production/secEnterModify.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
@@ -85,7 +86,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "getWorkPackage":(context) => const GetWorkPackage(),
         //查看个人作业包模块界面
         "searchWorkPackage":(context) => const SearchWorkPackage(),
-
+        'preTrainWork':(context) => const PreTrainWork(),
       },
       builder: FlutterSmartDialog.init(),
     );

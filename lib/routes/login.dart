@@ -174,6 +174,7 @@ class _LoginRouteState extends State<LoginRoute> {
           Global.profile = profile;
           Provider.of<UserModel>(context, listen: false).accessToken = profile.data;
           AppApi.init();
+          
           // Permissions p = await LoginApi().getpermissions();
           // if(p.code == 200){
           //   Global.profile.permissions = p;
@@ -188,7 +189,7 @@ class _LoginRouteState extends State<LoginRoute> {
       }
       // if(profile != null){
       //   Navigator.of(context).pop();
-      //   // Navigator.of(context).pushNamed('main_page');
+      //   Navigator.of(context).pushNamed('main_page');
       // }
     }
 

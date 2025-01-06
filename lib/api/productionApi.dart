@@ -146,8 +146,6 @@ class ProductApi extends AppApi {
     }
   }
 
-
-
   // 修次查询
   Future<RepairTimesList> getRepairTimes({
     Map<String, dynamic>? queryParametrs,
@@ -182,19 +180,19 @@ class ProductApi extends AppApi {
   }
 
   //查询修制
-    Future<RepairSysResponse> selectRepairSys({
+  Future<RepairSysResponse> selectRepairSys({
     Map<String, dynamic>? queryParametrs,
   }) async {
     // try {
     print('code');
     //get中使用queryParameters，post中使用data
     print(queryParametrs!['dynamicCode']);
-      var r = await AppApi.dio.get(
-        "/subparts/repairSys/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print((r.data["data"])["data"]);
-      return RepairSysResponse.fromJson((r.data["data"])["data"]);
+    var r = await AppApi.dio.get(
+      "/subparts/repairSys/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return RepairSysResponse.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
     //   return null;
@@ -268,6 +266,30 @@ class ProductApi extends AppApi {
     }
   }
 
+  //查询机车预派工机车
+  Future<dynamic> getNotEnterTrainPlan() async {
+    try {
+      var r = await AppApi.dio.post(
+        "/plan/repairPlan/getNotEnterTrainPlan",
+      );
+      print((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  //查询班组
+  Future<dynamic> getTeamInfo(Map<String, dynamic>? queryParametrs) async {
+    //获取班组
+    var r = await AppApi.dio
+        .get("/tasks/deptSchedule/getDeptScheduleByPlanCodeAndDeptId",
+        queryParameters: queryParametrs);
+    print((r.data["data"])['data']);
+    return (r.data["data"])['data'];
+  }
+
   // 取消辅修
   void cancelAssistantRepair(List<String> queryParametrs) async {
     try {
@@ -310,8 +332,10 @@ class ProductApi extends AppApi {
       "uploadFileList": await MultipartFile.fromFile(imagedata!.path),
       "secondPackageCode": queryParametrs["secondPackageCode"]
     });
-    var r = await AppApi.dio.post("/fileserver/taskCertainContentFile/uploadFile",
-        data: formData, options: Options(contentType: "multipart/form-data"));
+    var r = await AppApi.dio.post(
+        "/fileserver/taskCertainContentFile/uploadFile",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"));
     log("uploadImg${r.data}");
     return (r.data["code"]);
     // } catch (e) {
@@ -324,17 +348,16 @@ class ProductApi extends AppApi {
   Future<int> finishCertainPackage(
       List<TaskCertainPackageList> queryParameters) async {
     // try {
-      var r = await AppApi.dio2.post(
-          "/tasks/taskCertainPackage/completeTaskCertainPackage",
-          data: queryParameters);
-      log("finishCertainPackage${r.data}");
-      return (r.data["code"]);
+    var r = await AppApi.dio2.post(
+        "/tasks/taskCertainPackage/completeTaskCertainPackage",
+        data: queryParameters);
+    log("finishCertainPackage${r.data}");
+    return (r.data["code"]);
     // } catch (e) {
     //   _handleException(e);
     //   return -1;
     // }
   }
-
 
   // 上传防溜照片
   Future<int> upSlipImg(
@@ -399,31 +422,33 @@ class ProductApi extends AppApi {
       return MainNodeList(data: []);
     }
   }
+
   //获取班组作业包
   Future<PackageUserData> getTeamWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {
     // try {
-      var r = await AppApi.dio.get(
-        "/subparts/workInstructPackageUser/getPakcageUserList",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return PackageUserData.fromJson(r.data["data"]);
+    var r = await AppApi.dio.get(
+      "/subparts/workInstructPackageUser/getPakcageUserList",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return PackageUserData.fromJson(r.data["data"]);
     // } catch (e) {
     //   _handleException(e);
     //   return WorkPackageList(data: []);
     // }
   }
+
   //获取工序节点
   Future<RepairMainNode> getRepairMainNodeAll(
       {Map<String, dynamic>? queryParametrs}) async {
     // try {
-      var r = await AppApi.dio.get(
-        "/subparts/repairMainNode/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print((r.data["data"])["data"]);
-      return RepairMainNode.fromJson((r.data["data"])["data"]);
+    var r = await AppApi.dio.get(
+      "/subparts/repairMainNode/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return RepairMainNode.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
     //   return RepairMainNode();
@@ -546,6 +571,31 @@ class ProductApi extends AppApi {
     //   _handleException(e);
     //   return UserList(data: []);
     // }
+  }
+  //保存team
+  void saveTeam(List<Map<String, dynamic>> queryParametrs) async {
+    try {
+      var r = await AppApi.dio2.post(
+        "/tasks/deptSchedule/save",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  //保存施修人
+  void saveAssociated(List<Map<String, dynamic>> queryParametrs) async {
+    try {
+      var r = await AppApi.dio2.post(
+        "/subparts/workInstructPackageUser/saveOrUpdate",
+        data: queryParametrs,
+      );
+      print(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
 // 统一异常处理方法

@@ -29,4 +29,5 @@ export 'vehicle28/taskpackage/unqualified_list.dart';
 export 'production/taskPackageDetailList.dart';
 export 'production/TaskContentDetailsPage.dart';
 export 'production/preDispatchWork.dart';
+export 'production/preTrainWork.dart';
 
