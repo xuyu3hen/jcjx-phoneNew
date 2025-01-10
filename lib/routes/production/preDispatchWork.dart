@@ -261,7 +261,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
               Container(
                 width: MediaQuery.of(context).size.width,
                 height: (packageUserDTOList?.length ?? 0) *
-                    100.0, // 根据数据长度计算高度，并调整每行高度为 100
+                    150.0, // 根据数据长度计算高度，并调整每行高度为 100
                 decoration: const BoxDecoration(color: Colors.white),
                 child: Column(
                   children: [
@@ -298,7 +298,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                             },
                             child: Container(
                               width: MediaQuery.of(context).size.width,
-                              height: 80, // 减少容器高度
+                              height: 100, // 减少容器高度
                               margin: const EdgeInsets.symmetric(vertical: 5),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -324,9 +324,9 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                   Expanded(
                                     child: Column(
                                       children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceAround,
+                                        Wrap(
+                                          spacing: 8, // 调整间距
+                                          runSpacing: 4, // 调整行间距
                                           children: [
                                             // 增加序号中文
                                             Text(
@@ -344,13 +344,6 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                               style: const TextStyle(
                                                   fontSize: 16), // 放大文字
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 5), // 增加行间距
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceAround,
-                                          children: [
                                             Text(
                                               '主修 ${mainRepair}',
                                               style: const TextStyle(
@@ -639,34 +632,59 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
   void initState() {
     super.initState();
     getUserList(); // 在初始化时调用 getUserList 方法
-  }
-
-  @override
-  Widget build(BuildContext context) {
+    mainUsers = [];
+    assistantUsers = [];
+    mainUsersName = [];
+    assistantUsersName = [];
     // Bug 修复：添加闭合括号
     WorkInstructPackageUserList item =
         widget.packageUserDTO.workInstructPackageUserList![0];
-    String repair = item.repairPersonnel!;
+    String? repairName = item.repairPersonnelName;
+    //对repairName进行分割赋值
+    if (repairName!= null && repairName!= '') {
+      List<String> repairNameList = repairName.split(',');
+      for (String item1 in repairNameList) {
+        print(item1);
+        mainUsersName.add(item1);
+      }
+    }
+    String? assistantName = item.assistantName;
+    //对assistantName进行分割赋值
+    if (assistantName!= null && assistantName!= '') {
+      List<String> assistantNameList = assistantName.split(',');
+      for (String item1 in assistantNameList) {
+        print(item1);
+        assistantUsersName.add(item1);
+      }
+    }
+
+
+    String? repair = item.repairPersonnel;
     //打印repair
 
-    // repair格式为'1129.1130'将其转化为[1129,1130]
-    if (repair != '') {
+    // repair格式为'1129,1130'将其转化为[1129,1130]
+
+    if (repair != null && repair != '') {
       List<String> repairList = repair.split(',');
       for (String item1 in repairList) {
         print(item1);
         mainUsers.add(int.parse(item1));
       }
     }
-    String assistant = item.assistant!;
+    print(mainUsers.toString());
+    String? assistant = item.assistant;
     print(assistant);
-    if (assistant != '') {
+    if (assistant != null && assistant != '') {
       List<String> assistantList = assistant.split(',');
       for (String assistant in assistantList) {
         print(assistant);
         assistantUsers.add(int.parse(assistant));
       } // Bug 修复：添加闭合括号
     }
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('设置施修人'),
@@ -718,8 +736,10 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                           setState(() {
                             if (value!) {
                               assistantUsers.add(user['userId']);
+                              assistantUsersName.add(user['nickName']);
                             } else {
                               assistantUsers.remove(user['userId']);
+                              assistantUsersName.remove(user['nickName']);
                             }
                           });
                         },
@@ -740,8 +760,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
         },
         child: const Icon(Icons.save), // 修改图标为保存图标
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // 将按钮位置设置为右下角
-
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // 将按钮位置设置为右下角
     );
   }
 
@@ -753,6 +773,9 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     //名称转换为字符串
     String mainUsersNameStr = mainUsersName.join(',');
     String assistantUsersNameStr = assistantUsersName.join(',');
+    //打印结果
+    print(mainUsersStr);
+    print(mainUsersNameStr);
     //对所有作业项遍
     //将结果转换为List<Map<String, dynamic>>
     List<Map<String, dynamic>> list = [];
@@ -762,9 +785,12 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       item.assistant = assistantUsersStr;
       item.repairPersonnelName = mainUsersNameStr;
       item.assistantName = assistantUsersNameStr;
+      // print(item.toJson());
       list.add(item.toJson());
     }
     ProductApi().saveAssociated(list);
+    //清空mainUsers和assistantUsers和mainUsersName和assistantUsersName
+
     Navigator.pop(context);
   }
 }

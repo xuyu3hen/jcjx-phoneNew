@@ -172,7 +172,7 @@ class _LoginRouteState extends State<LoginRoute> {
           // print("显示token:${r.data?.access_token}");
           profile = r;
           Global.profile = profile;
-          Provider.of<UserModel>(context, listen: false).accessToken = profile.data;
+          Provider.of<UserModel>(                                                                                                                                                           context, listen: false).accessToken = profile.data;
           AppApi.init();
           
           // Permissions p = await LoginApi().getpermissions();

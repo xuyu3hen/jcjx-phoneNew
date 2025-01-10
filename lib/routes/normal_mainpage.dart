@@ -97,8 +97,38 @@ class _NormalMainPageState extends State<NormalMainPage> {
           // 其他相关操作功能区域
           if (Global.profile.permissions!.roles.contains("builder"))
             _buildBuilderSection(),
-        
+          if (Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
+            _buildZhurenyanjiuyuanSection(),
         ]);
+  }
+
+  Widget _buildZhurenyanjiuyuanSection() {
+    return Column(
+      children: [
+        const ListTile(
+          title: Text("主任验收",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        const Divider(height: .0, thickness: 1),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.format_list_bulleted_add,
+                    color: Colors.deepPurple[300]),
+                () => Navigator.pushNamed(context, 'preDispatchWork'),
+                '预派工',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            )
+          ],
+        ),
+      ],
+    );
   }
 
   // 构建工班长相关操作功能区域
@@ -136,7 +166,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.height),
               ),
             ),
-             SizedBox(
+            SizedBox(
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
@@ -222,7 +252,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.build, color: Colors.amber[300]),
+                Icon(Icons.build, color: Colors.amber[300]),                                        
                 () => Navigator.pushNamed(context, 'getWorkPackage'),
                 '领取作业包',
                 width: (MediaQuery.of(context).size.width),
@@ -275,6 +305,4 @@ class _NormalMainPageState extends State<NormalMainPage> {
       ],
     );
   }
-
-
 }
