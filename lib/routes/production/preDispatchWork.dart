@@ -622,9 +622,11 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     };
     var r = await JtApi().getUserList(queryParametrs: queryParameters);
     if (r['code'] == 200) {
-      setState(() {
-        userList = r['rows'];
-      });
+      if (mounted) {
+        setState(() {
+          userList = r['rows'];
+        });
+      }
     }
   }
 
@@ -641,7 +643,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
         widget.packageUserDTO.workInstructPackageUserList![0];
     String? repairName = item.repairPersonnelName;
     //对repairName进行分割赋值
-    if (repairName!= null && repairName!= '') {
+    if (repairName != null && repairName != '') {
       List<String> repairNameList = repairName.split(',');
       for (String item1 in repairNameList) {
         print(item1);
@@ -650,14 +652,13 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     }
     String? assistantName = item.assistantName;
     //对assistantName进行分割赋值
-    if (assistantName!= null && assistantName!= '') {
+    if (assistantName != null && assistantName != '') {
       List<String> assistantNameList = assistantName.split(',');
       for (String item1 in assistantNameList) {
         print(item1);
         assistantUsersName.add(item1);
       }
     }
-
 
     String? repair = item.repairPersonnel;
     //打印repair

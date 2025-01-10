@@ -123,29 +123,39 @@ class _TeamInfoState extends State<TeamInfo> {
         'planCode': widget.planCode
     };
     var r = await ProductApi().getTeamInfo(queryParameters);
-    setState(() {
-      teamList = r; // 假设 r 是包含班组信息的列表
-    });
+    if (mounted) {
+      setState(() {
+        teamList = r; // 假设 r 是包含班组信息的列表
+      });
+    }
   }
-
   void save() async {
-    List <Map<String, dynamic>> associatedList = [];
-      //遍历teamList
-      for (var team in teamList) {
-        if (team['associated'] == true) {
-          // 调用接口
-          Map<String, dynamic> queryParameters = {
-            'repairPlanCode': widget.planCode,
-            'deptId': team['deptId'],
-            'teamName': team['deptName'],
-            'teamId': team['deptId']
-          };
-       associatedList.add(queryParameters);
-        }
+    List<Map<String, dynamic>> associatedList = [];
+    //遍历teamList
+    for (var team in teamList) {
+      if (team['associated'] == true) {
+        // 调用接口
+        Map<String, dynamic> queryParameters = {
+          'repairPlanCode': widget.planCode,
+          'deptId': team['deptId'],
+          'teamName': team['deptName'],
+          'teamId': team['deptId']
+        };
+        associatedList.add(queryParameters);
       }
-          ProductApi().saveTeam(associatedList);
-         //跳回界面
-         Navigator.pop(context);
+    }
+    if (mounted) {
+      ProductApi().saveTeam(associatedList);
+      //跳回界面
+      Navigator.pop(context);
+    }
+  }
+  @override
+  void dispose() {
+    // 取消所有正在进行的异步操作
+    // 例如，如果有定时器，在这里取消
+    // timer?.cancel();
+    super.dispose();
   }
 }
   
