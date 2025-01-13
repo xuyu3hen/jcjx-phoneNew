@@ -136,7 +136,40 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return Column(
       children: [
         const ListTile(
-          title: Text("工班长",
+          title: Text("机车入段",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        const Divider(height: .0, thickness: 1),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.library_books_outlined, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'enter_list'),
+                '入修车辆',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.format_list_bulleted_add,
+                    color: Colors.deepPurple[300]),
+                () => Navigator.pushNamed(context, 'sec_enter_modify'),
+                '新增入修',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+          ],
+        ),
+        const ListTile(
+          title: Text("预派工，机统28",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         const Divider(height: .0, thickness: 1),
@@ -188,6 +221,10 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Widget _buildBuilderSection() {
     return Column(
       children: [
+        const ListTile(
+          title: Text("机车入段",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
         const Divider(height: .0, thickness: 1),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -218,7 +255,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           ],
         ),
         const ListTile(
-          title: Text("预派工，作业包，机统28",
+          title: Text("作业包，机统28",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         const Divider(height: .0, thickness: 1),
@@ -237,33 +274,28 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.height),
               ),
             ),
+            // SizedBox(
+            //   width: (MediaQuery.of(context).size.width) / 3,
+            //   height: (MediaQuery.of(context).size.width) / 4,
+            //   child: FeatureContainer(
+            //     Icon(Icons.build, color: Colors.amber[300]),
+            //     () => Navigator.pushNamed(context, 'repairlist'),
+            //     '不合格项处置',
+            //     width: (MediaQuery.of(context).size.width),
+            //     height: (MediaQuery.of(context).size.height),
+            //   ),
+            // ),
             SizedBox(
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
                 Icon(Icons.build, color: Colors.amber[300]),
-                () => Navigator.pushNamed(context, 'repairlist'),
-                '不合格项处置',
-                width: (MediaQuery.of(context).size.width),
-                height: (MediaQuery.of(context).size.height),
-              ),
-            ),
-            SizedBox(
-              width: (MediaQuery.of(context).size.width) / 3,
-              height: (MediaQuery.of(context).size.width) / 4,
-              child: FeatureContainer(
-                Icon(Icons.build, color: Colors.amber[300]),                                        
                 () => Navigator.pushNamed(context, 'getWorkPackage'),
                 '领取作业包',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
               ),
             ),
-          ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
             SizedBox(
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
@@ -275,6 +307,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.height),
               ),
             ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
             SizedBox(
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,

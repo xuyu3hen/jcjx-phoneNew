@@ -98,11 +98,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       title: "选择动力类型",
                       clickCallBack: (selectItem, selectArr) {
                         print(selectArr);
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           dynamicTypeSelected["code"] = selectItem["code"];
                           dynamicTypeSelected["name"] = selectItem["name"];
                           getJcType();
                         });
+                        }
+                        
                       },
                     );
                   }
@@ -125,12 +128,15 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择机型",
                       clickCallBack: (selectItem, selectArr) {
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           print(selectArr);
                           jcTypeListSelected["name"] = selectItem["name"];
                           jcTypeListSelected["code"] = selectItem["code"];
                           // 在这里添加获取车号等后续逻辑，如果有的话
                         });
+                        }
+                        
                       },
                     );
                   }
@@ -154,7 +160,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修制",
                       clickCallBack: (selectItem, selectArr) {
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           print(selectArr);
                           repairSysSelected["name"] = selectItem["name"];
                           //将主键进行选取
@@ -162,6 +169,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                           //获取修程信息
                           getRepairProc();
                         });
+                        }
+                        
                       },
                     );
                   }
@@ -185,7 +194,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修程",
                       clickCallBack: (selectItem, selectArr) {
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           print(selectArr);
                           repairSelected["name"] = selectItem["name"];
                           //将主键进行选取
@@ -193,6 +203,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                           getRepairTimes();
                           getRepairMainNode();
                         });
+                          }
+                        
                       },
                     );
                   }
@@ -216,12 +228,15 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修次",
                       clickCallBack: (selectItem, selectArr) {
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           print(selectArr);
                           repairTimesSelected["name"] = selectItem["name"];
                           //将主键进行选取
                           repairTimesSelected["code"] = selectItem["code"];
                         });
+                        }
+                        
                       },
                     );
                   }
@@ -245,13 +260,16 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择工序节点",
                       clickCallBack: (selectItem, selectArr) {
-                        setState(() {
+                        if(mounted){
+                          setState(() {
                           print(selectArr);
                           procNodeSelected["name"] = selectItem["name"];
                           //将主键进行选取
                           procNodeSelected["code"] = selectItem["code"];
                           getWorkPackage();
                         });
+                        }
+                        
                       },
                     );
                   }
@@ -312,6 +330,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                   Checkbox(
                                     value: selectedPackage == packageUserDTO,
                                     onChanged: (value) {
+                                      if(mounted)
                                       setState(() {
                                         if (value!) {
                                           selectedPackage = packageUserDTO;
@@ -403,11 +422,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     var r = await ProductApi().getDynamicType();
     //获取用户信息
     var permissionResponse = await LoginApi().getpermissions();
-    setState(() {
+      if(mounted){
+        setState(() {
       dynamicTypeList = r.toMapList();
       permissions = permissionResponse;
       print(permissions.toJson());
     });
+      }
+    
   }
 
   // 获取机型
@@ -419,10 +441,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getJcType(queryParametrs: queryParameters);
     print(r.toJson());
-    setState(() {
+    if(mounted){
+      setState(() {
       jcTypeList = r.toMapList();
       getRepairSys();
     });
+    }
+    
   }
 
   // 获取修制信息
@@ -440,7 +465,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     });
   }
 
-  // 修程
+  // 修
+  // 修次
   void getRepairProc() async {
     Map<String, dynamic> queryParameters = {
       'repairSysCode': repairSysSelected["code"],
@@ -449,10 +475,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
     if (r.rows != []) {
-      setState(() {
+      if(mounted){
+        setState(() {
         //将获取的信息列表
         repairList = r.toMapList();
       });
+      }
+      
     }
   }
 
@@ -466,10 +495,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getRepairTimes(queryParametrs: queryParameters);
     if (r.rows != []) {
-      setState(() {
+      if(mounted){
+        setState(() {
         //将获取的信息列表
         repairTImesList = r.toMapList();
       });
+      }
+      
     }
   }
 
@@ -485,10 +517,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     var r = await ProductApi()
         .getRepairMainNodeAll(queryParametrs: queryParameters);
     if (r.rows != null) {
-      setState(() {
+      if(mounted){
+        setState(() {
         //将获取的信息列表
         procNodeList = r.toMapList();
       });
+      }
+      
     }
   }
 
@@ -503,7 +538,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await JtApi().getPackageUserList(queryParameters: queryParameters);
     if (r.data != 0) {
-      setState(() {
+      if(mounted){
+        setState(() {
         //将获取的信息列表
         //将r.data进行遍历,获取相关信息进行展示
         packageUserDTOList = [];
@@ -513,84 +549,9 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
         }
         // print(packageUserDTOList!.length);
       });
+      }
+      
     }
-  }
-}
-
-class PreWorkList extends StatelessWidget {
-  final PackageUserDTOList packageUserDTO;
-
-  PreWorkList({required this.packageUserDTO});
-
-  @override
-  Widget build(BuildContext context) {
-    // 获取packageUserDTO中workInstructPackageUserList
-    List<WorkInstructPackageUserList>? workInstructPackageUserList =
-        packageUserDTO.workInstructPackageUserList;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('作业项点'),
-      ),
-      body: ListView(
-        children: [
-          // 数据行
-          ...(workInstructPackageUserList?.map((workInstructPackageUser) {
-                String workItem = workInstructPackageUser.name ?? '';
-                String riskLevel = workInstructPackageUser.riskLevel ?? '';
-                String mutualCheck =
-                    workInstructPackageUser.mutualPersonnelName ?? '';
-                String specialCheck =
-                    workInstructPackageUser.specialPersonnelName ?? '';
-                // Bug 修复：添加闭合括号
-                return Container(
-                  width: MediaQuery.of(context).size.width,
-                  height: 80, // 减少容器高度
-                  margin: const EdgeInsets.symmetric(vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: Colors.blue),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 5), // 调整内边距
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(
-                            '作业项 ${workItem}',
-                            style: const TextStyle(fontSize: 16), // 放大文字
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5), // 增加行间距
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Text(
-                            '风险等级 ${riskLevel}',
-                            style: const TextStyle(fontSize: 16), // 放大文字
-                          ),
-                          Text(
-                            '互检人员 ${mutualCheck}',
-                            style: const TextStyle(fontSize: 16), // 放大文字
-                          ),
-                          Text(
-                            '专检人员 ${specialCheck}',
-                            style: const TextStyle(fontSize: 16), // 放大文字
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-                // Bug 修复：添加闭合括号
-              }).toList() ??
-              []),
-        ],
-      ),
-    );
   }
 }
 
@@ -705,7 +666,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                         title: Text(user['nickName']),
                         value: mainUsers.contains(user['userId']),
                         onChanged: (bool? value) {
-                          setState(() {
+                          if(mounted){
+                              setState(() {
                             if (value!) {
                               mainUsers.add(user['userId']);
                               mainUsersName.add(user['nickName']);
@@ -714,6 +676,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                               mainUsersName.remove(user['nickName']);
                             }
                           });
+                          }
+                          
                         },
                         // 添加其他需要展示的用户信息
                       );
@@ -734,7 +698,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                         title: Text(user['nickName']),
                         value: assistantUsers.contains(user['userId']),
                         onChanged: (bool? value) {
-                          setState(() {
+                          if(mounted){
+                            setState(() {
                             if (value!) {
                               assistantUsers.add(user['userId']);
                               assistantUsersName.add(user['nickName']);
@@ -743,6 +708,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                               assistantUsersName.remove(user['nickName']);
                             }
                           });
+                          }
+                          
                         },
                         // 添加其他需要展示的用户信息
                       );
@@ -795,3 +762,126 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     Navigator.pop(context);
   }
 }
+
+class PreWorkList extends StatefulWidget {
+  final PackageUserDTOList packageUserDTO;
+
+  const PreWorkList({Key? key, required this.packageUserDTO}) : super(key: key);
+
+  @override
+  _PreWorkListState createState() => _PreWorkListState();
+}
+
+class _PreWorkListState extends State<PreWorkList> {
+  // 用于存储已勾选的作业项
+  List<WorkInstructPackageUserList> selectedWorkItems = [];
+
+  @override
+  Widget build(BuildContext context) {
+    // 获取packageUserDTO中workInstructPackageUserList
+    List<WorkInstructPackageUserList>? workInstructPackageUserList =
+        widget.packageUserDTO.workInstructPackageUserList;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('作业项点'),
+      ),
+      body: ListView.builder(
+        itemCount: workInstructPackageUserList?.length ?? 0,
+        itemBuilder: (context, index) {
+          WorkInstructPackageUserList workInstructPackageUser =
+              workInstructPackageUserList![index];
+          String workItem = workInstructPackageUser.name ?? '';
+          String riskLevel = workInstructPackageUser.riskLevel ?? '';
+          String mutualCheck =
+              workInstructPackageUser.mutualPersonnelName ?? '';
+          String specialCheck =
+              workInstructPackageUser.specialPersonnelName ?? '';
+
+          return Container(
+            width: MediaQuery.of(context).size.width,
+            height: 150,
+            margin: const EdgeInsets.symmetric(vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.blue),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: selectedWorkItems.contains(workInstructPackageUser),
+                  onChanged: (bool? value) {
+                    if(mounted){
+                      setState(() {
+                      if (value!) {
+                        selectedWorkItems.add(workInstructPackageUser);
+                      } else {
+                        selectedWorkItems.remove(workInstructPackageUser);
+                      }
+                    });  
+                    }
+                    
+                  },
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '作业项 $workItem',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '风险等级 $riskLevel',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '互检人员 $mutualCheck',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        '专检人员 $specialCheck',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      // 如果有勾选的作业项，显示设置专检按钮
+      bottomNavigationBar: selectedWorkItems.isNotEmpty
+          ? Container(
+              height: 50,
+              color: Colors.blue,
+              child: TextButton(
+                onPressed: () {
+                  // 处理设置专检的逻辑
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SetSpecialCheck(
+                        selectedWorkItems: selectedWorkItems,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  '设置专互检',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+

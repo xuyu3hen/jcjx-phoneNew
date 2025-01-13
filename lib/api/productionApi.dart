@@ -598,6 +598,56 @@ class ProductApi extends AppApi {
     }
   }
 
+ 
+  Future<dynamic> getDictCode(Map<String, dynamic>? queryParameters) async {
+    // try {
+      var r = await AppApi.dio.get(
+        "/system/dict/data/list",
+        queryParameters: queryParameters,
+      );
+      print(r.data);
+      return r.data;
+    // } catch (e) {
+    //   _handleException(e);
+    //   return null;
+    // }
+  }
+
+
+
+
+ //根据riskLevel查询post
+ Future<dynamic> getPostByRiskLevel(Map<String, dynamic> queryParameters) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/riskLevelPost/selectAll",
+        queryParameters: queryParameters,
+      );
+      print((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+ //getUserListByPostIdList 获取对应的用户信息
+ Future<dynamic> getUserListByPostIdList(List<int> postIdList) async {
+    try {
+      var r = await AppApi.dio2.post(
+        "/jcjxsystem/sysPost/getUserListByPostIdList",
+        data: postIdList,
+      );
+      print((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+
+
 // 统一异常处理方法
   void _handleException(dynamic e) {
     String errorMessage = "";

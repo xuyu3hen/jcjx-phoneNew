@@ -30,4 +30,5 @@ export 'production/taskPackageDetailList.dart';
 export 'production/TaskContentDetailsPage.dart';
 export 'production/preDispatchWork.dart';
 export 'production/preTrainWork.dart';
+export 'production/setSpecialMutual.dart';
 
