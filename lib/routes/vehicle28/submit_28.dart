@@ -22,10 +22,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   String? dynamicName;
   // 机型
   Map<dynamic, dynamic> jcTypeListSelected = {"name": "", "code": ""};
-  List<JcType> jcTypeList = <JcType>[];
+  List<Map<String, dynamic>> jcTypeList = [];
   // 车号
   Map<dynamic, dynamic> trainNumSelected = {"trainNum": "", "code": ""};
-  List<RepairPlan> trainNumCodeList = <RepairPlan>[];
+  List<Map<String, dynamic>> trainNumCodeList = []; 
   String? trainNum;
   String? trainCode;
   // 检修作业来源
@@ -58,7 +58,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   // Map<dynamic,dynamic> userSelected = {"userId":0,"nickName":""};
   // String? assignCode;
 
-  List<DynamicType> dynamicList = [];
+  List<Map<String, dynamic>> dynamicList = [];
   // 车组信息(组件试用版Map)
   List<dynamic> cascaderList = [];
   // 车厢信息
@@ -99,7 +99,13 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     var r = await ProductApi().getDynamicType();
     if (r.rows != []) {
       setState(() {
-        dynamicList = r.rows!;
+        List<DynamicType> dyn = r.rows!;
+        List<Map<String, dynamic>> temp = [];
+        for(DynamicType item in dyn){
+          temp.add(item.toJson());
+        }
+        dynamicList = temp;
+
       });
     }
   }
@@ -108,11 +114,12 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   //List<Map<String, dynamic>>类型才能够使用
   void getTypeCode() async {
     var r = await ProductApi().getJcType(queryParametrs: {
-      'dynamicCode': dynamicCode,
+      'dynamicCode': dynamciTypeSelected['code'],
     });
     if (r.rows != []) {
       setState(() {
-        jcTypeList = r.rows!;
+        jcTypeList = r.toMapList();
+        
       });
     }
   }
@@ -127,7 +134,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     print(r.rows);
     setState(() {
       trainNum = "";
-      trainNumCodeList = r.rows!;
+      trainNumCodeList = r.toMapList();
     });
   }
 
@@ -286,6 +293,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                             setState(() {
                               print(selectArr);
                               jcTypeListSelected["name"] = selectItem["name"];
+                              jcTypeListSelected["code"] = selectItem["code"];
                               getTrainNumCodeList();
                             });
                           },
@@ -532,9 +540,9 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               // "faultAssumption": faultAssumption,
               "faultDescription": faultDesc,
               // "faultyComponent": componentName['configCode'],
-              // "machineModel": jcTypeListSelected['code'],
+              "machineModel": jcTypeListSelected['code'],
               // "maintenanceNotice": maintenanceNotice,
-              // "trainEntryCode": trainCode,
+              "trainEntryCode": trainNumSelected["code"],
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],

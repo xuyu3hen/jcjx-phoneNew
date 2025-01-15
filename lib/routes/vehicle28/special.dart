@@ -166,6 +166,7 @@ class _SpecialState extends State<Special> {
           var upload = await JtApi().uploadMixJt(imagedata: repairPics);
           queryParameters[0]['specialInspectionPicture'] = upload['data'];
         }
+        queryParameters[0]['status'] = jtMes?.status;
         log("$queryParameters");
         await JtApi().uploadJt28(queryParametrs: queryParameters).then((value) async => {
           message = value,

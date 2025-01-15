@@ -98,14 +98,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       title: "选择动力类型",
                       clickCallBack: (selectItem, selectArr) {
                         print(selectArr);
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          dynamicTypeSelected["code"] = selectItem["code"];
-                          dynamicTypeSelected["name"] = selectItem["name"];
-                          getJcType();
-                        });
+                            dynamicTypeSelected["code"] = selectItem["code"];
+                            dynamicTypeSelected["name"] = selectItem["name"];
+                            getJcType();
+                          });
                         }
-                        
                       },
                     );
                   }
@@ -128,15 +127,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择机型",
                       clickCallBack: (selectItem, selectArr) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          print(selectArr);
-                          jcTypeListSelected["name"] = selectItem["name"];
-                          jcTypeListSelected["code"] = selectItem["code"];
-                          // 在这里添加获取车号等后续逻辑，如果有的话
-                        });
+                            print(selectArr);
+                            jcTypeListSelected["name"] = selectItem["name"];
+                            jcTypeListSelected["code"] = selectItem["code"];
+                            // 在这里添加获取车号等后续逻辑，如果有的话
+                          });
                         }
-                        
                       },
                     );
                   }
@@ -160,17 +158,16 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修制",
                       clickCallBack: (selectItem, selectArr) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          print(selectArr);
-                          repairSysSelected["name"] = selectItem["name"];
-                          //将主键进行选取
-                          repairSysSelected["code"] = selectItem["code"];
-                          //获取修程信息
-                          getRepairProc();
-                        });
+                            print(selectArr);
+                            repairSysSelected["name"] = selectItem["name"];
+                            //将主键进行选取
+                            repairSysSelected["code"] = selectItem["code"];
+                            //获取修程信息
+                            getRepairProc();
+                          });
                         }
-                        
                       },
                     );
                   }
@@ -194,17 +191,16 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修程",
                       clickCallBack: (selectItem, selectArr) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          print(selectArr);
-                          repairSelected["name"] = selectItem["name"];
-                          //将主键进行选取
-                          repairSelected["code"] = selectItem["code"];
-                          getRepairTimes();
-                          getRepairMainNode();
-                        });
-                          }
-                        
+                            print(selectArr);
+                            repairSelected["name"] = selectItem["name"];
+                            //将主键进行选取
+                            repairSelected["code"] = selectItem["code"];
+                            getRepairTimes();
+                            getRepairMainNode();
+                          });
+                        }
                       },
                     );
                   }
@@ -228,15 +224,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择修次",
                       clickCallBack: (selectItem, selectArr) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          print(selectArr);
-                          repairTimesSelected["name"] = selectItem["name"];
-                          //将主键进行选取
-                          repairTimesSelected["code"] = selectItem["code"];
-                        });
+                            print(selectArr);
+                            repairTimesSelected["name"] = selectItem["name"];
+                            //将主键进行选取
+                            repairTimesSelected["code"] = selectItem["code"];
+                          });
                         }
-                        
                       },
                     );
                   }
@@ -260,16 +255,15 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                       childrenKey: 'children',
                       title: "选择工序节点",
                       clickCallBack: (selectItem, selectArr) {
-                        if(mounted){
+                        if (mounted) {
                           setState(() {
-                          print(selectArr);
-                          procNodeSelected["name"] = selectItem["name"];
-                          //将主键进行选取
-                          procNodeSelected["code"] = selectItem["code"];
-                          getWorkPackage();
-                        });
+                            print(selectArr);
+                            procNodeSelected["name"] = selectItem["name"];
+                            //将主键进行选取
+                            procNodeSelected["code"] = selectItem["code"];
+                            getWorkPackage();
+                          });
                         }
-                        
                       },
                     );
                   }
@@ -330,14 +324,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                   Checkbox(
                                     value: selectedPackage == packageUserDTO,
                                     onChanged: (value) {
-                                      if(mounted)
-                                      setState(() {
-                                        if (value!) {
-                                          selectedPackage = packageUserDTO;
-                                        } else {
-                                          selectedPackage = null;
-                                        }
-                                      });
+                                      if (mounted)
+                                        setState(() {
+                                          if (value!) {
+                                            selectedPackage = packageUserDTO;
+                                          } else {
+                                            selectedPackage = null;
+                                          }
+                                        });
                                     },
                                   ),
                                   Expanded(
@@ -422,14 +416,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     var r = await ProductApi().getDynamicType();
     //获取用户信息
     var permissionResponse = await LoginApi().getpermissions();
-      if(mounted){
-        setState(() {
-      dynamicTypeList = r.toMapList();
-      permissions = permissionResponse;
-      print(permissions.toJson());
-    });
-      }
-    
+    if (mounted) {
+      setState(() {
+        dynamicTypeList = r.toMapList();
+        permissions = permissionResponse;
+        print(permissions.toJson());
+      });
+    }
   }
 
   // 获取机型
@@ -441,13 +434,12 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getJcType(queryParametrs: queryParameters);
     print(r.toJson());
-    if(mounted){
+    if (mounted) {
       setState(() {
-      jcTypeList = r.toMapList();
-      getRepairSys();
-    });
+        jcTypeList = r.toMapList();
+        getRepairSys();
+      });
     }
-    
   }
 
   // 获取修制信息
@@ -475,13 +467,12 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
     if (r.rows != []) {
-      if(mounted){
+      if (mounted) {
         setState(() {
-        //将获取的信息列表
-        repairList = r.toMapList();
-      });
+          //将获取的信息列表
+          repairList = r.toMapList();
+        });
       }
-      
     }
   }
 
@@ -495,13 +486,12 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().getRepairTimes(queryParametrs: queryParameters);
     if (r.rows != []) {
-      if(mounted){
+      if (mounted) {
         setState(() {
-        //将获取的信息列表
-        repairTImesList = r.toMapList();
-      });
+          //将获取的信息列表
+          repairTImesList = r.toMapList();
+        });
       }
-      
     }
   }
 
@@ -517,13 +507,12 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     var r = await ProductApi()
         .getRepairMainNodeAll(queryParametrs: queryParameters);
     if (r.rows != null) {
-      if(mounted){
+      if (mounted) {
         setState(() {
-        //将获取的信息列表
-        procNodeList = r.toMapList();
-      });
+          //将获取的信息列表
+          procNodeList = r.toMapList();
+        });
       }
-      
     }
   }
 
@@ -538,19 +527,18 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await JtApi().getPackageUserList(queryParameters: queryParameters);
     if (r.data != 0) {
-      if(mounted){
+      if (mounted) {
         setState(() {
-        //将获取的信息列表
-        //将r.data进行遍历,获取相关信息进行展示
-        packageUserDTOList = [];
-        for (PackageUser item in r.data!) {
-          print(item.packageUserDTOList!.length);
-          packageUserDTOList?.addAll(item.packageUserDTOList!);
-        }
-        // print(packageUserDTOList!.length);
-      });
+          //将获取的信息列表
+          //将r.data进行遍历,获取相关信息进行展示
+          packageUserDTOList = [];
+          for (PackageUser item in r.data!) {
+            print(item.packageUserDTOList!.length);
+            packageUserDTOList?.addAll(item.packageUserDTOList!);
+          }
+          // print(packageUserDTOList!.length);
+        });
       }
-      
     }
   }
 }
@@ -666,18 +654,17 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                         title: Text(user['nickName']),
                         value: mainUsers.contains(user['userId']),
                         onChanged: (bool? value) {
-                          if(mounted){
-                              setState(() {
-                            if (value!) {
-                              mainUsers.add(user['userId']);
-                              mainUsersName.add(user['nickName']);
-                            } else {
-                              mainUsers.remove(user['userId']);
-                              mainUsersName.remove(user['nickName']);
-                            }
-                          });
+                          if (mounted) {
+                            setState(() {
+                              if (value!) {
+                                mainUsers.add(user['userId']);
+                                mainUsersName.add(user['nickName']);
+                              } else {
+                                mainUsers.remove(user['userId']);
+                                mainUsersName.remove(user['nickName']);
+                              }
+                            });
                           }
-                          
                         },
                         // 添加其他需要展示的用户信息
                       );
@@ -698,18 +685,17 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                         title: Text(user['nickName']),
                         value: assistantUsers.contains(user['userId']),
                         onChanged: (bool? value) {
-                          if(mounted){
+                          if (mounted) {
                             setState(() {
-                            if (value!) {
-                              assistantUsers.add(user['userId']);
-                              assistantUsersName.add(user['nickName']);
-                            } else {
-                              assistantUsers.remove(user['userId']);
-                              assistantUsersName.remove(user['nickName']);
-                            }
-                          });
+                              if (value!) {
+                                assistantUsers.add(user['userId']);
+                                assistantUsersName.add(user['nickName']);
+                              } else {
+                                assistantUsers.remove(user['userId']);
+                                assistantUsersName.remove(user['nickName']);
+                              }
+                            });
                           }
-                          
                         },
                         // 添加其他需要展示的用户信息
                       );
@@ -782,6 +768,9 @@ class _PreWorkListState extends State<PreWorkList> {
     List<WorkInstructPackageUserList>? workInstructPackageUserList =
         widget.packageUserDTO.workInstructPackageUserList;
 
+    // 获取packageUserDTO中wholePackage用于判断是否需要点击一个之后将作业项全部勾选，取消一个全部取消
+    bool wholePackage = widget.packageUserDTO.wholePackage!;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('作业项点'),
@@ -813,16 +802,20 @@ class _PreWorkListState extends State<PreWorkList> {
                 Checkbox(
                   value: selectedWorkItems.contains(workInstructPackageUser),
                   onChanged: (bool? value) {
-                    if(mounted){
+                    if (mounted) {
                       setState(() {
-                      if (value!) {
-                        selectedWorkItems.add(workInstructPackageUser);
-                      } else {
-                        selectedWorkItems.remove(workInstructPackageUser);
-                      }
-                    });  
+                        // 如果是全选，将所有作业项勾选
+                        if (value! && wholePackage) {
+                          selectedWorkItems = workInstructPackageUserList;
+                        } else if (value && !wholePackage) {
+                          selectedWorkItems.add(workInstructPackageUser);
+                        } else if (!value && wholePackage) {
+                          selectedWorkItems = [];
+                        } else {
+                          selectedWorkItems.remove(workInstructPackageUser);
+                        }
+                      });
                     }
-                    
                   },
                 ),
                 Expanded(
@@ -883,5 +876,3 @@ class _PreWorkListState extends State<PreWorkList> {
     );
   }
 }
-
-

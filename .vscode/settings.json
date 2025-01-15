@@ -3,5 +3,6 @@
     "marscode.codeCompletionPro": {
         "enableCodeCompletionPro": true
     },
-    "marscode.enableInlineCommand": true
+    "marscode.enableInlineCommand": true,
+    "dart.openDevTools": "never"
 }

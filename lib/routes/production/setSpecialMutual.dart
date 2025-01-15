@@ -157,6 +157,9 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
     setState(() {
       
     });
+    //回退到上一页面
+    Navigator.pop(context);
+    
   }
 
   // 获取专互检信息
