@@ -64,14 +64,13 @@ class F {
   static String get version {
     switch (appFlavor) {
       case Flavor.env_dev:
-        return '1.0.0';
+        return '1.1.0';
       case Flavor.env_release:
         return '1.0.0';
       case Flavor.env_test:
-        return '1.0.9';
+        return '1.1.1';
       default:
         return '1.0.0';
     }
   }
-
 }

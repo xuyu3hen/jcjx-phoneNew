@@ -376,30 +376,26 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                               ),
                             ),
                           );
-                        }).toList() ??
-                        []),
+                        }).toList() ?? []),
                     // 弹出的设置施修人按钮
-                    if (selectedPackage != null)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SetRepairPersonScreen(
-                                  packageUserDTO: selectedPackage!,
-                                ),
-                              ),
-                            );
-                          },
-                          style: ButtonStyle(
-                            minimumSize:
-                                MaterialStateProperty.all(Size.fromHeight(50)),
-                            padding: MaterialStateProperty.all(EdgeInsets.zero),
+                    if (selectedPackage != null) 
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SetRepairPersonScreen(
+                              packageUserDTO: selectedPackage!,
+                            ),
                           ),
-                          child: const Text('设置施修人'),
-                        ),
-                      )
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.blue, // 设置按钮颜色为蓝色
+                        minimumSize: Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为40
+                      ),
+                      child: const Text('设置施修人'),
+                    ),
                   ],
                 ),
               )
@@ -742,10 +738,14 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       // print(item.toJson());
       list.add(item.toJson());
     }
-    ProductApi().saveAssociated(list);
+    if(mounted){
+      ProductApi().saveAssociated(list);
     //清空mainUsers和assistantUsers和mainUsersName和assistantUsersName
-
-    Navigator.pop(context);
+    showToast('主修辅修保存成功');
+    Navigator.pop(context, true);
+    
+    }
+    
   }
 }
 

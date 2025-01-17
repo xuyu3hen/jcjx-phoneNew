@@ -29,7 +29,7 @@ class _myPageItems extends State<myPageItems> {
             children: [
               ListTile(
                 leading: Icon(Icons.update,color: Theme.of(context).primaryColor),
-                title: Text("版本号：",style: TextStyle(fontSize: 18)),
+                title: Text("版本号测试：",style: TextStyle(fontSize: 18)),
                 trailing: Text("${F.version}",style: TextStyle(fontSize: 18)),
               ),
             ],

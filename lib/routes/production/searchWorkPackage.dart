@@ -286,34 +286,38 @@ Widget _buildBody() {
           ],
         ),
         // 使用Positioned将开工按钮悬浮在屏幕底部，且与底部无缝衔接
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: selectedWorkPackages.isNotEmpty
-           ? Center(
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: ElevatedButton(
-                      onPressed: () => startWork(selectedWorkPackages),
-                      style: ButtonStyle(
-                        minimumSize: MaterialStateProperty.all(Size(
-                            MediaQuery.of(context).size.width,
-                            MediaQuery.of(context).size.height * 0.1)),
-                        padding: MaterialStateProperty.all(
-                            EdgeInsets.symmetric(horizontal: 0, vertical: 10)),
-                      ),
-                      child: const Text('开工', style: TextStyle(fontSize: 18)),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
+       
       ],
     ),
   );
 }
 
+// 底部按钮
+ Widget _footer() {
+  return Positioned(
+    left: 0,
+    right: 0,
+    bottom: 0,
+    child: selectedWorkPackages.isNotEmpty
+        ? Center(
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: ElevatedButton(
+                onPressed: () => startWork(selectedWorkPackages),
+                style: ButtonStyle(
+                  minimumSize: MaterialStateProperty.all(Size(
+                      MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.height * 0.1)),
+                  padding: MaterialStateProperty.all(
+                      EdgeInsets.symmetric(horizontal: 0, vertical: 10)),
+                ),
+                child: const Text('开工', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+          )
+        : const SizedBox.shrink(),
+  );
+}
   void getMainNodeANdProc() async {
     var r = await ProductApi().getMainNodeANdProc1();
     setState(() {

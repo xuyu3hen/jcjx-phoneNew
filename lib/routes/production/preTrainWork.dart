@@ -146,6 +146,8 @@ class _TeamInfoState extends State<TeamInfo> {
     }
     if (mounted) {
       ProductApi().saveTeam(associatedList);
+      //展示机车预派工成功 showToast
+      showToast('机车预派工成功');
       //跳回界面
       Navigator.pop(context);
     }

@@ -580,6 +580,7 @@ class ProductApi extends AppApi {
         data: queryParametrs,
       );
       print(r.data["data"]);
+      
     } catch (e) {
       _handleException(e);
     }

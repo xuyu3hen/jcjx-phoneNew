@@ -229,8 +229,8 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
     );
   }
 
-  late UserList special = UserList(code: '', message: '', data: []);
-  late UserList mutual = UserList(code: '', message: '', data: []);
+  UserList special = UserList(code: '', message: '', data: []);
+  UserList mutual = UserList(code: '', message: '', data: []);
 
   Widget _buildUploadButton(BuildContext context) {
     double height = MediaQuery.of(context).size.height * 0.1;
@@ -254,23 +254,23 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       checkUploudPicture = secondCodeList.toSet().length == 1;
     }
 
+    String specialInspectionPersonnel = _packageCheckedList[0]
+            .taskCertainPackageList!
+            .specialInspectionPersonnel ??
+        '';
+    String mutualInspectionPersonnel = _packageCheckedList[0]
+            .taskCertainPackageList!
+            .mutualInspectionPersonnel ??
+        '';
+    getUserList(specialInspectionPersonnel, mutualInspectionPersonnel);
+    List<UserInfo>? specialList = special.data;
+    List<UserInfo>? mutualList = mutual.data;
+
     return Container(
       width: MediaQuery.of(context).size.width,
       height: height,
       child: ElevatedButton(
         onPressed: () {
-          String specialInspectionPersonnel = _packageCheckedList[0]
-                  .taskCertainPackageList!
-                  .specialInspectionPersonnel ??
-              '';
-          String mutualInspectionPersonnel = _packageCheckedList[0]
-                  .taskCertainPackageList!
-                  .mutualInspectionPersonnel ??
-              '';
-          getUserList(specialInspectionPersonnel, mutualInspectionPersonnel);
-          List<UserInfo>? specialList = special.data;
-          List<UserInfo>? mutualList = mutual.data;
-
           // 在这里添加弹出上传界面的逻辑
           if (checkUploudPicture) {
             Navigator.push(
@@ -317,12 +317,14 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
     print('Mutual List: $mutual_list');
     var specialUserList = await ProductApi().getUserList(special_list);
     var muutualUserList = await ProductApi().getUserList(mutual_list);
-    setState(() {
-      special = specialUserList;
-      print('${special.data}');
-      mutual = muutualUserList;
-      print('${mutual.data}');
-    });
+    if (mounted) {
+      setState(() {
+        special = specialUserList;
+        print('${special.data}');
+        mutual = muutualUserList;
+        print('${mutual.data}');
+      });
+    }
   }
 
   List<SecondShowPackage> getGroupSecondPackageCodeList() {
@@ -409,6 +411,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   }
 }
 
+//上传作业项图片以及互检专检人员
 class NewPage extends StatefulWidget {
   final List<UserInfo>? mutualList;
   final List<UserInfo>? specialList;
@@ -422,8 +425,8 @@ class NewPage extends StatefulWidget {
 }
 
 class _NewPageState extends State<NewPage> {
-  List<Map<String, dynamic>> mutualListData = [];
-  List<Map<String, dynamic>> specialListData = [];
+  late List<Map<String, dynamic>> mutualListData = [];
+  late List<Map<String, dynamic>> specialListData = [];
   // 互检筛选人员
   Map<String, dynamic> mutualSelected = {};
   // 专检筛选人员
@@ -437,21 +440,22 @@ class _NewPageState extends State<NewPage> {
   void initState() {
     super.initState();
     // 将 mutualList 转换为 mutualListData
-    mutualListData =
-        widget.mutualList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
-    // 将 specialList 转换为 specialListData
-    specialListData =
-        widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
-      
-    //刷新界面
-    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    mutualListData =
+        widget.mutualList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
+    // 将 specialList 转换为 specialListData
+    print(mutualListData);
+    specialListData =
+        widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
+    print(specialListData);
+    //刷新界面
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('上传作业项图片以及互检专检人员'),
+        title: const Text('上传作业项图片以及互检专检人员'),
       ),
       body: Container(
         width: MediaQuery.of(context).size.width,
@@ -571,7 +575,7 @@ class _NewPageState extends State<NewPage> {
               decoration: BoxDecoration(
                 color: Colors.indigo.shade50,
               ),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [Icon(Icons.add_a_photo)],
@@ -722,7 +726,7 @@ class _NewPageState extends State<NewPage> {
     }
   }
 
-    static Map<String, WidgetBuilder> routes = {
+  static Map<String, WidgetBuilder> routes = {
     'searchWorkPackage': (BuildContext context) => SearchWorkPackage(),
   };
 

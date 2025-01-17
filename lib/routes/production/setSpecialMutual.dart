@@ -151,14 +151,19 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
     // 打印queryParameters使用log
     print(jsonEncode(queryParameters));
     
-    // 调用接口
+
+    if(mounted){
+      // 调用接口
     ProductApi().saveAssociated(queryParameters);
 
+    showToast('专互检保存成功');
+    //回退到上一页面
+    Navigator.pop(context);
     setState(() {
       
     });
-    //回退到上一页面
-    Navigator.pop(context);
+    }
+    
     
   }
 
