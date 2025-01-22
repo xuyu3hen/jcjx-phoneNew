@@ -177,7 +177,7 @@ class _SpecialListState extends State<SpecialList> {
                 titleStyle: tileText(16.0),
               ),
               ZjcFormInputCell(
-                title: "互检人",
+                title: "专检人",
                 text: item.specialName,
                 hintText: "无数据",
                 enabled: false,

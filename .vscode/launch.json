@@ -34,7 +34,7 @@
             "program": "./lib/main_env_release.dart",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release",s
+            "flutterMode": "release",
             "args": ["--flavor","env_release"]
         },
         {

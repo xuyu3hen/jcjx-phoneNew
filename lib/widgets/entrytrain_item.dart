@@ -55,18 +55,18 @@ class _EntryTrainItem extends State<EntryTrainItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  DataText("检修地点",16.0),
-                  DataText("股道号",16.0),
-                  DataText("停留地点",16.0),
+                  DataText("机型",16.0),
+                  DataText("车号",16.0),
+                  DataText("入修时间",16.0),
                 ],
               ),
               const Divider(height: 0.1,indent: 20.0,endIndent: 20.0,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  DataText("${widget.trainentry.repairLocation}",16.0),
-                  DataText("${widget.trainentry.trackNum}",16.0),
-                  DataText("${widget.trainentry.stoppingPlace}",16.0),
+                  DataText("${widget.trainentry.typeName}",16.0),
+                  DataText("${widget.trainentry.trainNum}",16.0),
+                  DataText("${widget.trainentry.arrivePlatformTime}",16.0),
                 ],
               ),
               const SizedBox(width: 200,height: 10,),

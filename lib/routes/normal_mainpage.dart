@@ -95,7 +95,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
           if (Global.profile.permissions!.roles.contains("gongzhang"))
             _buildGongzhangSection(),
           // 其他相关操作功能区域
-          if (Global.profile.permissions!.roles.contains("builder"))
+          if (Global.profile.permissions!.roles.contains("builder") || Global.profile.permissions!.roles.contains("chejianjishuyuan") 
+          || Global.profile.permissions!.roles.contains("jicheyanshouyuan"))
             _buildBuilderSection(),
           if (Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
             _buildZhurenyanjiuyuanSection(),
@@ -194,7 +195,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               child: FeatureContainer(
                 Icon(Icons.fact_check_outlined, color: Colors.amber[300]),
                 () => Navigator.pushNamed(context, 'preDispatchWork'),
-                '预派工单',
+                '预派工',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
               ),
