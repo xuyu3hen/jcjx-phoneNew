@@ -35,6 +35,8 @@ class KColors {
   static const Color kGradientStartColor = Color(0xFF2683BE); // 渐变开始色
   static const Color kGradientEndColor = Color(0xFF34CABE); // 渐变结束色
 
+  //void
+  static const Color kGradientEndColor1 = Color(0xFF34CABE); // 渐变结束色
   // 渐变色
   // static const Color kGradientStartColor = Color(0xFF2171F5); // 渐变开始色
   // static const Color kGradientEndColor = Color(0xF000A2FC); // 渐变结束色
