@@ -308,10 +308,19 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   }
 
   void getUserList(String specialList, String mutualList) async {
-    List<int> special_list =
-        specialList.split(',').map((e) => int.parse(e)).toList();
-    List<int> mutual_list =
-        mutualList.split(',').map((e) => int.parse(e)).toList();
+    List<int> special_list = [];
+    List<int> mutual_list = [];
+    print(specialList.toString());
+    if (specialList.contains(',')) {
+      special_list = specialList.split(',').map((e) => int.parse(e)).toList();
+    } else {
+      special_list.add(int.parse(specialList));
+    }
+    if (mutualList.contains(',')) {
+      mutual_list = mutualList.split(',').map((e) => int.parse(e)).toList();
+    } else {
+      mutual_list.add(int.parse(mutualList));
+    }
 
     print('Special List: $special_list');
     print('Mutual List: $mutual_list');
