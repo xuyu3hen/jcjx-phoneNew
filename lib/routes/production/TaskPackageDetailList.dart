@@ -310,29 +310,48 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   void getUserList(String specialList, String mutualList) async {
     List<int> special_list = [];
     List<int> mutual_list = [];
-    print(specialList.toString());
-    if (specialList.contains(',')) {
-      special_list = specialList.split(',').map((e) => int.parse(e)).toList();
-    } else {
-      special_list.add(int.parse(specialList));
+    // 处理 specialList
+    if (specialList.isNotEmpty) {
+      specialList.split(',').forEach((element) {
+        try {
+          int value = int.parse(element);
+          special_list.add(value);
+        } catch (e) {
+          print('Error parsing $element in specialList: $e');
+        }
+      });
     }
-    if (mutualList.contains(',')) {
-      mutual_list = mutualList.split(',').map((e) => int.parse(e)).toList();
-    } else {
-      mutual_list.add(int.parse(mutualList));
+    // 处理 mutualList
+    if (mutualList.isNotEmpty) {
+      mutualList.split(',').forEach((element) {
+        try {
+          int value = int.parse(element);
+          mutual_list.add(value);
+        } catch (e) {
+          print('Error parsing $element in mutualList: $e');
+        }
+      });
     }
-
     print('Special List: $special_list');
     print('Mutual List: $mutual_list');
-    var specialUserList = await ProductApi().getUserList(special_list);
-    var muutualUserList = await ProductApi().getUserList(mutual_list);
-    if (mounted) {
-      setState(() {
-        special = specialUserList;
-        print('${special.data}');
-        mutual = muutualUserList;
-        print('${mutual.data}');
-      });
+
+    if (special_list.isNotEmpty) {
+      var specialUserList = await ProductApi().getUserList(special_list);
+      if (mounted) {
+        setState(() {
+          special = specialUserList;
+          print('${special.data}');
+        });
+      }
+    }
+    if (mutual_list.isNotEmpty) {
+      var muutualUserList = await ProductApi().getUserList(mutual_list);
+      if (mounted) {
+        setState(() {
+          mutual = muutualUserList;
+          print('${mutual.data}');
+        });
+      }
     }
   }
 

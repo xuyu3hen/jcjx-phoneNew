@@ -71,338 +71,341 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   }
 
   Widget _buildBody() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height,
-      decoration: const BoxDecoration(color: Colors.white),
-      child: ListView(
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              ZjcFormSelectCell(
-                title: "动力类型",
-                text: dynamicTypeSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (dynamicTypeList.isEmpty) {
-                    showToast("无动力类型选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: dynamicTypeList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择动力类型",
-                      clickCallBack: (selectItem, selectArr) {
-                        print(selectArr);
-                        if (mounted) {
-                          setState(() {
-                            dynamicTypeSelected["code"] = selectItem["code"];
-                            dynamicTypeSelected["name"] = selectItem["name"];
-                            getJcType();
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              ZjcFormSelectCell(
-                title: "机型",
-                text: jcTypeListSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (jcTypeList.isEmpty) {
-                    showToast("无机型可以选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: jcTypeList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择机型",
-                      clickCallBack: (selectItem, selectArr) {
-                        if (mounted) {
-                          setState(() {
-                            print(selectArr);
-                            jcTypeListSelected["name"] = selectItem["name"];
-                            jcTypeListSelected["code"] = selectItem["code"];
-                            // 在这里添加获取车号等后续逻辑，如果有的话
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              // 修制筛选
-              ZjcFormSelectCell(
-                title: "修制",
-                text: repairSysSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (repairSysList.isEmpty) {
-                    showToast("无修制信息");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: repairSysList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择修制",
-                      clickCallBack: (selectItem, selectArr) {
-                        if (mounted) {
-                          setState(() {
-                            print(selectArr);
-                            repairSysSelected["name"] = selectItem["name"];
-                            //将主键进行选取
-                            repairSysSelected["code"] = selectItem["code"];
-                            //获取修程信息
-                            getRepairProc();
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              //修程筛选框
-              ZjcFormSelectCell(
-                title: "修程",
-                text: repairSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (repairList.isEmpty) {
-                    showToast("无修程信息");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: repairList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择修程",
-                      clickCallBack: (selectItem, selectArr) {
-                        if (mounted) {
-                          setState(() {
-                            print(selectArr);
-                            repairSelected["name"] = selectItem["name"];
-                            //将主键进行选取
-                            repairSelected["code"] = selectItem["code"];
-                            getRepairTimes();
-                            getRepairMainNode();
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              //修次筛选框
-              ZjcFormSelectCell(
-                title: "修次",
-                text: repairTimesSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (repairTImesList.isEmpty) {
-                    showToast("无修次信息");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: repairTImesList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择修次",
-                      clickCallBack: (selectItem, selectArr) {
-                        if (mounted) {
-                          setState(() {
-                            print(selectArr);
-                            repairTimesSelected["name"] = selectItem["name"];
-                            //将主键进行选取
-                            repairTimesSelected["code"] = selectItem["code"];
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              //对工序节点进行查询
-              ZjcFormSelectCell(
-                title: "工序节点",
-                text: procNodeSelected["name"] ?? '',
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (procNodeList.isEmpty) {
-                    showToast("无工序节点信息");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: procNodeList,
-                      labelKey: 'name',
-                      valueKey: 'code',
-                      childrenKey: 'children',
-                      title: "选择工序节点",
-                      clickCallBack: (selectItem, selectArr) {
-                        if (mounted) {
-                          setState(() {
-                            print(selectArr);
-                            procNodeSelected["name"] = selectItem["name"];
-                            //将主键进行选取
-                            procNodeSelected["code"] = selectItem["code"];
-                            getWorkPackage();
-                          });
-                        }
-                      },
-                    );
-                  }
-                },
-              ),
-              // 将packageUserDTOList进行展示
-              Container(
-                width: MediaQuery.of(context).size.width,
-                height: (packageUserDTOList?.length ?? 0) *
-                    150.0, // 根据数据长度计算高度，并调整每行高度为 100
-                decoration: const BoxDecoration(color: Colors.white),
-                child: Column(
-                  children: [
-                    // 数据行
-                    ...(packageUserDTOList?.map((packageUserDTO) {
-                          String station = packageUserDTO.station ?? '';
-                          String mainRepair = packageUserDTO
-                                      .workInstructPackageUserList
-                                      ?.isNotEmpty ==
-                                  true
-                              ? packageUserDTO.workInstructPackageUserList![0]
-                                      .repairPersonnelName ??
-                                  ''
-                              : '';
-                          String assistant = packageUserDTO
-                                      .workInstructPackageUserList
-                                      ?.isNotEmpty ==
-                                  true
-                              ? packageUserDTO.workInstructPackageUserList![0]
-                                      .assistantName ??
-                                  ''
-                              : '';
-                          return InkWell(
-                            onTap: () {
-                              // 点击事件处理函数，跳转到新的界面
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PreWorkList(
-                                    packageUserDTO: packageUserDTO,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              width: MediaQuery.of(context).size.width,
-                              height: 100, // 减少容器高度
-                              margin: const EdgeInsets.symmetric(vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Colors.blue),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 5), // 调整内边距
-                              child: Row(
-                                children: [
-                                  Checkbox(
-                                    value: selectedPackage == packageUserDTO,
-                                    onChanged: (value) {
-                                      if (mounted)
-                                        setState(() {
-                                          if (value!) {
-                                            selectedPackage = packageUserDTO;
-                                          } else {
-                                            selectedPackage = null;
-                                          }
-                                        });
-                                    },
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        Wrap(
-                                          spacing: 8, // 调整间距
-                                          runSpacing: 4, // 调整行间距
-                                          children: [
-                                            // 增加序号中文
-                                            Text(
-                                              '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
-                                              style: const TextStyle(
-                                                  fontSize: 16), // 放大文字
-                                            ),
-                                            Text(
-                                              '作业包 ${packageUserDTO.packageName ?? ''}',
-                                              style: const TextStyle(
-                                                  fontSize: 16), // 放大文字
-                                            ),
-                                            Text(
-                                              '工位 ${station}',
-                                              style: const TextStyle(
-                                                  fontSize: 16), // 放大文字
-                                            ),
-                                            Text(
-                                              '主修 ${mainRepair}',
-                                              style: const TextStyle(
-                                                  fontSize: 16), // 放大文字
-                                            ),
-                                            Text(
-                                              '辅修 ${assistant}',
-                                              style: const TextStyle(
-                                                  fontSize: 16), // 放大文字
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+    return Stack(
+      children: [
+        ListView(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                ZjcFormSelectCell(
+                  title: "动力类型",
+                  text: dynamicTypeSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (dynamicTypeList.isEmpty) {
+                      showToast("无动力类型选择");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: dynamicTypeList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择动力类型",
+                        clickCallBack: (selectItem, selectArr) {
+                          print(selectArr);
+                          if (mounted) {
+                            setState(() {
+                              dynamicTypeSelected["code"] = selectItem["code"];
+                              dynamicTypeSelected["name"] = selectItem["name"];
+                              getJcType();
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                ZjcFormSelectCell(
+                  title: "机型",
+                  text: jcTypeListSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (jcTypeList.isEmpty) {
+                      showToast("无机型可以选择");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: jcTypeList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择机型",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              print(selectArr);
+                              jcTypeListSelected["name"] = selectItem["name"];
+                              jcTypeListSelected["code"] = selectItem["code"];
+                              // 在这里添加获取车号等后续逻辑，如果有的话
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                // 修制筛选
+                ZjcFormSelectCell(
+                  title: "修制",
+                  text: repairSysSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (repairSysList.isEmpty) {
+                      showToast("无修制信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: repairSysList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择修制",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              print(selectArr);
+                              repairSysSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              repairSysSelected["code"] = selectItem["code"];
+                              //获取修程信息
+                              getRepairProc();
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                //修程筛选框
+                ZjcFormSelectCell(
+                  title: "修程",
+                  text: repairSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (repairList.isEmpty) {
+                      showToast("无修程信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: repairList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择修程",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              print(selectArr);
+                              repairSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              repairSelected["code"] = selectItem["code"];
+                              getRepairTimes();
+                              getRepairMainNode();
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                //修次筛选框
+                ZjcFormSelectCell(
+                  title: "修次",
+                  text: repairTimesSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (repairTImesList.isEmpty) {
+                      showToast("无修次信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: repairTImesList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择修次",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              print(selectArr);
+                              repairTimesSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              repairTimesSelected["code"] = selectItem["code"];
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                //对工序节点进行查询
+                ZjcFormSelectCell(
+                  title: "工序节点",
+                  text: procNodeSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (procNodeList.isEmpty) {
+                      showToast("无工序节点信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: procNodeList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择工序节点",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              print(selectArr);
+                              procNodeSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              procNodeSelected["code"] = selectItem["code"];
+                              getWorkPackage();
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                // 将packageUserDTOList进行展示
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  // 去掉高度的固定计算，让列表自适应内容
+                  decoration: const BoxDecoration(color: Colors.white),
+                  child: Column(
+                    children: [
+                      // 数据行
+                      ...(packageUserDTOList?.map((packageUserDTO) {
+                            String station = packageUserDTO.station ?? '';
+                            String mainRepair = packageUserDTO
+                                        .workInstructPackageUserList
+                                        ?.isNotEmpty ==
+                                    true
+                                ? packageUserDTO.workInstructPackageUserList![0]
+                                        .repairPersonnelName ??
+                                    ''
+                                : '';
+                            String assistant = packageUserDTO
+                                        .workInstructPackageUserList
+                                        ?.isNotEmpty ==
+                                    true
+                                ? packageUserDTO.workInstructPackageUserList![0]
+                                        .assistantName ??
+                                    ''
+                                : '';
+                            return InkWell(
+                              onTap: () {
+                                // 点击事件处理函数，跳转到新的界面
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PreWorkList(
+                                      packageUserDTO: packageUserDTO,
                                     ),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Container(
+                                width: MediaQuery.of(context).size.width,
+                                height: 100, // 减少容器高度
+                                margin: const EdgeInsets.symmetric(vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(color: Colors.blue),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 5), // 调整内边距
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: selectedPackage == packageUserDTO,
+                                      onChanged: (value) {
+                                        if (mounted)
+                                          setState(() {
+                                            if (value!) {
+                                              selectedPackage = packageUserDTO;
+                                            } else {
+                                              selectedPackage = null;
+                                            }
+                                          });
+                                      },
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          Wrap(
+                                            spacing: 8, // 调整间距
+                                            runSpacing: 4, // 调整行间距
+                                            children: [
+                                              // 增加序号中文
+                                              Text(
+                                                '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
+                                                style: const TextStyle(
+                                                    fontSize: 16), // 放大文字
+                                              ),
+                                              Text(
+                                                '作业包 ${packageUserDTO.packageName ?? ''}',
+                                                style: const TextStyle(
+                                                    fontSize: 16), // 放大文字
+                                              ),
+                                              Text(
+                                                '工位 ${station}',
+                                                style: const TextStyle(
+                                                    fontSize: 16), // 放大文字
+                                              ),
+                                              Text(
+                                                '主修 ${mainRepair}',
+                                                style: const TextStyle(
+                                                    fontSize: 16), // 放大文字
+                                              ),
+                                              Text(
+                                                '辅修 ${assistant}',
+                                                style: const TextStyle(
+                                                    fontSize: 16), // 放大文字
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        }).toList() ?? []),
-                    // 弹出的设置施修人按钮
-                    if (selectedPackage != null) 
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SetRepairPersonScreen(
-                              packageUserDTO: selectedPackage!,
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        primary: Colors.blue, // 设置按钮颜色为蓝色
-                        minimumSize: Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为40
-                      ),
-                      child: const Text('设置施修人'),
+                            );
+                          }).toList() ?? []),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ],
+        ),
+        // 使用 Positioned 将设置施修人按钮固定在屏幕底部
+        if (selectedPackage != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SetRepairPersonScreen(
+                      packageUserDTO: selectedPackage!,
                     ),
-                  ],
-                ),
-              )
-            ],
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                primary: Colors.blue, // 设置按钮颜色为蓝色
+                minimumSize: Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+              ),
+              child: const Text('设置施修人'),
+            ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

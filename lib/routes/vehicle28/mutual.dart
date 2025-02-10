@@ -164,10 +164,12 @@ class _MutualState extends State<Mutual> {
         }else{
           queryParameters[0]['completeStatus'] = 4;
         }
+
         if(repairPics.isNotEmpty){
           var upload = await JtApi().uploadMixJt(imagedata: repairPics);
           queryParameters[0]['mutualInspectionPicture'] = upload['data'];
         }
+        queryParameters[0]['status'] = jtMes?.status;
         log("$queryParameters");
         await JtApi().uploadJt28(queryParametrs: queryParameters).then((value) async => {
           message = value,
