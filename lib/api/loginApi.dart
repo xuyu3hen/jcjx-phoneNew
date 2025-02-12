@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../index.dart';
@@ -20,6 +22,8 @@ class LoginApi extends AppApi{
     var r = await AppApi.dio.get(
       "/system/user/getInfo",
     );
+    //打印r
+    print('获取信息中心消息：${(r.data)}');
     return Permissions.fromJson(r.data);
   }
 

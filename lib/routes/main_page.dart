@@ -1,6 +1,4 @@
-
 import 'package:jcjx_phone/routes/production/getWorkPackage.dart';
-
 
 import 'package:jcjx_phone/routes/production/searchWorkPackage.dart';
 import 'package:jcjx_phone/routes/production/secEnterModify.dart';
@@ -8,20 +6,20 @@ import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
 
-class MainPage extends StatefulWidget{
+class MainPage extends StatefulWidget {
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey();
   const MainPage({Key? key}) : super(key: key);
 
   @override
-  _MainPage createState ()=> _MainPage();
+  _MainPage createState() => _MainPage();
 }
 
 class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   PageController? pageController;
-  int page = 2;
+  int page = 0;
   // int page = 1;
 
-    @override
+  @override
   void initState() {
     super.initState();
     pageController = PageController(initialPage: page);
@@ -41,59 +39,55 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
       navigatorKey: MainPage.navigatorKey,
       home: _buildBody(),
       theme: ThemeData(
-        primarySwatch: Colors.lightBlue,
-        focusColor: Colors.lightBlue,
-        appBarTheme: AppBarTheme(
-          elevation: 4.0,
-          backgroundColor: Colors.lightBlue[100],
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.lightBlue[100]
-          )
-        )
-      ),
+          primarySwatch: Colors.lightBlue,
+          focusColor: Colors.lightBlue,
+          appBarTheme: AppBarTheme(
+            elevation: 4.0,
+            backgroundColor: Colors.lightBlue[100],
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue[100]))),
       routes: <String, WidgetBuilder>{
-        "main":(context) => const MainPage(),
+        "main": (context) => const MainPage(),
 
         // 登录
-        "login":(context) => LoginRoute(),
+        "login": (context) => LoginRoute(),
         // 入段车辆查看
-        "enter_list":(context) => const EnterList(),
+        "enter_list": (context) => const EnterList(),
         // 新增入段
-        "sec_enter":(context) => const SecEnter(),
+        "sec_enter": (context) => const SecEnter(),
         // 新增入段修改
-        "sec_enter_modify":(context) => const SecEnterModify(),
+        "sec_enter_modify": (context) => const SecEnterModify(),
         // 机统28
-        "submit28":(context) => Vehicle28Form(),
-        "dispatchlist":(context) => const DispatchList(),
-        "repairlist":(context) => const RepairList(),
-        "repair":(context) => const Repair(),
-        "mutuallist":(context) => const MutualList(),
-        "mutual":(context) => const Mutual(),
-        "speciallist":(context) => const SpecialList(),
-        "special":(context) => const Special(),
-        "vehimageviewer":(context) => const VehImageViewer(),
-        "certainPackage":(context) => const CertainPackage(),
-        "rollcall":(context) => const RollCall(),
-        "muspecial":(context) => const MuSpecialCall(),
-        "procnode":(context) => const ProcNodeList(),
-        "trainbynode":(context) => const TrainEntryListByNodeCode(),
-        "packageviewer":(context) => const PackageViewer(),
+        "submit28": (context) => Vehicle28Form(),
+        "dispatchlist": (context) => const DispatchList(),
+        "repairlist": (context) => const RepairList(),
+        "repair": (context) => const Repair(),
+        "mutuallist": (context) => const MutualList(),
+        "mutual": (context) => const Mutual(),
+        "speciallist": (context) => const SpecialList(),
+        "special": (context) => const Special(),
+        "vehimageviewer": (context) => const VehImageViewer(),
+        "certainPackage": (context) => const CertainPackage(),
+        "rollcall": (context) => const RollCall(),
+        "muspecial": (context) => const MuSpecialCall(),
+        "procnode": (context) => const ProcNodeList(),
+        "trainbynode": (context) => const TrainEntryListByNodeCode(),
+        "packageviewer": (context) => const PackageViewer(),
         //预派工模块界面
-        "preDispatchWork":(context) => const PreDispatchWork(),
+        "preDispatchWork": (context) => const PreDispatchWork(),
         //获取个人作业包模块界面
-        "getWorkPackage":(context) => const GetWorkPackage(),
+        "getWorkPackage": (context) => const GetWorkPackage(),
         //查看个人作业包模块界面
-        "searchWorkPackage":(context) => const SearchWorkPackage(),
-        'preTrainWork':(context) => const PreTrainWork(),
+        "searchWorkPackage": (context) => const SearchWorkPackage(),
+        'preTrainWork': (context) => const PreTrainWork(),
       },
       builder: FlutterSmartDialog.init(),
     );
   }
 
-  Widget _buildBody(){
-
+  Widget _buildBody() {
     return Stack(
       children: <Widget>[
         Scaffold(
@@ -103,22 +97,18 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             children: <Widget>[
               NormalMainPage(),
               MainScanner(),
-              PersonPage()
+              PersonPage(),
             ],
             controller: pageController,
             onPageChanged: onPageChanged,
           ),
           bottomNavigationBar: BottomNavigationBar(
             items: const [
-               BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label:'主菜单'),
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: '主菜单'),
               BottomNavigationBarItem(
-                icon: Icon(Icons.qr_code_2_sharp),
-                label:'扫码'),
+                  icon: Icon(Icons.qr_code_2_sharp), label: '扫码'),
               BottomNavigationBarItem(
-                icon: Icon(Icons.abc_rounded),
-                label:'我的'),
+                  icon: Icon(Icons.abc_rounded), label: '我的'),
             ],
             onTap: onTap,
             currentIndex: page,
@@ -133,16 +123,19 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
           child: Padding(
             padding: const EdgeInsets.only(bottom: 25.0),
             child: FloatingActionButton(
-              onPressed:onBigImgTap,
-              backgroundColor: Colors.blueGrey[50],
-              child: const Icon(Icons.qr_code_scanner,color: Color.fromARGB(255, 117, 117, 117),)),
-            ),
+                onPressed: onBigImgTap,
+                backgroundColor: Colors.blueGrey[50],
+                child: const Icon(
+                  Icons.qr_code_scanner,
+                  color: Color.fromARGB(255, 117, 117, 117),
+                )),
+          ),
         ),
       ],
     );
   }
 
-  onPageChanged(int page){
+  onPageChanged(int page) {
     setState(() {
       this.page = page;
     });
@@ -171,4 +164,3 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     });
   }
 }
-

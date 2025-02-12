@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import '../index.dart';
 
 class NormalMainPage extends StatefulWidget {
@@ -40,14 +39,34 @@ class _NormalMainPageState extends State<NormalMainPage> {
         showToast("获取零部件表失败,请检查网络");
       }
     } catch (e) {
-      log("$e");
+     
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
   }
 
+  void getpermisson() async {
+    Permissions p = await LoginApi().getpermissions();
+    if (p.code == 200) {
+      if(mounted){
+        setState(() {
+        Global.profile.permissions = p;
+      });
+      }
+      
+    } else {
+      showToast("获取用户账号信息失败");
+    }
+  }
+
   @override
   void initState() {
+    super.initState();
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    getpermisson();
     getMessageInfo();
     int _count = 0;
     // 五分钟查询一次
@@ -56,7 +75,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
       print("循环次数$_count");
       getMessageInfo();
     });
-    super.initState();
   }
 
   @override
@@ -70,13 +88,31 @@ class _NormalMainPageState extends State<NormalMainPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (Global.profile.permissions == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            '主页',
+            style: TextStyle(
+              color: Color.fromARGB(169, 0, 0, 0),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
-      // key: scaffoldKey,
       appBar: AppBar(
         title: Text(
           '主页',
           style: TextStyle(
-              color: Color.fromARGB(169, 0, 0, 0), fontWeight: FontWeight.bold),
+            color: Color.fromARGB(169, 0, 0, 0),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       resizeToAvoidBottomInset: false,
@@ -89,18 +125,20 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Widget _buildBody() {
     // 功能选
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          // 工班长相关操作功能区域（根据权限显示）
-          if (Global.profile.permissions!.roles.contains("gongzhang"))
-            _buildGongzhangSection(),
-          // 其他相关操作功能区域
-          if (Global.profile.permissions!.roles.contains("builder") || Global.profile.permissions!.roles.contains("chejianjishuyuan") 
-          || Global.profile.permissions!.roles.contains("jicheyanshouyuan"))
-            _buildBuilderSection(),
-          if (Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
-            _buildZhurenyanjiuyuanSection(),
-        ]);
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: <Widget>[
+        // 工班长相关操作功能区域（根据权限显示）
+        if (Global.profile.permissions!.roles.contains("gongzhang"))
+          _buildGongzhangSection(),
+        // 其他相关操作功能区域
+        if (Global.profile.permissions!.roles.contains("builder") ||
+            Global.profile.permissions!.roles.contains("chejianjishuyuan") ||
+            Global.profile.permissions!.roles.contains("jicheyanshouyuan"))
+          _buildBuilderSection(),
+        if (Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
+          _buildZhurenyanjiuyuanSection(),
+      ],
+    );
   }
 
   Widget _buildZhurenyanjiuyuanSection() {
@@ -212,6 +250,24 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.height),
               ),
             ),
+          ],
+        ),
+        Row(
+          //临修机车导入标识
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.format_list_bulleted_add,
+                    color: Colors.deepPurple[300]),
+                () => Navigator.pushNamed(context, 'submit28'),
+                '临修机车导入',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            )
           ],
         ),
       ],
