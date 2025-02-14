@@ -31,4 +31,5 @@ export 'production/TaskContentDetailsPage.dart';
 export 'production/preDispatchWork.dart';
 export 'production/preTrainWork.dart';
 export 'production/setSpecialMutual.dart';
+export 'production/temporaryRepairInfoPage.dart';
 

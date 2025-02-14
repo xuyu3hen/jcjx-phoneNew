@@ -82,6 +82,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         //查看个人作业包模块界面
         "searchWorkPackage": (context) => const SearchWorkPackage(),
         'preTrainWork': (context) => const PreTrainWork(),
+        'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
+
       },
       builder: FlutterSmartDialog.init(),
     );

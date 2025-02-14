@@ -6,7 +6,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:jcjx_phone/models/getWorkPackage/repair.dart';
 import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
@@ -96,6 +95,8 @@ class ProductApi extends AppApi {
       return DynamicTypeList();
     }
   }
+
+  
 
   // 机车型号
   Future<JcTypeList> getJcType({
@@ -283,8 +284,8 @@ class ProductApi extends AppApi {
   //查询班组
   Future<dynamic> getTeamInfo(Map<String, dynamic>? queryParametrs) async {
     //获取班组
-    var r = await AppApi.dio
-        .get("/tasks/deptSchedule/getDeptScheduleByPlanCodeAndDeptId",
+    var r = await AppApi.dio.get(
+        "/tasks/deptSchedule/getDeptScheduleByPlanCodeAndDeptId",
         queryParameters: queryParametrs);
     print((r.data["data"])['data']);
     return (r.data["data"])['data'];
@@ -572,6 +573,7 @@ class ProductApi extends AppApi {
     //   return UserList(data: []);
     // }
   }
+
   //保存team
   void saveTeam(List<Map<String, dynamic>> queryParametrs) async {
     try {
@@ -580,7 +582,6 @@ class ProductApi extends AppApi {
         data: queryParametrs,
       );
       print(r.data["data"]);
-      
     } catch (e) {
       _handleException(e);
     }
@@ -599,26 +600,107 @@ class ProductApi extends AppApi {
     }
   }
 
- 
+  Future<dynamic> getDeptTreeByParentIdList(
+      {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/jcjxsystem/dept/getDeptTreeByParentIdList",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return (r.data["data"])["data"];
+  }
+
+  //获取dispatch/jcRepairSegment/selectAll
+  Future<dynamic> getJcRepairSegment(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/dispatch/jcRepairSegment/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"])["data"];
+    }
+      
+  //获取dispatch/jcAssignSegment/selectAll
+  Future<dynamic> getJcAssignSegment(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/dispatch/jcAssignSegment/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"])["data"];
+      }
+
+      //获取subparts/jcDynamicType/selectAll
+      Future<dynamic> getJcDynamicType(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/subparts/jcDynamicType/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"])["data"];
+      }
+
+      //获取subparts/stopPosition/selectAll
+      Future<dynamic> getStopPosition(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/subparts/stopPosition/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"])["data"];
+      }
+
+      //获取subparts/repairSys/selectAll
+      Future<dynamic> getRepairSys(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/subparts/repairSys/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"])["data"];
+      }
+
+      //获取subparts/repairProc/selectAll
+        Future<dynamic> getRepairProcMap(
+      {Map<String, dynamic>? queryParametrs}) async {
+
+      var r = await AppApi.dio.get(
+        "/subparts/repairProc/selectAll",
+        queryParameters: queryParametrs,
+      );
+      print(r.data["data"]);
+      return (r.data["data"]);
+      }
+
+
+
   Future<dynamic> getDictCode(Map<String, dynamic>? queryParameters) async {
     // try {
-      var r = await AppApi.dio.get(
-        "/system/dict/data/list",
-        queryParameters: queryParameters,
-      );
-      print(r.data);
-      return r.data;
+    var r = await AppApi.dio.get(
+      "/system/dict/data/list",
+      queryParameters: queryParameters,
+    );
+    print(r.data);
+    return r.data;
     // } catch (e) {
     //   _handleException(e);
     //   return null;
     // }
   }
 
-
-
-
- //根据riskLevel查询post
- Future<dynamic> getPostByRiskLevel(Map<String, dynamic> queryParameters) async {
+  //根据riskLevel查询post
+  Future<dynamic> getPostByRiskLevel(
+      Map<String, dynamic> queryParameters) async {
     try {
       var r = await AppApi.dio.get(
         "/subparts/riskLevelPost/selectAll",
@@ -632,8 +714,8 @@ class ProductApi extends AppApi {
     }
   }
 
- //getUserListByPostIdList 获取对应的用户信息
- Future<dynamic> getUserListByPostIdList(List<int> postIdList) async {
+  //getUserListByPostIdList 获取对应的用户信息
+  Future<dynamic> getUserListByPostIdList(List<int> postIdList) async {
     try {
       var r = await AppApi.dio2.post(
         "/jcjxsystem/sysPost/getUserListByPostIdList",
@@ -646,8 +728,6 @@ class ProductApi extends AppApi {
       return null;
     }
   }
-
-
 
 // 统一异常处理方法
   void _handleException(dynamic e) {

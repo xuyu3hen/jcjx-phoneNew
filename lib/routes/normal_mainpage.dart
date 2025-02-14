@@ -262,7 +262,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               child: FeatureContainer(
                 Icon(Icons.format_list_bulleted_add,
                     color: Colors.deepPurple[300]),
-                () => Navigator.pushNamed(context, 'submit28'),
+                () => Navigator.pushNamed(context, 'temporaryRepairInfoPage'),
                 '临修机车导入',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
