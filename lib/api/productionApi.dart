@@ -96,8 +96,6 @@ class ProductApi extends AppApi {
     }
   }
 
-  
-
   // 机车型号
   Future<JcTypeList> getJcType({
     Map<String, dynamic>? queryParametrs,
@@ -613,76 +611,90 @@ class ProductApi extends AppApi {
   //获取dispatch/jcRepairSegment/selectAll
   Future<dynamic> getJcRepairSegment(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/dispatch/jcRepairSegment/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/dispatch/jcRepairSegment/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"])["data"];
-    }
-      
   //获取dispatch/jcAssignSegment/selectAll
   Future<dynamic> getJcAssignSegment(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/dispatch/jcAssignSegment/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/dispatch/jcAssignSegment/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"])["data"];
-      }
-
-      //获取subparts/jcDynamicType/selectAll
-      Future<dynamic> getJcDynamicType(
+  //获取subparts/repairTimes/selectAll
+  Future<dynamic> getRepairTimesDynamic(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/repairTimes/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/subparts/jcDynamicType/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"])["data"];
-      }
-
-      //获取subparts/stopPosition/selectAll
-      Future<dynamic> getStopPosition(
+  //获取subparts/jcDynamicType/selectAll
+  Future<dynamic> getJcDynamicType(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/jcDynamicType/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/subparts/stopPosition/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"])["data"];
-      }
+  //获取subparts/jcType/selectAll
+  Future<dynamic> getJcTypeInfo({Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/jcType/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print(r.data["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      //获取subparts/repairSys/selectAll
-      Future<dynamic> getRepairSys(
+  //获取subparts/stopPosition/selectAll
+  Future<dynamic> getStopPosition(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/stopPosition/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/subparts/repairSys/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"])["data"];
-      }
+  //获取subparts/repairSys/selectAll
+  Future<dynamic> getRepairSys({Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/repairSys/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      //获取subparts/repairProc/selectAll
-        Future<dynamic> getRepairProcMap(
+  //获取subparts/repairProc/selectAll
+  Future<dynamic> getRepairProcMap(
       {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.get(
+      "/subparts/repairProc/selectAll",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return (r.data["data"])["data"];
+  }
 
-      var r = await AppApi.dio.get(
-        "/subparts/repairProc/selectAll",
-        queryParameters: queryParametrs,
-      );
-      print(r.data["data"]);
-      return (r.data["data"]);
-      }
-
-
+  
 
   Future<dynamic> getDictCode(Map<String, dynamic>? queryParameters) async {
     // try {
