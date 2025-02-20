@@ -198,6 +198,35 @@ class ProductApi extends AppApi {
     // }
   }
 
+  //获取 subparts/jcRoleConfigNode/getUerListByDeptId
+  Future<dynamic> getUserListByDeptId({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    // try {
+    var r = await AppApi.dio.get(
+      "/subparts/jcRoleConfigNode/getUserListByDeptId",
+      queryParameters: queryParametrs,
+    );
+    print((r.data["data"])["data"]);
+    return(r.data["data"])["data"];
+    }
+
+
+  //上传 plan/repairPlan/addTempPlan
+  Future<dynamic> uploadPlan({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    // try {
+    var r = await AppApi.dio.post(
+      "/plan/repairPlan/addTempPlan",
+      queryParameters: queryParametrs,
+    );
+    print(r.data);
+    return r.data;
+    }
+
+
+
   // 查看领取作业包
   Future<dynamic> getWorkPackage({
     Map<String, dynamic>? queryParametrs,
@@ -604,7 +633,7 @@ class ProductApi extends AppApi {
       "/jcjxsystem/dept/getDeptTreeByParentIdList",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    print((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
 

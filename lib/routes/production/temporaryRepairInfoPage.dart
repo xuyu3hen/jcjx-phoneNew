@@ -56,6 +56,8 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   void initState() {
     super.initState();
     getBasicInfo();
+    getStopLocation();
+    getDeptTreeByParentIdList();
   }
 
   List<Map<String, dynamic>> jcRepairSegmentInfo = [];
@@ -156,6 +158,78 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
               .toList();
         });
       }
+    } catch (e) {
+      print('Error fetching data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('获取数据失败: $e')),
+      );
+    }
+  }
+
+  // 修制信息
+  List<Map<String, dynamic>> deptInfo = [];
+  List<String> deptInfos = [];
+  String? _selectDeptName = null;
+  int? _selectedDeptKey = null;
+  // getDeptTreeByParentIdList 选择签收人
+  //  获取所有部门
+  Future<void> getDeptTreeByParentIdList() async {
+    Map<String, dynamic> queryParameters = {};
+
+    queryParameters['parentIdList'] = 101;
+    try {
+      List<dynamic> info = await ProductApi()
+          .getDeptTreeByParentIdList(queryParametrs: queryParameters);
+      if (info[0]['children'] is List) {
+        List<dynamic> rows = info[0]['children'];
+        print(info[0]['children'].toString());
+        List<Map<String, dynamic>> deptRows =
+            rows.whereType<Map<String, dynamic>>().toList();
+        print(deptRows.toString());
+        setState(() {
+          deptInfo = deptRows;
+          deptInfos = deptRows
+              .where((item) => item.containsKey('deptName'))
+              .map((item) => item['deptName'] as String)
+              .toList();
+          print(deptInfos.toString());
+        });
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('获取数据失败: $e')),
+      );
+    }
+  }
+
+//部门用户信息
+  List<Map<String, dynamic>> deptUserInfo = [];
+  List<String> deptUserInfos = [];
+  String? selectNickName = null;
+  String? selectUserId = null;
+
+  List<String> selectedEmployees = [];
+
+  //获取部门人员
+  Future<void> getDeptUserInfo(int? deptId) async {
+    Map<String, dynamic> queryParameters = {};
+
+    queryParameters['deptId'] = deptId;
+    try {
+      List<dynamic> info = await ProductApi()
+          .getUserListByDeptId(queryParametrs: queryParameters);
+      List<Map<String, dynamic>> userRows =
+          info.whereType<Map<String, dynamic>>().toList();
+      print(userRows.toString());
+      setState(() {
+        deptUserInfo = userRows;
+        deptUserInfos = userRows
+            .where((item) => item.containsKey('nickName'))
+            .map((item) => item['nickName'] as String)
+            .toList();
+        print(deptUserInfos.toString());
+      });
     } catch (e) {
       print('Error fetching data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -287,66 +361,53 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
 
   // 提交临修信息的方法
   void _submitRepairInfo() {
-    String repairSection = _repairSectionController.text;
-    String assignedSection = _assignedSectionController.text;
-    String powerType = _powerTypeController.text;
-    String model = _modelController.text;
-    String carNumber = _carNumberController.text;
-    String plannedMonth = _plannedMonthController.text;
-    String repairSystem = _repairSystemController.text;
-    String repairProcess = _repairProcessController.text;
-    String repairTimes = _repairTimesController.text;
-    String estimatedStartDate = _estimatedStartDate?.toString() ?? '';
-    String estimatedDeliveryDate = _estimatedDeliveryDate?.toString() ?? '';
-    String estimatedDepartureDate = _estimatedDepartureDate?.toString() ?? '';
-    String signer = _signerController.text;
-    String maintenanceLocation = _maintenanceLocationController.text;
-    String remarks = _remarksController.text;
-
-    // 简单验证输入是否为空
-    if (repairSection.isEmpty ||
-        assignedSection.isEmpty ||
-        powerType.isEmpty ||
-        model.isEmpty ||
-        carNumber.isEmpty ||
-        plannedMonth.isEmpty ||
-        repairSystem.isEmpty ||
-        repairProcess.isEmpty ||
-        repairTimes.isEmpty ||
-        estimatedStartDate.isEmpty ||
-        estimatedDeliveryDate.isEmpty ||
-        estimatedDepartureDate.isEmpty ||
-        signer.isEmpty ||
-        maintenanceLocation.isEmpty ||
-        remarks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('请填写所有必填字段')),
-      );
-      return;
-    }
-
-    // 这里可以添加将信息发送到服务器或进行其他处理的逻辑
-    print('排序: $_sort');
-    print('承修段: $repairSection');
-    print('配属段: $assignedSection');
-    print('动力类型: $powerType');
-    print('机型: $model');
-    print('车号: $carNumber');
-    print('计划月份: $plannedMonth');
-    print('修制: $repairSystem');
-    print('修程: $repairProcess');
-    print('修次: $repairTimes');
-    print('预计上台日期: $estimatedStartDate');
-    print('预计交车日期: $estimatedDeliveryDate');
-    print('预计离段日期: $estimatedDepartureDate');
-    print('选择签收人: $signer');
-    print('检修地点: $maintenanceLocation');
-    print('备注: $remarks');
-
+    Map<String, dynamic> queryParameters = {};
+    queryParameters['arrivePlatFomTime'] = _estimatedStartDate;
+    queryParameters['leaveDeptTime'] = _estimatedDepartureDate;
+    queryParameters['deliverTrainTime'] = _estimatedDeliveryDate;
+    queryParameters['attachDept'] = _selectedAssignSegment;
+    queryParameters['attachSegmentCode'] = _selectedAssignSegmentKey;
+    queryParameters['dynamicName'] = _selectedDynamicType;
+    queryParameters['dynamicCode'] = _selectedDynamicTypeKey;
+    queryParameters['month'] = _selectedMonth;
+    queryParameters['remarks'] = _remarksController.text;
+    queryParameters['repairDept'] = _selectedRepairSegment;
+    queryParameters['repairLocationCode'] = _selectedRepairSegmentKey;
     // 显示提交成功的提示
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('临修信息提交成功')),
     );
+  }
+
+  // 存储选择的检修地点信息
+  late String? stopLocationSelected = null;
+  List<Map<String, dynamic>> stopLocationList = [];
+  List<String> stopLocationListStr = [];
+  void getStopLocation() async {
+    var r = await ProductApi().getstopLocation({
+      'pageNum': 1,
+      'pageSize': 10,
+    });
+    List<Map<String, dynamic>> processedStopLocations = [];
+    if (r.rows != null && r.rows!.isNotEmpty) {
+      for (var item in r.rows!) {
+        if (item.areaName != null &&
+            item.deptName != null &&
+            item.trackNum != null) {
+          processedStopLocations.add({
+            'code': item.code,
+            'deptName': item.deptName,
+            'realLocation': '${item.deptName}-${item.trackNum}-${item.areaName}'
+          });
+          stopLocationListStr
+              .add('${item.deptName}-${item.trackNum}-${item.areaName}');
+        }
+      }
+    }
+    setState(() {
+      stopLocationList = processedStopLocations;
+      print(stopLocationList);
+    });
   }
 
   @override
@@ -605,42 +666,9 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                             }
                             // 修次列表
                             getJcRepairTimes(_selectedRepairProcessKey);
-                                                      _selectedRepairTime =
-                              null; // 初始化 _selectedRepairProcess
-                          _repairTimes = []; // 清空 _repairProcesses
-                          });
-                        }
-                      },
-                    ),
-
-                    SizedBox(height: 16.0),
-                    // 修次下拉框
-                    DropdownButtonFormField<String>(
-                      value: _selectedRepairTime,
-                      decoration: InputDecoration(
-                        labelText: '修次',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _repairTimes
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedRepairTime = newValue;
-                            _selectedRepairTimeKey = null;
-                            for (Map<String, dynamic> map
-                                in jcRepairTimesInfo) {
-                              if (map['name'] == newValue) {
-                                _selectedRepairTimeKey = map['code'];
-                                break; // 找到匹配项后退出循环
-                              }
-                            }
-                            
+                            _selectedRepairTime =
+                                null; // 初始化 _selectedRepairProcess
+                            _repairTimes = []; // 清空 _repairProcesses
                           });
                         }
                       },
@@ -716,23 +744,95 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       ),
                     ),
                     SizedBox(height: 16.0),
-                    // 选择签收人输入框
-                    TextField(
-                      controller: _signerController,
+                    // 选择部门
+                    // 修次下拉框
+                    // 部门选择下拉框
+                    DropdownButtonFormField<String>(
+                      value: _selectDeptName,
                       decoration: InputDecoration(
-                        labelText: '选择签收人',
+                        labelText: '选择部门',
                         border: OutlineInputBorder(),
                       ),
+                      items: deptInfos
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectDeptName = newValue;
+                            _selectedDeptKey = null;
+                            for (Map<String, dynamic> map in deptInfo) {
+                              if (map['deptName'] == newValue) {
+                                _selectedDeptKey = map['deptId'];
+                                break; // 找到匹配项后退出循环
+                              }
+                            }
+                            getDeptUserInfo(_selectedDeptKey);
+                            //初始化
+                            // selectNickName = null; // 初始化 _selectedRepairProcess
+                            // deptUserInfos = [];
+                          });
+                        }
+                      },
                     ),
-                    SizedBox(height: 16.0),
-                    // 检修地点输入框
-                    TextField(
-                      controller: _maintenanceLocationController,
+
+                    const SizedBox(height: 20),
+                    // 人员多选列表
+                    if (_selectDeptName != null)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: deptUserInfos.map((employee) {
+                          return CheckboxListTile(
+                            title: Text(employee),
+                            value: selectedEmployees?.contains(employee),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value != null) {
+                                  if (value) {
+                                    selectedEmployees.add(employee);
+                                  } else {
+                                    selectedEmployees.remove(employee);
+                                  }
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    const SizedBox(height: 20),
+                    // 检修地点下拉框
+                    DropdownButtonFormField<String>(
+                      value: stopLocationSelected,
                       decoration: InputDecoration(
                         labelText: '检修地点',
                         border: OutlineInputBorder(),
                       ),
+                      items: stopLocationListStr
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            stopLocationSelected = newValue;
+                            for (Map<String, dynamic> map in stopLocationList) {
+                              if (map['name'] == newValue) {
+                                _selectedRepairTimeKey = map['code'];
+                                break; // 找到匹配项后退出循环
+                              }
+                            }
+                          });
+                        }
+                      },
                     ),
+
                     SizedBox(height: 16.0),
                     // 备注输入框
                     TextField(
