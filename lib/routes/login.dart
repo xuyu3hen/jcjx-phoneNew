@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_xupdate/flutter_xupdate.dart';
 import '../index.dart';
 
@@ -11,7 +12,7 @@ class _LoginRouteState extends State<LoginRoute> {
   TextEditingController _unameController = TextEditingController();
   TextEditingController _pwdController = TextEditingController();
   bool _nameAutoFouce = true;
-  GlobalKey _formKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool pwdShow = false;
 
   @override
@@ -25,31 +26,30 @@ class _LoginRouteState extends State<LoginRoute> {
   void initXUpdate() {
     if (Platform.isAndroid) {
       FlutterXUpdate.init(
+        ///是否输出日志
+        debug: true,
 
-              ///是否输出日志
-              debug: true,
+        ///是否使用post请求
+        isPost: true,
 
-              ///是否使用post请求
-              isPost: true,
+        ///post请求是否是上传json
+        isPostJson: false,
 
-              ///post请求是否是上传json
-              isPostJson: false,
+        ///请求响应超时时间
+        timeout: 25000,
 
-              ///请求响应超时时间
-              timeout: 25000,
+        ///是否开启自动模式
+        isWifiOnly: false,
 
-              ///是否开启自动模式
-              isWifiOnly: false,
+        ///是否开启自动模式
+        isAutoMode: false,
 
-              ///是否开启自动模式
-              isAutoMode: false,
+        ///需要设置的公共参数
+        supportSilentInstall: false,
 
-              ///需要设置的公共参数
-              supportSilentInstall: false,
-
-              ///在下载过程中，如果点击了取消的话，是否弹出切换下载方式的重试提示弹窗
-              enableRetry: false)
-          .then((value) {
+        ///在下载过程中，如果点击了取消的话，是否弹出切换下载方式的重试提示弹窗
+        enableRetry: false,
+      ).then((value) {
         updateMessage('初始化成功: $value');
       }).catchError((error) {
         print(error);
@@ -72,70 +72,85 @@ class _LoginRouteState extends State<LoginRoute> {
     if (F.id != 'com.jcjx_phone_dev') {
       getLastUpdate();
     }
-    // TODO: implement build
     return Scaffold(
-      appBar: AppBar(title: const Text('登录')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(children: <Widget>[
-            Image.asset(
-              'assets/logo.png',
-              width: 200,
-              height: 200,
+      body: Stack(
+        children: [
+          // 背景图片
+          Positioned.fill(
+            child: Image.asset(
+              'assets/login.png',
+              fit: BoxFit.cover,
             ),
-            TextFormField(
-              autofocus: _nameAutoFouce,
-              controller: _unameController,
-              decoration: InputDecoration(
-                labelText: "用户名",
-                hintText: "用户名",
-                prefixIcon: Icon(Icons.person),
+          ),
+          // 登录表单
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  TextFormField(
+                    autofocus: _nameAutoFouce,
+                    controller: _unameController,
+                    decoration: InputDecoration(
+                      labelText: "用户名",
+                      hintText: "用户名",
+                      prefixIcon: Icon(Icons.person),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.8),
+                    ),
+                    // 校验用户名
+                    validator: (v) {
+                      return v == null || v.trim().isNotEmpty
+                          ? null
+                          : "用户名不能为空";
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _pwdController,
+                    autofocus: !_nameAutoFouce,
+                    decoration: InputDecoration(
+                      labelText: "密码",
+                      hintText: "密码",
+                      prefixIcon: Icon(Icons.lock),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                            pwdShow ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            pwdShow = !pwdShow;
+                          });
+                        },
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.8),
+                    ),
+                    // 密文密码显示
+                    obscureText: !pwdShow,
+                    // 校验空值
+                    validator: (v) {
+                      return v == null || v.trim().isNotEmpty
+                          ? null
+                          : "密码不能为空！";
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 25),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints.expand(height: 55.0),
+                      child: ElevatedButton(
+                        child: const Text("登录"),
+                        onPressed: _loginIn,
+                      ),
+                    ),
+                  )
+                ],
               ),
-
-              // 校验用户名
-              validator: (v) {
-                return v == null || v.trim().isNotEmpty ? null : "用户名不能为空";
-              },
             ),
-            TextFormField(
-              controller: _pwdController,
-              autofocus: !_nameAutoFouce,
-              decoration: InputDecoration(
-                labelText: "密码",
-                hintText: "密码",
-                prefixIcon: Icon(Icons.lock),
-                suffixIcon: IconButton(
-                  icon: Icon(pwdShow ? Icons.visibility_off : Icons.visibility),
-                  onPressed: () {
-                    setState(() {
-                      pwdShow = !pwdShow;
-                    });
-                  },
-                ),
-              ),
-
-              // 密文密码显示
-              obscureText: !pwdShow,
-
-              // 校验空值
-              validator: (v) {
-                return v == null || v.trim().isNotEmpty ? null : "密码不能为空！";
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 25),
-              child: ConstrainedBox(
-                constraints: BoxConstraints.expand(height: 55.0),
-                child: ElevatedButton(
-                  child: const Text("登录"),
-                  onPressed: _loginIn,
-                ),
-              ),
-            )
-          ]),
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -148,35 +163,34 @@ class _LoginRouteState extends State<LoginRoute> {
       try {
         // 调用api接口函数
         var r = await LoginApi().getProfile(
-            // queryParametrs: {
-            //   'password':'Jcjx@6217.',
-            //   'username':'admin',
-            // }
-            // 工长刘扬
-            // queryParametrs: {
-            //   'username': '60599',
-            //   'password': 'Jxd#6453',
-            // }
-            // 账号密码
-            queryParametrs: {
-              'password': _pwdController.text,
-              'username': _unameController.text,
-            }
-            // 邹晗
-            // queryParametrs: {
-            //   'password':'Jxd#6453',
-            //   'username':'60467',
-            // }
-            );
+          // queryParametrs: {
+          //   'password':'Jcjx@6217.',
+          //   'username':'admin',
+          // }
+          // 工长刘扬
+          // queryParametrs: {
+          //   'username': '60599',
+          //   'password': 'Jxd#6453',
+          // }
+          // 账号密码
+          queryParametrs: {
+            'password': _pwdController.text,
+            'username': _unameController.text,
+          },
+          // 邹晗
+          // queryParametrs: {
+          //   'password':'Jxd#6453',
+          //   'username':'60467',
+          // }
+        );
         if (mounted) {
           if (r.code == 200) {
-
             // print("显示token:${r.data?.access_token}");
             profile = r;
             Global.profile = profile;
             Provider.of<UserModel>(context, listen: false).accessToken =
                 profile.data;
-            
+
             // Permissions p = await LoginApi().getpermissions();
             // if(p.code == 200){
             //   Global.profile.permissions = p;
@@ -184,7 +198,6 @@ class _LoginRouteState extends State<LoginRoute> {
             //   showToast("获取用户账号信息失败");
             // }
             AppApi.init();
-
           }
         }
       } on DioException catch (e) {
