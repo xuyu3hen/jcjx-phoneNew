@@ -263,6 +263,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
             ),
           ],
         ),
+        //增加间距
+        const SizedBox(height: 15),
         Row(
           //临修机车导入标识
           mainAxisAlignment: MainAxisAlignment.start,
@@ -372,6 +374,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
             ),
           ],
         ),
+        const SizedBox(height: 15),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[

@@ -60,7 +60,7 @@ class _PersonPageState extends State<PersonPage> {
           children: [
             Positioned.fill(
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/newBackground.png'), // 替换为你的背景图路径
                     fit: BoxFit.cover, // 调整图片适应方式
@@ -87,12 +87,14 @@ class _PersonPageState extends State<PersonPage> {
                         child: FutureBuilder<Widget>(
                           future: _buildByState(context),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return CircularProgressIndicator();
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
                             } else if (snapshot.hasError) {
                               return Text('Error: ${snapshot.error}');
-                            } else if (!snapshot.hasData || snapshot.data == null) {
-                              return Text('无数据');
+                            } else if (!snapshot.hasData ||
+                                snapshot.data == null) {
+                              return const Text('无数据');
                             } else {
                               return snapshot.data!;
                             }
@@ -111,25 +113,27 @@ class _PersonPageState extends State<PersonPage> {
     }
   }
 
-  Widget _buildAvatarByState(BuildContext context) {
-    return SizedBox(
-      child: CircleAvatar(
-        radius: 15,
-        backgroundColor: Colors.white,
-        backgroundImage: AssetImage("assets/head.png"),
-      ),
-      width: 100,
-      height: 100,
-    );
-  }
+  // Widget _buildAvatarByState(BuildContext context) {
+  //   return SizedBox(
+  //     child: CircleAvatar(
+  //       radius: 15,
+  //       backgroundColor: Colors.white,
+  //       backgroundImage: AssetImage("assets/head.png"),
+  //     ),
+  //     width: 100,
+  //     height: 100,
+  //   );
+  // }
 
   // 创建 Logger 实例
   var logger = Logger(
     printer: PrettyPrinter(), // 漂亮的日志格式化
   );
 
+
+
   Future<Widget> _buildByState(BuildContext context) async {
-    String? parentDeptName = null;
+    String? parentDeptName;
     UserModel usermodel = Provider.of<UserModel>(context);
     Map<String, dynamic> queryParameters = {};
     if (Global.profile.permissions?.user.dept?.parentId != null) {
@@ -140,17 +144,41 @@ class _PersonPageState extends State<PersonPage> {
       parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
     }
 
-    // TODO:判断登录情况
+ 
     if (usermodel.isLogin) {
-      
-      return Text(
-        "${Global.profile.permissions?.user.nickName}-${Global.profile.permissions?.user.dept?.deptName}-$parentDeptName",
-        style: TextStyle(fontSize: 24, color: Colors.black),
-      );
+      if (parentDeptName != null) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${Global.profile.permissions?.user.nickName}",
+              style: AppConstants.textStylePerson,
+            ),
+            Text(
+              "$parentDeptName -${Global.profile.permissions?.user.dept?.deptName}",
+              style: AppConstants.textStylePerson,
+            ),
+          ],
+        );
+      } else {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${Global.profile.permissions?.user.nickName}",
+              style: AppConstants.textStylePerson,
+            ),
+            Text(
+              "${Global.profile.permissions?.user.dept?.deptName}",
+              style: AppConstants.textStylePerson,
+            ),
+          ],
+        );
+      }
     } else {
       return Text(
         "未登录",
-        style: TextStyle(fontSize: 24, color: Colors.black),
+        style: AppConstants.textStylePerson,
       );
     }
   }

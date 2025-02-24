@@ -26,7 +26,7 @@ class LoginApi extends AppApi{
       "/system/user/getInfo",
     );
     //打印r
-    logger.i('获取信息中心消息：${(r.data)}');
+    logger.i(r.data);
     return Permissions.fromJson(r.data);
   }
 
