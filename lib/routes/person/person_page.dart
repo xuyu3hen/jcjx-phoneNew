@@ -1,30 +1,34 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../index.dart';
+import 'package:logger/logger.dart';
 
 class PersonPage extends StatefulWidget {
-
-  const PersonPage({Key? key}) : super(key:key);
+  const PersonPage({Key? key}) : super(key: key);
 
   @override
   State<PersonPage> createState() => _PersonPageState();
 }
-class _PersonPageState extends State<PersonPage>{
 
-  void getpermisson()async{
+class _PersonPageState extends State<PersonPage> {
+  void getPermission() async {
     Permissions p = await LoginApi().getpermissions();
-    if(p.code == 200){
+    if (p.code == 200) {
       setState(() {
         Global.profile.permissions = p;
       });
-    }else{
+    } else {
       showToast("获取用户账号信息失败");
     }
   }
 
+  String? parentDeptName;
+
   @override
   Widget build(BuildContext context) {
     if (Global.profile.permissions == null) {
-      getpermisson();
+      getPermission();
       return Container(
         padding: const EdgeInsets.all(16.0),
         alignment: Alignment.center,
@@ -66,7 +70,8 @@ class _PersonPageState extends State<PersonPage>{
               ),
             ),
             AnnotatedRegion<SystemUiOverlayStyle>(
-              value: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
+              value: const SystemUiOverlayStyle(
+                  statusBarIconBrightness: Brightness.light),
               child: Column(
                 children: [
                   Stack(
@@ -79,7 +84,20 @@ class _PersonPageState extends State<PersonPage>{
                       Positioned(
                         bottom: 5,
                         left: 20,
-                        child: _buildByState(context),
+                        child: FutureBuilder<Widget>(
+                          future: _buildByState(context),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (!snapshot.hasData || snapshot.data == null) {
+                              return Text('无数据');
+                            } else {
+                              return snapshot.data!;
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -105,15 +123,31 @@ class _PersonPageState extends State<PersonPage>{
     );
   }
 
-  Widget _buildByState(BuildContext context) {
+  // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
+
+  Future<Widget> _buildByState(BuildContext context) async {
+    String? parentDeptName = null;
     UserModel usermodel = Provider.of<UserModel>(context);
+    Map<String, dynamic> queryParameters = {};
+    if (Global.profile.permissions?.user.dept?.parentId != null) {
+      queryParameters['idList'] =
+          Global.profile.permissions?.user.dept?.parentId;
+      var r = await ProductApi().getDeptByDeptIdList(queryParameters);
+      logger.i(r);
+      parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
+    }
+
     // TODO:判断登录情况
-    if(usermodel.isLogin){
+    if (usermodel.isLogin) {
+      
       return Text(
-        "${Global.profile.permissions?.user.nickName}-${Global.profile.permissions?.user.dept?.deptName}",
+        "${Global.profile.permissions?.user.nickName}-${Global.profile.permissions?.user.dept?.deptName}-$parentDeptName",
         style: TextStyle(fontSize: 24, color: Colors.black),
       );
-    }else{
+    } else {
       return Text(
         "未登录",
         style: TextStyle(fontSize: 24, color: Colors.black),

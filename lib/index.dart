@@ -16,6 +16,7 @@ export 'package:jcjx_phone/zjc_common/zjc_form/zjc_form_select_cell.dart';
 export 'package:date_format/date_format.dart';
 export 'package:jcjx_phone/zjc_common/zjc_form/zjc_form_input_cell.dart';
 export 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart';
+export 'package:logger/logger.dart';
 /*
   // flavors的元素备份
 

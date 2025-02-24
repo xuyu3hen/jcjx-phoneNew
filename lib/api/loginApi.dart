@@ -4,7 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../index.dart';
 class LoginApi extends AppApi{
-
+  // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
   // 登录函数
   Future<Profile> getProfile({
   Map<String,dynamic>? queryParametrs,// 分页参数
@@ -13,7 +16,7 @@ class LoginApi extends AppApi{
       "/auth/login",
       data: queryParametrs,
     );
-    print('登录信息：${(r.data)}');
+    logger.i('登录信息：${(r.data)}');
     return Profile.fromJson(r.data);
   }
 
@@ -23,7 +26,7 @@ class LoginApi extends AppApi{
       "/system/user/getInfo",
     );
     //打印r
-    print('获取信息中心消息：${(r.data)}');
+    logger.i('获取信息中心消息：${(r.data)}');
     return Permissions.fromJson(r.data);
   }
 

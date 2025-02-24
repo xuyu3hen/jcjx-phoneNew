@@ -9,12 +9,17 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
+import 'package:logger/logger.dart';
 
 import '../index.dart';
 import '../models/prework/packageUser.dart';
 import '../models/searchWorkPackage/secondPackage.dart';
 
 class ProductApi extends AppApi {
+  // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
   // 入段列车查询
   Future<TrainEntryList> getTrainEntry({
     Map<String, dynamic>? queryParametrs, // 分页参数
@@ -54,7 +59,7 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio
           .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
-      print(r.data);
+      logger.i(r.data);
       return InnerData.fromJson(r.data["data"]);
     } catch (e) {
       _handleException(e);
@@ -71,7 +76,7 @@ class ProductApi extends AppApi {
         "/subparts/stopPosition/selectAll",
         queryParameters: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
       return TrainLocation.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
@@ -88,7 +93,7 @@ class ProductApi extends AppApi {
         "/subparts/jcDynamicType/selectAll",
         queryParameters: queryParametrs,
       );
-      print((r.data["data"])["data"]["rows"]);
+      logger.i((r.data["data"])["data"]["rows"]);
       return DynamicTypeList.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
@@ -170,7 +175,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/save",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
       return r.data["data"];
     } catch (e) {
       _handleException(e);
@@ -190,7 +195,7 @@ class ProductApi extends AppApi {
       "/subparts/repairSys/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return RepairSysResponse.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
@@ -207,10 +212,9 @@ class ProductApi extends AppApi {
       "/subparts/jcRoleConfigNode/getUserListByDeptId",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
-    return(r.data["data"])["data"];
-    }
-
+    logger.i((r.data["data"])["data"]);
+    return (r.data["data"])["data"];
+  }
 
   //上传 plan/repairPlan/addTempPlan
   Future<dynamic> uploadPlan({
@@ -221,11 +225,9 @@ class ProductApi extends AppApi {
       "/plan/repairPlan/addTempPlan",
       queryParameters: queryParametrs,
     );
-    print(r.data);
+    logger.i(r.data);
     return r.data;
-    }
-
-
+  }
 
   // 查看领取作业包
   Future<dynamic> getWorkPackage({
@@ -236,7 +238,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/getCommonPackageList",
         queryParameters: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
       return WorkPackageList.fromJson(r.data["data"]);
     } catch (e) {
       _handleException(e);
@@ -253,7 +255,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/selectPersonalPackage",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
       // if(r.data["data"]["code"] == "S_F_5003"){
       // return RepairResponse.fromJson(r.data["data"]);
       // }else{
@@ -271,7 +273,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/cancelPersonalPackage",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
 
       // return RepairResponse.fromJson(r.data["data"]);
     } catch (e) {
@@ -286,7 +288,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/selectAssistantPackage",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
 
       // return RepairResponse.fromJson(r.data["data"]);
     } catch (e) {
@@ -300,7 +302,7 @@ class ProductApi extends AppApi {
       var r = await AppApi.dio.post(
         "/plan/repairPlan/getNotEnterTrainPlan",
       );
-      print((r.data["data"])['data']);
+      logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
     } catch (e) {
       _handleException(e);
@@ -314,7 +316,7 @@ class ProductApi extends AppApi {
     var r = await AppApi.dio.get(
         "/tasks/deptSchedule/getDeptScheduleByPlanCodeAndDeptId",
         queryParameters: queryParametrs);
-    print((r.data["data"])['data']);
+    logger.i((r.data["data"])['data']);
     return (r.data["data"])['data'];
   }
 
@@ -325,7 +327,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/cancelAssistantPackage",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
 
       // return RepairResponse.fromJson(r.data["data"]);
     } catch (e) {
@@ -343,7 +345,7 @@ class ProductApi extends AppApi {
       });
       var r = await AppApi.dio.post("/fileserver/oilInfoFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
-      log("uploadOilImg${r.data}");
+      logger.i("uploadOilImg${r.data}");
       return (r.data["code"]);
     } catch (e) {
       _handleException(e);
@@ -364,7 +366,7 @@ class ProductApi extends AppApi {
         "/fileserver/taskCertainContentFile/uploadFile",
         data: formData,
         options: Options(contentType: "multipart/form-data"));
-    log("uploadImg${r.data}");
+    logger.i("uploadImg${r.data}");
     return (r.data["code"]);
     // } catch (e) {
     //   _handleException(e);
@@ -379,7 +381,7 @@ class ProductApi extends AppApi {
     var r = await AppApi.dio2.post(
         "/tasks/taskCertainPackage/completeTaskCertainPackage",
         data: queryParameters);
-    log("finishCertainPackage${r.data}");
+    logger.i("finishCertainPackage${r.data}");
     return (r.data["code"]);
     // } catch (e) {
     //   _handleException(e);
@@ -397,7 +399,7 @@ class ProductApi extends AppApi {
       });
       var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
-      log("upSlipImg${r.data}");
+      logger.i("upSlipImg${r.data}");
       return (r.data["code"]);
     } catch (e) {
       _handleException(e);
@@ -412,7 +414,7 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
           queryParameters: queryParametrs);
-      log("previewImage${r.data}");
+      logger.i("previewImage${r.data}");
       return r.data;
     } catch (e) {
       _handleException(e);
@@ -443,7 +445,7 @@ class ProductApi extends AppApi {
       var r = await AppApi.dio.get(
         "/subparts/repairMainNode/getProcessingMainNodeAndProc",
       );
-      print((r.data["data"])["data"]);
+      logger.i((r.data["data"])["data"]);
       return MainNodeList.fromJson(r.data["data"]);
     } catch (e) {
       _handleException(e);
@@ -459,7 +461,7 @@ class ProductApi extends AppApi {
       "/subparts/workInstructPackageUser/getPakcageUserList",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return PackageUserData.fromJson(r.data["data"]);
     // } catch (e) {
     //   _handleException(e);
@@ -475,7 +477,7 @@ class ProductApi extends AppApi {
       "/subparts/repairMainNode/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return RepairMainNode.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
@@ -491,7 +493,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/getIndividualTaskPackage",
         queryParameters: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
       return WorkPackageList.fromJson(r.data["data"]);
     } catch (e) {
       _handleException(e);
@@ -508,7 +510,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/startWork",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
     }
@@ -523,7 +525,7 @@ class ProductApi extends AppApi {
         "/tasks/taskInstructPackage/startWork",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
     }
@@ -578,7 +580,7 @@ class ProductApi extends AppApi {
       "/tasks/taskSecondPackage/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return SecondPackage.fromJson((r.data["data"])["data"]);
     // } catch (e) {
     //   _handleException(e);
@@ -593,7 +595,7 @@ class ProductApi extends AppApi {
       "/jcjxsystem/sysUser/getUserListByUserIdList",
       data: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return UserList.fromJson(r.data["data"]);
     // } catch (e) {
     //   _handleException(e);
@@ -608,7 +610,7 @@ class ProductApi extends AppApi {
         "/tasks/deptSchedule/save",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
     }
@@ -621,7 +623,7 @@ class ProductApi extends AppApi {
         "/subparts/workInstructPackageUser/saveOrUpdate",
         data: queryParametrs,
       );
-      print(r.data["data"]);
+      logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
     }
@@ -633,7 +635,7 @@ class ProductApi extends AppApi {
       "/jcjxsystem/dept/getDeptTreeByParentIdList",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -644,7 +646,7 @@ class ProductApi extends AppApi {
       "/dispatch/jcRepairSegment/selectAll",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -655,7 +657,7 @@ class ProductApi extends AppApi {
       "/dispatch/jcAssignSegment/selectAll",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -666,7 +668,7 @@ class ProductApi extends AppApi {
       "/subparts/repairTimes/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -677,7 +679,7 @@ class ProductApi extends AppApi {
       "/subparts/jcDynamicType/selectAll",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -687,7 +689,7 @@ class ProductApi extends AppApi {
       "/subparts/jcType/selectAll",
       queryParameters: queryParametrs,
     );
-    print(r.data["data"]);
+    logger.i(r.data["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -698,7 +700,7 @@ class ProductApi extends AppApi {
       "/subparts/stopPosition/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -708,7 +710,7 @@ class ProductApi extends AppApi {
       "/subparts/repairSys/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
 
@@ -719,11 +721,9 @@ class ProductApi extends AppApi {
       "/subparts/repairProc/selectAll",
       queryParameters: queryParametrs,
     );
-    print((r.data["data"])["data"]);
+    logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
   }
-
-  
 
   Future<dynamic> getDictCode(Map<String, dynamic>? queryParameters) async {
     // try {
@@ -731,7 +731,7 @@ class ProductApi extends AppApi {
       "/system/dict/data/list",
       queryParameters: queryParameters,
     );
-    print(r.data);
+    logger.i(r.data);
     return r.data;
     // } catch (e) {
     //   _handleException(e);
@@ -747,7 +747,7 @@ class ProductApi extends AppApi {
         "/subparts/riskLevelPost/selectAll",
         queryParameters: queryParameters,
       );
-      print((r.data["data"])['data']);
+      logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
     } catch (e) {
       _handleException(e);
@@ -762,12 +762,23 @@ class ProductApi extends AppApi {
         "/jcjxsystem/sysPost/getUserListByPostIdList",
         data: postIdList,
       );
-      print((r.data["data"])['data']);
+      logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
     } catch (e) {
       _handleException(e);
       return null;
     }
+  }
+
+  //jcjxsystem/dept/getDeptByIdList
+  Future<dynamic> getDeptByDeptIdList(
+      Map<String, dynamic> queryParameters) async {
+    var r = await AppApi.dio.get(
+      "/jcjxsystem/dept/getDeptByIdList",
+      queryParameters: queryParameters,
+    );
+    logger.i((r.data["data"])['data']);
+    return (r.data["data"])['data'];
   }
 
 // 统一异常处理方法
