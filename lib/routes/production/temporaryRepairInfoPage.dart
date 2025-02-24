@@ -12,6 +12,11 @@ class TemporaryRepairInfoPage extends StatefulWidget {
 }
 
 class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
+ 
+    // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
   // 排序数字
   int _sort = 1;
   final TextEditingController _repairSectionController =
@@ -63,32 +68,32 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   List<Map<String, dynamic>> jcRepairSegmentInfo = [];
   List<String> _repairSegments = [];
   // 当前选中的承修段
-  String? _selectedRepairSegment = null;
+  String? _selectedRepairSegment;
   // 获取承修段主键
-  String? _selectedRepairSegmentKey = null;
+  String? _selectedRepairSegmentKey;
 
   List<Map<String, dynamic>> jcAssignSegmentInfo = [];
   List<String> _assignSegments = [];
-  String? _selectedAssignSegment = null;
-  String? _selectedAssignSegmentKey = null;
+  String? _selectedAssignSegment;
+  String? _selectedAssignSegmentKey;
   int? _selectedMonth;
 
   //动力类型
   List<Map<String, dynamic>> jcDynamicTypeInfo = [];
   List<String> _dynamicTypes = [];
-  String? _selectedDynamicType = null;
-  String? _selectedDynamicTypeKey = null;
+  String? _selectedDynamicType;
+  String? _selectedDynamicTypeKey;
 
   //机型
   List<Map<String, dynamic>> jcTypeInfo = [];
   List<String> _types = [];
-  String? _selectedType = null;
-  String? _selectedTypeKey = null;
+  String? _selectedType;
+  String? _selectedTypeKey;
 
   // 修制信息
   List<Map<String, dynamic>> jcRepairInfo = [];
   List<String> _repairInfos = [];
-  String? _selectedRepairInfo = null;
+  String? _selectedRepairInfo;
   String? _selectedRepairInfoKey;
 
   //获取初始选择需要的数据
@@ -109,8 +114,8 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
           await ProductApi().getJcDynamicType(queryParametrs: queryParameters);
 
       // 打印返回的数据结构以进行调试
-      print('API Response: $jcRepairSegment');
-      print('API Response: $jcAssignSegment');
+      logger.i('API Response: $jcRepairSegment');
+      logger.i('API Response: $jcAssignSegment');
 
       // 确保 jcRepairSegment['rows'] 是一个 List<Map<String, dynamic>>
       if (jcRepairSegment['rows'] is List) {
@@ -128,7 +133,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
               .toList();
         });
       } else {
-        print('Error: jcRepairSegment[\'rows\'] is not a List');
+        logger.i('Error: jcRepairSegment[\'rows\'] is not a List');
       }
 
       if (jcAssignSegment['rows'] is List) {
@@ -143,7 +148,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
               .toList();
         });
       } else {
-        print('Error: jcAssignSegment[\'rows\'] is not a List');
+        logger.i('Error: jcAssignSegment[\'rows\'] is not a List');
       }
 
       if (dynamicType['rows'] is List) {
@@ -169,8 +174,8 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   // 修制信息
   List<Map<String, dynamic>> deptInfo = [];
   List<String> deptInfos = [];
-  String? _selectDeptName = null;
-  int? _selectedDeptKey = null;
+  String? _selectDeptName;
+  int? _selectedDeptKey;
   // getDeptTreeByParentIdList 选择签收人
   //  获取所有部门
   Future<void> getDeptTreeByParentIdList() async {
@@ -185,18 +190,18 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
         print(info[0]['children'].toString());
         List<Map<String, dynamic>> deptRows =
             rows.whereType<Map<String, dynamic>>().toList();
-        print(deptRows.toString());
+        logger.i(deptRows.toString());
         setState(() {
           deptInfo = deptRows;
           deptInfos = deptRows
               .where((item) => item.containsKey('deptName'))
               .map((item) => item['deptName'] as String)
               .toList();
-          print(deptInfos.toString());
+          logger.i(deptInfos.toString());
         });
       }
     } catch (e) {
-      print('Error fetching data: $e');
+      logger.i('Error fetching data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('获取数据失败: $e')),
       );
@@ -206,8 +211,8 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
 //部门用户信息
   List<Map<String, dynamic>> deptUserInfo = [];
   List<String> deptUserInfos = [];
-  String? selectNickName = null;
-  String? selectUserId = null;
+  String? selectNickName;
+  String? selectUserId;
 
   List<String> selectedEmployees = [];
 
@@ -221,7 +226,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
           .getUserListByDeptId(queryParametrs: queryParameters);
       List<Map<String, dynamic>> userRows =
           info.whereType<Map<String, dynamic>>().toList();
-      print(userRows.toString());
+      logger.i(userRows.toString());
       setState(() {
         deptUserInfo = userRows;
         deptUserInfos = userRows
@@ -231,7 +236,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
         print(deptUserInfos.toString());
       });
     } catch (e) {
-      print('Error fetching data: $e');
+      logger.i('Error fetching data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('获取数据失败: $e')),
       );
@@ -255,12 +260,12 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
             .where((item) => item.containsKey('name'))
             .map((item) => item['name'] as String)
             .toList();
-        _types.forEach((element) {
-          print(element);
-        });
+        for (var element in _types) {
+          logger.i(element);
+        }
       });
     } else {
-      print('Error: jcAssignSegment[\'rows\'] is not a List');
+      logger.i('Error: jcAssignSegment[\'rows\'] is not a List');
     }
   }
 
@@ -289,8 +294,8 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   //修程信息
   List<Map<String, dynamic>> jcRepairProcessInfo = [];
   List<String> _repairProcesses = [];
-  String? _selectedRepairProcess = null;
-  String? _selectedRepairProcessKey = null;
+  String? _selectedRepairProcess;
+  String? _selectedRepairProcessKey;
 
   //获取修程
   Future<void> getJcRepairProcess(String? code) async {
@@ -298,10 +303,10 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
     queryParameters['pageNum'] = 0;
     queryParameters['pageSize'] = 0;
     queryParameters['repairSysCode'] = code;
-    print(queryParameters);
+    logger.i(queryParameters);
     Map<String, dynamic> jcRepairProcess =
         await ProductApi().getRepairProcMap(queryParametrs: queryParameters);
-    print('jcRepairProcess: $jcRepairProcess');
+    logger.i('jcRepairProcess: $jcRepairProcess');
     if (jcRepairProcess['rows'] is List) {
       List<dynamic> rows = jcRepairProcess['rows'];
       List<Map<String, dynamic>> jcRepairProcessRows =
@@ -373,14 +378,36 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
     queryParameters['remarks'] = _remarksController.text;
     queryParameters['repairDept'] = _selectedRepairSegment;
     queryParameters['repairLocationCode'] = _selectedRepairSegmentKey;
+    queryParameters['repairProc'] = _selectedRepairProcess;
+    queryParameters['repairProcCode'] = _selectedRepairProcessKey;
+    queryParameters['repairSegmentCode'] = _selectedRepairSegmentKey;
+    queryParameters['repairTimes'] = _selectedRepairTime;
+    queryParameters['sort'] = _sort;
+    queryParameters['status'] = 0;
+    queryParameters['trainNum'] = _carNumberController.text;
+    queryParameters['trainType'] = _selectedType;
+    queryParameters['trainTypeCode'] = _selectedTypeKey;
+    List<Map<String, dynamic>> shuntingNoticeList = [];
+    deptUserInfos.forEach((element) {
+      Map<String, dynamic> map = {};
+      map['applyUserId'] = Global.profile.permissions?.user.userId;
+      map['applyUserName'] = Global.profile.permissions?.user.nickName;
+      //需要将其与信息进行绑定。现在是默认的
+      map['auditDeptId'] = 231;
+      map['auditDeptName'] = '总成车间';
+      map['auditUserId'] = 1026;
+      map['auditUserName'] = '赖文圣';
+      map['status'] = 0;
+      shuntingNoticeList.add(map);
+    });
     // 显示提交成功的提示
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('临修信息提交成功')),
+      const SnackBar(content: Text('临修信息提交成功')),
     );
   }
 
   // 存储选择的检修地点信息
-  late String? stopLocationSelected = null;
+  String? stopLocationSelected;
   List<Map<String, dynamic>> stopLocationList = [];
   List<String> stopLocationListStr = [];
   void getStopLocation() async {
@@ -406,7 +433,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
     }
     setState(() {
       stopLocationList = processedStopLocations;
-      print(stopLocationList);
+      logger.i(stopLocationList);
     });
   }
 
@@ -414,7 +441,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('临修信息页面'),
+        title: const Text('临修信息页面'),
       ),
       body: Column(
         children: [
@@ -428,7 +455,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 排序数字选择器
                     DropdownButtonFormField<int>(
                       value: _sort,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '排序',
                         border: OutlineInputBorder(),
                       ),
@@ -449,7 +476,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 承修段下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairSegment,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '承修段',
                         border: OutlineInputBorder(),
                       ),
@@ -478,11 +505,11 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         });
                       },
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 配属段下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedAssignSegment,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '配属段',
                         border: OutlineInputBorder(),
                       ),
@@ -508,11 +535,11 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       },
                     ),
 
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 动力类型输入框
                     DropdownButtonFormField<String>(
                       value: _selectedDynamicType,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '动力类型',
                         border: OutlineInputBorder(),
                       ),
@@ -542,7 +569,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 机型选项
                     DropdownButtonFormField<String>(
                       value: _selectedType,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '机型',
                         border: OutlineInputBorder(),
                       ),
@@ -570,7 +597,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 车号输入框
                     TextField(
                       controller: _carNumberController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '车号',
                         border: OutlineInputBorder(),
                       ),
@@ -579,7 +606,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 计划月份输入框
                     DropdownButtonFormField<int>(
                       value: _selectedMonth,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '计划月份',
                         border: OutlineInputBorder(),
                       ),
@@ -603,12 +630,12 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         });
                       },
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 修制下拉框选择
                     // 修制下拉框选择
                     DropdownButtonFormField<String>(
                       value: _selectedRepairInfo,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '修制',
                         border: OutlineInputBorder(),
                       ),
@@ -641,7 +668,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 修程下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairProcess,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '修程',
                         border: OutlineInputBorder(),
                       ),
@@ -674,7 +701,40 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       },
                     ),
 
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
+                                      
+                    // 修次下拉框
+                    DropdownButtonFormField<String>(
+                      value: _selectedRepairTime,
+                      decoration: InputDecoration(
+                        labelText: '修次',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _repairTimes
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedRepairTime = newValue;
+                            _selectedRepairTimeKey = null;
+                            for (Map<String, dynamic> map
+                                in jcRepairTimesInfo) {
+                              if (map['name'] == newValue) {
+                                _selectedRepairTimeKey = map['code'];
+                                break; // 找到匹配项后退出循环
+                              }
+                            }
+                            
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
                     // 预计上台日期选择器
                     TextField(
                       readOnly: true,
@@ -686,9 +746,9 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: '预计上台日期',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
+                          icon: const Icon(Icons.calendar_today),
                           onPressed: () => _selectDate(context, (date) {
                             setState(() {
                               _estimatedStartDate = date;
@@ -697,7 +757,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
 // 预计交车日期选择器
                     TextField(
                       readOnly: true,
@@ -709,9 +769,9 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: '预计交车日期',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
+                          icon: const Icon(Icons.calendar_today),
                           onPressed: () => _selectDate(context, (date) {
                             setState(() {
                               _estimatedDeliveryDate = date;
@@ -720,7 +780,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
 // 预计离段日期选择器
                     TextField(
                       readOnly: true,
@@ -734,7 +794,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         labelText: '预计离段日期',
                         border: OutlineInputBorder(),
                         suffixIcon: IconButton(
-                          icon: Icon(Icons.calendar_today),
+                          icon: const Icon(Icons.calendar_today),
                           onPressed: () => _selectDate(context, (date) {
                             setState(() {
                               _estimatedDepartureDate = date;
@@ -749,7 +809,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 部门选择下拉框
                     DropdownButtonFormField<String>(
                       value: _selectDeptName,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '选择部门',
                         border: OutlineInputBorder(),
                       ),
@@ -780,7 +840,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       },
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     // 人员多选列表
                     if (_selectDeptName != null)
                       Column(
@@ -793,6 +853,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                               setState(() {
                                 if (value != null) {
                                   if (value) {
+                                  
                                     selectedEmployees.add(employee);
                                   } else {
                                     selectedEmployees.remove(employee);
@@ -803,11 +864,11 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                           );
                         }).toList(),
                       ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     // 检修地点下拉框
                     DropdownButtonFormField<String>(
                       value: stopLocationSelected,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '检修地点',
                         border: OutlineInputBorder(),
                       ),
@@ -833,12 +894,12 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       },
                     ),
 
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 备注输入框
                     TextField(
                       controller: _remarksController,
                       maxLines: 3,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '备注',
                         border: OutlineInputBorder(),
                       ),
@@ -853,7 +914,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: _submitRepairInfo,
-              child: Text('提交临修信息'),
+              child: const Text('提交临修信息'),
             ),
           ),
         ],
@@ -862,7 +923,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   }
 
   void main() {
-    runApp(MaterialApp(
+    runApp(const MaterialApp(
       home: TemporaryRepairInfoPage(),
     ));
   }
