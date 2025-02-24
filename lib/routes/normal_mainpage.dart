@@ -39,7 +39,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
         showToast("获取零部件表失败,请检查网络");
       }
     } catch (e) {
-     
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -48,12 +47,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
   void getpermisson() async {
     Permissions p = await LoginApi().getpermissions();
     if (p.code == 200) {
-      if(mounted){
+      if (mounted) {
         setState(() {
-        Global.profile.permissions = p;
-      });
+          Global.profile.permissions = p;
+        });
       }
-      
     } else {
       showToast("获取用户账号信息失败");
     }
@@ -90,33 +88,51 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Widget build(BuildContext context) {
     if (Global.profile.permissions == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            '主页',
-            style: TextStyle(
-              color: Color.fromARGB(169, 0, 0, 0),
-              fontWeight: FontWeight.bold,
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/newBackground.png'), // 替换为你的背景图路径
+                    fit: BoxFit.cover, // 调整图片适应方式
+                    alignment: Alignment(0, -0.9), // 使用默认的居中对齐
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-        body: Center(
-          child: CircularProgressIndicator(),
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+          ],
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '主页',
-          style: TextStyle(
-            color: Color.fromARGB(169, 0, 0, 0),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
       resizeToAvoidBottomInset: false,
-      body: _buildBody(),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage('assets/newBackground.png'), // 替换为你的背景图路径
+                    fit: BoxFit.cover, // 调整图片适应方式
+                    alignment: Alignment(0, -0.9)),
+              ),
+            ),
+          ),
+          Positioned(
+            top: kToolbarHeight + 40, // 确保图片在 AppBar 之下
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildBody(),
+          ),
+        ],
+      ),
       // drawer: const SideDrawer(),
     );
   }
@@ -178,7 +194,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
           title: Text("机车入段",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
-        const Divider(height: .0, thickness: 1),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -186,7 +201,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.library_books_outlined, color: Colors.blue[200]),
+                Icon(Icons.directions_train, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'enter_list'),
                 '入修车辆',
                 width: (MediaQuery.of(context).size.width),
@@ -197,8 +212,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'sec_enter_modify'),
                 '新增入修',
                 width: (MediaQuery.of(context).size.width),
@@ -211,7 +225,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
           title: Text("预派工，机统28",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
-        const Divider(height: .0, thickness: 1),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -219,8 +232,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.post_add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'submit28'),
                 '机统28提报',
                 width: (MediaQuery.of(context).size.width),
@@ -231,7 +243,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.fact_check_outlined, color: Colors.amber[300]),
+                Icon(Icons.fact_check_outlined, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'preDispatchWork'),
                 '预派工',
                 width: (MediaQuery.of(context).size.width),
@@ -242,8 +254,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.assignment, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'preTrainWork'),
                 '机车预派工',
                 width: (MediaQuery.of(context).size.width),
@@ -260,8 +271,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.format_list_bulleted_add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'temporaryRepairInfoPage'),
                 '临修机车导入',
                 width: (MediaQuery.of(context).size.width),
@@ -282,7 +292,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
           title: Text("机车入段",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
-        const Divider(height: .0, thickness: 1),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -290,7 +299,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.library_books_outlined, color: Colors.blue[200]),
+                Icon(Icons.train, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'enter_list'),
                 '入修车辆',
                 width: (MediaQuery.of(context).size.width),
@@ -301,8 +310,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'sec_enter_modify'),
                 '新增入修',
                 width: (MediaQuery.of(context).size.width),
@@ -315,7 +323,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
           title: Text("作业包，机统28",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
-        const Divider(height: .0, thickness: 1),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -323,8 +330,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add,
-                    color: Colors.deepPurple[300]),
+                Icon(Icons.post_add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'submit28'),
                 '机统28提报',
                 width: (MediaQuery.of(context).size.width),
@@ -346,7 +352,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.build, color: Colors.amber[300]),
+                Icon(Icons.folder, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'getWorkPackage'),
                 '领取作业包',
                 width: (MediaQuery.of(context).size.width),
@@ -357,7 +363,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.build, color: Colors.amber[300]),
+                Icon(Icons.build, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'searchWorkPackage'),
                 '查看作业包',
                 width: (MediaQuery.of(context).size.width),
@@ -373,7 +379,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.group_rounded, color: Colors.deepOrange[300]),
+                Icon(Icons.group_rounded, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'mutuallist'),
                 '互检',
                 width: (MediaQuery.of(context).size.width),
@@ -385,8 +391,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
-                Icon(Icons.construction_outlined,
-                    color: Colors.deepOrange[300]),
+                Icon(Icons.check_circle, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'speciallist'),
                 '专检',
                 width: (MediaQuery.of(context).size.width),

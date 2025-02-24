@@ -23,14 +23,12 @@ class _PersonPageState extends State<PersonPage>{
 
   @override
   Widget build(BuildContext context) {
-    String image = 'BackLogo.png';
-    if(Global.profile.permissions == null){
+    if (Global.profile.permissions == null) {
       getpermisson();
       return Container(
         padding: const EdgeInsets.all(16.0),
         alignment: Alignment.center,
-        child: 
-        Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
@@ -39,46 +37,58 @@ class _PersonPageState extends State<PersonPage>{
               height: 40.0,
               child: CircularProgressIndicator(
                 strokeWidth: 4.0,
-              )),
+              ),
+            ),
             const SizedBox(
               height: 20.0,
             ),
-            Text("正在请求用户数据",
+            Text(
+              "正在请求用户数据",
               style: TextStyle(color: Colors.blue[700]),
             ),
           ],
-        )
+        ),
       );
-    }else{
+    } else {
       return Scaffold(
-        body: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
-          child: Column(
-            children: [
-              Stack(
-                children: <Widget>[
-                  Container(
-                    height: 180,
-                    width: MediaQuery.of(context).size.width,
-                    margin: const EdgeInsets.only(bottom: 40),
-                    child: Image.asset(
-                      'assets/$image',
-                      fit: BoxFit.cover,
-                    ),
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('assets/newBackground.png'), // 替换为你的背景图路径
+                    fit: BoxFit.cover, // 调整图片适应方式
+                    alignment: Alignment(0, -0.9), // 使用默认的居中对齐
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 40,
-                    child: _buildAvatarByState(context)),
-                  Positioned(
-                    bottom: 5,
-                    right: 80,
-                    child: _buildByState(context)),
+                ),
+              ),
+            ),
+            AnnotatedRegion<SystemUiOverlayStyle>(
+              value: const SystemUiOverlayStyle(statusBarIconBrightness: Brightness.light),
+              child: Column(
+                children: [
+                  Stack(
+                    children: <Widget>[
+                      Container(
+                        height: 180,
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.only(bottom: 40),
+                      ),
+                      Positioned(
+                        bottom: 5,
+                        left: 20,
+                        child: _buildByState(context),
+                      ),
+                    ],
+                  ),
+                  Expanded(child: myPageItems()),
                 ],
               ),
-
-              Expanded(child: myPageItems(),)
-            ])),
+            ),
+          ],
+        ),
       );
     }
   }
@@ -100,13 +110,13 @@ class _PersonPageState extends State<PersonPage>{
     // TODO:判断登录情况
     if(usermodel.isLogin){
       return Text(
-        "${Global.profile.permissions?.user.nickName}",
-        style: TextStyle(fontSize: 24,color: Theme.of(context).primaryColor),
+        "${Global.profile.permissions?.user.nickName}-${Global.profile.permissions?.user.dept?.deptName}",
+        style: TextStyle(fontSize: 24, color: Colors.black),
       );
     }else{
       return Text(
         "未登录",
-        style: TextStyle(fontSize: 24,color: Theme.of(context).primaryColor),
+        style: TextStyle(fontSize: 24, color: Colors.black),
       );
     }
   }

@@ -110,14 +110,14 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
               BottomNavigationBarItem(
                   icon: Icon(Icons.qr_code_2_sharp), label: '扫码'),
               BottomNavigationBarItem(
-                  icon: Icon(Icons.abc_rounded), label: '我的'),
+                  icon: Icon(Icons.person), label: '我的'),
             ],
             onTap: onTap,
             currentIndex: page,
             type: BottomNavigationBarType.fixed,
             fixedColor: Colors.lightBlue[400],
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            backgroundColor: Colors.lightBlue[50],
+            backgroundColor: Colors.white,
           ),
         ),
         Align(
@@ -126,10 +126,10 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             padding: const EdgeInsets.only(bottom: 25.0),
             child: FloatingActionButton(
                 onPressed: onBigImgTap,
-                backgroundColor: Colors.blueGrey[50],
+                backgroundColor: Colors.blue,
                 child: const Icon(
                   Icons.qr_code_scanner,
-                  color: Color.fromARGB(255, 117, 117, 117),
+                  color: Colors.white,
                 )),
           ),
         ),
