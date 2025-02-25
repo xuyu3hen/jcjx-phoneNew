@@ -1,6 +1,6 @@
-import 'dart:convert';
+
 import 'dart:developer';
-import 'dart:ffi';
+
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -9,11 +9,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
-import 'package:logger/logger.dart';
+
 
 import '../index.dart';
 import '../models/prework/packageUser.dart';
-import '../models/searchWorkPackage/secondPackage.dart';
+
 
 class ProductApi extends AppApi {
   // 创建 Logger 实例

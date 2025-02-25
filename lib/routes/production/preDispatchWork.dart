@@ -1,6 +1,5 @@
-import 'dart:convert';
 
-import 'package:jcjx_phone/routes/production/getWorkPackage.dart';
+
 
 import '../../index.dart';
 
@@ -12,6 +11,11 @@ class PreDispatchWork extends StatefulWidget {
 }
 
 class _PreDispatchWorkState extends State<PreDispatchWork> {
+
+    // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
   // 动态类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
   // 筛选的动态类型信息
@@ -127,7 +131,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               jcTypeListSelected["name"] = selectItem["name"];
                               jcTypeListSelected["code"] = selectItem["code"];
                               // 在这里添加获取车号等后续逻辑，如果有的话
@@ -158,7 +162,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               repairSysSelected["name"] = selectItem["name"];
                               //将主键进行选取
                               repairSysSelected["code"] = selectItem["code"];
@@ -191,7 +195,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               repairSelected["name"] = selectItem["name"];
                               //将主键进行选取
                               repairSelected["code"] = selectItem["code"];
@@ -224,7 +228,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               repairTimesSelected["name"] = selectItem["name"];
                               //将主键进行选取
                               repairTimesSelected["code"] = selectItem["code"];

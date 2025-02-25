@@ -472,7 +472,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         });
                       },
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 承修段下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairSegment,

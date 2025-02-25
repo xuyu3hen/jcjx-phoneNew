@@ -10,9 +10,9 @@ class RepairMainNode {
     total = json['total'];
     if (json['rows']!= null) {
       rows = [];
-      (json['rows'] as List).forEach((v) {
+      for (var v in (json['rows'] as List)) {
         rows?.add(Rows.fromJson(v));
-      });
+      }
     }
     code = json['code'];
     msg = json['msg'];
@@ -20,12 +20,12 @@ class RepairMainNode {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['total'] = this.total;
+    data['total'] = total;
     if (this.rows!= null) {
       data['rows'] = this.rows?.map((v) => v.toJson()).toList();
     }
-    data['code'] = this.code;
-    data['msg'] = this.msg;
+    data['code'] = code;
+    data['msg'] = msg;
     return data;
   }
 
@@ -42,7 +42,7 @@ class Rows {
   String? remark;
   String? deptIds;
   List<SysDeptList>? sysDeptList;
-  dynamic? childList;
+  dynamic childList;
   bool? deleted;
 
   Rows({
@@ -76,17 +76,17 @@ class Rows {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['code'] = this.code;
-    data['name'] = this.name;
-    data['sort'] = this.sort;
-    data['repairProcCode'] = this.repairProcCode;
-    data['remark'] = this.remark;
-    data['deptIds'] = this.deptIds;
+    data['code'] = code;
+    data['name'] = name;
+    data['sort'] = sort;
+    data['repairProcCode'] = repairProcCode;
+    data['remark'] = remark;
+    data['deptIds'] = deptIds;
     if (this.sysDeptList!= null) {
-      data['sysDeptList'] = this.sysDeptList?.map((v) => v.toJson()).toList();
+      data['sysDeptList'] = sysDeptList?.map((v) => v.toJson()).toList();
     }
-    data['childList'] = this.childList;
-    data['deleted'] = this.deleted;
+    data['childList'] = childList;
+    data['deleted'] = deleted;
     return data;
   }
 }
@@ -162,24 +162,24 @@ class SysDeptList {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['createBy'] = this.createBy;
-    data['createTime'] = this.createTime;
-    data['updateBy'] = this.updateBy;
-    data['updateTime'] = this.updateTime;
-    data['remark'] = this.remark;
-    data['deptId'] = this.deptId;
-    data['parentId'] = this.parentId;
-    data['ancestors'] = this.ancestors;
-    data['deptName'] = this.deptName;
-    data['orderNum'] = this.orderNum;
-    data['leader'] = this.leader;
-    data['phone'] = this.phone;
-    data['email'] = this.email;
-    data['status'] = this.status;
-    data['delFlag'] = this.delFlag;
-    data['parentName'] = this.parentName;
-    if (this.children!= null) {
-      data['children'] = this.children;
+    data['createBy'] = createBy;
+    data['createTime'] = createTime;
+    data['updateBy'] = updateBy;
+    data['updateTime'] = updateTime;
+    data['remark'] = remark;
+    data['deptId'] = deptId;
+    data['parentId'] = parentId;
+    data['ancestors'] = ancestors;
+    data['deptName'] = deptName;
+    data['orderNum'] = orderNum;
+    data['leader'] = leader;
+    data['phone'] = phone;
+    data['email'] = email;
+    data['status'] = status;
+    data['delFlag'] = delFlag;
+    data['parentName'] = parentName;
+    if (children!= null) {
+      data['children'] = children;
     }
     return data;
   }
