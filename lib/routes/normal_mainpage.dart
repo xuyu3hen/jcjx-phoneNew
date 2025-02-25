@@ -265,23 +265,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
         ),
         //增加间距
         const SizedBox(height: 15),
-        Row(
-          //临修机车导入标识
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            SizedBox(
-              width: (MediaQuery.of(context).size.width) / 3,
-              height: (MediaQuery.of(context).size.width) / 4,
-              child: FeatureContainer(
-                Icon(Icons.format_list_bulleted_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'temporaryRepairInfoPage'),
-                '临修机车导入',
-                width: (MediaQuery.of(context).size.width),
-                height: (MediaQuery.of(context).size.height),
-              ),
-            )
-          ],
-        ),
+        // Row(
+        //   //临修机车导入标识
+        //   mainAxisAlignment: MainAxisAlignment.start,
+        //   children: <Widget>[
+        //     SizedBox(
+        //       width: (MediaQuery.of(context).size.width) / 3,
+        //       height: (MediaQuery.of(context).size.width) / 4,
+        //       child: FeatureContainer(
+        //         Icon(Icons.format_list_bulleted_add, color: Colors.blue[200]),
+        //         () => Navigator.pushNamed(context, 'temporaryRepairInfoPage'),
+        //         '临修机车导入',
+        //         width: (MediaQuery.of(context).size.width),
+        //         height: (MediaQuery.of(context).size.height),
+        //       ),
+        //     )
+        //   ],
+        // ),
       ],
     );
   }
