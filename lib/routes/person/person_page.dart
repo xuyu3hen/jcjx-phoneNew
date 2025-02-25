@@ -62,7 +62,7 @@ class _PersonPageState extends State<PersonPage> {
               child: Container(
                 decoration: const BoxDecoration(
                   image: DecorationImage(
-                    image: AssetImage('assets/newBackground.png'), // 替换为你的背景图路径
+                    image: AssetImage('assets/person.png'), // 替换为你的背景图路径
                     fit: BoxFit.cover, // 调整图片适应方式
                     alignment: Alignment(0, -0.9), // 使用默认的居中对齐
                   ),
@@ -82,7 +82,7 @@ class _PersonPageState extends State<PersonPage> {
                         margin: const EdgeInsets.only(bottom: 40),
                       ),
                       Positioned(
-                        bottom: 5,
+                        bottom: 20,
                         left: 20,
                         child: FutureBuilder<Widget>(
                           future: _buildByState(context),

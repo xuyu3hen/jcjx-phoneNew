@@ -78,7 +78,7 @@ class _LoginRouteState extends State<LoginRoute> {
           // 背景图片
           Positioned.fill(
             child: Image.asset(
-              'assets/login.png',
+              'assets/login1.png',
               fit: BoxFit.cover,
             ),
           ),
