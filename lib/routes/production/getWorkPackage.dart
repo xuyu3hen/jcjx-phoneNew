@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../../index.dart';
 
 class GetWorkPackage extends StatefulWidget {
@@ -10,6 +8,11 @@ class GetWorkPackage extends StatefulWidget {
 }
 
 class _DataDisplayPageState extends State<GetWorkPackage> {
+  // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
+
   // 动态类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
   // 筛选的动态类型信息
@@ -80,7 +83,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                       childrenKey: 'children',
                       title: "选择动力类型",
                       clickCallBack: (selectItem, selectArr) {
-                        print(selectArr);
+                        logger.i(selectArr);
                         setState(() {
                           dynamciTypeSelected["code"] = selectItem["code"];
                           dynamciTypeSelected["name"] = selectItem["name"];
@@ -109,7 +112,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                       title: "选择机型",
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
-                          print(selectArr);
+                          logger.i(selectArr);
                           jcTypeListSelected["name"] = selectItem["name"];
                           getTrainNumCodeList();
                         });
@@ -136,7 +139,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                       title: "选择检修地点",
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
-                          print(selectArr);
+                          logger.i(selectArr);
                           trainNumSelected["trainNum"] = selectItem["trainNum"];
                           trainNumSelected["code"] = selectItem["code"];
                           getWorkPackage();
@@ -151,8 +154,8 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                         workPackageList.data!.isNotEmpty)
                     ? workPackageList.data!
                         .map((package) => Container(
-                              margin: EdgeInsets.symmetric(vertical: 4),
-                              padding: EdgeInsets.symmetric(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 12),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -166,7 +169,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                     color: Colors.grey.withOpacity(0.3),
                                     spreadRadius: 1,
                                     blurRadius: 3,
-                                    offset: Offset(0, 2),
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
@@ -180,26 +183,26 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold),
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   // 先展示主修、辅修信息的行
                                   Row(
                                     children: [
                                       Expanded(
                                         child: Text(
                                           '主修：${package.executorName ?? ''}',
-                                          style: TextStyle(fontSize: 16),
+                                          style: const TextStyle(fontSize: 16),
                                         ),
                                       ),
-                                      SizedBox(width: 16),
+                                      const SizedBox(width: 16),
                                       Expanded(
                                         child: Text(
                                           '辅修：${package.assistantName ?? ''}',
-                                          style: TextStyle(fontSize: 16),
+                                          style: const TextStyle(fontSize: 16),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   // 再展示成为主修、成为辅修按钮的行
                                   Row(
                                     children: [
@@ -250,7 +253,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                               Text(getMainRepairText(package)),
                                         ),
                                       ),
-                                      SizedBox(width: 16),
+                                      const SizedBox(width: 16),
                                       // 根据assistantNameList字段判断是否显示成为辅修按钮，并添加相关逻辑
                                       Expanded(
                                         child: ElevatedButton(
@@ -345,7 +348,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
     setState(() {
       dynamicTypeList = r.toMapList();
       permissions = permissionResponse;
-      print(permissions.toJson());
+      logger.i(permissions.toJson());
     });
   }
 
@@ -356,7 +359,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
       'pageSize': 0
     };
     var r = await ProductApi().getJcType(queryParametrs: queryParameters);
-    print(r.toJson());
+    logger.i(r.toJson());
     setState(() {
       jcTypeList = r.toMapList();
     });
@@ -426,7 +429,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
 
     setState(() {
       workPackageList = r;
-      print(workPackageList.toJson());
+      logger.i(workPackageList.toJson());
     });
   }
 }

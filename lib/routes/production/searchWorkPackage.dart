@@ -1,8 +1,4 @@
-import 'dart:convert';
 import 'package:jcjx_phone/index.dart';
-import 'package:http/http.dart' as http;
-
-import '../../models/searchWorkPackage/secondPackage.dart';
 
 class SearchWorkPackage extends StatefulWidget {
   const SearchWorkPackage({super.key});
@@ -12,6 +8,10 @@ class SearchWorkPackage extends StatefulWidget {
 }
 
 class _DataDisplayPageState extends State<SearchWorkPackage> {
+  // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
   // 主流程节点以及修程
   late List<Map<String, dynamic>> mainNodeAndProcList = [];
   // 主流程节点以及修程选择
@@ -88,19 +88,19 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           childrenKey: 'children',
                           title: "选择动力类型",
                           clickCallBack: (selectItem, selectArr) {
-                            print(selectArr);
+                            logger.i(selectArr);
                             setState(() {
                               mainNodeAndProcSelected["name"] =
                                   selectItem["name"];
                               List<Map<String, dynamic>> repairNodecList = [];
-                              print(
+                              logger.i(
                                   selectItem["repairMainNodeList"].toString());
                               selectItem["repairMainNodeList"]
                                   ?.forEach((element) {
                                 repairNodecList.add(element.toJson());
                               });
                               procList = repairNodecList;
-                              print(procList.toString());
+                              logger.i(procList.toString());
                             });
                           },
                         );
@@ -125,7 +125,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           title: "选择机型",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               procSelected["name"] = selectItem["name"];
                               procSelected["repairMainNodeCode"] =
                                   selectItem["code"];
@@ -154,7 +154,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           title: "选择检修地点",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               trainNumSelected["trainNum"] =
                                   selectItem["trainNum"];
                               trainNumSelected["code"] = selectItem["code"];
@@ -205,7 +205,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                                       color: Colors.grey.withOpacity(0.3),
                                       spreadRadius: 2,
                                       blurRadius: 4,
-                                      offset: Offset(0, 3),
+                                      offset: const Offset(0, 3),
                                     ),
                                   ],
                                 ),
@@ -301,11 +301,10 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                               MediaQuery.of(context).size.width,
                               MediaQuery.of(context).size.height * 0.1)),
                           padding: MaterialStateProperty.all(
-                              EdgeInsets.symmetric(
+                              const EdgeInsets.symmetric(
                                   horizontal: 0, vertical: 10)),
                         ),
-                        child: const Text('开工',
-                            style: TextStyle(fontSize: 18)),
+                        child: const Text('开工', style: TextStyle(fontSize: 18)),
                       ),
                     ),
                   )
@@ -349,7 +348,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
         .getPersonalWorkPackage(queryParametrs: queryParameters);
     setState(() {
       workPackageList = r;
-      print(workPackageList.toJson());
+      logger.i(workPackageList.toJson());
     });
     return r;
   }
@@ -357,12 +356,12 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
   // 开工
   void startWork(List<WorkPackage> workPackageList) async {
     List<Map<String, dynamic>> startWorkList = [];
-    workPackageList.forEach((element) {
+    for (var element in workPackageList) {
       startWorkList.add({
         "code": element.code,
         "startTime": DateTime.now().millisecondsSinceEpoch
       });
-    });
+    }
     // 等待开工操作完成
     ProductApi().startWork(startWorkList);
     try {
@@ -373,7 +372,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
       });
     } catch (e) {
       // 处理获取作业包列表出现错误的情况，比如打印错误信息等
-      print('获取作业包列表失败: $e');
+      logger.i('获取作业包列表失败: $e');
     }
   }
 
