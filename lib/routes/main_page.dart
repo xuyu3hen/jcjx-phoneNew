@@ -83,7 +83,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "searchWorkPackage": (context) => const SearchWorkPackage(),
         'preTrainWork': (context) => const PreTrainWork(),
         'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
-
+        'repairProgress': (context) => const RepairProgress(),
       },
       builder: FlutterSmartDialog.init(),
     );

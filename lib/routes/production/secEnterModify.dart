@@ -1,24 +1,23 @@
-
 import '../../index.dart';
-
-
 
 class SecEnterModify extends StatefulWidget {
   const SecEnterModify({Key? key}) : super(key: key);
 
   @override
-  _SecEnterModify createState() => _SecEnterModify();
+  _SecEnterModifyState createState() => _SecEnterModifyState();
 }
 
-class _SecEnterModify extends State<SecEnterModify> {
+class _SecEnterModifyState extends State<SecEnterModify> {
   // 车号
   late List<Map<String, dynamic>> trainNumCodeList;
-  //车号筛选信息
-  late Map<dynamic, dynamic> trainNumSelected = {} ;
+  // 车号筛选信息
+  late Map<dynamic, dynamic> trainNumSelected = {};
   // 检修地点
   late List<Map<String, dynamic>> stopLocationList;
   // 存储选择的检修地点信息
   late Map<dynamic, dynamic> stopLocationSelected = {};
+  // 提报状态，true 表示正在提报
+  bool isSubmitting = false;
 
   @override
   void initState() {
@@ -116,12 +115,11 @@ class _SecEnterModify extends State<SecEnterModify> {
 
   // 获取车号
   void getTrainNumCodeList() async {
-    var r = await ProductApi().getTrainNum();
-    if (r.data != []) {
-      setState(() {
-        trainNumCodeList = r.toMapList();
-      });
-    }
+    List<dynamic> r = await ProductApi().getTrainNumDynamic();
+    setState(() {
+      // 将 List<dynamic> 转换为 List<Map<String, dynamic>>
+      trainNumCodeList = r.map((item) => item as Map<String, dynamic>).toList();
+    });
   }
 
   // 获取检修地点
@@ -131,42 +129,54 @@ class _SecEnterModify extends State<SecEnterModify> {
       'pageSize': 10,
     });
     List<Map<String, dynamic>> processedStopLocations = [];
-    if(r.rows != null && r.rows!.isNotEmpty) {
-      for(var item in r.rows!) {
-        if(item.areaName != null && item.deptName != null && item.trackNum!= null){
+    if (r.rows != null && r.rows!.isNotEmpty) {
+      for (var item in r.rows!) {
+        if (item.areaName != null && item.deptName != null && item.trackNum != null) {
           processedStopLocations.add({
-          'code': item.code,
-          'deptName': item.deptName,
-          'realLocation': '${item.deptName}-${item.trackNum}-${item.areaName}'  
-        });
+            'code': item.code,
+            'deptName': item.deptName,
+            'realLocation': '${item.deptName}-${item.trackNum}-${item.areaName}'
+          });
         }
       }
     }
     setState(() {
-      stopLocationList =  processedStopLocations;
+      stopLocationList = processedStopLocations;
       print(stopLocationList);
     });
   }
 
   Future<String> newEntry() async {
+    if (isSubmitting) {
+      return ""; // 如果正在提报，直接返回空字符串
+    }
+    setState(() {
+      isSubmitting = true; // 开始提报，设置状态为正在提报
+    });
     Map<String, dynamic> queryParameters = {
       'trainNum': trainNumSelected["name"],
       'trainNumCode': trainNumSelected["code"],
       'repairTimes': trainNumSelected["repairTimes"],
       'dynamicCode': trainNumSelected["dynamicCode"],
-      'repairPlanCode': trainNumSelected["repairPlanCode"],//获取的trainNum的主键
+      'repairPlanCode': trainNumSelected["repairPlanCode"], // 获取的 trainNum 的主键
       'repairProcCode': trainNumSelected["repairProcCode"],
       'repairLocation': stopLocationSelected["code"],
       'sort': 5,
       'typeCode': trainNumSelected["typeCode"],
     };
-    var r = await ProductApi().newTrainEntry(queryParametrs: queryParameters);
-    if (r["code"] == "S_T_S001") {
-      showToast("新增入修成功");
-      return r["data"];
-    } else {
-      showToast("新增入修失败");
-      return "";
+    try {
+      var r = await ProductApi().newTrainEntry(queryParametrs: queryParameters);
+      if (r["code"] == "S_T_S001") {
+        showToast("新增入修成功");
+        return r["data"];
+      } else {
+        showToast("新增入修失败");
+        return "";
+      }
+    } finally {
+      setState(() {
+        isSubmitting = false; // 提报结束，设置状态为未提报
+      });
     }
   }
 
@@ -174,16 +184,20 @@ class _SecEnterModify extends State<SecEnterModify> {
     return SafeArea(
       child: InkWell(
         onTap: () async {
-          newEntry().then((code) => {
-                if (code != "") {exitDialog()}
-              });
+          if (isSubmitting) return; // 如果正在提报，不处理点击事件
+          newEntry().then((code) {
+            if (code != "") {
+              exitDialog();
+            }
+          });
         },
         child: Container(
           alignment: Alignment.center,
           color: Colors.lightBlue[200],
           height: 50,
-          child: const Text('新 增 入 段',
-              style: TextStyle(color: Colors.black, fontSize: 18)),
+          child: isSubmitting
+              ? const CircularProgressIndicator() // 显示加载指示器
+              : const Text('新 增 入 段', style: TextStyle(color: Colors.black, fontSize: 18)),
         ),
       ),
     );
@@ -213,8 +227,7 @@ class _SecEnterModify extends State<SecEnterModify> {
                 constraints: BoxConstraints.expand(height: 30, width: 160),
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    SmartDialog.dismiss()
-                        .then((value) => Navigator.of(context).pop());
+                    SmartDialog.dismiss().then((value) => Navigator.of(context).pop());
                   },
                   label: Text('确定'),
                   icon: Icon(Icons.system_security_update_good_sharp),

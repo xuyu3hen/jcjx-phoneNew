@@ -47,6 +47,21 @@ class JtApi extends AppApi{
     return (r.data['data']);
   }
 
+    // 创建 Logger 实例
+  var logger = Logger(
+    printer: PrettyPrinter(), // 漂亮的日志格式化
+  );
+
+  // subparts/workInstructPackage/syncWorkPackageToPackageUser 同步作业包
+  Future<void> syncWorkPackageToPackageUser(Map<String, dynamic> params) async{
+      var r = await AppApi.dio.get(
+        "/subparts/workInstructPackage/syncWorkPackageToPackageUser",
+        data: params
+      );
+      logger.i(r.data);  
+  }
+
+
   // 机统28保存-更新(提报)
   Future<dynamic> uploadJt28({
     List<Map<String,dynamic>>? queryParametrs

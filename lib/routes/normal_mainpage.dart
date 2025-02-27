@@ -93,7 +93,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           children: [
             Positioned.fill(
               child: Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage('assets/mainPage.png'), // 替换为你的背景图路径
                     fit: BoxFit.cover, // 调整图片适应方式
@@ -102,7 +102,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 ),
               ),
             ),
-            Center(
+            const Center(
               child: CircularProgressIndicator(),
             ),
           ],
@@ -116,7 +116,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
         children: [
           Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 image: DecorationImage(
                     image: AssetImage('assets/mainPage.png'), // 替换为你的背景图路径
                     fit: BoxFit.cover, // 调整图片适应方式
@@ -190,6 +190,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Widget _buildGongzhangSection() {
     return Column(
       children: [
+        const SizedBox(height: 30),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.alarm, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairProgress'),
+                '检修进度',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+          ],
+        ),
         const ListTile(
           title: Text("机车入段",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -290,6 +307,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Widget _buildBuilderSection() {
     return Column(
       children: [
+        const SizedBox(height: 30),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.alarm, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairProgress'),
+                '检修进度',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+          ],
+        ),
         const ListTile(
           title: Text("机车入段",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

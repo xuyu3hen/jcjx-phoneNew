@@ -1,4 +1,3 @@
-
 import 'dart:developer';
 
 import 'dart:io';
@@ -10,10 +9,8 @@ import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
 
-
 import '../index.dart';
 import '../models/prework/packageUser.dart';
-
 
 class ProductApi extends AppApi {
   // 创建 Logger 实例
@@ -65,6 +62,15 @@ class ProductApi extends AppApi {
       _handleException(e);
       return InnerData(List: null, data: []);
     }
+  }
+
+  //入段车号展示dynamic
+  Future<dynamic> getTrainNumDynamic() async {
+    var r = await AppApi.dio
+        .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
+    logger.i("展示获取信息");
+    logger.i((r.data["data"])['data']);
+    return (r.data["data"])['data'];
   }
 
   // 检修地点展示
@@ -247,7 +253,7 @@ class ProductApi extends AppApi {
   }
 
   // 成为主修
-  void beMainRepair(
+  Future<void> beMainRepair(
     List<String> queryParametrs,
   ) async {
     try {
@@ -267,7 +273,7 @@ class ProductApi extends AppApi {
   }
 
   // 取消主修
-  void cancelMainRepair(List<String> queryParametrs) async {
+  Future<void> cancelMainRepair(List<String> queryParametrs) async {
     try {
       var r = await AppApi.dio2.post(
         "/tasks/taskInstructPackage/cancelPersonalPackage",
@@ -282,7 +288,7 @@ class ProductApi extends AppApi {
   }
 
   // 成为辅修
-  void beAssistantRepair(List<String> queryParametrs) async {
+  Future<void> beAssistantRepair(List<String> queryParametrs) async {
     try {
       var r = await AppApi.dio2.post(
         "/tasks/taskInstructPackage/selectAssistantPackage",
@@ -321,7 +327,7 @@ class ProductApi extends AppApi {
   }
 
   // 取消辅修
-  void cancelAssistantRepair(List<String> queryParametrs) async {
+  Future<void> cancelAssistantRepair(List<String> queryParametrs) async {
     try {
       var r = await AppApi.dio2.post(
         "/tasks/taskInstructPackage/cancelAssistantPackage",
@@ -333,6 +339,39 @@ class ProductApi extends AppApi {
     } catch (e) {
       _handleException(e);
     }
+  }
+
+  //dispatch/trainEntry/selectAll
+  Future<dynamic> getTrainEntryDynamic(
+      Map<String, dynamic> queryParametrs) async {
+    var r = await AppApi.dio.get(
+      "/dispatch/trainEntry/selectAll",
+      data: queryParametrs,
+    );
+    logger.i((r.data["data"])['data']);
+
+    return (r.data["data"])['data'];
+  }
+
+  // dispatch/trainEntry/getTrainEntryByRepairMainNodeCodeList
+  Future<dynamic> getTrainEntryByRepairMainNodeCodeList(
+      List<String> codeList) async {
+    var r = await AppApi.dio2.post(
+      "/dispatch/trainEntry/getTrainEntryByRepairMainNodeCodeList",
+      data: codeList,
+    );
+    logger.i((r.data["data"])['data']);
+    return (r.data["data"])['data'];
+  }
+
+  // dispatch/trainEntry/getRepairingTrainStatus
+  Future<dynamic> getRepairingTrainStatus(List<String> codeList) async {
+    var r = await AppApi.dio2.post(
+      "/dispatch/trainEntry/getRepairingTrainStatus",
+      data: codeList,
+    );
+    logger.i((r.data["data"])['data']);
+    return r.data["data"];
   }
 
   // 上传油量照片

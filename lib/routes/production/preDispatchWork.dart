@@ -16,9 +16,9 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   var logger = Logger(
     printer: PrettyPrinter(), // 漂亮的日志格式化
   );
-  // 动态类型列表
+  // 动力类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
-  // 筛选的动态类型信息
+  // 筛选的动力类型信息
   late Map<dynamic, dynamic> dynamicTypeSelected = {};
   // 机型列表
   late List<Map<String, dynamic>> jcTypeList = [];
@@ -413,6 +413,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     );
   }
 
+  //同步作业包 TODO: 完善作业包同步
+  void syncWorkPackageToPackageUser(){
+    Map<String, dynamic> params = {
+      "typeCode": jcTypeListSelected['code'],
+      "repairMainNodeCode": "repairMainNodeCode",
+      'deptId': ""
+    };
+  }
   // 获取动态类型
   void getDynamicType() async {
     //获取动力类型

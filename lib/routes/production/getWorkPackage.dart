@@ -240,12 +240,16 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                             if (mainRepairStatus) {
                                               // 如果当前不是主修状态，则调用成为主修接口
                                               beMainRepair(package.code ?? '');
-                                              setState(() {});
+                                              setState(() {
+                                                  getWorkPackage();
+                                              });
                                             } else if (cancelMainRepairStatus) {
                                               // 如果已经是主修状态，调用取消主修接口
                                               cancelMainRepair(
                                                   package.code ?? '');
-                                              setState(() {});
+                                              setState(() {
+                                                getWorkPackage();
+                                              });
                                             }
                                             _isButtonProcessing = false;
                                           },
@@ -275,12 +279,16 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                               // 如果当前不是辅修状态，则调用成为辅修接口
                                               beAssistantRepair(
                                                   package.code ?? '');
-                                              setState(() {});
+                                              setState(() {
+                                                getWorkPackage();
+                                              });
                                             } else if (cancelAssistant) {
                                               // 如果已经是辅修状态，调用取消辅修接口
                                               cancelAssistantRepair(
                                                   package.code ?? '');
-                                              setState(() {});
+                                              setState(() {
+                                                getWorkPackage();
+                                              });
                                             }
                                           },
                                           child:
@@ -381,45 +389,48 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
   }
 
   // 成为主修
-  void beMainRepair(String code) async {
+  Future<void> beMainRepair(String code) async {
     //用code组件一个List<String>
     List<String> queryParameters = [code];
 
-    ProductApi().beMainRepair(queryParameters);
+    await ProductApi().beMainRepair(queryParameters);
     // 更新状态为已成为主修
-    getWorkPackage();
+    setState(() {
+      getWorkPackage();
+    });
+  
   }
 
   // 取消主修
-  void cancelMainRepair(String code) async {
+  Future<void> cancelMainRepair(String code) async {
     //构建取消主修参数
     List<String> queryParameters = [code];
-    ProductApi().cancelMainRepair(queryParameters);
+    await ProductApi().cancelMainRepair(queryParameters);
     // 更新状态为已取消主修
     getWorkPackage();
   }
 
   //成为辅修
-  void beAssistantRepair(String code) async {
+  Future<void> beAssistantRepair(String code) async {
     //构建成为辅修参数
     List<String> queryParameters = [code];
-    ProductApi().beAssistantRepair(queryParameters);
+    await ProductApi().beAssistantRepair(queryParameters);
 
     getWorkPackage();
   }
 
   //取消辅修
-  void cancelAssistantRepair(String code) async {
+  Future<void> cancelAssistantRepair(String code) async {
     //构建成为辅修参数
     List<String> queryParameters = [code];
 
-    ProductApi().cancelAssistantRepair(queryParameters);
+    await ProductApi().cancelAssistantRepair(queryParameters);
 
     getWorkPackage();
   }
 
   //获取作业包
-  void getWorkPackage() async {
+  Future<void> getWorkPackage() async {
     //构建查询作业包参数
     Map<String, dynamic> queryParameters = {
       'trainEntryCode': trainNumSelected["code"],

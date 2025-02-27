@@ -166,4 +166,4 @@ flavorizr:
         name: "机车检修(测试)"
       android:
         applicationId: "com.jcjx_phone_test"
-        icon: "./img/test_icon.jpg"
+        icon: "./img/logo4.jpg"
