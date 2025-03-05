@@ -297,7 +297,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
         //         height: (MediaQuery.of(context).size.height),
         //       ),
         //     )
-        //   ],
+        //   ],6
         // ),
       ],
     );

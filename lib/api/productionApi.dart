@@ -149,6 +149,7 @@ class ProductApi extends AppApi {
         "/subparts/repairProc/selectAll",
         queryParameters: queryParametrs,
       );
+      logger.i((r.data["data"])["data"]);
       return RepairProcList.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
