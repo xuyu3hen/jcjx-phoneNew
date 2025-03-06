@@ -66,4 +66,6 @@ class Global {
   static saveProfile() => _prefs.setString("profile", jsonEncode(profile.toJson()));
 
   static TextStyle _textStyle = const TextStyle(fontSize: 20, color: Colors.black);
+
+
 }

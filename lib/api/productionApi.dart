@@ -344,7 +344,7 @@ class ProductApi extends AppApi {
 
   //dispatch/trainEntry/selectAll
   Future<dynamic> getTrainEntryDynamic(
-      Map<String, dynamic> queryParametrs) async {
+      Map<String, dynamic>? queryParametrs) async {
     var r = await AppApi.dio.get(
       "/dispatch/trainEntry/selectAll",
       data: queryParametrs,
@@ -355,14 +355,21 @@ class ProductApi extends AppApi {
   }
 
   // dispatch/trainEntry/getTrainEntryByRepairMainNodeCodeList
-  Future<dynamic> getTrainEntryByRepairMainNodeCodeList(
+  Future<Map<String, List<dynamic>>> getTrainEntryByRepairMainNodeCodeList(
       List<String> codeList) async {
     var r = await AppApi.dio2.post(
       "/dispatch/trainEntry/getTrainEntryByRepairMainNodeCodeList",
       data: codeList,
     );
-    logger.i((r.data["data"])['data']);
-    return (r.data["data"])['data'];
+
+    //将Map<String, dynamic>转换为Map<String, List<dynamic>>
+    Map<String, List<dynamic>> map = {};
+    for (var key in (r.data["data"])['data'].keys) {
+      map[key] = (r.data["data"])['data'][key];
+    }
+    logger.i(map.toString());
+    // return (r.data["data"])['data'];
+    return map;
   }
 
   // dispatch/trainEntry/getRepairingTrainStatus
@@ -371,7 +378,7 @@ class ProductApi extends AppApi {
       "/dispatch/trainEntry/getRepairingTrainStatus",
       data: codeList,
     );
-    logger.i((r.data["data"])['data']);
+    logger.i(r.data["data"]);
     return r.data["data"];
   }
 
@@ -599,13 +606,16 @@ class ProductApi extends AppApi {
   }
 
   // 获取工序节点
-  Future<dynamic> getRepairMainNode(
-      {Map<String, dynamic>? queryParameters}) async {
+  Future<List<Map<String, dynamic>>> getRepairMainNode({
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
       var r = await AppApi.dio.get("/subparts/repairMainNode/selectAll",
           queryParameters: queryParameters);
-      // log("getRepairMainNode${r.data}");
-      return ((r.data["data"])["data"])['rows'];
+      logger.i(r.data["data"]);
+      // 确保返回的数据格式正确
+      List<dynamic> rows = r.data["data"]["data"]["rows"];
+      return rows.map((item) => item as Map<String, dynamic>).toList();
     } catch (e) {
       _handleException(e);
       return [];
@@ -820,6 +830,8 @@ class ProductApi extends AppApi {
     logger.i((r.data["data"])['data']);
     return (r.data["data"])['data'];
   }
+
+  //subparts/repairMainNode/selectAll
 
 // 统一异常处理方法
   void _handleException(dynamic e) {

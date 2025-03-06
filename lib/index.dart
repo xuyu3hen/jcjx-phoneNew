@@ -3,6 +3,7 @@ export 'models/index.dart';
 export 'common/index.dart';
 export 'states/index.dart';
 export 'widgets/index.dart';
+export 'utils/index.dart';
 export 'api/index.dart';
 export 'package:flutter/material.dart';
 export 'package:provider/provider.dart';
@@ -17,6 +18,7 @@ export 'package:date_format/date_format.dart';
 export 'package:jcjx_phone/zjc_common/zjc_form/zjc_form_input_cell.dart';
 export 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart';
 export 'package:logger/logger.dart';
+export 'package:graphview/GraphView.dart';
 /*
   // flavors的元素备份
 

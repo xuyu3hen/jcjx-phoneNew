@@ -85,6 +85,8 @@ dependencies:
   flutter_screenutil: ^5.8.4
   # 小红点 https://pub.flutter-io.cn/packages/badges
   badges: ^3.1.1
+  flutter_svg: ^2.0.7
+  graphview: ^1.1.6
   
 dev_dependencies:
   flutter_test:
