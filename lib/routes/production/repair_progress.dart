@@ -24,14 +24,18 @@ class _RepairProgressState extends State<RepairProgress> {
 
   // 获取动态类型
   Future<void> getDynamicType() async {
-    var r = await ProductApi().getDynamicType();
+    try {
+      var r = await ProductApi().getDynamicType();
 
-    if (mounted) {
-      setState(() {
-        dynamicTypeList = r.toMapList();
-        dynamicTypeSelected = r.toMapList()[0];
-        logger.i(dynamicTypeSelected);
-      });
+      if (mounted) {
+        setState(() {
+          dynamicTypeList = r.toMapList();
+          dynamicTypeSelected = r.toMapList()[0];
+          logger.i(dynamicTypeSelected);
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -41,20 +45,25 @@ class _RepairProgressState extends State<RepairProgress> {
   late Map<String, dynamic> repairSysSelected = {};
   // 获取修制信息
   Future<void> getRepairSys() async {
-    Map<String, dynamic> queryParameters = {
-      'dynamicCode': dynamicTypeSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
+    try {
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': dynamicTypeSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
 
-    var r = await ProductApi().selectRepairSys(queryParametrs: queryParameters);
+      var r =
+          await ProductApi().selectRepairSys(queryParametrs: queryParameters);
 
-    setState(() {
-      logger.i(r.rows!.length);
-      repairSysList = r.toMapList();
-      logger.i(repairSysList.toString());
-      repairSelected = r.toMapList()[0];
-    });
+      setState(() {
+        logger.i(r.rows!.length);
+        repairSysList = r.toMapList();
+        logger.i(repairSysList.toString());
+        repairSelected = r.toMapList()[0];
+      });
+    } catch (e, stackTrace) {
+      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   // 修程列表
@@ -63,20 +72,24 @@ class _RepairProgressState extends State<RepairProgress> {
   late Map<String, dynamic> repairSelected = {};
 
   void getRepairProc() async {
-    Map<String, dynamic> queryParameters = {
-      'repairSysCode': repairSysSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
+    try {
+      Map<String, dynamic> queryParameters = {
+        'repairSysCode': repairSysSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
 
-    if (r.rows != []) {
-      if (mounted) {
-        setState(() {
-          //将获取的信息列表
-          repairList = r.toMapList();
-        });
+      if (r.rows != []) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            repairList = r.toMapList();
+          });
+        }
       }
+    } catch (e, stackTrace) {
+      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -87,28 +100,33 @@ class _RepairProgressState extends State<RepairProgress> {
   List<Map<String, dynamic>> repairMainNodeStatusList = [];
 
   void getTrainEntry() async {
-    Map<String, dynamic> queryParameters = {};
-    queryParameters['pageNum'] = 0;
-    queryParameters['pageSize'] = 0;
-    queryParameters['dynamicCode'] = dynamicTypeSelected['code'];
-    queryParameters['repairProcCode'] = repairSelected['code'];
+    try {
+      Map<String, dynamic> queryParameters = {};
+      queryParameters['pageNum'] = 0;
+      queryParameters['pageSize'] = 0;
+      queryParameters['dynamicCode'] = dynamicTypeSelected['code'];
+      queryParameters['repairProcCode'] = repairSelected['code'];
 
-    Map<String, dynamic> r =
-        await ProductApi().getTrainEntryDynamic(queryParameters);
+      Map<String, dynamic> r =
+          await ProductApi().getTrainEntryDynamic(queryParameters);
 
-    if (r.containsKey('rows') && r['rows'].isNotEmpty) {
-      List<String> codeList =
-          r['rows'].map((value) => value['code']).cast<String>().toList();
+      if (r.containsKey('rows') && r['rows'].isNotEmpty) {
+        List<String> codeList =
+            r['rows'].map((value) => value['code']).cast<String>().toList();
 
-      var statusResponse = await ProductApi().getRepairingTrainStatus(codeList);
+        var statusResponse =
+            await ProductApi().getRepairingTrainStatus(codeList);
 
-      logger.i(statusResponse);
+        logger.i(statusResponse);
 
-      if (mounted) {
-        setState(() {
-          trainEntryResponse = {'data': statusResponse['data'] ?? []};
-        });
+        if (mounted) {
+          setState(() {
+            trainEntryResponse = {'data': statusResponse['data'] ?? []};
+          });
+        }
       }
+    } catch (e, stackTrace) {
+      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
