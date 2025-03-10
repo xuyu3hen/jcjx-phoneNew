@@ -33,3 +33,5 @@ export 'production/preTrainWork.dart';
 export 'production/setSpecialMutual.dart';
 export 'production/temporaryRepairInfoPage.dart';
 export 'production/repair_progress.dart';
+export 'production/search_work_package.dart';
+export 'production/get_workPackage.dart';

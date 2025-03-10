@@ -1,9 +1,5 @@
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:dio/src/adapters/io_adapter.dart';
 
 import '../index.dart';
 export 'package:dio/dio.dart' show DioException;
@@ -45,23 +41,24 @@ class AppApi {
 
   static void init() {
     // TODO:添加缓存插件
-
+    // 创建 Logger 实例
+    var logger = AppLogger.logger;
     // 设置用户token
     dio.options.headers[HttpHeaders.authorizationHeader] =
         Global.profile.data?.access_token;
 
-    print(
-        "看看authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
+    logger.i(
+        "authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
     dio.options.headers.addAll({'token': Global.profile.access_token});
     dio2.options.headers["content-type"] = "application/json";
     dio2.options.headers[HttpHeaders.authorizationHeader] =
         Global.profile.data?.access_token;
 
-    print(
-        "看看authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
+    logger.i(
+        "authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
     dio2.options.headers.addAll({'token': Global.profile.access_token});
-    print('apptoken${dio.options.headers['token']}');
-    print('baseurl${dio.options.baseUrl}');
+    logger.i('apptoken${dio.options.headers['token']}');
+    logger.i('baseurl${dio.options.baseUrl}');
 
     //调试抓包及禁用证书校验
     if (!Global.isRelease) {

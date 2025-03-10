@@ -1,7 +1,3 @@
-import 'dart:io';
-
-import 'package:image_picker/image_picker.dart';
-import 'package:jcjx_phone/routes/production/searchWorkPackage.dart';
 
 import '../../index.dart';
 
@@ -9,10 +5,10 @@ class TaskPackageDetailsPage extends StatefulWidget {
   final WorkPackage package;
   final SecondPackage secondPackage;
 
-  TaskPackageDetailsPage({required this.package, required this.secondPackage});
+   TaskPackageDetailsPage({required this.package, required this.secondPackage});
 
   @override
-  _TaskPackageDetailsPageState createState() => _TaskPackageDetailsPageState();
+  State createState() => _TaskPackageDetailsPageState();
 }
 
 class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
@@ -30,7 +26,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('作业项内容'),
+        title: const Text('作业项内容'),
       ),
       body: Column(
         children: [
@@ -72,8 +68,8 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
         );
       },
       child: Container(
-        margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        padding: EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
             color: Colors.blue,
