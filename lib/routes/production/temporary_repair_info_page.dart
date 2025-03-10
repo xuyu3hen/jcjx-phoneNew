@@ -1,22 +1,19 @@
-import 'package:flutter/material.dart';
+
 import 'package:intl/intl.dart';
-import 'package:jcjx_phone/models/prework/repairTimes.dart';
 import '../../index.dart';
 
 class TemporaryRepairInfoPage extends StatefulWidget {
   const TemporaryRepairInfoPage({super.key});
 
   @override
-  _TemporaryRepairInfoPageState createState() =>
+  State createState() =>
       _TemporaryRepairInfoPageState();
 }
 
 class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
  
     // 创建 Logger 实例
-  var logger = Logger(
-    printer: PrettyPrinter(), // 漂亮的日志格式化
-  );
+  var logger = AppLogger.logger;
   // 排序数字
   int _sort = 1;
   final TextEditingController _repairSectionController =
@@ -164,7 +161,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
         });
       }
     } catch (e) {
-      print('Error fetching data: $e');
+      logger.e('Error fetching data: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('获取数据失败: $e')),
       );
@@ -187,7 +184,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
           .getDeptTreeByParentIdList(queryParametrs: queryParameters);
       if (info[0]['children'] is List) {
         List<dynamic> rows = info[0]['children'];
-        print(info[0]['children'].toString());
+        logger.i(info[0]['children'].toString());
         List<Map<String, dynamic>> deptRows =
             rows.whereType<Map<String, dynamic>>().toList();
         logger.i(deptRows.toString());
@@ -233,7 +230,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
             .where((item) => item.containsKey('nickName'))
             .map((item) => item['nickName'] as String)
             .toList();
-        print(deptUserInfos.toString());
+        logger.i(deptUserInfos.toString());
       });
     } catch (e) {
       logger.i('Error fetching data: $e');
@@ -317,7 +314,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
             .where((item) => item.containsKey('name'))
             .map((item) => item['name'] as String)
             .toList();
-        print(_repairProcesses.toString());
+        logger.i(_repairProcesses.toString());
       });
     }
   }

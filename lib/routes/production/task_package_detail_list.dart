@@ -5,7 +5,7 @@ class TaskPackageDetailsPage extends StatefulWidget {
   final WorkPackage package;
   final SecondPackage secondPackage;
 
-   TaskPackageDetailsPage({required this.package, required this.secondPackage});
+   const TaskPackageDetailsPage({super.key, required this.package, required this.secondPackage});
 
   @override
   State createState() => _TaskPackageDetailsPageState();
@@ -17,6 +17,8 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   //将SecondPackage转换为SecondShowPackage进行包装
   late List<SecondShowPackage> secondShowPackageList =
       getGroupSecondPackageCodeList();
+  
+  var logger = AppLogger.logger;
 
   void setCheck() {
     setState(() {});
@@ -81,7 +83,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildCheckbox(secondShowPackage),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,13 +95,13 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                         fontWeight: FontWeight.bold,
                         color: getColorFromIndex(secondShowPackage.color ?? 0)),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       _buildColoredText(
                           '风险等级: ${secondShowPackage.taskCertainPackageList?.riskLevel ?? '无'}',
                           secondShowPackage.color),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       _buildStatusIconAndText(
                           secondShowPackage.taskCertainPackageList!.complete),
                     ],
@@ -158,13 +160,13 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                 }
               }
               setState(() {
-                print(_packageCheckedList.length);
+                logger.i(_packageCheckedList.length);
                 if (_packageCheckedList.isNotEmpty) {
                   for (SecondShowPackage secondShowPackage
                       in _packageCheckedList) {
-                    print(secondShowPackage.secondPackageNode);
-                    print(secondShowPackage.taskCertainPackageList!.name);
-                    print(secondShowPackage.taskCertainPackageList!.riskLevel);
+                    logger.i(secondShowPackage.secondPackageNode);
+                    logger.i(secondShowPackage.taskCertainPackageList!.name);
+                    logger.i(secondShowPackage.taskCertainPackageList!.riskLevel);
                   }
                 }
               });
@@ -219,7 +221,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
           iconData,
           color: Colors.grey,
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         Text(statusText),
       ],
     );
@@ -231,7 +233,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   Widget _buildUploadButton(BuildContext context) {
     double height = MediaQuery.of(context).size.height * 0.1;
     bool checkUploudPicture = false;
-    String secondPackageCode = '';
+    // String secondPackageCode = '';
 
     // 如果只勾选一项可以提交作业列表
     if (_packageCheckedList.length == 1) {
@@ -262,7 +264,7 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
     List<UserInfo>? specialList = special.data;
     List<UserInfo>? mutualList = mutual.data;
 
-    return Container(
+    return SizedBox(
       width: MediaQuery.of(context).size.width,
       height: height,
       child: ElevatedButton(
@@ -284,10 +286,10 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: Text('非同一第二工位作业项，不可一起提交！'),
+                  title: const Text('非同一第二工位作业项，不可一起提交！'),
                   actions: [
                     TextButton(
-                      child: Text('确定'),
+                      child: const Text('确定'),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
@@ -298,22 +300,22 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
             );
           }
         },
-        child: Text('上传作业项图片'),
+        child: const Text('上传作业项图片'),
       ),
     );
   }
 
   void getUserList(String specialList, String mutualList) async {
-    List<int> special_list = [];
-    List<int> mutual_list = [];
+    List<int> specialList1 = [];
+    List<int> mutualList1 = [];
     // 处理 specialList
     if (specialList.isNotEmpty) {
       specialList.split(',').forEach((element) {
         try {
           int value = int.parse(element);
-          special_list.add(value);
+          specialList1.add(value);
         } catch (e) {
-          print('Error parsing $element in specialList: $e');
+          logger.e('Error parsing $element in specialList: $e');
         }
       });
     }
@@ -322,30 +324,30 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       mutualList.split(',').forEach((element) {
         try {
           int value = int.parse(element);
-          mutual_list.add(value);
+          mutualList1.add(value);
         } catch (e) {
-          print('Error parsing $element in mutualList: $e');
+          logger.e('Error parsing $element in mutualList: $e');
         }
       });
     }
-    print('Special List: $special_list');
-    print('Mutual List: $mutual_list');
+    logger.i('Special List: $specialList1');
+    logger.i('Mutual List: $mutualList1');
 
-    if (special_list.isNotEmpty) {
-      var specialUserList = await ProductApi().getUserList(special_list);
+    if (specialList1.isNotEmpty) {
+      var specialUserList = await ProductApi().getUserList(specialList1);
       if (mounted) {
         setState(() {
           special = specialUserList;
-          print('${special.data}');
+          logger.i('${special.data}');
         });
       }
     }
-    if (mutual_list.isNotEmpty) {
-      var muutualUserList = await ProductApi().getUserList(mutual_list);
+    if (mutualList1.isNotEmpty) {
+      var muutualUserList = await ProductApi().getUserList(mutualList1);
       if (mounted) {
         setState(() {
           mutual = muutualUserList;
-          print('${mutual.data}');
+          logger.i('${mutual.data}');
         });
       }
     }
@@ -393,8 +395,8 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       secondShowPackageList.add(secondShowPackage);
     }
     for (SecondShowPackage secondShowPackage in secondShowPackageList) {
-      print(secondShowPackage.taskCertainPackageList?.toJson());
-      print(secondShowPackage.toJson());
+      logger.i(secondShowPackage.taskCertainPackageList?.toJson());
+      logger.i(secondShowPackage.toJson());
     }
     return secondShowPackageList;
   }
@@ -441,11 +443,11 @@ class NewPage extends StatefulWidget {
   final List<UserInfo>? specialList;
   final List<SecondShowPackage>? secondPackageList;
 
-  NewPage({Key? key, this.mutualList, this.specialList, this.secondPackageList})
+  const NewPage({Key? key, this.mutualList, this.specialList, this.secondPackageList})
       : super(key: key);
 
   @override
-  _NewPageState createState() => _NewPageState();
+  State createState() => _NewPageState();
 }
 
 class _NewPageState extends State<NewPage> {
@@ -460,6 +462,8 @@ class _NewPageState extends State<NewPage> {
   //图片筛选
   final ImagePicker picker = ImagePicker();
 
+  var logger = AppLogger.logger;
+
   @override
   void initState() {
     super.initState();
@@ -471,10 +475,10 @@ class _NewPageState extends State<NewPage> {
     mutualListData =
         widget.mutualList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
     // 将 specialList 转换为 specialListData
-    print(mutualListData);
+    logger.i(mutualListData);
     specialListData =
         widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
-    print(specialListData);
+    logger.i(specialListData);
     //刷新界面
 
     return Scaffold(
@@ -512,7 +516,7 @@ class _NewPageState extends State<NewPage> {
                             childrenKey: 'children',
                             title: "选择动力类型",
                             clickCallBack: (selectItem, selectArr) {
-                              print(selectArr);
+                              logger.i(selectArr);
                               setState(() {
                                 mutualSelected['nickName'] =
                                     selectItem['nickName'];
@@ -546,7 +550,7 @@ class _NewPageState extends State<NewPage> {
                             childrenKey: 'children',
                             title: "选择动力类型",
                             clickCallBack: (selectItem, selectArr) {
-                              print(selectArr);
+                              logger.i(selectArr);
                               setState(() {
                                 specialSelected['nickName'] =
                                     selectItem['nickName'];
@@ -570,14 +574,14 @@ class _NewPageState extends State<NewPage> {
     );
   }
 
-  TextStyle LeadingStyle(val) {
+  TextStyle leadingStyle(val) {
     return TextStyle(
       fontSize: val,
       color: Colors.black,
     );
   }
 
-  Text DataText(str, val) {
+  Text dataText(str, val) {
     return Text(
       str,
       style: TextStyle(
@@ -595,7 +599,7 @@ class _NewPageState extends State<NewPage> {
           InkWell(
             child: Container(
               constraints:
-                  BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
+                  const BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
               decoration: BoxDecoration(
                 color: Colors.indigo.shade50,
               ),
@@ -608,10 +612,8 @@ class _NewPageState extends State<NewPage> {
             onTap: () => {showBottomSheet(context)},
           ),
         if (_image != null)
-          Container(
-            child: Image.file(_image!, height: 400), // 放大图片的显示高度
-          ),
-        SizedBox(height: 20), // 增加一些间距
+          Image.file(_image!, height: 400),
+        const SizedBox(height: 20), // 增加一些间距
         SizedBox(
           //宽度为屏幕宽
           width: MediaQuery.of(context).size.width,
@@ -631,7 +633,7 @@ class _NewPageState extends State<NewPage> {
               else
                 {showToast("请先选择上传图像")}
             },
-            child: Text("上传", style: TextStyle(fontSize: 18.0)),
+            child: const Text("上传", style: TextStyle(fontSize: 18.0)),
           ),
         ),
       ],
@@ -649,7 +651,7 @@ class _NewPageState extends State<NewPage> {
 
   // 选择支构筑
   Widget buildBottomSheetWidget(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 150,
       child: Column(
         children: [
@@ -658,7 +660,7 @@ class _NewPageState extends State<NewPage> {
             Navigator.of(context).pop();
           }),
           //分割线
-          Divider(),
+          const Divider(),
 
           buildItem("打开相册", onTap: () {
             getImage(ImageSource.gallery);
@@ -677,9 +679,9 @@ class _NewPageState extends State<NewPage> {
               Navigator.of(context).pop();
             },
             child: Container(
-              child: Text("取消"),
               height: 44,
               alignment: Alignment.center,
+              child: const Text("取消"),
             ),
           )
         ],
@@ -700,13 +702,13 @@ class _NewPageState extends State<NewPage> {
           onTap();
         }
       },
-      child: Container(
+      child: SizedBox(
         height: 40,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
+            const SizedBox(
               width: 10,
             ),
             Text(title)
@@ -736,8 +738,8 @@ class _NewPageState extends State<NewPage> {
     String certainPackageCodeList = secondShowPackageList!
         .map((package) => package.taskCertainPackageList!.code)
         .join(',');
-    print(certainPackageCodeList);
-    print(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
+    logger.i(certainPackageCodeList);
+    logger.i(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
     var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
       'certainPackageCodeList': certainPackageCodeList,
       'secondPackageCode':

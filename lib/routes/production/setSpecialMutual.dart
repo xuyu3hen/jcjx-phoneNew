@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:jcjx_phone/routes/production/get_workPackage.dart';
+import 'package:jcjx_phone/routes/production/get_work_package.dart';
 
 import '../../index.dart';
 

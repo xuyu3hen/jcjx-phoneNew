@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:image_picker/image_picker.dart';
 
 import '../index.dart';
 
@@ -10,7 +7,7 @@ class EntryTrainItem extends StatefulWidget {
   EntryTrainItem(this.trainentry,this.updateList) :super(key: ValueKey(trainentry.code));
 
   @override
-  _EntryTrainItem createState() => _EntryTrainItem();
+  State createState() => _EntryTrainItem();
 }
 
 class _EntryTrainItem extends State<EntryTrainItem> {
@@ -25,7 +22,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
     return Padding(
       padding: const EdgeInsets.only(top: 8.0,left: 20.0,right: 20.0),
       child: Container(
-        constraints: BoxConstraints.tightFor(height: 150),
+        constraints: const BoxConstraints.tightFor(height: 150),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.all(Radius.circular(10)),
@@ -38,7 +35,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
           ]
         ),
         child: Padding(
-          padding: EdgeInsets.only(top: 0.0,bottom: 0.0),
+          padding: const EdgeInsets.only(top: 0.0,bottom: 0.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -46,27 +43,27 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                 dense: true,
                 leading: Text(
                   "${widget.trainentry.typeName}-${widget.trainentry.trainNum}",
-                  style: LeadingStyle(18.0),
+                  style: leadingStyle(18.0),
                 ),
                 // title: Text("${widget.trainentry.repairProcName}-${widget.trainentry.repairTimes}"),
-                trailing: Text("${widget.trainentry.repairProcName}-${widget.trainentry.repairTimes}",style: LeadingStyle(18.0),),
+                trailing: Text("${widget.trainentry.repairProcName}-${widget.trainentry.repairTimes}",style: leadingStyle(18.0),),
               ),
               const Divider(height: 0.0,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  DataText("机型",16.0),
-                  DataText("车号",16.0),
-                  DataText("入修时间",16.0),
+                  dataText("机型",16.0),
+                  dataText("车号",16.0),
+                  dataText("入修时间",16.0),
                 ],
               ),
               const Divider(height: 0.1,indent: 20.0,endIndent: 20.0,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  DataText("${widget.trainentry.typeName}",16.0),
-                  DataText("${widget.trainentry.trainNum}",16.0),
-                  DataText("${widget.trainentry.arrivePlatformTime}",16.0),
+                  dataText("${widget.trainentry.typeName}",16.0),
+                  dataText("${widget.trainentry.trainNum}",16.0),
+                  dataText("${widget.trainentry.arrivePlatformTime}",16.0),
                 ],
               ),
               const SizedBox(width: 200,height: 10,),
@@ -93,13 +90,13 @@ class _EntryTrainItem extends State<EntryTrainItem> {
     );
   }
 
-  TextStyle LeadingStyle(val){
+  TextStyle leadingStyle(val){
     return TextStyle(
       fontSize: val,
       color: Colors.black,
     );
   }
-  Text DataText(str,val){
+  Text dataText(str,val){
     return Text(
       str,
       style: TextStyle(fontSize: val,color: Colors.black,),
@@ -148,7 +145,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              DataText(str == "slip"?"上传防溜":"上传油量",18.0),
+              dataText(str == "slip"?"上传防溜":"上传油量",18.0),
               if(_image == null)
                 InkWell(
                   child: Container(
@@ -184,12 +181,12 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                     }else{
                       showToast("请先选择上传图像")
                     }
-                  }, child: DataText("上传",18.0))),
+                  }, child: dataText("上传",18.0))),
                   SizedBox(width: 140,height:30.0,child: ElevatedButton(
                     onPressed: ()=>{
                       SmartDialog.dismiss(),
                       _image = null
-                    }, child: DataText("取消",18.0))),
+                    }, child: dataText("取消",18.0))),
                 ],
               )
             ],

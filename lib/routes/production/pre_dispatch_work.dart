@@ -1,6 +1,4 @@
 
-
-
 import '../../index.dart';
 
 class PreDispatchWork extends StatefulWidget {
@@ -13,9 +11,7 @@ class PreDispatchWork extends StatefulWidget {
 class _PreDispatchWorkState extends State<PreDispatchWork> {
 
     // 创建 Logger 实例
-  var logger = Logger(
-    printer: PrettyPrinter(), // 漂亮的日志格式化
-  );
+  var logger = AppLogger.logger;
   // 动力类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
   // 筛选的动力类型信息
@@ -99,7 +95,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         childrenKey: 'children',
                         title: "选择动力类型",
                         clickCallBack: (selectItem, selectArr) {
-                          print(selectArr);
+                          logger.i(selectArr);
                           if (mounted) {
                             setState(() {
                               dynamicTypeSelected["code"] = selectItem["code"];
@@ -259,7 +255,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               procNodeSelected["name"] = selectItem["name"];
                               //将主键进行选取
                               procNodeSelected["code"] = selectItem["code"];
@@ -325,7 +321,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                     Checkbox(
                                       value: selectedPackage == packageUserDTO,
                                       onChanged: (value) {
-                                        if (mounted)
+                                        if (mounted){
                                           setState(() {
                                             if (value!) {
                                               selectedPackage = packageUserDTO;
@@ -333,6 +329,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                               selectedPackage = null;
                                             }
                                           });
+                                        }
+                                          
                                       },
                                     ),
                                     Expanded(
@@ -354,17 +352,17 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                                     fontSize: 16), // 放大文字
                                               ),
                                               Text(
-                                                '工位 ${station}',
+                                                '工位 $station',
                                                 style: const TextStyle(
                                                     fontSize: 16), // 放大文字
                                               ),
                                               Text(
-                                                '主修 ${mainRepair}',
+                                                '主修 $mainRepair',
                                                 style: const TextStyle(
                                                     fontSize: 16), // 放大文字
                                               ),
                                               Text(
-                                                '辅修 ${assistant}',
+                                                '辅修 $assistant',
                                                 style: const TextStyle(
                                                     fontSize: 16), // 放大文字
                                               ),
@@ -403,8 +401,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // 设置按钮颜色为蓝色
-                minimumSize: Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+                backgroundColor: Colors.blue, // 设置按钮颜色为蓝色
+                minimumSize: const Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
               ),
               child: const Text('设置施修人'),
             ),
@@ -413,13 +411,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     );
   }
 
-  //同步作业包 TODO: 完善作业包同步
+  //同步作业包 TODO 完善作业包同步
   void syncWorkPackageToPackageUser(){
-    Map<String, dynamic> params = {
-      "typeCode": jcTypeListSelected['code'],
-      "repairMainNodeCode": "repairMainNodeCode",
-      'deptId': ""
-    };
+    // Map<String, dynamic> params = {
+    //   "typeCode": jcTypeListSelected['code'],
+    //   "repairMainNodeCode": "repairMainNodeCode",
+    //   'deptId': ""
+    // };
   }
   // 获取动态类型
   void getDynamicType() async {
@@ -431,7 +429,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
       setState(() {
         dynamicTypeList = r.toMapList();
         permissions = permissionResponse;
-        print(permissions.toJson());
+        logger.i(permissions.toJson());
       });
     }
   }
@@ -444,7 +442,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
       'pageSize': 0
     };
     var r = await ProductApi().getJcType(queryParametrs: queryParameters);
-    print(r.toJson());
+    logger.i(r.toJson());
     if (mounted) {
       setState(() {
         jcTypeList = r.toMapList();
@@ -455,7 +453,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
 
   // 获取修制信息
   Future<void> getRepairSys() async {
-    print(dynamicTypeSelected["code"]);
+    logger.i(dynamicTypeSelected["code"]);
     Map<String, dynamic> queryParameters = {
       'dynamicCode': dynamicTypeSelected["code"],
       'pageNum': 0,
@@ -463,12 +461,11 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     };
     var r = await ProductApi().selectRepairSys(queryParametrs: queryParameters);
     setState(() {
-      print(r.rows!.length);
+      logger.i(r.rows!.length);
       repairSysList = r.toMapList();
     });
   }
 
-  // 修
   // 修次
   void getRepairProc() async {
     Map<String, dynamic> queryParameters = {
@@ -529,7 +526,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
 
   //获取作业包
   void getWorkPackage() async {
-    print("开始查询");
+    
     Map<String, dynamic> queryParameters = {
       'typeCode': jcTypeListSelected["code"],
       'deptId': Global.profile.permissions!.user.deptId,
@@ -537,14 +534,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
       'repairMainNodeCode': procNodeSelected["code"],
     };
     var r = await JtApi().getPackageUserList(queryParameters: queryParameters);
-    if (r.data != 0) {
+    if (r.data != null && r.data!.isNotEmpty) {
       if (mounted) {
         setState(() {
           //将获取的信息列表
           //将r.data进行遍历,获取相关信息进行展示
           packageUserDTOList = [];
           for (PackageUser item in r.data!) {
-            print(item.packageUserDTOList!.length);
+            logger.i(item.packageUserDTOList!.length);
             packageUserDTOList?.addAll(item.packageUserDTOList!);
           }
           // print(packageUserDTOList!.length);
@@ -561,18 +558,21 @@ class SetRepairPersonScreen extends StatefulWidget {
       : super(key: key);
 
   @override
-  _SetRepairPersonScreenState createState() => _SetRepairPersonScreenState();
+  State createState() => _SetRepairPersonScreenState();
 }
 
 class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
   late List<dynamic> userList = [];
-  late List<int> mainUsers = []; // 用于存储主修
-  late List<int> assistantUsers = []; // 用于存储辅修
-  //存储主修名称
+  // 用于存储主修
+  late List<int> mainUsers = []; 
+  // 用于存储辅修
+  late List<int> assistantUsers = []; 
+  // 存储主修名称
   late List<String> mainUsersName = [];
-  //存储辅修名称
+  // 存储辅修名称
   late List<String> assistantUsersName = [];
 
+  var logger = AppLogger.logger;
   // 获取班组成员
   void getUserList() async {
     Map<String, dynamic> queryParameters = {
@@ -606,7 +606,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     if (repairName != null && repairName != '') {
       List<String> repairNameList = repairName.split(',');
       for (String item1 in repairNameList) {
-        print(item1);
+      
         mainUsersName.add(item1);
       }
     }
@@ -615,32 +615,27 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     if (assistantName != null && assistantName != '') {
       List<String> assistantNameList = assistantName.split(',');
       for (String item1 in assistantNameList) {
-        print(item1);
+        
         assistantUsersName.add(item1);
       }
     }
-
     String? repair = item.repairPersonnel;
-    //打印repair
-
     // repair格式为'1129,1130'将其转化为[1129,1130]
-
     if (repair != null && repair != '') {
       List<String> repairList = repair.split(',');
       for (String item1 in repairList) {
-        print(item1);
         mainUsers.add(int.parse(item1));
       }
     }
-    print(mainUsers.toString());
+    logger.i(mainUsers.toString());
     String? assistant = item.assistant;
-    print(assistant);
+    logger.i(assistant);
     if (assistant != null && assistant != '') {
       List<String> assistantList = assistant.split(',');
       for (String assistant in assistantList) {
-        print(assistant);
+        logger.i(assistant);
         assistantUsers.add(int.parse(assistant));
-      } // Bug 修复：添加闭合括号
+      } 
     }
   }
 
@@ -652,9 +647,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       ),
       body: Column(
         children: [
-          Container(
-            child: Text("主修"),
-          ),
+          const Text("主修"),
           Expanded(
             child: userList.isNotEmpty
                 ? ListView.builder(
@@ -683,9 +676,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                   )
                 : const CircularProgressIndicator(), // 显示加载指示器
           ),
-          Container(
-            child: Text("辅修"),
-          ),
+          const Text("辅修"),
           Expanded(
             child: userList.isNotEmpty
                 ? ListView.builder(
@@ -739,8 +730,8 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     String mainUsersNameStr = mainUsersName.join(',');
     String assistantUsersNameStr = assistantUsersName.join(',');
     //打印结果
-    print(mainUsersStr);
-    print(mainUsersNameStr);
+    logger.i(mainUsersStr);
+    logger.i(mainUsersNameStr);
     //对所有作业项遍
     //将结果转换为List<Map<String, dynamic>>
     List<Map<String, dynamic>> list = [];
@@ -770,7 +761,7 @@ class PreWorkList extends StatefulWidget {
   const PreWorkList({Key? key, required this.packageUserDTO}) : super(key: key);
 
   @override
-  _PreWorkListState createState() => _PreWorkListState();
+  State createState() => _PreWorkListState();
 }
 
 class _PreWorkListState extends State<PreWorkList> {

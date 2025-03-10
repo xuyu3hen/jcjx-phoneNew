@@ -9,7 +9,7 @@ class AboutAppPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Theme(
       data: ThemeData(brightness: Brightness.light),
-      child: Scaffold(
+      child: const Scaffold(
         backgroundColor:  Colors.white,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
