@@ -299,20 +299,20 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
               ]else...[
                 ListTile(
                   dense: true,
-                  leading: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
-                  title: Text("${item.station}",style: TextStyle(fontSize: 16.0)),
+                  leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                  title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
                 ),
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text('作业进度'),
+                  const Text('作业进度'),
                   SizedBox(
                     height: 5,
                     width: 270,
                     child: LinearProgressIndicator(
                       backgroundColor: Colors.grey[200],
-                      valueColor: AlwaysStoppedAnimation(Colors.blue),
+                      valueColor: const AlwaysStoppedAnimation(Colors.blue),
                       value: item.progress == 0? 0 : item.progress!/100,
                     ),
                   )
@@ -388,8 +388,8 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
                       onPressed: (){
                         SmartDialog.dismiss();
                       },
-                      label: Text('取消'),
-                      icon:Icon(Icons.close),
+                      label: const Text('取消'),
+                      icon:const Icon(Icons.close),
                       style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.grey[200]))
                     ),
                     ElevatedButton.icon(
@@ -398,8 +398,8 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
                           SmartDialog.dismiss().then((e)=>getIndividualTaskPackage());
                         });
                       },
-                      label: Text('确定'),
-                      icon:Icon(Icons.system_security_update_good_sharp),
+                      label: const Text('确定'),
+                      icon:const Icon(Icons.system_security_update_good_sharp),
                     ),
                   ],
                 )
@@ -478,64 +478,62 @@ class __FinancialMoreTemplateState extends State<_FinancialMoreTemplate> {
     }else{
       return Scaffold(
         backgroundColor: Colors.white,
-        body: Container(
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                padding: const EdgeInsets.all(0.0),
-                children: [
-                  const SizedBox(
-                    height: 12.0,
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '请选择车号',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0XFF303133)),
-                          ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+              padding: const EdgeInsets.all(0.0),
+              children: [
+                const SizedBox(
+                  height: 12.0,
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        child: const Text(
+                          '请选择车号',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0XFF303133)),
                         ),
-                        const SizedBox(
-                          height: 12.0,
-                        ),
-                        GridView.count(
-                          childAspectRatio: 109 / 40,
-                          crossAxisSpacing: 12.0,
-                          mainAxisSpacing: 12.0,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(0),
-                          primary: false,
-                          shrinkWrap: true,
+                      ),
+                      const SizedBox(
+                        height: 12.0,
+                      ),
+                      GridView.count(
+                        childAspectRatio: 109 / 40,
+                        crossAxisSpacing: 12.0,
+                        mainAxisSpacing: 12.0,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(0),
+                        primary: false,
+                        shrinkWrap: true,
 
-                          ///添加当前可解决Vertical viewport was given unbounded height.报错
-                          crossAxisCount: 3,
-                          children: _urgencyList(),
-                        ),
-                      ],
-                    ),
+                        ///添加当前可解决Vertical viewport was given unbounded height.报错
+                        crossAxisCount: 3,
+                        children: _urgencyList(),
+                      ),
+                    ],
                   ),
-                  const SizedBox(
-                    height: 34.0,
-                  ),
-                ],
-              )),
-              downmenu.FilterButton(
-                fixOnTap: () {
-                  assert(widget.controller != null);
-                  print("ss$_map");
-                  widget.controller!.select(_map);
-                },
-                resetOnTap: () {
-                  widget.controller!.select({});
-                },
-              )
-            ],
-          ),
+                ),
+                const SizedBox(
+                  height: 34.0,
+                ),
+              ],
+            )),
+            downmenu.FilterButton(
+              fixOnTap: () {
+                assert(widget.controller != null);
+                print("ss$_map");
+                widget.controller!.select(_map);
+              },
+              resetOnTap: () {
+                widget.controller!.select({});
+              },
+            )
+          ],
         ),
       );
     }

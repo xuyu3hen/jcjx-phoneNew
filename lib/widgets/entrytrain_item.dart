@@ -71,12 +71,12 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   if(widget.trainentry.antiSlipImage == null)...[
-                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{uploadDialog("slip")}, child: Text("上传防溜")),),
+                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{uploadDialog("slip")}, child: const Text("上传防溜")),),
                   ]else...[
-                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{showPicDialog(widget.trainentry.antiSlipImage)}, child: Text("查看防溜"),style:ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green[200])))),
+                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{showPicDialog(widget.trainentry.antiSlipImage)},style:ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green[200])), child: const Text("查看防溜"))),
                   ],
                   if(widget.trainentry.oilInfoImage == null)...[
-                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{uploadDialog("oil")}, child: Text("上传油量"))),
+                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{uploadDialog("oil")}, child: const Text("上传油量"))),
                   ]else...[
                     SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{showPicDialog(widget.trainentry.oilInfoImage)}, child: Text("查看油量"),style:ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green[200])))),
                   ]
@@ -149,11 +149,11 @@ class _EntryTrainItem extends State<EntryTrainItem> {
               if(_image == null)
                 InkWell(
                   child: Container(
-                    constraints: BoxConstraints.tightFor(width: 200,height: 200),
+                    constraints: const BoxConstraints.tightFor(width: 200,height: 200),
                       decoration: BoxDecoration(
                         color: Colors.indigo.shade50,
                         ),
-                      child: Column(
+                      child: const Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [

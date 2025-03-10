@@ -24,7 +24,6 @@ class MainDataStructure {
     );
   }
 
-  @override
   Map<String, dynamic> toJson() {
     return {
       'assigned': assigned,
