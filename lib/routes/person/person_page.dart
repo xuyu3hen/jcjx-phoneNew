@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
 import 'package:flutter/services.dart';
 import '../../index.dart';
-import 'package:logger/logger.dart';
+
 
 class PersonPage extends StatefulWidget {
   const PersonPage({Key? key}) : super(key: key);
@@ -103,7 +102,7 @@ class _PersonPageState extends State<PersonPage> {
                       ),
                     ],
                   ),
-                  Expanded(child: myPageItems()),
+                  const Expanded(child: MyPageItems()),
                 ],
               ),
             ),

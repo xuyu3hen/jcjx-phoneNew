@@ -17,6 +17,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
   
   // 油量/防溜
   String? imgtype;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -207,7 +208,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
 
   // 选择支构筑
   Widget buildBottomSheetWidget(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 150,
       child: Column(
         children: [
@@ -216,7 +217,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
             Navigator.of(context).pop();
           }),
           //分割线
-          Divider(),
+          const Divider(),
 
           buildItem("打开相册",onTap:(){
             getImage(ImageSource.gallery);
@@ -232,9 +233,9 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                 Navigator.of(context).pop();
               },
               child: Container(
-                child: Text("取消"),
                 height: 44,
                 alignment: Alignment.center,
+                child: const Text("取消"),
               ),)
         ],
       ),
@@ -254,13 +255,13 @@ class _EntryTrainItem extends State<EntryTrainItem> {
           onTap();
         }
       },
-      child: Container(
+      child: SizedBox(
         height: 40,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(width: 10,),
+            const SizedBox(width: 10,),
             Text(title)
           ],
         ),

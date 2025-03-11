@@ -4,7 +4,7 @@ class EnterList extends StatefulWidget {
   const EnterList({Key? key}) : super(key: key);
 
   @override
-  _EnterList createState() => _EnterList();
+  State createState() => _EnterList();
 }
 
 class _EnterList extends State<EnterList> {
@@ -16,11 +16,40 @@ class _EnterList extends State<EnterList> {
   bool hasMore = true;
   int pageNum = 1;
 
+    void _queryEntryData() async{
+    var data = await ProductApi().getTrainEntry(
+      queryParametrs: {
+        'pageNum':pageNum,
+        'page_size':10,
+      }
+    );
+
+    if(data.rows != null){
+      hasMore = data.rows!.isNotEmpty && data.rows!.length%10==0;
+      setState(() {
+        _items.insertAll(_items.length - 1, data.rows!);
+        pageNum++;
+      });
+    }else{
+      hasMore = false;
+    }
+
+  }
+
+  // 刷新
+  update(){
+    setState(() {
+      _items = <TrainEntry>[TrainEntry()..code = loadingTag];
+      hasMore = true;
+      pageNum = 1;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("检修状态"),
+        title: const Text("检修状态"),
       ),
       body: _buildBody(),
     );
@@ -71,32 +100,5 @@ class _EnterList extends State<EnterList> {
     );
   }
 
-  void _queryEntryData() async{
-    var data = await ProductApi().getTrainEntry(
-      queryParametrs: {
-        'pageNum':pageNum,
-        'page_size':10,
-      }
-    );
 
-    if(data.rows != null){
-      hasMore = data.rows!.length > 0 && data.rows!.length%10==0;
-      setState(() {
-        _items.insertAll(_items.length - 1, data.rows!);
-        pageNum++;
-      });
-    }else{
-      hasMore = false;
-    }
-
-  }
-
-  // 刷新
-  update(){
-    setState(() {
-      _items = <TrainEntry>[TrainEntry()..code = loadingTag];
-      hasMore = true;
-      pageNum = 1;
-    });
-  }
 }

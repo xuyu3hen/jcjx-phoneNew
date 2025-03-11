@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 class TaskContentDetailsPage extends StatelessWidget {
   final List<dynamic>? taskInstructContentList;
 
-  TaskContentDetailsPage({required this.taskInstructContentList});
+  const TaskContentDetailsPage({super.key, required this.taskInstructContentList});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('作业内容详情'),
+        title: const Text('作业内容详情'),
       ),
       body: ListView.separated(
         itemCount: taskInstructContentList!.length,

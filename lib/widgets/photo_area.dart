@@ -1,6 +1,5 @@
-import 'dart:io';
 
-import 'package:image_picker/image_picker.dart';
+
 
 import '../index.dart';
 
@@ -19,7 +18,7 @@ class _PhotoArea extends State<PhotoArea>{
     if(widget._image == null) {
       return InkWell(
           child: Container(
-            constraints: BoxConstraints.tightFor(width: 200,height: 200),
+            constraints: const BoxConstraints.tightFor(width: 200,height: 200),
               decoration: BoxDecoration(
                 color: Colors.indigo.shade50,
                 ),
@@ -32,7 +31,7 @@ class _PhotoArea extends State<PhotoArea>{
                       child: Image.file(widget._image!,width: 200,height: 200,),
                     ),
                   if(widget._image == null)
-                  Icon(Icons.add_a_photo)
+                  const Icon(Icons.add_a_photo)
                 ],
               ),
             ),
@@ -41,9 +40,7 @@ class _PhotoArea extends State<PhotoArea>{
           },
         );
     }else{
-      return Container(
-        child: Image.file(widget._image!,width: 200,height: 200,),
-      );
+      return Image.file(widget._image!,width: 200,height: 200,);
     }
           
   }
@@ -61,7 +58,7 @@ class _PhotoArea extends State<PhotoArea>{
 
   // 选择支构筑
   Widget buildBottomSheetWidget(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 150,
       child: Column(
         children: [

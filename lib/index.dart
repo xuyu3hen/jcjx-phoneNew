@@ -21,6 +21,7 @@ export 'package:logger/logger.dart';
 export 'package:graphview/GraphView.dart';
 export 'package:image_picker/image_picker.dart';
 export 'dart:io';
+export 'dart:convert';
 
 /*
   // flavors的元素备份

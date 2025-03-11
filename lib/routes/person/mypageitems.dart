@@ -1,16 +1,18 @@
 import '../../index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class myPageItems extends StatefulWidget {
+class MyPageItems extends StatefulWidget {
+  const MyPageItems({super.key});
+
   @override
-  _myPageItems createState() => _myPageItems();
+  State createState() => _MyPageItems();
 }
 
-class _myPageItems extends State<myPageItems> {
+class _MyPageItems extends State<MyPageItems> {
   @override
   Widget build(BuildContext context) {
     return ScrollConfiguration(
-        behavior: ScrollBehavior(),
+        behavior: const ScrollBehavior(),
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
@@ -22,9 +24,9 @@ class _myPageItems extends State<myPageItems> {
                 ListTile(
                   leading:
                       Icon(Icons.update, color: Theme.of(context).primaryColor),
-                  title: Text("版本号：", style: TextStyle(fontSize: 18)),
+                  title: const Text("版本号：", style: TextStyle(fontSize: 18)),
                   trailing:
-                      Text("${F.version}", style: TextStyle(fontSize: 18)),
+                      Text(F.version, style: const TextStyle(fontSize: 18)),
                 ),
               ],
             ),
@@ -58,7 +60,7 @@ class _myPageItems extends State<myPageItems> {
       return ListTile(
         leading:
             Icon(Icons.logout_outlined, color: Theme.of(context).primaryColor),
-        title: Text("退出登录", style: TextStyle(fontSize: 18)),
+        title: const Text("退出登录", style: TextStyle(fontSize: 18)),
         onTap: () {
           showDialog(
               context: context,
@@ -73,7 +75,7 @@ class _myPageItems extends State<myPageItems> {
                         onPressed: () async {
                           usermodel.accessToken = null;
                           Global.profile = Profile();
-                          print('已重置');
+                         
                           var _prefs = await SharedPreferences.getInstance();
                           _prefs.remove("profile");
                           Navigator.pop(context);
@@ -90,7 +92,7 @@ class _myPageItems extends State<myPageItems> {
       return ListTile(
         leading:
             Icon(Icons.logout_outlined, color: Theme.of(context).primaryColor),
-        title: Text("登录", style: TextStyle(fontSize: 18)),
+        title: const Text("登录", style: TextStyle(fontSize: 18)),
         onTap: () {
           Navigator.of(context).pushNamed("login");
         },

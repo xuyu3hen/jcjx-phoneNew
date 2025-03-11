@@ -1,8 +1,3 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:jcjx_phone/routes/production/get_work_package.dart';
-
 import '../../index.dart';
 
 class SetSpecialCheck extends StatefulWidget {
@@ -11,7 +6,7 @@ class SetSpecialCheck extends StatefulWidget {
       : super(key: key);
 
   @override
-  _SetSpecialCheckState createState() => _SetSpecialCheckState();
+  State createState() => _SetSpecialCheckState();
 }
 
 class _SetSpecialCheckState extends State<SetSpecialCheck> {
@@ -24,6 +19,8 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
   // 获取的专检用户
   late List<Map<String, dynamic>> special = [];
 
+  var logger = AppLogger.logger;
+
   @override
   void initState() {
     super.initState();
@@ -31,85 +28,6 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
     //对信息进行复制
     selectedWorkItems = List.from(widget.selectedWorkItems);
     getSpecialMutual();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('设置专互检'),
-      ),
-      body: Column(
-        children: [
-          const Text('互检'),
-          // 互检
-          Container(
-            height: 300,
-            child: ListView.builder(
-              scrollDirection: Axis.vertical, // 修改为垂直滚动
-              itemCount: mutual.length,
-              itemBuilder: (BuildContext context, int index) {
-                var person = mutual[index];
-                return Row(
-                  children: [
-                    Text(
-                      mutual[index]['name'].toString(),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const Spacer(),
-                    Checkbox(
-                      value: person['associated'] ?? false,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          person['associated'] = value;
-                        });
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const Text('专检'),
-          // 专检
-          Container(
-            height: 300,
-            child: ListView.builder(
-              scrollDirection: Axis.vertical, // 修改为垂直滚动
-              itemCount: special.length,
-              itemBuilder: (BuildContext context, int index) {
-                var person = special[index];
-                return Row(
-                  children: [
-                    Text(
-                      special[index]['name'].toString(),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const Spacer(), // 添加Spacer将文本和复选框分开
-                    Checkbox(
-                      value: person['associated'] ?? false, // 初始状态全选
-                      onChanged: (bool? value) {
-                        // 处理勾选状态改变的逻辑
-                        setState(() {
-                          person['associated'] = value; // 更新状态
-                        });
-                      },
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          //右下角保存按钮
-
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: saveSelectedUsers, // 调用 save 方法
-        child: const Text('保存'), // 按钮内容
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // 按钮位置
-    );
   }
 
   void saveSelectedUsers() {
@@ -149,22 +67,17 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
     }
 
     // 打印queryParameters使用log
-    print(jsonEncode(queryParameters));
-    
+    logger.i(jsonEncode(queryParameters));
 
-    if(mounted){
+    if (mounted) {
       // 调用接口
-    ProductApi().saveAssociated(queryParameters);
+      ProductApi().saveAssociated(queryParameters);
 
-    showToast('专互检保存成功');
-    //回退到上一页面
-    Navigator.pop(context);
-    setState(() {
-      
-    });
+      showToast('专互检保存成功');
+      //回退到上一页面
+      Navigator.pop(context);
+      setState(() {});
     }
-    
-    
   }
 
   // 获取专互检信息
@@ -179,7 +92,7 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
       };
       var r = await ProductApi().getDictCode(queryParameters);
       int dictCode = r['rows'][0]['dictCode'];
-      print(dictCode);
+      logger.i(dictCode);
       Map<String, dynamic> queryParameters1 = {
         'pageNum': 0,
         'pageSize': 0,
@@ -204,29 +117,116 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
         item['userId'] = info['userId'];
 
         //’1123，1134‘ 123匹配上的规则 仍然可以完善
-        if(selectedWorkItems[0].mutualInspectionPersonnel.toString().contains(item['userId'].toString())){
+        if (selectedWorkItems[0]
+            .mutualInspectionPersonnel
+            .toString()
+            .contains(item['userId'].toString())) {
           item['associated'] = true;
-        }else{
-          item['associated'] = false;}
+        } else {
+          item['associated'] = false;
+        }
 
-        print(item);
+        logger.i(item);
       }
       var r3 = await ProductApi().getUserListByPostIdList(specialIdList);
       for (var item in special) {
         Map<String, dynamic> info = r3[item['postId'].toString()][0];
         item['name'] = info['nickName'];
         item['userId'] = info['userId'];
-        
+
         //workInstructPackageUserList的userId
-        if(selectedWorkItems[0].specialInspectionPersonnel.toString().contains(item['userId'].toString())){
+        if (selectedWorkItems[0]
+            .specialInspectionPersonnel
+            .toString()
+            .contains(item['userId'].toString())) {
           item['associated'] = true;
-        }else{
-          item['associated'] = false;}
-        print(item);
+        } else {
+          item['associated'] = false;
+        }
+        logger.i(item);
       }
       if (mounted) {
         setState(() {});
       }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('设置专互检'),
+      ),
+      body: Column(
+        children: [
+          const Text('互检'),
+          // 互检
+          SizedBox(
+            height: 300,
+            child: ListView.builder(
+              scrollDirection: Axis.vertical, // 修改为垂直滚动
+              itemCount: mutual.length,
+              itemBuilder: (BuildContext context, int index) {
+                var person = mutual[index];
+                return Row(
+                  children: [
+                    Text(
+                      mutual[index]['name'].toString(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const Spacer(),
+                    Checkbox(
+                      value: person['associated'] ?? false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          person['associated'] = value;
+                        });
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const Text('专检'),
+          // 专检
+          SizedBox(
+            height: 300,
+            child: ListView.builder(
+              scrollDirection: Axis.vertical, // 修改为垂直滚动
+              itemCount: special.length,
+              itemBuilder: (BuildContext context, int index) {
+                var person = special[index];
+                return Row(
+                  children: [
+                    Text(
+                      special[index]['name'].toString(),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const Spacer(), // 添加Spacer将文本和复选框分开
+                    Checkbox(
+                      value: person['associated'] ?? false, // 初始状态全选
+                      onChanged: (bool? value) {
+                        // 处理勾选状态改变的逻辑
+                        setState(() {
+                          person['associated'] = value; // 更新状态
+                        });
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          //右下角保存按钮
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: saveSelectedUsers, // 调用 save 方法
+        child: const Text('保存'), // 按钮内容
+      ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat, // 按钮位置
+    );
   }
 }

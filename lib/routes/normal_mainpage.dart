@@ -3,7 +3,7 @@ import '../index.dart';
 
 class NormalMainPage extends StatefulWidget {
   @override
-  _NormalMainPageState createState() => _NormalMainPageState();
+  State createState() => _NormalMainPageState();
 }
 
 class _NormalMainPageState extends State<NormalMainPage> {
@@ -39,6 +39,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
         showToast("获取零部件表失败,请检查网络");
       }
     } catch (e) {
+      
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }

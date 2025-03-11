@@ -1,7 +1,3 @@
-import 'dart:convert';
-
-import 'dart:io';
-
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
@@ -12,7 +8,7 @@ class SecEnter extends StatefulWidget {
   const SecEnter({Key? key}) : super(key: key);
 
   @override
-  _SecEnter createState() => _SecEnter();
+  State createState() => _SecEnter();
 }
 
 class _SecEnter extends State<SecEnter> {
@@ -341,7 +337,6 @@ class _SecEnter extends State<SecEnter> {
                   } else {
                     slipImage = [];
                   }
-                  print('assetEntityList-------------');
                 },
               ),
             ),
@@ -465,7 +460,6 @@ class _SecEnter extends State<SecEnter> {
     if (r.rows != []) {
       setState(() {
         repairProList = r.rows!;
-        print("修程获取成功${repairProList[0].toJson()}");
       });
     }
   }
@@ -476,7 +470,6 @@ class _SecEnter extends State<SecEnter> {
     if (r.rows != []) {
       setState(() {
         repairTimesList = r.rows!;
-        print("修次获取成功${repairTimesList[0].toJson()}");
       });
     }
   }
@@ -601,19 +594,20 @@ class _SecEnter extends State<SecEnter> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                Text(
+                const Text(
                   "新增入段提报成功",
                   style: TextStyle(fontSize: 18),
                 ),
                 ConstrainedBox(
-                  constraints: BoxConstraints.expand(height: 30, width: 160),
+                  constraints:
+                      const BoxConstraints.expand(height: 30, width: 160),
                   child: ElevatedButton.icon(
                     onPressed: () {
                       SmartDialog.dismiss()
                           .then((value) => Navigator.of(context).pop());
                     },
-                    label: Text('确定'),
-                    icon: Icon(Icons.system_security_update_good_sharp),
+                    label: const Text('确定'),
+                    icon: const Icon(Icons.system_security_update_good_sharp),
                   ),
                 ),
               ],
@@ -639,7 +633,7 @@ class _SecEnter extends State<SecEnter> {
     if (val != null && str == "datetime") {
       String str =
           formatDate(val, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss]);
-      print(str);
+
       return str;
     } else if (val != null && str == "date") {
       String str = formatDate(val, [yyyy, '-', mm, '-', dd]);

@@ -2,7 +2,7 @@ import '../../index.dart';
 
 class RotableMainPage extends StatefulWidget{
   @override
-  _RotableMainPage createState()=> _RotableMainPage();
+  State createState()=> _RotableMainPage();
 }
 
 class _RotableMainPage extends State<RotableMainPage>{

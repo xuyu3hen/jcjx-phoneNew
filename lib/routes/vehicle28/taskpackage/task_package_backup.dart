@@ -1,4 +1,4 @@
-import 'dart:convert';
+
 import 'package:jcjx_phone/config/index.dart';
 import '../../../index.dart';
 import 'package:flutter_custom_dropdown/flutter_custom_dropdown.dart' as downmenu;
@@ -165,7 +165,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
     return downmenu.DropdownHeader(
       isSideline: false,
       onTap: onTap,
-      titles: ['动力类型', '机型','车号'],
+      titles: const ['动力类型', '机型','车号'],
       selectIsChangingColor: true,
       // specialModules: [1, 2],
       ///特殊模块,选中数据只亮起,不需要更改头部title,下标为1
@@ -288,8 +288,8 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
               if(item.wholePackage!)...[
                 ListTile(
                   dense: true,
-                  leading: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
-                  title: Text("${item.station}",style: TextStyle(fontSize: 16.0)),
+                  leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                  title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
                   // subtitle: Text(""),
                   trailing:ElevatedButton(onPressed: (){
                     changeABDialog(item);

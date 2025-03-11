@@ -753,7 +753,7 @@ class _NewPageState extends State<NewPage> {
   }
 
   static Map<String, WidgetBuilder> routes = {
-    'searchWorkPackage': (BuildContext context) => SearchWorkPackage(),
+    'searchWorkPackage': (BuildContext context) => const SearchWorkPackage(),
   };
 
   //完成作业项图片上传

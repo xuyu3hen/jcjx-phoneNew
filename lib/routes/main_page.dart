@@ -1,7 +1,5 @@
-import 'package:jcjx_phone/routes/production/get_work_package.dart';
 
-import 'package:jcjx_phone/routes/production/search_work_package.dart';
-import 'package:jcjx_phone/routes/production/secEnterModify.dart';
+import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
@@ -11,7 +9,7 @@ class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
 
   @override
-  _MainPage createState() => _MainPage();
+  State createState() => _MainPage();
 }
 
 class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
@@ -75,11 +73,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "procnode": (context) => const ProcNodeList(),
         "trainbynode": (context) => const TrainEntryListByNodeCode(),
         "packageviewer": (context) => const PackageViewer(),
-        //预派工模块界面
         "preDispatchWork": (context) => const PreDispatchWork(),
-        //获取个人作业包模块界面
         "getWorkPackage": (context) => const GetWorkPackage(),
-        //查看个人作业包模块界面
         "searchWorkPackage": (context) => const SearchWorkPackage(),
         'preTrainWork': (context) => const PreTrainWork(),
         'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
@@ -96,13 +91,13 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
           resizeToAvoidBottomInset: false,
           body: PageView(
             physics: const NeverScrollableScrollPhysics(),
+            controller: pageController,
+            onPageChanged: onPageChanged,
             children: <Widget>[
               NormalMainPage(),
               MainScanner(),
-              PersonPage(),
+              const PersonPage(),
             ],
-            controller: pageController,
-            onPageChanged: onPageChanged,
           ),
           bottomNavigationBar: BottomNavigationBar(
             items: const [

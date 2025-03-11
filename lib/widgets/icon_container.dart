@@ -12,7 +12,7 @@ class IconContainer extends StatefulWidget{
   IconContainer(this._image,this.pressFun,this.text,{this.width,this.height}) :super(key: ValueKey(text));
 
   @override
-  _IconContainer createState() => _IconContainer();
+  State createState() => _IconContainer();
 }
 
 class _IconContainer extends State<IconContainer>{

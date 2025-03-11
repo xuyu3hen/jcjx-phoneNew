@@ -74,7 +74,7 @@ class TeamInfo extends StatefulWidget {
   final String planCode;
   const TeamInfo({super.key, required this.planCode});
   @override
-  _TeamInfoState createState() => _TeamInfoState();
+  State createState() => _TeamInfoState();
 }
 
 class _TeamInfoState extends State<TeamInfo> {
