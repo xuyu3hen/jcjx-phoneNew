@@ -150,9 +150,9 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${wip.name}",style: TextStyle(fontSize: 16.0),),
+                title: Text("${wip.name}",style: const TextStyle(fontSize: 16.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
-                trailing:Text("${wip.riskLevel}",style: TextStyle(fontSize: 18.0))
+                trailing:Text("${wip.riskLevel}",style: const TextStyle(fontSize: 18.0))
               ),
               ZjcFormInputCell(
                 title: "互检",
@@ -240,7 +240,7 @@ Widget _personDrawer(){
                 if(index < mutualList.length)...[
                   Container(
                     // 位置待调整,可能因分辨率错位
-                    margin: EdgeInsets.only(bottom: 15),
+                    margin: const EdgeInsets.only(bottom: 15),
                     width: MediaQuery.of(context).size.width*0.35,
                     height: 40.0,
                     child: CheckboxListTile(
@@ -262,7 +262,7 @@ Widget _personDrawer(){
                 ],
                 if(index < specialList.length)...[
                   Container(
-                    margin: EdgeInsets.only(bottom: 15),
+                    margin: const EdgeInsets.only(bottom: 15),
                     width: MediaQuery.of(context).size.width*0.35,
                     height: 40.0,
                     child: CheckboxListTile(
@@ -285,7 +285,7 @@ Widget _personDrawer(){
               ] 
             );
           },
-          separatorBuilder: (context,index) => MediaQuery.removePadding(context: context,child: Divider(height: 0.1,color:Colors.blue,)), 
+          separatorBuilder: (context,index) => MediaQuery.removePadding(context: context,child: const Divider(height: 0.1,color:Colors.blue,)), 
         );
       }
     );
@@ -305,11 +305,11 @@ Widget _personDrawer(){
               element['select'] = false;
             }
           });
-        }, child: Text('重置'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-            backgroundColor: Color.fromRGBO(182, 182, 182, 1)
-          ),),
+            minimumSize: const Size(100, 40),
+            backgroundColor: const Color.fromRGBO(182, 182, 182, 1)
+          ), child: const Text('重置'),),
         ElevatedButton(onPressed: () async {
           // if(repairPersonnelSelected.isEmpty){
           //   showToast('请选择主修');
@@ -361,10 +361,10 @@ Widget _personDrawer(){
               getworkInstructList();
             }
           // }
-        }, child: Text('确认'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-          ),  
+            minimumSize: const Size(100, 40),
+          ), child: const Text('确认'),  
         )
       ],
     );

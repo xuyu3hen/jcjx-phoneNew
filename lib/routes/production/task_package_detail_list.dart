@@ -468,7 +468,7 @@ class _NewPageState extends State<NewPage> {
   // 专检筛选人员
   Map<String, dynamic> specialSelected = {};
   //图片
-  File? _image;
+  late List<File> _images = [];
   //图片筛选
   final ImagePicker picker = ImagePicker();
 
@@ -481,13 +481,14 @@ class _NewPageState extends State<NewPage> {
   }
 
   // 获取图片函数
+// 获取图片函数
   Future getImage(ImageSource isource) async {
-    final PickedFile = await picker.pickImage(
+    final pickedFile = await picker.pickImage(
       source: isource,
     );
     setState(() {
-      if (PickedFile != null) {
-        _image = File(PickedFile.path);
+      if (pickedFile != null) {
+        _images.add(File(pickedFile.path));
         SmartDialog.dismiss();
       } else {
         showToast("未获取图片");
@@ -495,7 +496,7 @@ class _NewPageState extends State<NewPage> {
     });
   }
 
-  void uploadPicture() async {
+  void uploadPictures() async {
     List<SecondShowPackage>? secondShowPackageList = widget.secondPackageList;
     String certainPackageCodeList = secondShowPackageList!
         .map((package) => package.taskCertainPackageList!.code)
@@ -503,16 +504,20 @@ class _NewPageState extends State<NewPage> {
     logger.i(certainPackageCodeList);
     logger
         .i(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
-    var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
-      'certainPackageCodeList': certainPackageCodeList,
-      'secondPackageCode':
-          secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
-    }, imagedata: File(_image!.path));
-    if (r == 200) {
-      showToast("上传成功");
-      SmartDialog.dismiss();
-      _image = null;
+    for (File image in _images) {
+      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+        'certainPackageCodeList': certainPackageCodeList,
+        'secondPackageCode':
+            secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
+      }, imagedata: image);
+      if (r == 200) {
+        showToast("上传成功");
+      } else {
+        showToast("上传失败");
+      }
     }
+    SmartDialog.dismiss();
+    _images.clear();
   }
 
   static Map<String, WidgetBuilder> routes = {
@@ -667,54 +672,104 @@ class _NewPageState extends State<NewPage> {
   }
 
   // 上传照片弹窗
-  Widget uploadDialogComponents(BuildContext context) {
-    return Column(
-      children: [
-        if (_image == null)
-          InkWell(
-            child: Container(
-              constraints: const BoxConstraints.tightFor(
-                  width: 400, height: 400), // 放大图片的容器大小
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [Icon(Icons.add_a_photo)],
-              ),
+
+// 上传照片弹窗
+Widget uploadDialogComponents(BuildContext context) {
+  return Column(
+    children: [
+      if (_images.isEmpty)
+        InkWell(
+          child: Container(
+            constraints: const BoxConstraints.tightFor(
+                width: 400, height: 400), // 放大图片的容器大小
+            decoration: BoxDecoration(
+              color: Colors.indigo.shade50,
             ),
-            onTap: () => {showBottomSheet(context)},
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [Icon(Icons.add_a_photo)],
+            ),
           ),
-        if (_image != null) Image.file(_image!, height: 400),
-        const SizedBox(height: 20), // 增加一些间距
-        SizedBox(
-          //宽度为屏幕宽
-          width: MediaQuery.of(context).size.width,
-          //高度为屏幕0.1倍
-          height: MediaQuery.of(context).size.height * 0.1,
-          //放在屏幕最下方锁定
-
-          child: ElevatedButton(
-            onPressed: () => {
-              if (_image != null)
-                {
-                  SmartDialog.showLoading(),
-                  uploadPicture(),
-                  completeCertainPackage(),
-                  SmartDialog.dismiss()
-                }
-              else
-                {showToast("请先选择上传图像")}
-            },
-            child: const Text("上传", style: TextStyle(fontSize: 18.0)),
-          ),
+          onTap: () => {showBottomSheet(context)},
         ),
-      ],
-    );
-  }
+      if (_images.isNotEmpty)
+        Column(
+          children: [
+            GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 4.0,
+                mainAxisSpacing: 4.0,
+              ),
+              itemCount: _images.length,
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    Image.file(_images[index], height: 100, width: 100),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _images.removeAt(index);
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20), // 增加一些间距
+            InkWell(
+              child: Container(
+                constraints: const BoxConstraints.tightFor(
+                    width: 400, height: 400), // 放大图片的容器大小
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [Icon(Icons.add_a_photo)],
+                ),
+              ),
+              onTap: () => {showBottomSheet(context)},
+            ),
+          ],
+        ),
+      const SizedBox(height: 20), // 增加一些间距
+      SizedBox(
+        //宽度为屏幕宽
+        width: MediaQuery.of(context).size.width,
+        //高度为屏幕0.1倍
+        height: MediaQuery.of(context).size.height * 0.1,
+        //放在屏幕最下方锁定
 
-  // 图片来源选择支
+        child: ElevatedButton(
+          onPressed: () => {
+            if (_images.isNotEmpty)
+              {
+                SmartDialog.showLoading(),
+                uploadPictures(),
+                completeCertainPackage(),
+                SmartDialog.dismiss()
+              }
+            else
+              {showToast("请先选择上传图像")}
+          },
+          child: const Text("上传", style: TextStyle(fontSize: 18.0)),
+        ),
+      ),
+    ],
+  );
+}
+
+// 图片来源选择支
   void showBottomSheet(BuildContext context) {
     showModalBottomSheet(
         context: context,
@@ -723,7 +778,7 @@ class _NewPageState extends State<NewPage> {
         });
   }
 
-  // 选择支构筑
+// 选择支构筑
   Widget buildBottomSheetWidget(BuildContext context) {
     return SizedBox(
       height: 150,
@@ -763,7 +818,7 @@ class _NewPageState extends State<NewPage> {
     );
   }
 
-  // 选择支子单元
+// 选择支子单元
   Widget buildItem(String title, {String? imagePath, Function? onTap}) {
     //添加点击事件
     return InkWell(

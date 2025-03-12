@@ -397,9 +397,10 @@ class ProductApi extends AppApi {
   }
 
   //上传作业项图片
+  //TODO: 传输多个图片
   Future<int> uploadCertainPackageImg(
       {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
-    // try {
+    try {
     FormData formData = FormData.fromMap({
       "certainPackageCodeList": queryParametrs!["certainPackageCodeList"],
       "uploadFileList": await MultipartFile.fromFile(imagedata!.path),
@@ -411,10 +412,10 @@ class ProductApi extends AppApi {
         options: Options(contentType: "multipart/form-data"));
     logger.i("uploadImg${r.data}");
     return (r.data["code"]);
-    // } catch (e) {
-    //   _handleException(e);
-    //   return -1;
-    // }
+    } catch (e, stackTrace) {
+      logger.e( e, stackTrace);
+      return -1;
+    }
   }
 
   // 完成作业项

@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'dart:io';
+
 
 import 'package:jcjx_phone/index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as apc;
@@ -45,7 +45,7 @@ class _MutualState extends State<Mutual> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
-      decoration: BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: Colors.white),
       child: ListView(children: <Widget>[
         Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -54,7 +54,7 @@ class _MutualState extends State<Mutual> {
               // dense: true,
               leading: Text(
                 "${jtMes?.trainType}-${jtMes?.trainNum}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               // title: Text("${jtMes?.trainType}-${jtMes?.trainNum}",style: TextStyle(fontSize: 18.0),),
               trailing: Text("加工方法：${jtMes?.processMethodName}"),
@@ -63,7 +63,7 @@ class _MutualState extends State<Mutual> {
               dense: true,
               title: Text(
                 "检修作业来源：${jtMes?.repairResourceName}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               subtitle: Text("报修人：${jtMes?.reporterName}"),
               trailing: Text("风险等级：${jtMes?.riskLevel}"),
@@ -72,7 +72,7 @@ class _MutualState extends State<Mutual> {
               dense: true,
               title: Text(
                 "施修情况：${jtMes?.repairStatus}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               subtitle: Text("施修人：${jtMes?.repairName}"),
             ),
@@ -80,7 +80,7 @@ class _MutualState extends State<Mutual> {
               dense: true,
               title: Text(
                 "故障零部件:${jtMes?.jcNodeName}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
             ),
             ZjcFormInputCell(

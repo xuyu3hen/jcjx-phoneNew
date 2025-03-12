@@ -41,7 +41,7 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
         element.selected = false;
       }
       setState(() {
-        hasMore = data.rows!.length > 0 && data.rows!.length%10==0;
+        hasMore = data.rows!.isNotEmpty && data.rows!.length%10==0;
         _items.insertAll(_items.length - 1, data.rows!);
         pageNum++;
       });
@@ -77,7 +77,7 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
                     return Container(
                       padding: const EdgeInsets.all(16.0),
                       alignment: Alignment.center,
-                      child: SizedBox(
+                      child: const SizedBox(
                         width: 24.0,
                         height: 24.0,
                         child: CircularProgressIndicator(strokeWidth: 2.0,)
@@ -142,11 +142,11 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${item.trainType}-${item.trainNum}",style: TextStyle(fontSize: 18.0),),
+                title: Text("${item.trainType}-${item.trainNum}",style: const TextStyle(fontSize: 18.0),),
                 subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   Navigator.of(context).pushNamed('vehimageviewer',arguments: item);
-                }, child: Icon(Icons.image)),
+                }, child: const Icon(Icons.image)),
               ),
               ZjcFormInputCell(
                 title: "故障现象",
