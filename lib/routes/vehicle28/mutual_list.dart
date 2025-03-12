@@ -40,7 +40,7 @@ class _MutualListState extends State<MutualList> {
         element.selected = false;
       }
       setState(() {
-        hasMore = data.rows!.length > 0 && data.rows!.length%10==0;
+        hasMore = data.rows!.isNotEmpty && data.rows!.length%10==0;
         _items.insertAll(_items.length - 1, data.rows!);
         pageNum++;
       });
@@ -89,7 +89,7 @@ class _MutualListState extends State<MutualList> {
                     return Container(
                       padding: const EdgeInsets.all(16.0),
                       alignment: Alignment.center,
-                      child: SizedBox(
+                      child: const SizedBox(
                         width: 24.0,
                         height: 24.0,
                         child: CircularProgressIndicator(strokeWidth: 2.0,)

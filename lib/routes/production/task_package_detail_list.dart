@@ -1,11 +1,11 @@
-
 import '../../index.dart';
 
 class TaskPackageDetailsPage extends StatefulWidget {
   final WorkPackage package;
   final SecondPackage secondPackage;
 
-   const TaskPackageDetailsPage({super.key, required this.package, required this.secondPackage});
+  const TaskPackageDetailsPage(
+      {super.key, required this.package, required this.secondPackage});
 
   @override
   State createState() => _TaskPackageDetailsPageState();
@@ -17,11 +17,161 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
   //将SecondPackage转换为SecondShowPackage进行包装
   late List<SecondShowPackage> secondShowPackageList =
       getGroupSecondPackageCodeList();
-  
+
   var logger = AppLogger.logger;
+
+  UserList special = UserList(code: '', message: '', data: []);
+  UserList mutual = UserList(code: '', message: '', data: []);
 
   void setCheck() {
     setState(() {});
+  }
+
+  bool _anyPackageChecked() {
+    if (_packageCheckedList.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  void getUserList(String specialList, String mutualList) async {
+    try {
+      List<int> specialList1 = [];
+      List<int> mutualList1 = [];
+      // 处理 specialList
+      if (specialList.isNotEmpty) {
+        specialList.split(',').forEach((element) {
+          try {
+            int value = int.parse(element);
+            specialList1.add(value);
+          } catch (e) {
+            logger.e('Error parsing $element in specialList: $e');
+          }
+        });
+      }
+      // 处理 mutualList
+      if (mutualList.isNotEmpty) {
+        mutualList.split(',').forEach((element) {
+          try {
+            int value = int.parse(element);
+            mutualList1.add(value);
+          } catch (e) {
+            logger.e('Error parsing $element in mutualList: $e');
+          }
+        });
+      }
+      logger.i('Special List: $specialList1');
+      logger.i('Mutual List: $mutualList1');
+      if (specialList1.isNotEmpty) {
+        var specialUserList = await ProductApi().getUserList(specialList1);
+        if (mounted) {
+          setState(() {
+            special = specialUserList;
+            logger.i('${special.data}');
+          });
+        }
+      }
+      if (mutualList1.isNotEmpty) {
+        var muutualUserList = await ProductApi().getUserList(mutualList1);
+        if (mounted) {
+          setState(() {
+            mutual = muutualUserList;
+            logger.i('${mutual.data}');
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('saveSelectedUsers方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  List<SecondShowPackage> getGroupSecondPackageCodeList() {
+    try {
+      // 第二工位设置
+      List<Rows>? secondPackageList = widget.secondPackage.rows;
+      //每一个secondPackageNode对应一种颜色
+
+      // 第二工位以及taskCertainPackageList设置
+      List<SecondShowPackage> secondShowPackageList = [];
+
+      List<TaskCertainPackageList>? taskCertainPackageList =
+          widget.package.taskCertainPackageList;
+
+      Map<String, int> secondPackageNode2Color = {};
+      int color = 1;
+      if (secondPackageList != null && secondPackageList.isNotEmpty) {
+        for (TaskCertainPackageList taskCertainPackage
+            in taskCertainPackageList!) {
+          String secondPackageNode = taskCertainPackage.secondPackageCode ?? '';
+          secondPackageNode2Color[secondPackageNode] = color % 14;
+          color++;
+        }
+      }
+      if (secondPackageList == null || taskCertainPackageList == null) {
+        return secondShowPackageList;
+      }
+
+      for (TaskCertainPackageList taskCertainPackage
+          in taskCertainPackageList) {
+        String secondPackageCode = '';
+        for (Rows rows in secondPackageList) {
+          if (taskCertainPackage.code == rows.certainPackageCode) {
+            secondPackageCode = rows.secondPackageCode ?? '';
+          }
+        }
+        int i =
+            secondPackageNode2Color[taskCertainPackage.secondPackageCode] ?? 0;
+        SecondShowPackage secondShowPackage = SecondShowPackage(
+          taskCertainPackageList: taskCertainPackage,
+          secondPackageNode: taskCertainPackage.secondPackageCode,
+          color: i,
+        );
+        secondShowPackageList.add(secondShowPackage);
+      }
+      for (SecondShowPackage secondShowPackage in secondShowPackageList) {
+        logger.i(secondShowPackage.taskCertainPackageList?.toJson());
+        logger.i(secondShowPackage.toJson());
+      }
+      return secondShowPackageList;
+    } catch (e, stackTrace) {
+      logger.e('getGroupSecondPackageCodeList方法中发生异常: $e\n堆栈信息: $stackTrace');
+      return [];
+    }
+  }
+
+  Color getColorFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return Colors.black;
+      case 1:
+        return Colors.red;
+      case 2:
+        return Colors.green;
+      case 3:
+        return Colors.blue;
+      case 4:
+        return Colors.yellow;
+      case 5:
+        return Colors.orange;
+      case 6:
+        return Colors.purple;
+      case 7:
+        return Colors.pink;
+      case 8:
+        return Colors.brown;
+      case 9:
+        return Colors.cyan;
+      case 10:
+        return Colors.amber;
+      case 11:
+        return Colors.lime;
+      case 12:
+        return Colors.teal;
+      case 13:
+        return Colors.indigo;
+      default:
+        return Colors.grey;
+    }
   }
 
   @override
@@ -45,14 +195,6 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
         ],
       ),
     );
-  }
-
-//
-  bool _anyPackageChecked() {
-    if (_packageCheckedList.isNotEmpty) {
-      return true;
-    }
-    return false;
   }
 
   Widget buildPackageDetailsItem(
@@ -166,7 +308,8 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
                       in _packageCheckedList) {
                     logger.i(secondShowPackage.secondPackageNode);
                     logger.i(secondShowPackage.taskCertainPackageList!.name);
-                    logger.i(secondShowPackage.taskCertainPackageList!.riskLevel);
+                    logger
+                        .i(secondShowPackage.taskCertainPackageList!.riskLevel);
                   }
                 }
               });
@@ -226,9 +369,6 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       ],
     );
   }
-
-  UserList special = UserList(code: '', message: '', data: []);
-  UserList mutual = UserList(code: '', message: '', data: []);
 
   Widget _buildUploadButton(BuildContext context) {
     double height = MediaQuery.of(context).size.height * 0.1;
@@ -304,137 +444,6 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
       ),
     );
   }
-
-  void getUserList(String specialList, String mutualList) async {
-    List<int> specialList1 = [];
-    List<int> mutualList1 = [];
-    // 处理 specialList
-    if (specialList.isNotEmpty) {
-      specialList.split(',').forEach((element) {
-        try {
-          int value = int.parse(element);
-          specialList1.add(value);
-        } catch (e) {
-          logger.e('Error parsing $element in specialList: $e');
-        }
-      });
-    }
-    // 处理 mutualList
-    if (mutualList.isNotEmpty) {
-      mutualList.split(',').forEach((element) {
-        try {
-          int value = int.parse(element);
-          mutualList1.add(value);
-        } catch (e) {
-          logger.e('Error parsing $element in mutualList: $e');
-        }
-      });
-    }
-    logger.i('Special List: $specialList1');
-    logger.i('Mutual List: $mutualList1');
-
-    if (specialList1.isNotEmpty) {
-      var specialUserList = await ProductApi().getUserList(specialList1);
-      if (mounted) {
-        setState(() {
-          special = specialUserList;
-          logger.i('${special.data}');
-        });
-      }
-    }
-    if (mutualList1.isNotEmpty) {
-      var muutualUserList = await ProductApi().getUserList(mutualList1);
-      if (mounted) {
-        setState(() {
-          mutual = muutualUserList;
-          logger.i('${mutual.data}');
-        });
-      }
-    }
-  }
-
-  List<SecondShowPackage> getGroupSecondPackageCodeList() {
-    // 第二工位设置
-    List<Rows>? secondPackageList = widget.secondPackage.rows;
-    //每一个secondPackageNode对应一种颜色
-
-    // 第二工位以及taskCertainPackageList设置
-    List<SecondShowPackage> secondShowPackageList = [];
-
-    List<TaskCertainPackageList>? taskCertainPackageList =
-        widget.package.taskCertainPackageList;
-
-    Map<String, int> secondPackageNode2Color = {};
-    int color = 1;
-    if (secondPackageList != null && secondPackageList.isNotEmpty) {
-      for (TaskCertainPackageList taskCertainPackage
-          in taskCertainPackageList!) {
-        String secondPackageNode = taskCertainPackage.secondPackageCode ?? '';
-        secondPackageNode2Color[secondPackageNode] = color % 14;
-        color++;
-      }
-    }
-    if (secondPackageList == null || taskCertainPackageList == null) {
-      return secondShowPackageList;
-    }
-
-    for (TaskCertainPackageList taskCertainPackage in taskCertainPackageList) {
-      String secondPackageCode = '';
-      for (Rows rows in secondPackageList) {
-        if (taskCertainPackage.code == rows.certainPackageCode) {
-          secondPackageCode = rows.secondPackageCode ?? '';
-        }
-      }
-      int i =
-          secondPackageNode2Color[taskCertainPackage.secondPackageCode] ?? 0;
-      SecondShowPackage secondShowPackage = SecondShowPackage(
-        taskCertainPackageList: taskCertainPackage,
-        secondPackageNode: taskCertainPackage.secondPackageCode,
-        color: i,
-      );
-      secondShowPackageList.add(secondShowPackage);
-    }
-    for (SecondShowPackage secondShowPackage in secondShowPackageList) {
-      logger.i(secondShowPackage.taskCertainPackageList?.toJson());
-      logger.i(secondShowPackage.toJson());
-    }
-    return secondShowPackageList;
-  }
-
-  Color getColorFromIndex(int index) {
-    switch (index) {
-      case 0:
-        return Colors.black;
-      case 1:
-        return Colors.red;
-      case 2:
-        return Colors.green;
-      case 3:
-        return Colors.blue;
-      case 4:
-        return Colors.yellow;
-      case 5:
-        return Colors.orange;
-      case 6:
-        return Colors.purple;
-      case 7:
-        return Colors.pink;
-      case 8:
-        return Colors.brown;
-      case 9:
-        return Colors.cyan;
-      case 10:
-        return Colors.amber;
-      case 11:
-        return Colors.lime;
-      case 12:
-        return Colors.teal;
-      case 13:
-        return Colors.indigo;
-      default:
-        return Colors.grey;
-    }
-  }
 }
 
 //上传作业项图片以及互检专检人员
@@ -443,7 +452,8 @@ class NewPage extends StatefulWidget {
   final List<UserInfo>? specialList;
   final List<SecondShowPackage>? secondPackageList;
 
-  const NewPage({Key? key, this.mutualList, this.specialList, this.secondPackageList})
+  const NewPage(
+      {Key? key, this.mutualList, this.specialList, this.secondPackageList})
       : super(key: key);
 
   @override
@@ -468,6 +478,71 @@ class _NewPageState extends State<NewPage> {
   void initState() {
     super.initState();
     // 将 mutualList 转换为 mutualListData
+  }
+
+  // 获取图片函数
+  Future getImage(ImageSource isource) async {
+    final PickedFile = await picker.pickImage(
+      source: isource,
+    );
+    setState(() {
+      if (PickedFile != null) {
+        _image = File(PickedFile.path);
+        SmartDialog.dismiss();
+      } else {
+        showToast("未获取图片");
+      }
+    });
+  }
+
+  void uploadPicture() async {
+    List<SecondShowPackage>? secondShowPackageList = widget.secondPackageList;
+    String certainPackageCodeList = secondShowPackageList!
+        .map((package) => package.taskCertainPackageList!.code)
+        .join(',');
+    logger.i(certainPackageCodeList);
+    logger
+        .i(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
+    var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      'certainPackageCodeList': certainPackageCodeList,
+      'secondPackageCode':
+          secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
+    }, imagedata: File(_image!.path));
+    if (r == 200) {
+      showToast("上传成功");
+      SmartDialog.dismiss();
+      _image = null;
+    }
+  }
+
+  static Map<String, WidgetBuilder> routes = {
+    'searchWorkPackage': (BuildContext context) => const SearchWorkPackage(),
+  };
+
+  //完成作业项图片上传
+  void completeCertainPackage() async {
+    List<TaskCertainPackageList> list = [];
+    for (SecondShowPackage secondShowPackage in widget.secondPackageList!) {
+      secondShowPackage.taskCertainPackageList?.mutualInspectionId =
+          mutualSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionId =
+          specialSelected['userId'];
+      secondShowPackage.taskCertainPackageList?.mutualInspectionName =
+          mutualSelected['nickName'];
+      secondShowPackage.taskCertainPackageList?.specialInspectionName =
+          specialSelected['nickName'];
+      list.add(secondShowPackage.taskCertainPackageList!);
+    }
+    //展示list内容。每个元素值
+    for (TaskCertainPackageList taskCertainPackageList in list) {
+      logger.i(taskCertainPackageList.toJson());
+    }
+    var r = await ProductApi().finishCertainPackage(list);
+    if (r == 200) {
+      showToast("完成成功");
+      //进行页面跳转跳转到作业包模块
+      //目前目前没有解决跳转问题
+    }
   }
 
   @override
@@ -598,8 +673,8 @@ class _NewPageState extends State<NewPage> {
         if (_image == null)
           InkWell(
             child: Container(
-              constraints:
-                  const BoxConstraints.tightFor(width: 400, height: 400), // 放大图片的容器大小
+              constraints: const BoxConstraints.tightFor(
+                  width: 400, height: 400), // 放大图片的容器大小
               decoration: BoxDecoration(
                 color: Colors.indigo.shade50,
               ),
@@ -611,8 +686,7 @@ class _NewPageState extends State<NewPage> {
             ),
             onTap: () => {showBottomSheet(context)},
           ),
-        if (_image != null)
-          Image.file(_image!, height: 400),
+        if (_image != null) Image.file(_image!, height: 400),
         const SizedBox(height: 20), // 增加一些间距
         SizedBox(
           //宽度为屏幕宽
@@ -716,69 +790,5 @@ class _NewPageState extends State<NewPage> {
         ),
       ),
     );
-  }
-
-  // 获取图片函数
-  Future getImage(ImageSource isource) async {
-    final PickedFile = await picker.pickImage(
-      source: isource,
-    );
-    setState(() {
-      if (PickedFile != null) {
-        _image = File(PickedFile.path);
-        SmartDialog.dismiss();
-      } else {
-        showToast("未获取图片");
-      }
-    });
-  }
-
-  void uploadPicture() async {
-    List<SecondShowPackage>? secondShowPackageList = widget.secondPackageList;
-    String certainPackageCodeList = secondShowPackageList!
-        .map((package) => package.taskCertainPackageList!.code)
-        .join(',');
-    logger.i(certainPackageCodeList);
-    logger.i(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
-    var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
-      'certainPackageCodeList': certainPackageCodeList,
-      'secondPackageCode':
-          secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
-    }, imagedata: File(_image!.path));
-    if (r == 200) {
-      showToast("上传成功");
-      SmartDialog.dismiss();
-      _image = null;
-    }
-  }
-
-  static Map<String, WidgetBuilder> routes = {
-    'searchWorkPackage': (BuildContext context) => const SearchWorkPackage(),
-  };
-
-  //完成作业项图片上传
-  void completeCertainPackage() async {
-    List<TaskCertainPackageList> list = [];
-    for (SecondShowPackage secondShowPackage in widget.secondPackageList!) {
-      secondShowPackage.taskCertainPackageList?.mutualInspectionId =
-          mutualSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionId =
-          specialSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.mutualInspectionName =
-          mutualSelected['nickName'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionName =
-          specialSelected['nickName'];
-      list.add(secondShowPackage.taskCertainPackageList!);
-    }
-    //展示list内容。每个元素值
-    for (TaskCertainPackageList taskCertainPackageList in list) {
-      logger.i(taskCertainPackageList.toJson());
-    }
-    var r = await ProductApi().finishCertainPackage(list);
-    if (r == 200) {
-      showToast("完成成功");
-      //进行页面跳转跳转到作业包模块
-      //目前目前没有解决跳转问题
-    }
   }
 }

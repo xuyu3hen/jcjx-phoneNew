@@ -154,12 +154,12 @@ class _CertainPackageState extends State<CertainPackage>{
               trailing:ElevatedButton(onPressed: (){
                   // changeABDialog(item);
                 }, 
-                child: Icon(Icons.remove_red_eye_outlined),
+                child: const Icon(Icons.remove_red_eye_outlined),
               ),
             ),
             ListTile(
               dense: true,
-              leading: Text("完成情况",style: TextStyle(fontSize: 16.0),),
+              leading: const Text("完成情况",style: TextStyle(fontSize: 16.0),),
               // title: Text("${item.complete}",style: TextStyle(fontSize: 16.0)),
               trailing:Text(item.complete=='0'?'未完成':'已完成',style: TextStyle(fontSize: 16.0,color: item.complete=='0'?Colors.orange:Colors.blue))
             ),
@@ -188,16 +188,16 @@ class _CertainPackageState extends State<CertainPackage>{
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.indigo.shade50,
-                  borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10),bottomRight: Radius.circular(10))
+                  borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(10),bottomRight: Radius.circular(10))
                 ),
                 height: 20,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if(item.expanded!)...[
-                      Icon(Icons.keyboard_double_arrow_up_rounded)
+                      const Icon(Icons.keyboard_double_arrow_up_rounded)
                     ]else...[
-                      Icon(Icons.keyboard_double_arrow_down_rounded)
+                      const Icon(Icons.keyboard_double_arrow_down_rounded)
                     ]
                   ],
                 ),

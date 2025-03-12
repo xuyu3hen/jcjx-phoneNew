@@ -1,6 +1,6 @@
-import 'dart:convert';
+
 import 'dart:developer';
-import 'dart:io';
+
 
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
@@ -9,10 +9,10 @@ import '../../index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
 class Vehicle28Form extends StatefulWidget {
-  Vehicle28Form({Key? key}) : super(key: key);
+  const Vehicle28Form({Key? key}) : super(key: key);
 
   @override
-  _Vehicle28FormState createState() => _Vehicle28FormState();
+  State createState() => _Vehicle28FormState();
 }
 
 class _Vehicle28FormState extends State<Vehicle28Form> {
@@ -593,7 +593,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             showToast("故障提报失败");
             print("${e.toString()}");
           } finally {
-            // TODO：code不存在，换message
+            
             SmartDialog.dismiss(status: SmartStatus.loading);
             if (submit['code'] == "S_T_S003") {
               SmartDialog.show(
@@ -611,21 +611,21 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: <Widget>[
-                          Text(
+                          const Text(
                             "机统28提报成功",
                             style: TextStyle(fontSize: 18),
                           ),
                           ConstrainedBox(
                             constraints:
-                                BoxConstraints.expand(height: 30, width: 160),
+                                const BoxConstraints.expand(height: 30, width: 160),
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 SmartDialog.dismiss().then(
                                     (value) => Navigator.of(context).pop());
                               },
-                              label: Text('确定'),
+                              label: const Text('确定'),
                               icon:
-                                  Icon(Icons.system_security_update_good_sharp),
+                                  const Icon(Icons.system_security_update_good_sharp),
                             ),
                           ),
                         ],

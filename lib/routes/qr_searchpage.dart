@@ -127,7 +127,7 @@ class _QRsearchPage extends State<QRsearchPage>{
     return downmenu.DropdownHeader(
       isSideline: false,
       onTap: onTap,
-      titles: ['是否显示空包装'],
+      titles: const ['是否显示空包装'],
       selectIsChangingColor: true,
       // specialModules: [1],
       ///特殊模块,选中数据只亮起,不需要更改头部title,下标为1

@@ -31,58 +31,63 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
   }
 
   void saveSelectedUsers() {
-    List<int> mutualIdList = [];
-    List<String> mutualNameList = [];
-    for (var person in mutual) {
-      if (person['associated'] == true) {
-        mutualIdList.add(person['userId']);
-        mutualNameList.add(person['name']);
+    try {
+      List<int> mutualIdList = [];
+      List<String> mutualNameList = [];
+      for (var person in mutual) {
+        if (person['associated'] == true) {
+          mutualIdList.add(person['userId']);
+          mutualNameList.add(person['name']);
+        }
       }
-    }
-    // idList和nameList分别以,拼接成字符串
-    String mutualIdString = mutualIdList.join(',');
-    String mutualNameString = mutualNameList.join(',');
+      // idList和nameList分别以,拼接成字符串
+      String mutualIdString = mutualIdList.join(',');
+      String mutualNameString = mutualNameList.join(',');
 
-    List<int> specialIdList = [];
-    List<String> specialNameList = [];
-    for (var person in special) {
-      if (person['associated'] == true) {
-        specialIdList.add(person['userId']);
-        specialNameList.add(person['name']);
+      List<int> specialIdList = [];
+      List<String> specialNameList = [];
+      for (var person in special) {
+        if (person['associated'] == true) {
+          specialIdList.add(person['userId']);
+          specialNameList.add(person['name']);
+        }
       }
-    }
-    // idList和nameList分别以,拼接成字符串
-    String specialIdString = specialIdList.join(',');
-    String specialNameString = specialNameList.join(',');
+      // idList和nameList分别以,拼接成字符串
+      String specialIdString = specialIdList.join(',');
+      String specialNameString = specialNameList.join(',');
 
-    List<Map<String, dynamic>> queryParameters = [];
+      List<Map<String, dynamic>> queryParameters = [];
 
-    //selectedWorkItems 遍历 赋值
-    for (var item in selectedWorkItems) {
-      item.mutualInspectionPersonnel = mutualIdString;
-      item.mutualPersonnelName = mutualNameString;
-      item.specialInspectionPersonnel = specialIdString;
-      item.specialPersonnelName = specialNameString;
-      queryParameters.add(item.toJson());
-    }
+      //selectedWorkItems 遍历 赋值
+      for (var item in selectedWorkItems) {
+        item.mutualInspectionPersonnel = mutualIdString;
+        item.mutualPersonnelName = mutualNameString;
+        item.specialInspectionPersonnel = specialIdString;
+        item.specialPersonnelName = specialNameString;
+        queryParameters.add(item.toJson());
+      }
 
-    // 打印queryParameters使用log
-    logger.i(jsonEncode(queryParameters));
+      // 打印queryParameters使用log
+      logger.i(jsonEncode(queryParameters));
 
-    if (mounted) {
-      // 调用接口
-      ProductApi().saveAssociated(queryParameters);
+      if (mounted) {
+        // 调用接口
+        ProductApi().saveAssociated(queryParameters);
 
-      showToast('专互检保存成功');
-      //回退到上一页面
-      Navigator.pop(context);
-      setState(() {});
+        showToast('专互检保存成功');
+        //回退到上一页面
+        Navigator.pop(context);
+        setState(() {});
+      }
+    } catch (e, stackTrace) {
+      logger.e('saveSelectedUsers方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
   // 获取专互检信息
   void getSpecialMutual() async {
-    if (selectedWorkItems.isNotEmpty) {
+    try{
+         if (selectedWorkItems.isNotEmpty) {
       Map<String, dynamic> queryParameters = {
         'pageNum': 0,
         'pageSize': 0,
@@ -148,6 +153,9 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
       if (mounted) {
         setState(() {});
       }
+    }
+    }catch(e, stackTrace){
+      logger.e('getSpecialMutual方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
