@@ -8,11 +8,7 @@ class GetWorkPackage extends StatefulWidget {
 }
 
 class _DataDisplayPageState extends State<GetWorkPackage> {
-  // 创建 Logger 实例
-  var logger = Logger(
-    printer: PrettyPrinter(), // 漂亮的日志格式化
-  );
-
+  var logger = AppLogger.logger;
   // 动态类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
   // 筛选的动态类型信息
@@ -32,7 +28,8 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
   // 获取用户信息
   late Permissions permissions;
 
-  bool _isButtonProcessing = false; // 用于标记主修相关按钮是否正在处理操作（防止连点）
+  // 用于标记主修相关按钮是否正在处理操作（防止连点）
+  bool _isButtonProcessing = false;
 
   bool mainRepairStatus = false;
   bool cancelMainRepairStatus = false;
@@ -44,6 +41,182 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
     super.initState();
     //初始化动力类型
     getDynamicType();
+  }
+
+  String getMainRepairText(WorkPackage package) {
+    try {
+      if (package.repairPersonnel != null &&
+          package.repairPersonnel!
+              .contains(permissions.user.userId.toString()) &&
+          package.executorId == null) {
+        return "成为主修";
+      } else if (package.repairPersonnel != null &&
+          package.repairPersonnel!
+              .contains(permissions.user.userId.toString()) &&
+          package.executorId == permissions.user.userId) {
+        return "取消主修";
+      } else if (package.repairPersonnel != null &&
+          package.repairPersonnel!
+              .contains(permissions.user.userId.toString()) &&
+          package.executorId != permissions.user.userId &&
+          package.executorId != null) {
+        return "已经有其他主修可选人成为主修";
+      } else {
+        return "无法成为主修";
+      }
+    } catch (e, stackTrace) {
+      logger.e('getMainRepairText 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      return "无法成为主修";
+    }
+  }
+
+  String getAssistantText(WorkPackage package) {
+    try {
+      if (package.assistant != null &&
+          package.assistant!.contains(permissions.user.userId.toString()) &&
+          package.assistantId == null) {
+        return "成为辅修";
+      } else if (package.assistant != null &&
+          package.assistant!.contains(permissions.user.userId.toString()) &&
+          package.assistantId == permissions.user.userId) {
+        return "取消辅修";
+      } else if (package.assistant != null &&
+          package.assistant!.contains(permissions.user.userId.toString()) &&
+          package.assistantId != permissions.user.userId &&
+          package.assistantId != null) {
+        return "已经有其他辅修可选人辅修";
+      } else {
+        return "无法成为辅修";
+      }
+    } catch (e, stackTrace) {
+      logger.e('getAssistantText 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      return "无法成为辅修";
+    }
+  }
+
+  void getDynamicType() async {
+    try {
+      //获取动力类型
+      var r = await ProductApi().getDynamicType();
+      //获取用户信息
+      var permissionResponse = await LoginApi().getpermissions();
+      setState(() {
+        dynamicTypeList = r.toMapList();
+        permissions = permissionResponse;
+        logger.i(permissions.toJson());
+      });
+    } catch (e, stackTrace) {
+      logger.e('getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  void getJcType() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': dynamciTypeSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getJcType(queryParametrs: queryParameters);
+      logger.i(r.toJson());
+      setState(() {
+        jcTypeList = r.toMapList();
+      });
+    } catch (e, stackTrace) {
+      logger.e('getJcType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  void getTrainNumCodeList() async {
+    try {
+      //构建查询车号参数
+      Map<String, dynamic> queryParameters = {
+        'typeName': jcTypeListSelected["name"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      //获取车号
+      var r =
+          await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
+      setState(() {
+        trainNumCodeList = r.toMapList();
+      });
+    } catch (e, stackTrace) {
+      logger.e('getTrainNumCodeList 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 成为主修
+  Future<void> beMainRepair(String code) async {
+    try {
+      //用code组件一个List<String>
+      List<String> queryParameters = [code];
+
+      await ProductApi().beMainRepair(queryParameters);
+      // 更新状态为已成为主修
+      setState(() {
+        getWorkPackage();
+      });
+    } catch (e, stackTrace) {
+      logger.e('beMainRepair 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 取消主修
+  Future<void> cancelMainRepair(String code) async {
+    try {
+      //构建取消主修参数
+      List<String> queryParameters = [code];
+      await ProductApi().cancelMainRepair(queryParameters);
+      // 更新状态为已取消主修
+      getWorkPackage();
+    } catch (e, stackTrace) {
+      logger.e('cancelMainRepair 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //成为辅修
+  Future<void> beAssistantRepair(String code) async {
+    try {
+      //构建成为辅修参数
+      List<String> queryParameters = [code];
+      await ProductApi().beAssistantRepair(queryParameters);
+      getWorkPackage();
+    } catch (e, stackTrace) {
+      logger.e('beAssistantRepair 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //取消辅修
+  Future<void> cancelAssistantRepair(String code) async {
+    try {
+      //构建成为辅修参数
+      List<String> queryParameters = [code];
+      await ProductApi().cancelAssistantRepair(queryParameters);
+      getWorkPackage();
+    } catch (e, stackTrace) {
+      logger.e('cancelAssistantRepair 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //获取作业包
+  Future<void> getWorkPackage() async {
+    try {
+      //构建查询作业包参数
+      Map<String, dynamic> queryParameters = {
+        'trainEntryCode': trainNumSelected["code"],
+      };
+      //获取作业包
+      var r =
+          await ProductApi().getWorkPackage(queryParametrs: queryParameters);
+
+      setState(() {
+        workPackageList = r;
+        logger.i(workPackageList.toJson());
+      });
+    } catch (e, stackTrace) {
+      logger.e('getWorkPackage 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   @override
@@ -241,7 +414,7 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
                                               // 如果当前不是主修状态，则调用成为主修接口
                                               beMainRepair(package.code ?? '');
                                               setState(() {
-                                                  getWorkPackage();
+                                                getWorkPackage();
                                               });
                                             } else if (cancelMainRepairStatus) {
                                               // 如果已经是主修状态，调用取消主修接口
@@ -308,139 +481,5 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
         ],
       ),
     );
-  }
-
-  String getMainRepairText(WorkPackage package) {
-    if (package.repairPersonnel != null &&
-        package.repairPersonnel!.contains(permissions.user.userId.toString()) &&
-        package.executorId == null) {
-      return "成为主修";
-    } else if (package.repairPersonnel != null &&
-        package.repairPersonnel!.contains(permissions.user.userId.toString()) &&
-        package.executorId == permissions.user.userId) {
-      return "取消主修";
-    } else if (package.repairPersonnel != null &&
-        package.repairPersonnel!.contains(permissions.user.userId.toString()) &&
-        package.executorId != permissions.user.userId &&
-        package.executorId != null) {
-      return "已经有其他主修可选人成为主修";
-    } else {
-      return "无法成为主修";
-    }
-  }
-
-  String getAssistantText(WorkPackage package) {
-    if (package.assistant != null &&
-        package.assistant!.contains(permissions.user.userId.toString()) &&
-        package.assistantId == null) {
-      return "成为辅修";
-    } else if (package.assistant != null &&
-        package.assistant!.contains(permissions.user.userId.toString()) &&
-        package.assistantId == permissions.user.userId) {
-      return "取消辅修";
-    } else if (package.assistant != null &&
-        package.assistant!.contains(permissions.user.userId.toString()) &&
-        package.assistantId != permissions.user.userId &&
-        package.assistantId != null) {
-      return "已经有其他辅修可选人辅修";
-    } else {
-      return "无法成为辅修";
-    }
-  }
-
-  void getDynamicType() async {
-    //获取动力类型
-    var r = await ProductApi().getDynamicType();
-    //获取用户信息
-    var permissionResponse = await LoginApi().getpermissions();
-    setState(() {
-      dynamicTypeList = r.toMapList();
-      permissions = permissionResponse;
-      logger.i(permissions.toJson());
-    });
-  }
-
-  void getJcType() async {
-    Map<String, dynamic> queryParameters = {
-      'dynamicCode': dynamciTypeSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().getJcType(queryParametrs: queryParameters);
-    logger.i(r.toJson());
-    setState(() {
-      jcTypeList = r.toMapList();
-    });
-  }
-
-  void getTrainNumCodeList() async {
-    //构建查询车号参数
-    Map<String, dynamic> queryParameters = {
-      'typeName': jcTypeListSelected["name"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    //获取车号
-    var r =
-        await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
-    setState(() {
-      trainNumCodeList = r.toMapList();
-    });
-  }
-
-  // 成为主修
-  Future<void> beMainRepair(String code) async {
-    //用code组件一个List<String>
-    List<String> queryParameters = [code];
-
-    await ProductApi().beMainRepair(queryParameters);
-    // 更新状态为已成为主修
-    setState(() {
-      getWorkPackage();
-    });
-  
-  }
-
-  // 取消主修
-  Future<void> cancelMainRepair(String code) async {
-    //构建取消主修参数
-    List<String> queryParameters = [code];
-    await ProductApi().cancelMainRepair(queryParameters);
-    // 更新状态为已取消主修
-    getWorkPackage();
-  }
-
-  //成为辅修
-  Future<void> beAssistantRepair(String code) async {
-    //构建成为辅修参数
-    List<String> queryParameters = [code];
-    await ProductApi().beAssistantRepair(queryParameters);
-
-    getWorkPackage();
-  }
-
-  //取消辅修
-  Future<void> cancelAssistantRepair(String code) async {
-    //构建成为辅修参数
-    List<String> queryParameters = [code];
-
-    await ProductApi().cancelAssistantRepair(queryParameters);
-
-    getWorkPackage();
-  }
-
-  //获取作业包
-  Future<void> getWorkPackage() async {
-    //构建查询作业包参数
-    Map<String, dynamic> queryParameters = {
-      'trainEntryCode': trainNumSelected["code"],
-    };
-    //获取作业包
-    var r = await ProductApi().getWorkPackage(queryParametrs: queryParameters);
-
-    setState(() {
-      workPackageList = r;
-      logger.i(workPackageList.toJson());
-    });
   }
 }

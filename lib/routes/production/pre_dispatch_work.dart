@@ -1,4 +1,3 @@
-
 import '../../index.dart';
 
 class PreDispatchWork extends StatefulWidget {
@@ -9,8 +8,7 @@ class PreDispatchWork extends StatefulWidget {
 }
 
 class _PreDispatchWorkState extends State<PreDispatchWork> {
-
-    // 创建 Logger 实例
+  // 创建 Logger 实例
   var logger = AppLogger.logger;
   // 动力类型列表
   late List<Map<String, dynamic>> dynamicTypeList = [];
@@ -58,6 +56,174 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     super.initState();
     getDynamicType();
     selectedPackage = null;
+  }
+
+  //同步作业包 TODO 完善作业包同步
+  void syncWorkPackageToPackageUser() {
+    // Map<String, dynamic> params = {
+    //   "typeCode": jcTypeListSelected['code'],
+    //   "repairMainNodeCode": "repairMainNodeCode",
+    //   'deptId': ""
+    // };
+  }
+  // 获取动态类型
+  void getDynamicType() async {
+    try {
+      //获取动力类型
+      var r = await ProductApi().getDynamicType();
+      //获取用户信息
+      var permissionResponse = await LoginApi().getpermissions();
+      if (mounted) {
+        setState(() {
+          dynamicTypeList = r.toMapList();
+          permissions = permissionResponse;
+          logger.i(permissions.toJson());
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 获取机型
+  void getJcType() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': dynamicTypeSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getJcType(queryParametrs: queryParameters);
+      logger.i(r.toJson());
+      if (mounted) {
+        setState(() {
+          jcTypeList = r.toMapList();
+          getRepairSys();
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getJcType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 获取修制信息
+  Future<void> getRepairSys() async {
+    try {
+      logger.i(dynamicTypeSelected["code"]);
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': dynamicTypeSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r =
+          await ProductApi().selectRepairSys(queryParametrs: queryParameters);
+      setState(() {
+        logger.i(r.rows!.length);
+        repairSysList = r.toMapList();
+      });
+    } catch (e, stackTrace) {
+      logger.e('getRepairSys 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 修次
+  void getRepairProc() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'repairSysCode': repairSysSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
+      if (r.rows != []) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            repairList = r.toMapList();
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('getRepairProc 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //修次查询
+  void getRepairTimes() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'repairProcCode': repairSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r =
+          await ProductApi().getRepairTimes(queryParametrs: queryParameters);
+      if (r.rows != []) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            repairTImesList = r.toMapList();
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('getRepairTimes 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //获取工序节点
+  void getRepairMainNode() async {
+    try {
+      //对工序节点进行查询
+      Map<String, dynamic> queryParameters = {
+        'repairProcCode': repairSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0,
+        'deptIds': Global.profile.permissions!.user.dept!.parentId
+      };
+      var r = await ProductApi()
+          .getRepairMainNodeAll(queryParametrs: queryParameters);
+      if (r.rows != null) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            procNodeList = r.toMapList();
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('getRepairMainNode 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  //获取作业包
+  void getWorkPackage() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'typeCode': jcTypeListSelected["code"],
+        'deptId': Global.profile.permissions!.user.deptId,
+        'repairTimes': repairTimesSelected["name"],
+        'repairMainNodeCode': procNodeSelected["code"],
+      };
+      var r =
+          await JtApi().getPackageUserList(queryParameters: queryParameters);
+      if (r.data != null && r.data!.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            //将r.data进行遍历,获取相关信息进行展示
+            packageUserDTOList = [];
+            for (PackageUser item in r.data!) {
+              logger.i(item.packageUserDTOList!.length);
+              packageUserDTOList?.addAll(item.packageUserDTOList!);
+            }
+            // print(packageUserDTOList!.length);
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('getWorkPackage 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   @override
@@ -321,7 +487,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                     Checkbox(
                                       value: selectedPackage == packageUserDTO,
                                       onChanged: (value) {
-                                        if (mounted){
+                                        if (mounted) {
                                           setState(() {
                                             if (value!) {
                                               selectedPackage = packageUserDTO;
@@ -330,7 +496,6 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                             }
                                           });
                                         }
-                                          
                                       },
                                     ),
                                     Expanded(
@@ -375,7 +540,8 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                                 ),
                               ),
                             );
-                          }).toList() ?? []),
+                          }).toList() ??
+                          []),
                     ],
                   ),
                 )
@@ -402,152 +568,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue, // 设置按钮颜色为蓝色
-                minimumSize: const Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+                minimumSize:
+                    const Size(double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
               ),
               child: const Text('设置施修人'),
             ),
           ),
       ],
     );
-  }
-
-  //同步作业包 TODO 完善作业包同步
-  void syncWorkPackageToPackageUser(){
-    // Map<String, dynamic> params = {
-    //   "typeCode": jcTypeListSelected['code'],
-    //   "repairMainNodeCode": "repairMainNodeCode",
-    //   'deptId': ""
-    // };
-  }
-  // 获取动态类型
-  void getDynamicType() async {
-    //获取动力类型
-    var r = await ProductApi().getDynamicType();
-    //获取用户信息
-    var permissionResponse = await LoginApi().getpermissions();
-    if (mounted) {
-      setState(() {
-        dynamicTypeList = r.toMapList();
-        permissions = permissionResponse;
-        logger.i(permissions.toJson());
-      });
-    }
-  }
-
-  // 获取机型
-  void getJcType() async {
-    Map<String, dynamic> queryParameters = {
-      'dynamicCode': dynamicTypeSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().getJcType(queryParametrs: queryParameters);
-    logger.i(r.toJson());
-    if (mounted) {
-      setState(() {
-        jcTypeList = r.toMapList();
-        getRepairSys();
-      });
-    }
-  }
-
-  // 获取修制信息
-  Future<void> getRepairSys() async {
-    logger.i(dynamicTypeSelected["code"]);
-    Map<String, dynamic> queryParameters = {
-      'dynamicCode': dynamicTypeSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().selectRepairSys(queryParametrs: queryParameters);
-    setState(() {
-      logger.i(r.rows!.length);
-      repairSysList = r.toMapList();
-    });
-  }
-
-  // 修次
-  void getRepairProc() async {
-    Map<String, dynamic> queryParameters = {
-      'repairSysCode': repairSysSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
-    if (r.rows != []) {
-      if (mounted) {
-        setState(() {
-          //将获取的信息列表
-          repairList = r.toMapList();
-        });
-      }
-    }
-  }
-
-  //修次查询
-
-  void getRepairTimes() async {
-    Map<String, dynamic> queryParameters = {
-      'repairProcCode': repairSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0
-    };
-    var r = await ProductApi().getRepairTimes(queryParametrs: queryParameters);
-    if (r.rows != []) {
-      if (mounted) {
-        setState(() {
-          //将获取的信息列表
-          repairTImesList = r.toMapList();
-        });
-      }
-    }
-  }
-
-  //获取工序节点
-  void getRepairMainNode() async {
-    //对工序节点进行查询
-    Map<String, dynamic> queryParameters = {
-      'repairProcCode': repairSelected["code"],
-      'pageNum': 0,
-      'pageSize': 0,
-      'deptIds': Global.profile.permissions!.user.dept!.parentId
-    };
-    var r = await ProductApi()
-        .getRepairMainNodeAll(queryParametrs: queryParameters);
-    if (r.rows != null) {
-      if (mounted) {
-        setState(() {
-          //将获取的信息列表
-          procNodeList = r.toMapList();
-        });
-      }
-    }
-  }
-
-  //获取作业包
-  void getWorkPackage() async {
-    
-    Map<String, dynamic> queryParameters = {
-      'typeCode': jcTypeListSelected["code"],
-      'deptId': Global.profile.permissions!.user.deptId,
-      'repairTimes': repairTimesSelected["name"],
-      'repairMainNodeCode': procNodeSelected["code"],
-    };
-    var r = await JtApi().getPackageUserList(queryParameters: queryParameters);
-    if (r.data != null && r.data!.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          //将获取的信息列表
-          //将r.data进行遍历,获取相关信息进行展示
-          packageUserDTOList = [];
-          for (PackageUser item in r.data!) {
-            logger.i(item.packageUserDTOList!.length);
-            packageUserDTOList?.addAll(item.packageUserDTOList!);
-          }
-          // print(packageUserDTOList!.length);
-        });
-      }
-    }
   }
 }
 
@@ -564,9 +592,9 @@ class SetRepairPersonScreen extends StatefulWidget {
 class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
   late List<dynamic> userList = [];
   // 用于存储主修
-  late List<int> mainUsers = []; 
+  late List<int> mainUsers = [];
   // 用于存储辅修
-  late List<int> assistantUsers = []; 
+  late List<int> assistantUsers = [];
   // 存储主修名称
   late List<String> mainUsersName = [];
   // 存储辅修名称
@@ -606,7 +634,6 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     if (repairName != null && repairName != '') {
       List<String> repairNameList = repairName.split(',');
       for (String item1 in repairNameList) {
-      
         mainUsersName.add(item1);
       }
     }
@@ -615,7 +642,6 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
     if (assistantName != null && assistantName != '') {
       List<String> assistantNameList = assistantName.split(',');
       for (String item1 in assistantNameList) {
-        
         assistantUsersName.add(item1);
       }
     }
@@ -635,7 +661,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       for (String assistant in assistantList) {
         logger.i(assistant);
         assistantUsers.add(int.parse(assistant));
-      } 
+      }
     }
   }
 
@@ -744,14 +770,12 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       // print(item.toJson());
       list.add(item.toJson());
     }
-    if(mounted){
+    if (mounted) {
       ProductApi().saveAssociated(list);
-    //清空mainUsers和assistantUsers和mainUsersName和assistantUsersName
-    showToast('主修辅修保存成功');
-    Navigator.pop(context, true);
-    
+      //清空mainUsers和assistantUsers和mainUsersName和assistantUsersName
+      showToast('主修辅修保存成功');
+      Navigator.pop(context, true);
     }
-    
   }
 }
 
