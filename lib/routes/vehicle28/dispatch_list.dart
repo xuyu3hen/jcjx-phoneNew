@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:jcjx_phone/zjc_common/zjc_form/zjc_searchbar.dart';
 
@@ -12,7 +12,6 @@ class DispatchList extends StatefulWidget {
 }
 
 class _DispatchListState extends State<DispatchList> {
-
   // 列表尽头
   static const loadingTag = '##loading##';
   var _items = <JtMessage>[JtMessage()..code = loadingTag];
@@ -29,6 +28,7 @@ class _DispatchListState extends State<DispatchList> {
   // 施修人编号
   int? repairPersonnel;
   int? assistant;
+    var logger = AppLogger.logger;
 
   //查询待派工
    void _queryEntryData() async{
@@ -46,7 +46,7 @@ class _DispatchListState extends State<DispatchList> {
         element.selected = false;
       }
       setState(() {
-        hasMore = data.rows!.length > 0 && data.rows!.length%10==0;
+        hasMore = data.rows!.isNotEmpty && data.rows!.length%10==0;
         _items.insertAll(_items.length - 1, data.rows!);
         pageNum++;
       });
@@ -54,6 +54,8 @@ class _DispatchListState extends State<DispatchList> {
       hasMore = false;
     }
   } 
+
+
 
   // 查询班组人员
   void getJtUsers() async {
@@ -73,7 +75,7 @@ class _DispatchListState extends State<DispatchList> {
         showToast("未能获取班组人员");
       }
     }catch(e){
-      print("$e");
+      logger.e(e);
     }
   }
 
@@ -101,7 +103,7 @@ class _DispatchListState extends State<DispatchList> {
             }else{
               Scaffold.of(context).openEndDrawer();
             }
-          }, icon: Icon(Icons.tram_outlined), label: Text('派工',style: tileText(18.0),));
+          }, icon: const Icon(Icons.tram_outlined), label: Text('派工',style: tileText(18.0),));
         })
       ],
       // bottomSheet:_footer(),
@@ -134,7 +136,7 @@ class _DispatchListState extends State<DispatchList> {
                     return Container(
                       padding: const EdgeInsets.all(16.0),
                       alignment: Alignment.center,
-                      child: SizedBox(
+                      child: const SizedBox(
                         width: 24.0,
                         height: 24.0,
                         child: CircularProgressIndicator(strokeWidth: 2.0,)
@@ -212,11 +214,11 @@ class _DispatchListState extends State<DispatchList> {
                   }
                 });
               }, value: item.selected,),
-              title: Text("${item.trainType}-${item.trainNum}",style: TextStyle(fontSize: 18.0),),
+              title: Text("${item.trainType}-${item.trainNum}",style: const TextStyle(fontSize: 18.0),),
               subtitle: Text("报修人：${item.reporterName}"),
               trailing:ElevatedButton(onPressed: (){
                 Navigator.of(context).pushNamed('vehimageviewer',arguments: item);
-              }, child: Icon(Icons.image)),
+              }, child: const Icon(Icons.image)),
             ),
             ZjcFormInputCell(
               title: "故障现象",
@@ -278,7 +280,7 @@ class _DispatchListState extends State<DispatchList> {
   void showPicDialog(url) async {
     SmartDialog.show(
       builder: (context){
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Image(
@@ -380,11 +382,11 @@ class _DispatchListState extends State<DispatchList> {
             assistant = null;
             repairPersonnel = null;
           });
-        }, child: Text('重置'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-            backgroundColor: Color.fromRGBO(182, 182, 182, 1)
-          ),),
+            minimumSize: const Size(100, 40),
+            backgroundColor: const Color.fromRGBO(182, 182, 182, 1)
+          ), child: const Text('重置'),),
         ElevatedButton(onPressed: () async {
           if(selectDispath.isEmpty){
             showToast('未选中派工项');
@@ -420,10 +422,10 @@ class _DispatchListState extends State<DispatchList> {
               search();
             }
           }
-        }, child: Text('确认'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-          ),  
+            minimumSize: const Size(100, 40),
+          ), child: const Text('确认'),  
         )
       ],
     );

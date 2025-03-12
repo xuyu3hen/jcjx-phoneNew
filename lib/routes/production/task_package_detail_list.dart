@@ -772,7 +772,7 @@ class _NewPageState extends State<NewPage> {
     }
     //展示list内容。每个元素值
     for (TaskCertainPackageList taskCertainPackageList in list) {
-      print(taskCertainPackageList.toJson());
+      logger.i(taskCertainPackageList.toJson());
     }
     var r = await ProductApi().finishCertainPackage(list);
     if (r == 200) {

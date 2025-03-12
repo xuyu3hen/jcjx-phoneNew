@@ -94,7 +94,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             controller: pageController,
             onPageChanged: onPageChanged,
             children: <Widget>[
-              NormalMainPage(),
+              const NormalMainPage(),
               MainScanner(),
               const PersonPage(),
             ],

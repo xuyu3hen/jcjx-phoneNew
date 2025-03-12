@@ -653,7 +653,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                               break; // 找到匹配项后退出循环
                             }
                           }
-                          print(_selectedRepairInfoKey); //修程列表
+                          logger.i(_selectedRepairInfoKey); //修程列表
                           getJcRepairProcess(_selectedRepairInfoKey);
                           _selectedRepairProcess =
                               null; // 初始化 _selectedRepairProcess
@@ -703,7 +703,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     // 修次下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairTime,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: '修次',
                         border: OutlineInputBorder(),
                       ),
@@ -789,7 +789,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       ),
                       decoration: InputDecoration(
                         labelText: '预计离段日期',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.calendar_today),
                           onPressed: () => _selectDate(context, (date) {
@@ -800,7 +800,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 选择部门
                     // 修次下拉框
                     // 部门选择下拉框
@@ -845,7 +845,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         children: deptUserInfos.map((employee) {
                           return CheckboxListTile(
                             title: Text(employee),
-                            value: selectedEmployees?.contains(employee),
+                            value: selectedEmployees.contains(employee),
                             onChanged: (bool? value) {
                               setState(() {
                                 if (value != null) {

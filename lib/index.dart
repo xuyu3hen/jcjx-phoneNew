@@ -22,6 +22,7 @@ export 'package:graphview/GraphView.dart';
 export 'package:image_picker/image_picker.dart';
 export 'dart:io';
 export 'dart:convert';
+export 'package:qr_code_scanner/qr_code_scanner.dart';
 
 /*
   // flavors的元素备份

@@ -1,8 +1,7 @@
 
-import '../index.dart';
 
-/// TODO : 元数据
-/// TODO : title字段专门给回显值留下的
+
+
 class FilterData{
 
   static List<Map<String,dynamic>>  packageFlag = [

@@ -30,7 +30,7 @@ class _RotableMainPage extends State<RotableMainPage>{
       );
     }else{
       // print("已登录：${usermodel.user!.userLoginName}");
-      print("已登录");
+      // print("已登录");
     }
     // 功能选区
     return const Column(
