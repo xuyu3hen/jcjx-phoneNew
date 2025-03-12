@@ -79,7 +79,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                   if(widget.trainentry.oilInfoImage == null)...[
                     SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{uploadDialog("oil")}, child: const Text("上传油量"))),
                   ]else...[
-                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{showPicDialog(widget.trainentry.oilInfoImage)}, child: Text("查看油量"),style:ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green[200])))),
+                    SizedBox(width: 170,height:30.0,child: ElevatedButton(onPressed: ()=>{showPicDialog(widget.trainentry.oilInfoImage)},style:ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.green[200])), child: const Text("查看油量"))),
                   ]
                   
                 ],
@@ -108,7 +108,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
   void showPicDialog(url) async {
     SmartDialog.show(
       builder: (context){
-        return Container(
+        return SizedBox(
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Image(
@@ -167,9 +167,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
                   },
                 ),
               if(_image != null)
-                Container(
-                  child: Image.file(_image!,height: 200,),
-                ),
+                Image.file(_image!,height: 200,),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [

@@ -35,7 +35,7 @@ class _RepairProgressState extends State<RepairProgress> {
         });
       }
     } catch (e, stackTrace) {
-      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      logger.e('getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -62,7 +62,7 @@ class _RepairProgressState extends State<RepairProgress> {
         repairSelected = r.toMapList()[0];
       });
     } catch (e, stackTrace) {
-      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      logger.e('getRepairSys 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -89,7 +89,7 @@ class _RepairProgressState extends State<RepairProgress> {
         }
       }
     } catch (e, stackTrace) {
-      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      logger.e('getRepairProc 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -126,7 +126,7 @@ class _RepairProgressState extends State<RepairProgress> {
         }
       }
     } catch (e, stackTrace) {
-      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      logger.e('getTrainEntry 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 

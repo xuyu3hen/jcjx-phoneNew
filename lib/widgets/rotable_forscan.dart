@@ -6,7 +6,7 @@ class RotableItem extends StatefulWidget {
   RotableItem(this.rotableSt) :super(key: ValueKey(rotableSt.id));
 
   @override
-  _RotableItem createState() => _RotableItem();
+  State createState() => _RotableItem();
 }
 
 class _RotableItem extends State<RotableItem> {
@@ -34,7 +34,7 @@ class _RotableItem extends State<RotableItem> {
                 // shape: StadiumBorder(side: BorderSide(color: Colors.blue.shade200,width: 1)),
                 leading: Text(
                   '周转件名称：${widget.rotableSt.materialName??''}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Color.fromARGB(255, 221, 44, 0)
@@ -46,7 +46,7 @@ class _RotableItem extends State<RotableItem> {
                 // subtitle: subtitle,
                 trailing:  Text(
                   "单位：${widget.rotableSt.unitNum}",
-                  style: TextStyle(fontSize: 18,fontStyle: FontStyle.italic),
+                  style: const TextStyle(fontSize: 18,fontStyle: FontStyle.italic),
                 ),
               ),
 
@@ -59,11 +59,11 @@ class _RotableItem extends State<RotableItem> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Padding(
-                          padding: EdgeInsets.only(top:8.0,bottom: 8.0),
+                          padding: const EdgeInsets.only(top:8.0,bottom: 8.0),
                           child: Text("配件分类：${widget.rotableSt.capitalType == 1 ?'普通件':'高价件'}",style:commonText(16.0,col: Colors.indigo)),
                         ),
                         Padding(
-                          padding: EdgeInsets.only(bottom: 5.0),
+                          padding: const EdgeInsets.only(bottom: 5.0),
                           child: Text("序列号：${widget.rotableSt.serialNum??''}",style:commonText(16.0,col: Colors.indigo)),
                         ),
                         Text("规格型号：${widget.rotableSt.materialModel??''}"),

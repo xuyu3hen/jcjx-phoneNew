@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-final Color _fontColor = const Color(0XFFC0C4CC);
-final double _fontSize = 11;
-final Color _labelBgColor = Colors.white;
+const Color _fontColor = Color(0XFFC0C4CC);
+const double _fontSize = 11;
+const Color _labelBgColor = Colors.white;
 GlobalKey<_LabelWidgetState> childLabelKey = GlobalKey();
 
 class LabelWidget extends StatefulWidget {
@@ -34,7 +34,7 @@ class LabelWidget extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _LabelWidgetState createState() => _LabelWidgetState();
+  State createState() => _LabelWidgetState();
 }
 
 class _LabelWidgetState extends State<LabelWidget> {
@@ -51,7 +51,7 @@ class _LabelWidgetState extends State<LabelWidget> {
 
             ///widget.borderRadius?? BorderRadius.all( Radius.circular(2.0)),
             border: widget.isBorder ? widget.border ?? Border.all(width: .5, color: const Color(0XFFC0C4CC)) : null,
-            boxShadow: widget.boxShadow.length > 0 ? widget.boxShadow : []),
+            boxShadow: widget.boxShadow.isNotEmpty ? widget.boxShadow : []),
         child: widget.child ??
             Text(
               widget.tagItem['name'].toString(),

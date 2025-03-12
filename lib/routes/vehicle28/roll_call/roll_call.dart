@@ -12,6 +12,8 @@ class RollCall extends StatefulWidget{
 
 class _RollCallState extends State<RollCall>{
 
+  var logger = AppLogger.logger;
+
   // 机型
   List? jcTypeList;
   String? dynamicCode;
@@ -72,7 +74,7 @@ class _RollCallState extends State<RollCall>{
         'pageSize':0
       }
     );
-    if(r != []&&r != null){
+    if(r != []){
       setState(() {
         repairMainNodeList = r;
       });
@@ -122,7 +124,7 @@ class _RollCallState extends State<RollCall>{
         showToast("未能获取班组人员");
       }
     }catch(e){
-      print("$e");
+      logger.e("$e");
     }
   }
 
@@ -285,11 +287,11 @@ class _RollCallState extends State<RollCall>{
               element['assistantF'] = false;
             }
           });
-        }, child: Text('重置'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-            backgroundColor: Color.fromRGBO(182, 182, 182, 1)
-          ),),
+            minimumSize: const Size(100, 40),
+            backgroundColor: const Color.fromRGBO(182, 182, 182, 1)
+          ), child: const Text('重置'),),
         ElevatedButton(onPressed: () async {
           // if(repairPersonnelSelected.isEmpty){
           //   showToast('请选择主修');
@@ -336,10 +338,10 @@ class _RollCallState extends State<RollCall>{
               searchPackage();
             }
           // }
-        }, child: Text('确认'),
+        },
           style: ElevatedButton.styleFrom(
-            minimumSize: Size(100, 40),
-          ),  
+            minimumSize: const Size(100, 40),
+          ), child: const Text('确认'),  
         )
       ],
     );
@@ -457,15 +459,13 @@ class _RollCallState extends State<RollCall>{
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Flexible(
-                            child: Container(
-                              child: Text(
-                                "$_showTitle",
-                                style: TextStyle(
-                                  color: title != null?Colors.blueAccent:Colors.black,
-                                  fontSize: 15.0),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
+                            child: Text(
+                              "$_showTitle",
+                              style: TextStyle(
+                                color: title != null?Colors.blueAccent:Colors.black,
+                                fontSize: 15.0),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
                             )
                           ),
                           Container(
@@ -475,7 +475,7 @@ class _RollCallState extends State<RollCall>{
                       ),
                     ),
                     if(title == null)
-                      Icon(Icons.arrow_drop_down),
+                      const Icon(Icons.arrow_drop_down),
                   ],
                 ),
               ))),
@@ -535,7 +535,7 @@ class _RollCallState extends State<RollCall>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${dto.packageName}",style: TextStyle(fontSize: 18.0),),
+                title: Text("${dto.packageName}",style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   packageSelected = dto;
@@ -557,7 +557,7 @@ class _RollCallState extends State<RollCall>{
                     }
                   }
                   Scaffold.of(context).openEndDrawer();
-                }, child: Icon(Icons.checklist_rtl_sharp)),
+                }, child: const Icon(Icons.checklist_rtl_sharp)),
               ),
               ZjcFormInputCell(
                 title: "主修",

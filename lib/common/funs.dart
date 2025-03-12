@@ -50,7 +50,7 @@ void showLoading(context, [String? text]) {
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(3.0),
-                boxShadow: [
+                boxShadow: const [
                   //阴影
                   BoxShadow(
                     color: Colors.black12,
@@ -58,14 +58,14 @@ void showLoading(context, [String? text]) {
                     blurRadius: 10.0,
                   )
                 ]),
-            padding: EdgeInsets.all(16),
-            margin: EdgeInsets.all(16),
-            constraints: BoxConstraints(minHeight: 120, minWidth: 180),
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
+            constraints: const BoxConstraints(minHeight: 120, minWidth: 180),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SizedBox(
+                const SizedBox(
                   height: 30,
                   width: 30,
                   child: CircularProgressIndicator(

@@ -1,14 +1,10 @@
 import 'dart:developer';
-
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/prework/repairSys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
-
 import '../index.dart';
 import '../models/prework/packageUser.dart';
 
@@ -195,9 +191,9 @@ class ProductApi extends AppApi {
     Map<String, dynamic>? queryParametrs,
   }) async {
     // try {
-    print('code');
+    logger.i('code');
     //get中使用queryParameters，post中使用data
-    print(queryParametrs!['dynamicCode']);
+    logger.i(queryParametrs!['dynamicCode']);
     var r = await AppApi.dio.get(
       "/subparts/repairSys/selectAll",
       queryParameters: queryParametrs,

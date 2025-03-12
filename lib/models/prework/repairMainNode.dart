@@ -154,7 +154,7 @@ class SysDeptList {
           children?.add(v);
         } else {
           // 可以根据需要添加异常处理逻辑
-          print('Invalid child element type: $v');
+         
         }
       });
     }

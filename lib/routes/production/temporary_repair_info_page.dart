@@ -385,7 +385,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
     queryParameters['trainType'] = _selectedType;
     queryParameters['trainTypeCode'] = _selectedTypeKey;
     List<Map<String, dynamic>> shuntingNoticeList = [];
-    deptUserInfos.forEach((element) {
+    for (var element in deptUserInfos) {
       Map<String, dynamic> map = {};
       map['applyUserId'] = Global.profile.permissions?.user.userId;
       map['applyUserName'] = Global.profile.permissions?.user.nickName;
@@ -396,7 +396,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
       map['auditUserName'] = '赖文圣';
       map['status'] = 0;
       shuntingNoticeList.add(map);
-    });
+    }
     // 显示提交成功的提示
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('临修信息提交成功')),
@@ -562,7 +562,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         });
                       },
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 机型选项
                     DropdownButtonFormField<String>(
                       value: _selectedType,
@@ -590,7 +590,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                       },
                     ),
 
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 车号输入框
                     TextField(
                       controller: _carNumberController,
@@ -599,7 +599,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 计划月份输入框
                     DropdownButtonFormField<int>(
                       value: _selectedMonth,
@@ -661,7 +661,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                         });
                       },
                     ),
-                    SizedBox(height: 16.0),
+                    const SizedBox(height: 16.0),
                     // 修程下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairProcess,

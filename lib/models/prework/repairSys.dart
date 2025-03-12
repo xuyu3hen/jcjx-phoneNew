@@ -15,7 +15,8 @@ class RepairSysResponse extends DataList{
     factory RepairSysResponse.fromJson(Map<String, dynamic> json) =>
         _$RepairSysResponseFromJson(json);
 
-    Map<String, dynamic> toJson() => _$RepairSysResponseToJson(this);
+    @override
+      Map<String, dynamic> toJson() => _$RepairSysResponseToJson(this);
     List<Map<String, dynamic>> toMapList() {
         return rows?.map((item) => item.toJson()).toList() ?? [];
     }

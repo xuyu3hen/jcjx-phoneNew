@@ -53,7 +53,6 @@ class ThemeModel extends ProfileChangeNotifier {
   set theme(MaterialColor color) {
     if(color != theme) {
       _profile.theme = color.value;
-      print(Global.profile.theme);
       notifyListeners();
     }
   }

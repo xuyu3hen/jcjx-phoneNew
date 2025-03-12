@@ -2,6 +2,10 @@ import 'dart:async';
 import '../index.dart';
 
 class NormalMainPage extends StatefulWidget {
+  const NormalMainPage({super.key});
+
+
+  
   @override
   State createState() => _NormalMainPageState();
 }
@@ -13,6 +17,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
   int mutualNum = 0;
   // 专检
   int specialNum = 0;
+
+  var logger = AppLogger.logger;
 
   // 获取代办信息
   void getMessageInfo() async {
@@ -38,8 +44,10 @@ class _NormalMainPageState extends State<NormalMainPage> {
       } else {
         showToast("获取零部件表失败,请检查网络");
       }
-    } catch (e) {
-      
+    } catch (e, stackTrace) {
+      //显示异常以及异常所在 行 异常内容
+      logger.e( "getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace");
+
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -67,11 +75,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
   Future<void> _initData() async {
     getpermisson();
     getMessageInfo();
-    int _count = 0;
+    int count = 0;
     // 五分钟查询一次
     _timer = Timer.periodic(const Duration(minutes: 10), (timer) {
-      _count++;
-      print("循环次数$_count");
+      count++;
+      logger.i("循环次数$count");
       getMessageInfo();
     });
   }

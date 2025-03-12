@@ -82,7 +82,6 @@ class SideDrawer extends StatelessWidget {
                           onPressed: ()async{
                             // userModel.user = null;
                             Global.profile = Profile();
-                            print('已重置');
                             var _prefs = await SharedPreferences.getInstance();
                             _prefs.remove("profile");
                             Navigator.pop(context);

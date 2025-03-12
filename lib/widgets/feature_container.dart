@@ -13,7 +13,7 @@ class FeatureContainer extends StatefulWidget{
   FeatureContainer(this._icon,this.pressFun,this.text,{this.width,this.height,this.num}) :super(key: ValueKey(text));
 
   @override
-  _FeatureContainer createState() => _FeatureContainer();
+  State createState() => _FeatureContainer();
 }
 
 class _FeatureContainer extends State<FeatureContainer>{
@@ -38,7 +38,7 @@ class _FeatureContainer extends State<FeatureContainer>{
                 curve: Curves.fastOutSlowIn,
                 colorChangeAnimationCurve: Curves.easeInCubic,
               ),
-              badgeContent: Text("${widget.num}",style: TextStyle(fontSize: 18),),
+              badgeContent: Text("${widget.num}",style: const TextStyle(fontSize: 18),),
               child: 
               Container(
                 constraints: BoxConstraints.tightFor(width: (widget.width!)/6,height: (widget.width!)/6),

@@ -1,6 +1,7 @@
 import '../index.dart';
 class UpdateApi extends AppApi{
   
+  var logger = AppLogger.logger;
   // 检查版本更新，获取下载链接
   Future<MyApkVersion> checkUpdate({
     Map<String,dynamic>? queryParametrs,// 分页参数
@@ -9,7 +10,7 @@ class UpdateApi extends AppApi{
         "http://10.102.12.211:8000/distributionplatform/main/get/apk/version/last",
         queryParameters: queryParametrs,
       );
-      print('最新版本信息：${r.data}');
+      logger.i('最新版本信息：${r.data}');
       return MyApkVersion.fromJson(r.data["data"]);
   }
 }

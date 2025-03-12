@@ -6,7 +6,7 @@ class MaterialItem extends StatefulWidget {
   MaterialItem(this.materialSt) :super(key: ValueKey(materialSt.id));
 
   @override
-  _MaterialItem createState() => _MaterialItem();
+  State createState() => _MaterialItem();
 }
 
 class _MaterialItem extends State<MaterialItem> {

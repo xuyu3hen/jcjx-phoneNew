@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'dart:io';
+
 
 import 'package:dio/dio.dart';
 
@@ -7,6 +7,8 @@ import '../index.dart';
 
 class JtApi extends AppApi{
 
+
+  var  logger = AppLogger.logger;
   // 上传机统28照片
   Future<dynamic> uploadJt({
     File? imagedata
@@ -28,13 +30,13 @@ class JtApi extends AppApi{
   Future<dynamic> uploadMixJt({
     List<File>? imagedata
   })async{
-    List<MultipartFile> MfList = [];
+    List<MultipartFile> mfList = [];
     for(var e in imagedata!){
       var a = await MultipartFile.fromFile(e.path);
-      MfList.insert(0,a);
+      mfList.insert(0,a);
     }
     FormData formData = FormData.fromMap({
-      "uploadFileList": MfList
+      "uploadFileList": mfList
     });
     var r = await AppApi.dio.post(
       "/fileserver/jt28File/uploadFile",
@@ -47,10 +49,6 @@ class JtApi extends AppApi{
     return (r.data['data']);
   }
 
-    // 创建 Logger 实例
-  var logger = Logger(
-    printer: PrettyPrinter(), // 漂亮的日志格式化
-  );
 
   // subparts/workInstructPackage/syncWorkPackageToPackageUser 同步作业包
   Future<void> syncWorkPackageToPackageUser(Map<String, dynamic> params) async{
@@ -283,13 +281,13 @@ class JtApi extends AppApi{
   Future<PackageUserList> getPackageUserList({
     Map<String,dynamic>? queryParameters
   }) async {
-    print(queryParameters);
+    logger.i(queryParameters);
     var r = await AppApi.dio.get(
       "/subparts/workInstructPackageUser/getPackageUserList",
       queryParameters: queryParameters
     );
     // log("getPackageUserList${r.data}");
-    print(r.data['data']);
+    logger.i(r.data['data']);
     return PackageUserList.fromJson(r.data['data']);
   }
 
