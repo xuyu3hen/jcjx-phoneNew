@@ -1,5 +1,5 @@
 import 'package:jcjx_phone/index.dart';
-import 'package:jcjx_phone/zjc_common/zjc_form/zjc_searchbar.dart';
+
 
 class UnqualifiedList extends StatefulWidget {
   final String trainEntryCode;

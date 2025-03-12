@@ -28,6 +28,8 @@ class _CertainPackageState extends State<CertainPackage>{
   List<AssetEntity> assestPics = [];
   List<File> taskPics = [];
 
+  var logger = AppLogger.logger;
+
   // 完成作业项
   Future<int> completeTaskCertainPackage(List<TaskCertainPackageList> val) async {
     SmartDialog.showLoading();
@@ -41,7 +43,7 @@ class _CertainPackageState extends State<CertainPackage>{
       queryParameters:list
     );
     if(r['message'] == "操作成功"&&r['code']== 200){
-      print('作业项完成正常');
+      logger.i('作业项完成正常');
     }else{
       showToast('作业项完成出现错误');
     }
@@ -253,13 +255,13 @@ class _CertainPackageState extends State<CertainPackage>{
                         mainAxisAlignment: MainAxisAlignment.start,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text('作业项图片'),
+                          const Text('作业项图片'),
                           Container(
                             padding: const EdgeInsets.all(10),
                             margin: const EdgeInsets.all(10),
                             decoration:BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.all(Radius.circular(20)),
+                              borderRadius: const BorderRadius.all(Radius.circular(20)),
                               border: Border.all(color: Colors.brown)
                             ),
                             child: ZjcAssetPicker(
@@ -268,8 +270,8 @@ class _CertainPackageState extends State<CertainPackage>{
                               selectedAssets: assestPics,
                               // bgColor: Colors.grey,
                               callBack: (assetEntityList) async {
-                                print('assetEntityList-------------');
-                                print(assetEntityList);
+                                logger.i('assetEntityList-------------');
+                                logger.i(assetEntityList);
                                 assestPics = assetEntityList;
                                 if (assetEntityList.isNotEmpty) {
                                   for (var e in assetEntityList) { 
@@ -279,7 +281,7 @@ class _CertainPackageState extends State<CertainPackage>{
                                 } else {
                                   taskPics = [];
                                 }
-                                print('assetEntityList-------------');
+                                logger.i('assetEntityList-------------');
                               },
                             ),
                           ),
@@ -317,29 +319,29 @@ class _CertainPackageState extends State<CertainPackage>{
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               ConstrainedBox(
-                                constraints: BoxConstraints.expand(height: 30,width: 100),
+                                constraints: const BoxConstraints.expand(height: 30,width: 100),
                                 child: ElevatedButton.icon(
                                   onPressed: (){
                                     SmartDialog.dismiss();
                                   },
-                                  label: Text('取消'),
-                                  icon:Icon(Icons.system_security_update_good_sharp),
+                                  label: const Text('取消'),
+                                  icon:const Icon(Icons.system_security_update_good_sharp),
                                   style: ElevatedButton.styleFrom(
-                                    minimumSize: Size(140, 40),
+                                    minimumSize: const Size(140, 40),
                                     backgroundColor: Colors.grey[100]
                                   ),
                                 ),
                               ),
                               ConstrainedBox(
-                                constraints: BoxConstraints.expand(height: 30,width: 100),
+                                constraints: const BoxConstraints.expand(height: 30,width: 100),
                                 child: ElevatedButton.icon(
                                   onPressed: (){
                                     
                                   },
-                                  label: Text('确定'),
-                                  icon:Icon(Icons.system_security_update_good_sharp),
+                                  label: const Text('确定'),
+                                  icon:const Icon(Icons.system_security_update_good_sharp),
                                   style: ElevatedButton.styleFrom(
-                                    minimumSize: Size(140, 40),
+                                    minimumSize: const Size(140, 40),
                                   ),
                                 ),
                               ),
@@ -353,12 +355,12 @@ class _CertainPackageState extends State<CertainPackage>{
                 );
               }
             );
-          }, 
-          child: Text('上传作业项图片'),
+          },
           style: ElevatedButton.styleFrom(
             minimumSize: Size((MediaQuery.of(context).size.width-20)/2, 40),
             backgroundColor: Colors.orange[100]
-          ),
+          ), 
+          child: const Text('上传作业项图片'),
         ),
         ElevatedButton(
           onPressed: (){
@@ -369,7 +371,7 @@ class _CertainPackageState extends State<CertainPackage>{
                 selectDispath.add(e);
               }
             }
-            // TODO:展示一次选中项
+          
             SmartDialog.show(
               clickMaskDismiss: false,
               builder: (context){
@@ -387,26 +389,26 @@ class _CertainPackageState extends State<CertainPackage>{
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text('是否完成勾选共${selectDispath.length}项',style: TextStyle(fontSize: 16.0),),
+                            Text('是否完成勾选共${selectDispath.length}项',style: const TextStyle(fontSize: 16.0),),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 ConstrainedBox(
-                                  constraints: BoxConstraints.expand(height: 30,width: 100),
+                                  constraints: const BoxConstraints.expand(height: 30,width: 100),
                                   child: ElevatedButton.icon(
                                     onPressed: (){
                                       SmartDialog.dismiss();
                                     },
-                                    label: Text('取消'),
-                                    icon:Icon(Icons.system_security_update_good_sharp),
+                                    label: const Text('取消'),
+                                    icon:const Icon(Icons.system_security_update_good_sharp),
                                     style: ElevatedButton.styleFrom(
-                                      minimumSize: Size(140, 40),
+                                      minimumSize: const Size(140, 40),
                                       backgroundColor: Colors.grey[100]
                                     ),
                                   ),
                                 ),
                                 ConstrainedBox(
-                                  constraints: BoxConstraints.expand(height: 30,width: 100),
+                                  constraints: const BoxConstraints.expand(height: 30,width: 100),
                                   child: ElevatedButton.icon(
                                     onPressed: (){
                                       completeTaskCertainPackage(selectDispath).then((value) => {
@@ -415,10 +417,10 @@ class _CertainPackageState extends State<CertainPackage>{
                                         },)
                                       });
                                     },
-                                    label: Text('确定'),
-                                    icon:Icon(Icons.system_security_update_good_sharp),
+                                    label: const Text('确定'),
+                                    icon:const Icon(Icons.system_security_update_good_sharp),
                                     style: ElevatedButton.styleFrom(
-                                      minimumSize: Size(140, 40),
+                                      minimumSize: const Size(140, 40),
                                     ),
                                   ),
                                 ),
@@ -439,18 +441,18 @@ class _CertainPackageState extends State<CertainPackage>{
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text('作业项完成！',style: TextStyle(fontSize: 16.0),),
+                            const Text('作业项完成！',style: TextStyle(fontSize: 16.0),),
                             ConstrainedBox(
-                              constraints: BoxConstraints.expand(height: 30,width: 100),
+                              constraints: const BoxConstraints.expand(height: 30,width: 100),
                               child: ElevatedButton.icon(
                                 onPressed: (){
                                   SmartDialog.dismiss();
                                   getTaskCertainPackage();
                                 },
-                                label: Text('确定'),
-                                icon:Icon(Icons.system_security_update_good_sharp),
+                                label: const Text('确定'),
+                                icon:const Icon(Icons.system_security_update_good_sharp),
                                 style: ElevatedButton.styleFrom(
-                                  minimumSize: Size(140, 40),
+                                  minimumSize: const Size(140, 40),
                                 ),
                               ),
                             ),
@@ -461,11 +463,11 @@ class _CertainPackageState extends State<CertainPackage>{
                   });
               }
             );
-          }, 
-          child: Text('完成作业项'),
+          },
           style: ElevatedButton.styleFrom(
             minimumSize: Size((MediaQuery.of(context).size.width-20)/2, 40)
-          ),
+          ), 
+          child: const Text('完成作业项'),
         ),
       ],
     );

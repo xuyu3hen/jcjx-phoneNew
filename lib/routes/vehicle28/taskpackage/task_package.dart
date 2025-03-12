@@ -1,7 +1,5 @@
-import 'dart:convert';
-import 'package:jcjx_phone/config/index.dart';
+
 import '../../../index.dart';
-import '../../../zjc_common/widgets/zjc_empty_view.dart';
 
 class TaskPackage extends StatefulWidget{
   final String trainEntryCode;
@@ -23,6 +21,7 @@ class _TaskPackageState extends State<TaskPackage> {
   // 机型
   List<Map<String,dynamic>> jcTypeList = [];
   String? typeName;
+  var logger = AppLogger.logger;
 
   // 个人作业包
   void getIndividualTaskPackage() async {
@@ -57,14 +56,14 @@ class _TaskPackageState extends State<TaskPackage> {
 
   // AB端切换
   Future<int> updateWorkInstructPackage(val) async {
-    print(json.decode(json.encode(val)));
+    logger.i(json.decode(json.encode(val)));
     var list = <Map<String,dynamic>>[];
     list.insert(0, json.decode(json.encode(val)));
     var r = await JtApi().updateWorkInstructPackage(
       queryParameters:list
     );
     if(r['message'] == "操作成功"&&r['code']== 200){
-      print('切换AB端成功');
+      logger.i('切换AB端成功');
     }else{
       showToast('切换AB端出现错误');
     }
@@ -128,8 +127,8 @@ class _TaskPackageState extends State<TaskPackage> {
             if(item.wholePackage!&&item.progress == 0)...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: TextStyle(fontSize: 16.0)),
+                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
                 // subtitle: Text(""),
                 trailing:ElevatedButton(onPressed: (){
                   changeABDialog(item);
@@ -139,28 +138,28 @@ class _TaskPackageState extends State<TaskPackage> {
             ]else if(item.wholePackage!)...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: TextStyle(fontSize: 16.0)),
+                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
                 // subtitle: Text(""),
                 trailing:Text(item.ends??'A/B',style: tileText(18.0,bold: FontWeight.bold,col: item.ends =='B'?Colors.orange:Colors.red),),
               ),
             ]else...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: TextStyle(fontSize: 16.0)),
+                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
               ),
             ],
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Text('作业进度'),
+                const Text('作业进度'),
                 SizedBox(
                   height: 5,
                   width: 240,
                   child: LinearProgressIndicator(
                     backgroundColor: Colors.grey[200],
-                    valueColor: AlwaysStoppedAnimation(Colors.blue),
+                    valueColor: const AlwaysStoppedAnimation(Colors.blue),
                     value: item.progress == 0? 0 : (item.completeCount!/item.total!),
                   ),
                 ),
@@ -170,7 +169,7 @@ class _TaskPackageState extends State<TaskPackage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
+                SizedBox(
                   width: (MediaQuery.of(context).size.width)/2-8,
                   height: 40,
                   child: ElevatedButton(
@@ -185,7 +184,6 @@ class _TaskPackageState extends State<TaskPackage> {
                         });
                       }
                     },
-                    child: Text('取消领活'),
                     // 按钮样式
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.all(Colors.blueGrey[100]),
@@ -195,15 +193,15 @@ class _TaskPackageState extends State<TaskPackage> {
                         ),
                       )
                     ),
+                    child: const Text('取消领活'),
                   ),
                 ),
-                Container(
+                SizedBox(
                   width: (MediaQuery.of(context).size.width)/2-8,
                   height: 40,
                   child: ElevatedButton(
                     onPressed: () {
                     },
-                    child: Text('继续作业'),
                     style: const ButtonStyle(
                       shape: MaterialStatePropertyAll(
                         RoundedRectangleBorder(
@@ -211,6 +209,7 @@ class _TaskPackageState extends State<TaskPackage> {
                       ),
                       )
                     ),
+                    child: const Text('继续作业'),
                   ),
                 ),
               ],
@@ -284,8 +283,8 @@ class _TaskPackageState extends State<TaskPackage> {
                       onPressed: (){
                         SmartDialog.dismiss();
                       },
-                      label: Text('取消'),
-                      icon:Icon(Icons.close),
+                      label: const Text('取消'),
+                      icon:const Icon(Icons.close),
                       style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.grey[200]))
                     ),
                     ElevatedButton.icon(
@@ -294,8 +293,8 @@ class _TaskPackageState extends State<TaskPackage> {
                           SmartDialog.dismiss().then((e)=>getIndividualTaskPackage());
                         });
                       },
-                      label: Text('确定'),
-                      icon:Icon(Icons.system_security_update_good_sharp),
+                      label: const Text('确定'),
+                      icon:const Icon(Icons.system_security_update_good_sharp),
                     ),
                   ],
                 )

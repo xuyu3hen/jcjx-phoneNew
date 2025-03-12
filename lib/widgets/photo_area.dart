@@ -9,7 +9,7 @@ class PhotoArea extends StatefulWidget{
   PhotoArea(this._image,{Key? key}) :super(key: key);
 
   @override
-  _PhotoArea createState() => _PhotoArea();
+  State createState() => _PhotoArea();
 }
 
 class _PhotoArea extends State<PhotoArea>{
@@ -27,9 +27,7 @@ class _PhotoArea extends State<PhotoArea>{
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if(widget._image != null)
-                    Container(
-                      child: Image.file(widget._image!,width: 200,height: 200,),
-                    ),
+                    Image.file(widget._image!,width: 200,height: 200,),
                   if(widget._image == null)
                   const Icon(Icons.add_a_photo)
                 ],
@@ -67,7 +65,7 @@ class _PhotoArea extends State<PhotoArea>{
             Navigator.of(context).pop();
           }),
           //分割线
-          Divider(),
+          const Divider(),
 
           buildItem("打开相册",onTap:(){
             getImage(ImageSource.gallery);
@@ -83,9 +81,9 @@ class _PhotoArea extends State<PhotoArea>{
                 Navigator.of(context).pop();
               },
               child: Container(
-                child: Text("取消"),
                 height: 44,
                 alignment: Alignment.center,
+                child: const Text("取消"),
               ),)
         ],
       ),
@@ -105,13 +103,13 @@ class _PhotoArea extends State<PhotoArea>{
           onTap();
         }
       },
-      child: Container(
+      child: SizedBox(
         height: 40,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(width: 10,),
+            const SizedBox(width: 10,),
             Text(title)
           ],
         ),
