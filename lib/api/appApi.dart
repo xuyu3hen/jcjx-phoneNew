@@ -40,7 +40,7 @@ class AppApi {
       }));
 
   static void init() {
-    // TODO:添加缓存插件
+    
     // 创建 Logger 实例
     var logger = AppLogger.logger;
     // 设置用户token
