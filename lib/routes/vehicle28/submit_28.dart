@@ -85,6 +85,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   
   Map<dynamic, dynamic> dynamciTypeSelected = {};
 
+  var logger = AppLogger.logger;
+
   @override
   void initState() {
     super.initState();
@@ -131,7 +133,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       "pageSize": 0,
       "typeName": jcTypeListSelected["name"]
     });
-    print(r.rows);
+    logger.i(r.rows);
     setState(() {
       trainNum = "";
       trainNumCodeList = r.toMapList();
@@ -239,7 +241,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     return Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(color: Colors.white),
+        decoration: const BoxDecoration(color: Colors.white),
         child: ListView(
           children: <Widget>[
             Column(
@@ -262,7 +264,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                           childrenKey: 'children',
                           title: "选择动力类型",
                           clickCallBack: (selectItem, selectArr) {
-                            print(selectArr);
+                            logger.i(selectArr);
                             setState(() {
                               dynamciTypeSelected["code"] = selectItem["code"];
                               dynamciTypeSelected["name"] = selectItem["name"];
@@ -291,7 +293,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                           title: "选择机型",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               jcTypeListSelected["name"] = selectItem["name"];
                               jcTypeListSelected["code"] = selectItem["code"];
                               getTrainNumCodeList();
@@ -319,7 +321,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                           title: "选择检修地点",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              print(selectArr);
+                              logger.i(selectArr);
                               trainNumSelected["trainNum"] =
                                   selectItem["trainNum"];
                               trainNumSelected["code"] = selectItem["code"];
@@ -343,7 +345,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                         valueKey: 'code',
                         title: "选择检修作业来源",
                         clickCallBack: (selectItem, selectArr) {
-                          print(selectArr);
+                          logger.i(selectArr);
                           setState(() {
                             repairWorkResource["name"] = selectItem["name"];
                             repairWorkResource["code"] = selectItem["code"];
@@ -372,7 +374,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                         valueKey: 'code',
                         title: "选择加工方法",
                         clickCallBack: (selectItem, selectArr) {
-                          print(selectArr);
+                          logger.i(selectArr);
                           setState(() {
                             requiredProcessingMethod["dictName"] =
                                 selectItem["dictName"];
@@ -494,7 +496,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                     margin: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        borderRadius: const BorderRadius.all(Radius.circular(20)),
                         border: Border.all(color: Colors.brown)),
                     child: ZjcAssetPicker(
                       assetType: APC.AssetType.image,
@@ -502,18 +504,18 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                       selectedAssets: assestPics,
                       // bgColor: Colors.grey,
                       callBack: (assetEntityList) async {
-                        print('assetEntityList-------------');
-                        print(assetEntityList);
+                        logger.i('assetEntityList-------------');
+                        logger.i(assetEntityList);
                         if (assetEntityList.isNotEmpty) {
                           var asset = assetEntityList[0];
                           var pic = await asset.file;
-                          print(await asset.file);
-                          print(await asset.originFile);
+                          logger.i(await asset.file);
+                          logger.i(await asset.originFile);
                           faultPics.insert(0, pic!);
                         } else {
                           faultPics = [];
                         }
-                        print('assetEntityList-------------');
+                        logger.i('assetEntityList-------------');
                       },
                     ),
                   ),
@@ -591,7 +593,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             }
           } on DioException catch (e) {
             showToast("故障提报失败");
-            print("${e.toString()}");
+            logger.i("${e.toString()}");
           } finally {
             
             SmartDialog.dismiss(status: SmartStatus.loading);
@@ -663,7 +665,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     if (val != null && str == "datetime") {
       String str =
           formatDate(val, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss]);
-      print(str);
+      logger.i(str);
       return str;
     } else if (val != null && str == "date") {
       String str = formatDate(val, [yyyy, '-', mm, '-', dd]);

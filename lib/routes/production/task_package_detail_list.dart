@@ -504,18 +504,17 @@ class _NewPageState extends State<NewPage> {
     logger.i(certainPackageCodeList);
     logger
         .i(secondShowPackageList[0].taskCertainPackageList!.secondPackageCode);
-    for (File image in _images) {
       var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
         'certainPackageCodeList': certainPackageCodeList,
         'secondPackageCode':
             secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
-      }, imagedata: image);
+      },  imagedatas: _images);
       if (r == 200) {
         showToast("上传成功");
       } else {
         showToast("上传失败");
       }
-    }
+    
     SmartDialog.dismiss();
     _images.clear();
   }

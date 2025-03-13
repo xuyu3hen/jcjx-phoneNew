@@ -37,7 +37,7 @@ class _DatetimeFormitemState extends State<DatetimeFormitem> {
             pickerType: DateTimePickerType.datetime,
           );
           if (result != null) {
-            print("selectDay$result");
+         
             update(result);
           }
         },

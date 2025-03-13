@@ -22,6 +22,8 @@ class _MutualState extends State<Mutual> {
   List<File> repairPics = [];
   JtMessage? jtMes;
 
+  var logger = AppLogger.logger;
+
   @override
   void initState() {
     super.initState();
@@ -102,7 +104,7 @@ class _MutualState extends State<Mutual> {
                   isShowSearch: false,
                   title: "选择互检结果",
                   clickCallBack: (selectItem, selectArr) {
-                    print(selectArr);
+                    logger.i(selectArr);
                     setState(() {
                       mutualStatus['label'] = selectItem["label"];
                       mutualStatus['value'] = selectItem["value"];
@@ -116,7 +118,7 @@ class _MutualState extends State<Mutual> {
               margin: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
                   border: Border.all(color: Colors.brown)),
               child: ZjcAssetPicker(
                 assetType: apc.AssetType.image,
@@ -124,8 +126,8 @@ class _MutualState extends State<Mutual> {
                 selectedAssets: assestPics,
                 // bgColor: Colors.grey,
                 callBack: (assetEntityList) async {
-                  print('assetEntityList-------------');
-                  print(assetEntityList);
+                  logger.i('assetEntityList-------------');
+                  logger.i(assetEntityList);
                   assestPics = assetEntityList;
                   if (assetEntityList.isNotEmpty) {
                     for (var e in assetEntityList) { 
@@ -140,7 +142,7 @@ class _MutualState extends State<Mutual> {
                   } else {
                     repairPics = [];
                   }
-                  print('assetEntityList-------------');
+                  logger.i('assetEntityList-------------');
                 },
               ),
             ),
@@ -176,7 +178,7 @@ class _MutualState extends State<Mutual> {
           SmartDialog.dismiss(status: SmartStatus.loading)
         });
         log("$message");
-        // TODO:未测试成功弹窗
+        
         if(message['code'] == "S_T_S003"){
           SmartDialog.show(
             clickMaskDismiss: false,
@@ -193,15 +195,15 @@ class _MutualState extends State<Mutual> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Text("互检提报成功",style: TextStyle(fontSize: 18),),
+                    const Text("互检提报成功",style: TextStyle(fontSize: 18),),
                     ConstrainedBox(
-                      constraints: BoxConstraints.expand(height: 30,width: 160),
+                      constraints: const BoxConstraints.expand(height: 30,width: 160),
                       child: ElevatedButton.icon(
                         onPressed: (){
                           SmartDialog.dismiss().then((value) => Navigator.of(context).pop());
                         },
-                        label: Text('确定'),
-                        icon:Icon(Icons.system_security_update_good_sharp),
+                        label: const Text('确定'),
+                        icon:const Icon(Icons.system_security_update_good_sharp),
                       ),
                     ),
                   ],

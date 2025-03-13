@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
+
 
 import 'package:flutter/services.dart';
 import 'package:jcjx_phone/index.dart';
@@ -60,7 +59,7 @@ class _CertainPackageState extends State<CertainPackage>{
       }
     );
     if(r['message'] == "操作成功"&&r['code']== 200){
-      print('刷新作业项');
+      
     }else{
       showToast('获取作业项出现错误');
     }

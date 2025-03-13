@@ -1,10 +1,8 @@
 import '../index.dart';
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'dart:convert';
-import 'package:qr_code_scanner/qr_code_scanner.dart';
+
 
 class MainScanner extends StatefulWidget{
   MainScanner({Key? key}) : super(key: key);
@@ -68,9 +66,9 @@ class _MainScanner extends State<MainScanner>{
                             future: controller?.getFlashStatus(),
                             builder: (context, snapshot) {
                               if(snapshot.data == false){
-                                return Icon(Icons.flash_off);
+                                return const Icon(Icons.flash_off);
                               }else{
-                                return Icon(Icons.flash_on);
+                                return const Icon(Icons.flash_on);
                               }
                               // return Text('Flash: ${snapshot.data}');
                             },
@@ -88,7 +86,7 @@ class _MainScanner extends State<MainScanner>{
                               future: controller?.getCameraInfo(),
                               builder: (context, snapshot) {
                                 if (snapshot.data != null) {
-                                  return Icon(Icons.change_circle_outlined);
+                                  return const Icon(Icons.change_circle_outlined);
                                   // return Text(
                                   //     'Camera facing ${describeEnum(snapshot.data!)}');
                                 } else {

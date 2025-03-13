@@ -23,7 +23,7 @@ export 'jtData/repair_proc.dart';
 export 'jtData/train_entry_bynodecode.dart';
 export 'enterDepot/trainLocation.dart';
 export 'enterDepot/trainNum.dart';
-export 'prework/MainStructure.dart';
+export 'prework/main_structure.dart';
 export 'getWorkPackage/getWorkPackage.dart';
 
 export 'searchWorkPackage/secondPackage.dart';

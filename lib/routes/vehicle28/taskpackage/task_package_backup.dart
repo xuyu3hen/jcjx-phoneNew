@@ -29,6 +29,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
   String? typeName;
   // 车号code
   String? trainCode;
+  var logger = AppLogger.logger;
 
   // 动力类型
   void getDynamicType() async {
@@ -86,14 +87,14 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
 
   // AB端切换
   Future<int> updateWorkInstructPackage(val) async {
-    print(json.decode(json.encode(val)));
+    logger.i(json.decode(json.encode(val)));
     var list = <Map<String,dynamic>>[];
     list.insert(0, json.decode(json.encode(val)));
     var r = await JtApi().updateWorkInstructPackage(
       queryParameters:list
     );
     if(r['message'] == "操作成功"&&r['code']== 200){
-      print('切换AB端成功');
+      logger.i('切换AB端成功');
     }else{
       showToast('切换AB端出现错误');
     }
@@ -120,24 +121,24 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
   Widget _filter() {
     return downmenu.DefaultDropdownMenuController(
       onSelected: ({int? menuIndex, dynamic data}) {
-        print("int menuIndex, dynamic data = $menuIndex,$data");
+        logger.i("int menuIndex, dynamic data = $menuIndex,$data");
         if (menuIndex == 0) {
           // value1 = '选中下标$menuIndex,\n选中内容$data';
           setState(() {
-            print("看看数据${data[0]['code']}");
+            logger.i("看看数据${data[0]['code']}");
             dynamicCode = data[0]['code'];
             getTypeCode();
           });
         }
         if (menuIndex == 1) {
           setState(() {
-            print("看看数据$data");
+            logger.i("看看数据$data");
             typeName = data[0]['name'];
           });
         }
         if (menuIndex == 2) {
           setState(() {
-            print("看看数据$data");
+            logger.i("看看数据$data");
             trainCode = data['urgency'];
             getIndividualTaskPackage();
           });
@@ -211,7 +212,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
       downmenu.DropdownMenuBuilder(
           builder: (BuildContext context) {
             return downmenu.DropdownMenuCustomize(
-              data: [],
+              data: const [],
               itemBuilder: financialMoreTemplate,
             );
           },
@@ -567,9 +568,9 @@ class __FinancialMoreTemplateState extends State<_FinancialMoreTemplate> {
           borderRadius: const BorderRadius.all(Radius.circular(4.0)),
           padding: const EdgeInsets.all(0.0),
           alignment: Alignment.center,
-          border: _isSelected ? null : Border.all(width: .5, color: Color(0XFFD9D9D9)),
-          fontColor: _isSelected ? Color(0XFF00CCA9) : Color(0XFF909399),
-          labelBgColor: _isSelected ? Color(0X2100CCA9) : Colors.white,
+          border: _isSelected ? null : Border.all(width: .5, color: const Color(0XFFD9D9D9)),
+          fontColor: _isSelected ? const Color(0XFF00CCA9) : const Color(0XFF909399),
+          labelBgColor: _isSelected ? const Color(0X2100CCA9) : Colors.white,
           fontSize: 16,
           tagItem: {'name': item['trainNum']},
         ),

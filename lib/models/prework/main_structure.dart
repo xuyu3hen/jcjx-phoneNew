@@ -1,5 +1,5 @@
 
-import 'package:jcjx_phone/index.dart';
+
 import 'package:jcjx_phone/models/prework/packageUser.dart';
 
 

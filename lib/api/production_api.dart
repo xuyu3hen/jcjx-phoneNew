@@ -397,23 +397,33 @@ class ProductApi extends AppApi {
   }
 
   //上传作业项图片
-  //TODO: 传输多个图片
+  //传输多个图片
   Future<int> uploadCertainPackageImg(
-      {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
+      {Map<String, dynamic>? queryParametrs,
+      required List<File> imagedatas}) async {
     try {
-    FormData formData = FormData.fromMap({
-      "certainPackageCodeList": queryParametrs!["certainPackageCodeList"],
-      "uploadFileList": await MultipartFile.fromFile(imagedata!.path),
-      "secondPackageCode": queryParametrs["secondPackageCode"]
-    });
-    var r = await AppApi.dio.post(
-        "/fileserver/taskCertainContentFile/uploadFile",
-        data: formData,
-        options: Options(contentType: "multipart/form-data"));
-    logger.i("uploadImg${r.data}");
-    return (r.data["code"]);
+      Map<String, dynamic> formMap = {};
+      formMap["certainPackageCodeList"] =
+          queryParametrs?["certainPackageCodeList"];
+      formMap['secondPackageCode'] = queryParametrs?['secondPackageCode'];
+      if (imagedatas.isNotEmpty) {
+        for (var i = 0; i < imagedatas.length; i++) {
+          List<MultipartFile> fileList = [];
+          for (var i = 0; i < imagedatas.length; i++) {
+            fileList.add(await MultipartFile.fromFile(imagedatas[i].path));
+          }
+          formMap['uploadFileList'] = fileList;
+        }
+      }
+      FormData formData = FormData.fromMap(formMap);
+      var r = await AppApi.dio.post(
+          "/fileserver/taskCertainContentFile/uploadFile",
+          data: formData,
+          options: Options(contentType: "multipart/form-data"));
+      logger.i("uploadImg${r.data}");
+      return (r.data["code"]);
     } catch (e, stackTrace) {
-      logger.e( e, stackTrace);
+      logger.e(e, stackTrace);
       return -1;
     }
   }

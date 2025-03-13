@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:jcjx_phone/index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as apc;
@@ -21,6 +20,7 @@ class _SpecialState extends State<Special> {
   List<AssetEntity> assestPics = [];
   List<File> repairPics = [];
   JtMessage? jtMes;
+  var logger = AppLogger.logger;
 
   @override
   void initState() {
@@ -45,7 +45,7 @@ class _SpecialState extends State<Special> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
-      decoration: BoxDecoration(color: Colors.white),
+      decoration: const BoxDecoration(color: Colors.white),
       child: ListView(children: <Widget>[
         Column(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -54,7 +54,7 @@ class _SpecialState extends State<Special> {
               // dense: true,
               leading: Text(
                 "${jtMes?.trainType}-${jtMes?.trainNum}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               // title: Text("${jtMes?.trainType}-${jtMes?.trainNum}",style: TextStyle(fontSize: 18.0),),
               trailing: Text("加工方法：${jtMes?.processMethodName}"),
@@ -63,7 +63,7 @@ class _SpecialState extends State<Special> {
               dense: true,
               title: Text(
                 "检修作业来源：${jtMes?.repairResourceName}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               subtitle: Text("报修人：${jtMes?.reporterName}"),
               trailing: Text("风险等级：${jtMes?.riskLevel}"),
@@ -72,7 +72,7 @@ class _SpecialState extends State<Special> {
               dense: true,
               title: Text(
                 "施修情况：${jtMes?.repairStatus}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
               subtitle: Text("施修人：${jtMes?.repairName}"),
             ),
@@ -80,7 +80,7 @@ class _SpecialState extends State<Special> {
               dense: true,
               title: Text(
                 "故障零部件:${jtMes?.jcNodeName}",
-                style: TextStyle(fontSize: 18.0),
+                style: const TextStyle(fontSize: 18.0),
               ),
             ),
             ZjcFormInputCell(
@@ -102,7 +102,7 @@ class _SpecialState extends State<Special> {
                   isShowSearch: false,
                   title: "选择互检结果",
                   clickCallBack: (selectItem, selectArr) {
-                    print(selectArr);
+                    logger.i(selectArr);
                     setState(() {
                       mutualStatus['label'] = selectItem["label"];
                       mutualStatus['value'] = selectItem["value"];
@@ -116,7 +116,7 @@ class _SpecialState extends State<Special> {
               margin: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
                   border: Border.all(color: Colors.brown)),
               child: ZjcAssetPicker(
                 assetType: apc.AssetType.image,
@@ -124,8 +124,8 @@ class _SpecialState extends State<Special> {
                 selectedAssets: assestPics,
                 // bgColor: Colors.grey,
                 callBack: (assetEntityList) async {
-                  print('assetEntityList-------------');
-                  print(assetEntityList);
+                  logger.i('assetEntityList-------------');
+                  logger.i(assetEntityList);
                   assestPics = assetEntityList;
                   if (assetEntityList.isNotEmpty) {
                     for (var e in assetEntityList) { 
@@ -140,7 +140,7 @@ class _SpecialState extends State<Special> {
                   } else {
                     repairPics = [];
                   }
-                  print('assetEntityList-------------');
+                  logger.i('assetEntityList-------------');
                 },
               ),
             ),
@@ -173,7 +173,6 @@ class _SpecialState extends State<Special> {
           SmartDialog.dismiss(status: SmartStatus.loading)
         });
         log("$message");
-        // TODO:未测试成功弹窗
         if(message['code'] == "S_T_S003"){
           SmartDialog.show(
             clickMaskDismiss: false,
@@ -190,15 +189,15 @@ class _SpecialState extends State<Special> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Text("专检提报成功",style: TextStyle(fontSize: 18),),
+                    const Text("专检提报成功",style: TextStyle(fontSize: 18),),
                     ConstrainedBox(
-                      constraints: BoxConstraints.expand(height: 30,width: 160),
+                      constraints: const BoxConstraints.expand(height: 30,width: 160),
                       child: ElevatedButton.icon(
                         onPressed: (){
                           SmartDialog.dismiss().then((value) => Navigator.of(context).pop());
                         },
-                        label: Text('确定'),
-                        icon:Icon(Icons.system_security_update_good_sharp),
+                        label: const Text('确定'),
+                        icon:const Icon(Icons.system_security_update_good_sharp),
                       ),
                     ),
                   ],
@@ -208,8 +207,8 @@ class _SpecialState extends State<Special> {
         );
       }
       }, 
-      icon: Icon(Icons.check_circle_outline_rounded), 
-      label: Text("确认"),
+      icon: const Icon(Icons.check_circle_outline_rounded), 
+      label: const Text("确认"),
       style: ElevatedButton.styleFrom(
         minimumSize: Size(MediaQuery.of(context).size.width, 40),
       ),

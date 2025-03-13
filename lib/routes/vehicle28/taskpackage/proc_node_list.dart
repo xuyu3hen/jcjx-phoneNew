@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:jcjx_phone/index.dart';
 
@@ -80,7 +80,7 @@ class _ProcNodeListState extends State<ProcNodeList>{
             )
           ],
         ),
-        Divider(height: 1,)
+        const Divider(height: 1,)
       ],
     );
   }
@@ -112,13 +112,13 @@ class _ProcNodeListState extends State<ProcNodeList>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${rmnl.name}",style: TextStyle(fontSize: 18.0),),
+                title: Text("${rmnl.name}",style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   Navigator.of(context).pushNamed('trainbynode',arguments: rmnl.code).then((value) => {
                     getProcessingMainNodeAndProc()
                   });
-                }, child: Icon(Icons.train_outlined)),
+                }, child: const Icon(Icons.train_outlined)),
               ),
             ],
           ),

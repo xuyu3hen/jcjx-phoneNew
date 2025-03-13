@@ -1,6 +1,6 @@
 import '../index.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+
 
 // 该参数用于程序样式控制(主题颜色)
 
@@ -17,13 +17,13 @@ class Global {
   static late SharedPreferences _prefs;
   static Profile profile = Profile(theme: 0);
 
-  // TODO:网络缓存
+
   
   // 可选的主题列表
   static List<MaterialColor> get themes => _theme;
 
   // 是否为release版
-  static bool get isRelease => bool.fromEnvironment("dart.vm.product");
+  static bool get isRelease => const bool.fromEnvironment("dart.vm.product");
 
   // 初始化全局信息
   static Future init() async {
@@ -57,7 +57,7 @@ class Global {
     ..enable = true
     ..maxAge = 3600
     ..maxCount = 100;
-    print(profile.theme);
+
 
     AppApi.init();
   }
@@ -65,7 +65,6 @@ class Global {
   // 持久化Profile信息
   static saveProfile() => _prefs.setString("profile", jsonEncode(profile.toJson()));
 
-  static TextStyle _textStyle = const TextStyle(fontSize: 20, color: Colors.black);
 
 
 }

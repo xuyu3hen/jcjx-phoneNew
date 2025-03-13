@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 import 'dart:ui';
 
 import 'package:jcjx_phone/index.dart';
@@ -106,7 +106,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
         // 磨砂效果
         // BackdropFilter没有圆角效果，故使用ClipRRect包裹
         child: ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: const BorderRadius.all(Radius.circular(10)),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: InkWell(
@@ -117,7 +117,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
               },
               child:Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [Text("${item.trainNum}",style: TextStyle(fontSize: 20.0),)],
+                children: [Text("${item.trainNum}",style: const TextStyle(fontSize: 20.0),)],
               )
             )
           ),
