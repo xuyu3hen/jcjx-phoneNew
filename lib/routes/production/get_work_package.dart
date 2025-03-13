@@ -40,7 +40,8 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
   void initState() {
     super.initState();
     //初始化动力类型
-    getDynamicType();
+    // getDynamicType();
+    initData();
   }
 
   String getMainRepairText(WorkPackage package) {
@@ -91,6 +92,44 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
     } catch (e, stackTrace) {
       logger.e('getAssistantText 方法中发生异常: $e\n堆栈信息: $stackTrace');
       return "无法成为辅修";
+    }
+  }
+
+  Future<void> initData() async {
+    try {
+      var r = await ProductApi().getDynamicType();
+      var permissionResponse = await LoginApi().getpermissions();
+      if (r.toMapList().isEmpty) {
+        logger.e('动力类型列表为空');
+        return;
+      }
+      Map<String, dynamic> initDynamicTypeSelected = r.toMapList()[0];
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': initDynamicTypeSelected['code'],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r1 = await ProductApi().getJcType(queryParametrs: queryParameters);
+      Map<String, dynamic> initJcTypeSelected = r1.toMapList()[0];
+      Map<String, dynamic> queryParameters1 = {
+        'typeName': initJcTypeSelected["name"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      //获取车号
+      var r2 = await ProductApi()
+          .getRepairPlanList(queryParametrs: queryParameters1);
+      setState(() {
+        dynamicTypeList = r.toMapList();
+        dynamciTypeSelected = dynamicTypeList[0];  
+        jcTypeList = r1.toMapList();
+        jcTypeListSelected = jcTypeList[0];
+        trainNumCodeList = r2.toMapList();
+        trainNumSelected = trainNumCodeList[0];
+        permissions = permissionResponse;
+      });
+    } catch (e, stackTrace) {
+      logger.e('initData 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
