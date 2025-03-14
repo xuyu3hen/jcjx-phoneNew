@@ -415,24 +415,51 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
             right: 0,
             bottom: 0,
             child: selectedWorkPackages.isNotEmpty
-                ? Center(
-                    child: SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      child: ElevatedButton(
-                        onPressed: () => startWork(selectedWorkPackages),
-                        style: ButtonStyle(
-                          minimumSize: MaterialStateProperty.all(Size(
-                              MediaQuery.of(context).size.width,
-                              MediaQuery.of(context).size.height * 0.1)),
-                          padding: MaterialStateProperty.all(
-                              const EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 10)),
-                        ),
-                        child: const Text('开工', style: TextStyle(fontSize: 18)),
+                ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => startWork(selectedWorkPackages),
+                      style: ButtonStyle(
+                        minimumSize: MaterialStateProperty.all(Size(
+                            MediaQuery.of(context).size.width / 3 - 10,
+                            MediaQuery.of(context).size.height * 0.1)),
+                        padding: MaterialStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 10)),
                       ),
+                      child: const Text('置为A端作业包',
+                          style: TextStyle(fontSize: 18)),
                     ),
-                  )
-                : const SizedBox.shrink(),
+                    ElevatedButton(
+                      onPressed: () => startWork(selectedWorkPackages),
+                      style: ButtonStyle(
+                        minimumSize: MaterialStateProperty.all(Size(
+                            MediaQuery.of(context).size.width / 3 - 10,
+                            MediaQuery.of(context).size.height * 0.1)),
+                        padding: MaterialStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 10)),
+                      ),
+                      child: const Text('置为B端作业包',
+                          style: TextStyle(fontSize: 18)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => startWork(selectedWorkPackages),
+                      style: ButtonStyle(
+                        minimumSize: MaterialStateProperty.all(Size(
+                            MediaQuery.of(context).size.width / 3 - 10,
+                            MediaQuery.of(context).size.height * 0.1)),
+                        padding: MaterialStateProperty.all(
+                            const EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 10)),
+                      ),
+                      child: const Text('开工', style: TextStyle(fontSize: 18)),
+                    ),
+                  ],
+                )
+              : const SizedBox.shrink(),
+                
           )
         ],
       ),
