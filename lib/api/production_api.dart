@@ -40,7 +40,8 @@ class ProductApi extends AppApi {
         queryParameters: queryParametrs,
       );
       return MainDataStructure.fromJson((r.data["data"])["data"]);
-    } catch (e) {
+    } catch (e, stackTrace) {
+            logger.e(e, stackTrace);
       _handleException(e);
       return MainDataStructure(
           assigned: false, packageUserDTOList: [], station: '');
@@ -54,11 +55,28 @@ class ProductApi extends AppApi {
           .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
       logger.i(r.data);
       return InnerData.fromJson(r.data["data"]);
-    } catch (e) {
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
       _handleException(e);
       return InnerData(List: null, data: []);
     }
   }
+
+  //置为AB端作业包 subparts/workInstructPackage/updateTaskInstructPackage
+    Future<dynamic> updateTaskInstructPackage(List<WorkPackage> workPackages) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/subparts/workInstructPackage/updateTaskInstructPackage",
+        data: workPackages,
+      );
+      logger.i(r.data["data"]);
+      return r.data["data"];
+   } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+
+   }
+  }
+
 
   //入段车号展示dynamic
   Future<dynamic> getTrainNumDynamic() async {

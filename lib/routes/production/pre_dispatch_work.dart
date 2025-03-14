@@ -55,7 +55,11 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void initState() {
     super.initState();
     getDynamicType();
-    selectedPackage = null;
+
+  }
+
+  void initData() async{
+    getDynamicType();
   }
 
 
@@ -230,7 +234,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('预派工'),
+        title: const Text('机车修程预派工'),
       ),
       body: _buildBody(),
     );
