@@ -23,7 +23,6 @@ class _LoginRouteState extends State<LoginRoute> {
     initXUpdate();
   }
 
-  String _message = '';
   // 更新组件初始化
   void initXUpdate() {
     if (Platform.isAndroid) {
@@ -63,7 +62,6 @@ class _LoginRouteState extends State<LoginRoute> {
 
   void updateMessage(String message) {
     setState(() {
-      _message = message;
     });
     // showToast(_message);
   }

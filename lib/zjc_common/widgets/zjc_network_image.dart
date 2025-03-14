@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 export '/zjc_common/utils/zjc_image_utils.dart';
 import '/zjc_common/utils/zjc_image_utils.dart';
-import '/config/colors.dart';
 
 const String _normalPlaceholder = 'ic_placeholder';
 

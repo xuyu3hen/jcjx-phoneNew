@@ -21,8 +21,8 @@ class RepairMainNode {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
     data['total'] = total;
-    if (this.rows!= null) {
-      data['rows'] = this.rows?.map((v) => v.toJson()).toList();
+    if (rows!= null) {
+      data['rows'] = rows?.map((v) => v.toJson()).toList();
     }
     data['code'] = code;
     data['msg'] = msg;

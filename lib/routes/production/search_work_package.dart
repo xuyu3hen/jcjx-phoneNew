@@ -38,7 +38,50 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
     super.initState();
     // 创建带有Authorization头的请求
     // 主流程节点以及修程
-    getMainNodeANdProc();
+    // getMainNodeANdProc();
+    initData();
+  }
+
+  //初始化数据
+  void initData() async {
+    try {
+      // 主流程节点以及修程
+      var r = await ProductApi().getMainNodeANdProc1();
+      mainNodeAndProcList = r.toMapList();
+      mainNodeAndProcSelected = mainNodeAndProcList[0];
+      logger.i(mainNodeAndProcList);
+      logger.i(mainNodeAndProcSelected["repairMainNodeList"].toString());
+      mainNodeAndProcSelected["repairMainNodeList"]?.forEach((element) {
+        procList.add(element.toJson());
+      });
+      procSelected = procList[0];
+      logger.i(procSelected);
+      //构建查询车号参数
+      Map<String, dynamic> queryParameters = {
+        'repairMainNodeCode': procSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      //获取车号
+      var r1 =
+          await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
+      trainNumList = r1.toMapList();
+      logger.i(trainNumList);
+      trainNumSelected = trainNumList[0];
+            //构建查询作业包参数
+      Map<String, dynamic> queryParameters1 = {
+        'trainEntryCode': trainNumSelected["code"],
+      };
+      //获取作业包
+      workPackageList = await ProductApi()
+          .getPersonalWorkPackage(queryParametrs: queryParameters1);
+          
+      setState(() {
+        
+      });
+    } catch (e, stackTrace) {
+      logger.e('initData 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   void getMainNodeANdProc() async {
@@ -73,24 +116,21 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
 
   //获取个人作业包
   Future<WorkPackageList> getWorkPackage() async {
-    try{
+    try {
       //构建查询作业包参数
-    Map<String, dynamic> queryParameters = {
-      'trainEntryCode': trainNumSelected["code"],
-    };
-    //获取作业包
-    var r = await ProductApi()
-        .getPersonalWorkPackage(queryParametrs: queryParameters);
-    setState(() {
-      workPackageList = r;
-      logger.i(workPackageList.toJson());
-    });
-    return r;
-    }catch(e, stackTrace) {
+      Map<String, dynamic> queryParameters = {
+        'trainEntryCode': trainNumSelected["code"],
+      };
+      //获取作业包
+      workPackageList = await ProductApi()
+          .getPersonalWorkPackage(queryParametrs: queryParameters);
+      setState(() { 
+      });
+      return workPackageList;
+    } catch (e, stackTrace) {
       logger.e('getWorkPackage 方法中发生异常: $e\n堆栈信息: $stackTrace');
       return WorkPackageList(data: []);
     }
-    
   }
 
   // 开工
@@ -118,16 +158,15 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
 
   //获取第二作业包
   Future<SecondPackage> getSecondPackage(String code) {
-    try{
-          Map<String, dynamic> queryParameters = {
-      'instructPackageCode': code,
-    };
-    return ProductApi().getSecondWorkPackage(queryParametrs: queryParameters);
-    }catch (e, stackTrace) {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'instructPackageCode': code,
+      };
+      return ProductApi().getSecondWorkPackage(queryParametrs: queryParameters);
+    } catch (e, stackTrace) {
       logger.e('getSecondPackage 方法中发生异常: $e\n堆栈信息: $stackTrace');
       return Future.value(SecondPackage());
     }
-
   }
 
   @override

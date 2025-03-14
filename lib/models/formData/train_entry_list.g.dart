@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'trainEntryList.dart';
+part of 'train_entry_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

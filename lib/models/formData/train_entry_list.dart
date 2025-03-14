@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import '../index.dart';
-part 'trainEntryList.g.dart';
+part 'train_entry_list.g.dart';
 
 @JsonSerializable()
 class TrainEntryList extends DataList{

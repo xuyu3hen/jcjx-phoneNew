@@ -77,7 +77,7 @@ class _JhBottomSheetViewState extends State<JhBottomSheetView> {
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
 
     if (widget.dataArr != null) {

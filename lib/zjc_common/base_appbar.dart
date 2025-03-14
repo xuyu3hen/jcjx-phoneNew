@@ -16,7 +16,6 @@ const double _rightSpace = 5.0; // 右侧item右间距
 
 // 默认颜色
 const Color _bgColor = KColors.kNavThemeBgColor;
-const Color _bgDarkColor = KColors.kNavBgDarkColor;
 const Color _titleColor = KColors.kNavTitleColor;
 // 状态栏字体颜色，当backgroundColor透明或者是白色，状态栏字体为黑色，暗黑模式为白色
 const Brightness _brightness = Brightness.light;
@@ -151,7 +150,7 @@ class _BaseAppBarState extends State<BaseAppBar> {
       brightness = Brightness.light;
     }
 
-    // TODO: 通过ThemeProvider进行主题管理
+
     // final provider = Provider.of<ThemeProvider>(context);
     // final bool isDark = context.jhIsDark;
     const bool isDark = false;
