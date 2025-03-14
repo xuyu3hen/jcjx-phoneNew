@@ -1,6 +1,8 @@
 import '../../index.dart';
 
 class RotableMainPage extends StatefulWidget{
+  const RotableMainPage({super.key});
+
   @override
   State createState()=> _RotableMainPage();
 }

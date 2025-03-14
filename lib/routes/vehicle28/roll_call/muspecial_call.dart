@@ -18,6 +18,8 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
   // 专检列表
   List<dynamic> specialList = [];
 
+  var logger = AppLogger.logger;
+
   // 获取作业项
   void getworkInstructList() async {
     var r = await JtApi().getworkInstructPackageUser(
@@ -49,7 +51,7 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
         }
       });
     } catch (e) {
-      print("$e");
+      logger.e("$e");
       showToast("获取专互检人员表失败");
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);

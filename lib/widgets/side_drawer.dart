@@ -82,8 +82,8 @@ class SideDrawer extends StatelessWidget {
                           onPressed: ()async{
                             // userModel.user = null;
                             Global.profile = Profile();
-                            var _prefs = await SharedPreferences.getInstance();
-                            _prefs.remove("profile");
+                            var prefs = await SharedPreferences.getInstance();
+                            prefs.remove("profile");
                             Navigator.pop(context);
                             // Scaffold.of(context).closeDrawer();
                             // 需要改为StatefulWidget父类

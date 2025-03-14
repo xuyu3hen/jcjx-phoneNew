@@ -69,7 +69,7 @@ class ZjcTextField extends StatefulWidget {
   final TextInputAction? textInputAction; // 键盘右下角按钮类型
 
   @override
-  _ZjcTextFieldState createState() => _ZjcTextFieldState();
+  State createState() => _ZjcTextFieldState();
 }
 
 class _ZjcTextFieldState extends State<ZjcTextField> {
@@ -80,7 +80,7 @@ class _ZjcTextFieldState extends State<ZjcTextField> {
 
   @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
 
     _textController = widget.controller ?? TextEditingController();
@@ -147,7 +147,7 @@ class _ZjcTextFieldState extends State<ZjcTextField> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+
 
     _focusNode!.unfocus();
     _textController!.dispose();

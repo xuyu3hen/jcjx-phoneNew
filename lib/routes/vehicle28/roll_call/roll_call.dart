@@ -432,12 +432,12 @@ class _RollCallState extends State<RollCall>{
 
   //筛选表头 
   Widget buildItem(title,acqTitle,void Function() onTap) {
-    double _screenWidth = MediaQuery.of(context).size.width - 20;
-    dynamic _showTitle;
+    double screenWidth = MediaQuery.of(context).size.width - 20;
+    dynamic showTitle;
     if(title == null){
-      _showTitle = acqTitle;
+      showTitle = acqTitle;
     }else{
-      _showTitle = title;
+      showTitle = title;
     }
 
     return GestureDetector(
@@ -448,7 +448,7 @@ class _RollCallState extends State<RollCall>{
               decoration: BoxDecoration(border: Border(left: Divider.createBorderSide(context))),
               child: Container(
                 margin: const EdgeInsets.only(left: 1.0, right: 1.0),
-                width: (_screenWidth / 3),
+                width: (screenWidth / 3),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -460,7 +460,7 @@ class _RollCallState extends State<RollCall>{
                         children: [
                           Flexible(
                             child: Text(
-                              "$_showTitle",
+                              "$showTitle",
                               style: TextStyle(
                                 color: title != null?Colors.blueAccent:Colors.black,
                                 fontSize: 15.0),

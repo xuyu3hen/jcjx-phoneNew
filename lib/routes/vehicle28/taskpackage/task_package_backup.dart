@@ -527,7 +527,7 @@ class __FinancialMoreTemplateState extends State<_FinancialMoreTemplate> {
             downmenu.FilterButton(
               fixOnTap: () {
                 assert(widget.controller != null);
-                print("ss$_map");
+              
                 widget.controller!.select(_map);
               },
               resetOnTap: () {
@@ -542,35 +542,35 @@ class __FinancialMoreTemplateState extends State<_FinancialMoreTemplate> {
 
   List<Widget> _urgencyList() {
     return trainNumCodeList.map((item) {
-      bool _isSelected = false;
+      bool isSelected = false;
       if (_map['urgency'] != null) {
-        _isSelected = _map['urgency'] == item['code'];
+        isSelected = _map['urgency'] == item['code'];
       } else {
-        _isSelected = item['trainNum'] == '-1';
+        isSelected = item['trainNum'] == '-1';
       }
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          Map<String, Object?> _item = {}..addEntries(_map.entries);
+          Map<String, Object?> item = {}..addEntries(_map.entries);
           if (item['serialNum'] == -1) {
-            _item['urgency'] = null;
-            _item['title'] = null;
+            item['urgency'] = null;
+            item['title'] = null;
           } else {
-            _item['urgency'] = item['code'];
-            _item['title'] = item['trainNum'];
+            item['urgency'] = item['code'];
+            item['title'] = item['trainNum'];
           }
           setState(() {
-            _map = {}..addEntries(_item.entries);
+            _map = {}..addEntries(item.entries);
           });
         },
         child: LabelWidget(
-          isBorder: !_isSelected,
+          isBorder: !isSelected,
           borderRadius: const BorderRadius.all(Radius.circular(4.0)),
           padding: const EdgeInsets.all(0.0),
           alignment: Alignment.center,
-          border: _isSelected ? null : Border.all(width: .5, color: const Color(0XFFD9D9D9)),
-          fontColor: _isSelected ? const Color(0XFF00CCA9) : const Color(0XFF909399),
-          labelBgColor: _isSelected ? const Color(0X2100CCA9) : Colors.white,
+          border: isSelected ? null : Border.all(width: .5, color: const Color(0XFFD9D9D9)),
+          fontColor: isSelected ? const Color(0XFF00CCA9) : const Color(0XFF909399),
+          labelBgColor: isSelected ? const Color(0X2100CCA9) : Colors.white,
           fontSize: 16,
           tagItem: {'name': item['trainNum']},
         ),

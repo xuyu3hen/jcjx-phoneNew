@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:jcjx_phone/index.dart';
 
@@ -91,7 +91,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
                   getCommonPackageList()
                 }
               });
-            }, child: Text('主修认领')),
+            }, child: const Text('主修认领')),
             collapsedBackgroundColor: Colors.blue[100],
             children: list
           ),
@@ -139,7 +139,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${item.name}",style: TextStyle(fontSize: 18.0),),
+                title: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
               ),
             ],

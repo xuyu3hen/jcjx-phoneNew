@@ -26,6 +26,6 @@ export 'enterDepot/trainNum.dart';
 export 'prework/main_structure.dart';
 export 'getWorkPackage/getWorkPackage.dart';
 
-export 'searchWorkPackage/secondPackage.dart';
-export 'searchWorkPackage/userList.dart';
+export 'searchWorkPackage/second_package.dart';
+export 'searchWorkPackage/user_list.dart';
 

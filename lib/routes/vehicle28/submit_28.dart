@@ -593,7 +593,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             }
           } on DioException catch (e) {
             showToast("故障提报失败");
-            logger.i("${e.toString()}");
+            logger.i(e.toString());
           } finally {
             
             SmartDialog.dismiss(status: SmartStatus.loading);

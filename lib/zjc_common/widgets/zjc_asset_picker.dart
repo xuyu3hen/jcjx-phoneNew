@@ -18,11 +18,11 @@ const int _lineCount = 3;
 // 每个GridView item间距(GridView四周与内部item间距在此统一设置)
 const double _itemSpace = 5.0;
 // 右上角删除按钮大小
-const double _deleteBtnWH = 20.0;
+// const double _deleteBtnWH = 20.0;
 // 默认添加图片
-const String _addBtnIcon = 'assets/images/selectPhoto_add.png';
+// const String _addBtnIcon = 'assets/images/selectPhoto_add.png';
 // 默认删除按钮图片
-const String _deleteBtnIcon = 'assets/images/selectPhoto_close.png';
+// const String _deleteBtnIcon = 'assets/images/selectPhoto_close.png';
 // 默认背景色
 const Color _bgColor = Colors.transparent;
 
@@ -64,7 +64,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    
     super.initState();
   }
 
@@ -74,7 +74,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
   }
 
   _body() {
-    // TODO: 通过ThemeProvider进行主题管理
+    
     // final provider = Provider.of<ThemeProvider>(context);
     _themeColor = KColors.dynamicColor(context, Theme.of(context).primaryColor, KColors.kThemeColor);
 
@@ -118,7 +118,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          borderRadius: BorderRadius.all(Radius.circular(20)),
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
           border: Border.all(color: Colors.grey)
         ),
         child: const Icon(Icons.add_a_photo_outlined,size: 50,),
@@ -142,7 +142,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
               child: _loadAsset(widget.selectedAssets[index]),
             ),
             GestureDetector(
-              child: Icon(Icons.delete),
+              child: const Icon(Icons.delete),
               // const Image(
               //   image: AssetImage(_deleteBtnIcon),
               //   width: _deleteBtnWH,

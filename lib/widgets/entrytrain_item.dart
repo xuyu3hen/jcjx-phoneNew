@@ -269,12 +269,12 @@ class _EntryTrainItem extends State<EntryTrainItem> {
 
   // 获取图片函数
   Future getImage(ImageSource isource) async {
-    final PickedFile = await picker.pickImage(
+    final pickedFile = await picker.pickImage(
       source: isource,
     );
     setState(() {
-      if(PickedFile != null){
-        _image = File(PickedFile.path);
+      if(pickedFile != null){
+        _image = File(pickedFile.path);
         SmartDialog.dismiss();
         switchDialog(imgtype);
       }else{

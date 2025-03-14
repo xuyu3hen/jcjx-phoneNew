@@ -87,7 +87,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
         margin: const EdgeInsets.all(3),
         constraints: const BoxConstraints.tightFor(height: 50),
         decoration: const BoxDecoration(
-          // TODO:测试渐变效果
+
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,

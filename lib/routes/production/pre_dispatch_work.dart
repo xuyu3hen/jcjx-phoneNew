@@ -58,7 +58,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     selectedPackage = null;
   }
 
-  //同步作业包 TODO 完善作业包同步
+
   void syncWorkPackageToPackageUser() {
     // Map<String, dynamic> params = {
     //   "typeCode": jcTypeListSelected['code'],

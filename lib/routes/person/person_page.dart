@@ -175,7 +175,7 @@ class _PersonPageState extends State<PersonPage> {
         );
       }
     } else {
-      return Text(
+      return const Text(
         "未登录",
         style: AppConstants.textStylePerson,
       );

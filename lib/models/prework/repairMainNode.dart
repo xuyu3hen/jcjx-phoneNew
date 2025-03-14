@@ -82,7 +82,7 @@ class Rows {
     data['repairProcCode'] = repairProcCode;
     data['remark'] = remark;
     data['deptIds'] = deptIds;
-    if (this.sysDeptList!= null) {
+    if (sysDeptList!= null) {
       data['sysDeptList'] = sysDeptList?.map((v) => v.toJson()).toList();
     }
     data['childList'] = childList;
@@ -149,14 +149,14 @@ class SysDeptList {
     parentName = json['parentName'];
     if (json['children']!= null) {
       children = [];
-      (json['children'] as List).forEach((v) {
+      for (var v in (json['children'] as List)) {
         if (v is Map<String, dynamic>) {
           children?.add(v);
         } else {
           // 可以根据需要添加异常处理逻辑
          
         }
-      });
+      }
     }
   }
 

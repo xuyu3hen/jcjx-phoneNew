@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
               // 开屏(废弃)
               // "opening":(context) => const MyHomePage(title: 'Maitre Scan Home Page'),
               // 主路由展示
-              "main_page":(context) => NormalMainPage(),
+              "main_page":(context) => const NormalMainPage(),
               // 筛选器测试
               // "menu":(context) => DownnMenu(),
               // 拣配
@@ -73,7 +73,7 @@ class MyApp extends StatelessWidget {
   Widget firstPage(context){
     // UserModel userModel = Provider.of<UserModel>(context);
     if(Global.profile.data == null){
-      return LoginRoute();
+      return const LoginRoute();
     }else{
       return const MainPage();
     }

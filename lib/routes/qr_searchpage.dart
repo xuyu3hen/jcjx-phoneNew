@@ -4,7 +4,7 @@ import '../config/filter_data.dart';
 class QRsearchPage extends StatefulWidget{
 
   @override
-  _QRsearchPage createState() => _QRsearchPage();
+  State createState() => _QRsearchPage();
 }
 
 class _QRsearchPage extends State<QRsearchPage>{
@@ -25,31 +25,29 @@ class _QRsearchPage extends State<QRsearchPage>{
   Widget _buildBody(abd){
     // 一般件
     if(abd.type == 1){
-      return Container(
-        child: downmenu.DefaultDropdownMenuController(
-          onSelected: ({int? menuIndex,dynamic data}){
-            print("点击的筛选器顺序和内容：$menuIndex,$data");
-            if(menuIndex == 0){
-              // TODO：测试是否需要置于函数体内
-              showpackage = (data[0])["value"];
-              print("赋值$showpackage");
-              setState(() {
-                
-              });
-            }
-          },
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  Container(color: Colors.white, child: buildDropdownHeader()),
-                  Expanded(child: _normalBody(abd)),
-                ],
-              ),
-              Padding(padding: const EdgeInsets.only(top: 40), child: buildDropdownMenu(context))
-            ],
+      return downmenu.DefaultDropdownMenuController(
+        onSelected: ({int? menuIndex,dynamic data}){
+          
+          if(menuIndex == 0){
+          
+            showpackage = (data[0])["value"];
+         
+            setState(() {
+              
+            });
+          }
+        },
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                Container(color: Colors.white, child: buildDropdownHeader()),
+                Expanded(child: _normalBody(abd)),
+              ],
             ),
-        ),
+            Padding(padding: const EdgeInsets.only(top: 40), child: buildDropdownMenu(context))
+          ],
+          ),
       );
     }else{
       return RotableItem(abd.reveal.data);

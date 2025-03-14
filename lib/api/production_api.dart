@@ -2,9 +2,9 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:jcjx_phone/models/prework/repairSys.dart';
+import 'package:jcjx_phone/models/prework/repair_sys.dart';
 import 'package:jcjx_phone/models/prework/repairMainNode.dart';
-import 'package:jcjx_phone/models/searchWorkPackage/mainNode.dart';
+import 'package:jcjx_phone/models/searchWorkPackage/main_node.dart';
 import '../index.dart';
 import '../models/prework/packageUser.dart';
 

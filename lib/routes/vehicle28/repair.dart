@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'dart:io';
+
 
 import 'package:jcjx_phone/index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as apc;
@@ -132,7 +132,7 @@ class _RepairState extends State<Repair> {
       return Container(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
-          decoration: BoxDecoration(color: Colors.white),
+          decoration: const BoxDecoration(color: Colors.white),
           child: ListView(children: <Widget>[
             Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -141,7 +141,7 @@ class _RepairState extends State<Repair> {
                     // dense: true,
                     leading: Text(
                       "${jtMes?.trainType}-${jtMes?.trainNum}",
-                      style: TextStyle(fontSize: 18.0),
+                      style: const TextStyle(fontSize: 18.0),
                     ),
                     // title: Text("${jtMes?.trainType}-${jtMes?.trainNum}",style: TextStyle(fontSize: 18.0),),
                     trailing: Text("加工方法：${jtMes?.processMethodName}"),
@@ -150,7 +150,7 @@ class _RepairState extends State<Repair> {
                     dense: true,
                     title: Text(
                       "检修作业来源:${jtMes?.repairResourceName}",
-                      style: TextStyle(fontSize: 18.0),
+                      style: const TextStyle(fontSize: 18.0),
                     ),
                     subtitle: Text("报修人：${jtMes?.reporterName}"),
                     trailing: Text("风险等级：${jtMes?.riskLevel}"),
@@ -202,7 +202,7 @@ class _RepairState extends State<Repair> {
                         valueKey: 'configCode',
                         title: "选择故障零部件",
                         clickCallBack: (selectItem, selectArr) {
-                          print(selectArr);
+                        
                           setState(() {
                             componentName['nodeName'] = selectItem["nodeName"];
                             componentName['configCode'] =
@@ -256,7 +256,7 @@ class _RepairState extends State<Repair> {
                     margin: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                        borderRadius: const BorderRadius.all(Radius.circular(20)),
                         border: Border.all(color: Colors.brown)),
                     child: ZjcAssetPicker(
                       assetType: apc.AssetType.image,
@@ -264,8 +264,7 @@ class _RepairState extends State<Repair> {
                       selectedAssets: assestPics,
                       // bgColor: Colors.grey,
                       callBack: (assetEntityList) async {
-                        print('assetEntityList-------------');
-                        print(assetEntityList);
+                        
                         assestPics = assetEntityList;
                         if (assetEntityList.isNotEmpty) {
                           for (var e in assetEntityList) { 
@@ -280,7 +279,7 @@ class _RepairState extends State<Repair> {
                         } else {
                           repairPics = [];
                         }
-                        print('assetEntityList-------------');
+                        
                       },
                     ),
                   ),
@@ -316,7 +315,7 @@ class _RepairState extends State<Repair> {
           SmartDialog.dismiss(status: SmartStatus.loading)
         });
         log("$message");
-        // TODO:未测试成功弹窗
+
         if(message['code'] == "S_T_S003"){
           SmartDialog.show(
             clickMaskDismiss: false,
@@ -333,15 +332,15 @@ class _RepairState extends State<Repair> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    Text("施修提报成功",style: TextStyle(fontSize: 18),),
+                    const Text("施修提报成功",style: TextStyle(fontSize: 18),),
                     ConstrainedBox(
-                      constraints: BoxConstraints.expand(height: 30,width: 160),
+                      constraints: const BoxConstraints.expand(height: 30,width: 160),
                       child: ElevatedButton.icon(
                         onPressed: (){
                           SmartDialog.dismiss().then((value) => Navigator.of(context).pop());
                         },
-                        label: Text('确定'),
-                        icon:Icon(Icons.system_security_update_good_sharp),
+                        label: const Text('确定'),
+                        icon:const Icon(Icons.system_security_update_good_sharp),
                       ),
                     ),
                   ],
@@ -351,8 +350,8 @@ class _RepairState extends State<Repair> {
         );
       }
       }, 
-      icon: Icon(Icons.handyman_outlined), 
-      label: Text("施修"),
+      icon: const Icon(Icons.handyman_outlined), 
+      label: const Text("施修"),
       style: ElevatedButton.styleFrom(
         minimumSize: Size(MediaQuery.of(context).size.width, 40),
       ),

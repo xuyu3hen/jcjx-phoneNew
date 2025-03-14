@@ -154,11 +154,11 @@ class _MutualListState extends State<MutualList> {
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${item.trainType}-${item.trainNum}",style: TextStyle(fontSize: 18.0),),
+                title: Text("${item.trainType}-${item.trainNum}",style: const TextStyle(fontSize: 18.0),),
                 subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   Navigator.of(context).pushNamed('vehimageviewer',arguments: item);
-                }, child: Icon(Icons.image)),
+                }, child: const Icon(Icons.image)),
               ),
               ZjcFormInputCell(
                 title: "故障现象",
