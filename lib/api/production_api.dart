@@ -41,7 +41,7 @@ class ProductApi extends AppApi {
       );
       return MainDataStructure.fromJson((r.data["data"])["data"]);
     } catch (e, stackTrace) {
-            logger.e(e, stackTrace);
+      logger.e(e, stackTrace);
       _handleException(e);
       return MainDataStructure(
           assigned: false, packageUserDTOList: [], station: '');
@@ -63,28 +63,48 @@ class ProductApi extends AppApi {
   }
 
   //置为AB端作业包 subparts/workInstructPackage/updateTaskInstructPackage
-    Future<dynamic> updateTaskInstructPackage(List<WorkPackage> workPackages) async {
+  Future<dynamic> updateTaskInstructPackage(
+      List<WorkPackage> workPackages) async {
     try {
-      var r = await AppApi.dio.post(
+      var r = await AppApi.dio2.post(
         "/subparts/workInstructPackage/updateTaskInstructPackage",
         data: workPackages,
       );
       logger.i(r.data["data"]);
       return r.data["data"];
-   } catch (e, stackTrace) {
+    } catch (e, stackTrace) {
       logger.e(e, stackTrace);
-
-   }
+    }
   }
 
+  //同步作业包 subparts/workInstructPackage/syncWorkPackageToPackageUser
+  Future<dynamic> syncWorkPackageToPackageUser({
+    Map<String, dynamic>? queryParametrs, // 分页参数
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/workInstructPackage/syncWorkPackageToPackageUser",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r);
+      logger.i(r.data["data"]);
+      return r.data["data"];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+    }
+  }
 
   //入段车号展示dynamic
   Future<dynamic> getTrainNumDynamic() async {
-    var r = await AppApi.dio
-        .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
-    logger.i("展示获取信息");
-    logger.i((r.data["data"])['data']);
-    return (r.data["data"])['data'];
+    try {
+      var r = await AppApi.dio
+          .get("/dispatch/trainRepairScheduleEdit/getNeedToDeptSchedulePlan");
+      logger.i("展示获取信息");
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+    }
   }
 
   // 检修地点展示
@@ -208,7 +228,7 @@ class ProductApi extends AppApi {
   Future<RepairSysResponse> selectRepairSys({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    // try {
+    try {
     logger.i('code');
     //get中使用queryParameters，post中使用data
     logger.i(queryParametrs!['dynamicCode']);
@@ -218,10 +238,10 @@ class ProductApi extends AppApi {
     );
     logger.i((r.data["data"])["data"]);
     return RepairSysResponse.fromJson((r.data["data"])["data"]);
-    // } catch (e) {
-    //   _handleException(e);
-    //   return null;
-    // }
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+      return  RepairSysResponse();
+    }
   }
 
   //获取 subparts/jcRoleConfigNode/getUerListByDeptId
@@ -848,12 +868,17 @@ class ProductApi extends AppApi {
   //jcjxsystem/dept/getDeptByIdList
   Future<dynamic> getDeptByDeptIdList(
       Map<String, dynamic> queryParameters) async {
-    var r = await AppApi.dio.get(
-      "/jcjxsystem/dept/getDeptByIdList",
-      queryParameters: queryParameters,
-    );
-    logger.i((r.data["data"])['data']);
-    return (r.data["data"])['data'];
+    try {
+      var r = await AppApi.dio.get(
+        "/jcjxsystem/dept/getDeptByIdList",
+        queryParameters: queryParameters,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+      return null;
+    }
   }
 
   //subparts/repairMainNode/selectAll

@@ -41,7 +41,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 工序节点列表
   late List<Map<String, dynamic>> procNodeList = [];
   // 工序节点筛选信息
-  late Map<String, dynamic> procNodeSelected = {};
+  late Map<String, dynamic> procNodeSelected = {'name': '', 'code': ''};
 
   // 将作业包进行展示
   late List<PackageUserDTOList>? packageUserDTOList = [];
@@ -55,21 +55,12 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void initState() {
     super.initState();
     getDynamicType();
-
   }
 
-  void initData() async{
+  void initData() async {
     getDynamicType();
   }
 
-
-  void syncWorkPackageToPackageUser() {
-    // Map<String, dynamic> params = {
-    //   "typeCode": jcTypeListSelected['code'],
-    //   "repairMainNodeCode": "repairMainNodeCode",
-    //   'deptId': ""
-    // };
-  }
   // 获取动态类型
   void getDynamicType() async {
     try {
@@ -200,6 +191,24 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     }
   }
 
+  //同步作业包
+  void syncWorkPackageToPackageUser() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'typeCode': jcTypeListSelected["code"],
+        'deptId': Global.profile.permissions!.user.deptId,
+        'repairTimes': repairTimesSelected["name"],
+        'repairMainNodeCode': procNodeSelected["code"],
+      };
+      logger.i(queryParameters);
+      var r = await ProductApi()
+          .syncWorkPackageToPackageUser(queryParametrs: queryParameters);
+
+    } catch (e, stackTrace) {
+      logger.e('syncWorkPackageToPackageUser 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
   //获取作业包
   void getWorkPackage() async {
     try {
@@ -209,6 +218,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
         'repairTimes': repairTimesSelected["name"],
         'repairMainNodeCode': procNodeSelected["code"],
       };
+      logger.i(queryParameters);
       var r =
           await JtApi().getPackageUserList(queryParameters: queryParameters);
       if (r.data != null && r.data!.isNotEmpty) {
@@ -437,6 +447,29 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                     }
                   },
                 ),
+                // 添加一个同步作业包按钮，当工序节点不是空的时候显示
+                if (procNodeSelected['name'] != '' &&
+                    procNodeSelected['code'] != '')
+                  //展示同步作业包按钮 使用正常绿色按钮
+                  Container(
+                      width: MediaQuery.of(context).size.width,
+                      // 去掉高度的固定计算，让列表自适应内容
+                      decoration: const BoxDecoration(color: Colors.white),
+                      child: Column(children: [
+                        ElevatedButton(
+                          onPressed: () {
+                            syncWorkPackageToPackageUser();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                                255, 146, 231, 147), // 设置按钮颜色为绿色
+                            minimumSize: const Size(
+                                double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+                          ),
+                          child: const Text('同步作业包'),
+                        ),
+                      ])),
+
                 // 将packageUserDTOList进行展示
                 Container(
                   width: MediaQuery.of(context).size.width,
@@ -553,6 +586,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
             ),
           ],
         ),
+
         // 使用 Positioned 将设置施修人按钮固定在屏幕底部
         if (selectedPackage != null)
           Positioned(

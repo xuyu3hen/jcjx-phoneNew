@@ -2,6 +2,8 @@ import '../index.dart';
 import 'package:flutter_custom_dropdown/flutter_custom_dropdown.dart' as downmenu;
 import '../config/filter_data.dart';
 class QRsearchPage extends StatefulWidget{
+  const QRsearchPage({super.key});
+
 
   @override
   State createState() => _QRsearchPage();

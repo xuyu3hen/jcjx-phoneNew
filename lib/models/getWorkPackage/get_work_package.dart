@@ -56,6 +56,7 @@ class WorkPackage {
   double? progress;
   int? total;
   int? completeCount;
+  String? repairTimes;
 
   WorkPackage(
       {this.code,
@@ -93,7 +94,8 @@ class WorkPackage {
       this.taskCertainPackageList,
       this.progress,
       this.total,
-      this.completeCount});
+      this.completeCount,
+      this.repairTimes});
 
   factory WorkPackage.fromJson(Map<String, dynamic> json) =>
       _$WorkPackageFromJson(json);

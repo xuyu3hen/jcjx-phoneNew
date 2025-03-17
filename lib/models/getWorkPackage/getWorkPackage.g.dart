@@ -58,6 +58,7 @@ WorkPackage _$WorkPackageFromJson(Map<String, dynamic> json) => WorkPackage(
       progress: (json['progress'] as num?)?.toDouble(),
       total: json['total'] as int?,
       completeCount: json['completeCount'] as int?,
+      repairTimes: json['repairTimes'] as String?,
     );
 
 Map<String, dynamic> _$WorkPackageToJson(WorkPackage instance) =>
@@ -98,4 +99,5 @@ Map<String, dynamic> _$WorkPackageToJson(WorkPackage instance) =>
       'progress': instance.progress,
       'total': instance.total,
       'completeCount': instance.completeCount,
+      'repairTimes': instance.repairTimes,
     };
