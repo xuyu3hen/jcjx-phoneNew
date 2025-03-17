@@ -170,15 +170,12 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
   }
 
   //置为A端或B端作业包
-  Future<void> setEnds(List<WorkPackage> workPackageList) async{
+  Future<void> setEnds(List<WorkPackage> workPackageList) async {
     try {
-      workPackageList.forEach((element) {
-        logger.i(element.toJson());
-      });
-      ProductApi().updateTaskInstructPackage(workPackageList);
+
+      await ProductApi().updateTaskInstructPackage(workPackageList);
     } catch (e, stackTrace) {
       logger.e('setAEnds 方法中发生异常: $e\n堆栈信息: $stackTrace');
-      
     }
   }
 
@@ -445,12 +442,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                               workPackageListAEnds.add(package);
                             }
                             await setEnds(workPackageListAEnds); // 等待操作完成
-                          } catch (e) {
-                            logger.e('设置 A 端作业包失败: $e'); // 捕获异常并记录日志
-                          } finally {
+                            await getWorkPackage();
                             setState(() {
                               isLoadingA = false; // 无论成功或失败，都重置加载状态
+                              
                             });
+                          } catch (e, stackTrace) {
+                            logger.e('Error: $e\nStackTrace: $stackTrace');
                           }
                         },
                         style: ButtonStyle(
@@ -480,12 +478,12 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                               workPackageListBEnds.add(package);
                             }
                             await setEnds(workPackageListBEnds); // 等待操作完成
-                          } catch (e) {
-                            logger.e('设置 A 端作业包失败: $e'); // 捕获异常并记录日志
-                          } finally {
+                            await getWorkPackage();
                             setState(() {
                               isLoadingB = false; // 无论成功或失败，都重置加载状态
                             });
+                          } catch (e, stackTrace) {
+                            logger.e('Error: $e\nStackTrace: $stackTrace');
                           }
                         },
                         style: ButtonStyle(
@@ -502,7 +500,12 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                                 style: TextStyle(fontSize: 18)),
                       ),
                       ElevatedButton(
-                        onPressed: () => startWork(selectedWorkPackages),
+                        onPressed: () async {
+                          startWork(selectedWorkPackages);
+                          setState(() {
+                            getWorkPackage();
+                          });
+                        },
                         style: ButtonStyle(
                           minimumSize: MaterialStateProperty.all(Size(
                               MediaQuery.of(context).size.width / 3 - 10,
