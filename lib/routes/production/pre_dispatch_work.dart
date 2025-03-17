@@ -49,7 +49,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 获取用户信息
   late Permissions permissions;
 
-  late PackageUserDTOList? selectedPackage;
+  late PackageUserDTOList? selectedPackage = null;
 
   @override
   void initState() {

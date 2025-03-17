@@ -66,9 +66,9 @@ class Rows {
     deptIds = json['deptIds'];
     if (json['sysDeptList']!= null) {
       sysDeptList = [];
-      (json['sysDeptList'] as List).forEach((v) {
+      for (var v in (json['sysDeptList'] as List)) {
         sysDeptList?.add(SysDeptList.fromJson(v));
-      });
+      }
     }
     childList = json['childList'];
     deleted = json['deleted'];

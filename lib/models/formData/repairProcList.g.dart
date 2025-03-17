@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'repairProcList.dart';
+part of 'repair_proc_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

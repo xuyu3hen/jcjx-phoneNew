@@ -1,5 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:jcjx_phone/models/accessToken.dart';
+import 'package:jcjx_phone/models/access_token.dart';
 import 'index.dart';
 part 'profile.g.dart';
 
@@ -12,7 +12,7 @@ class Profile {
     this.data,
     // this.roleList,
     this.permissions,
-    this.access_token,
+    this.accessToken,
     this.theme,
     this.cache,
     this.lastLogin,
@@ -23,7 +23,7 @@ class Profile {
   AccessToken? data;
   // List<RoleList>? roleList;
   Permissions? permissions;
-  String? access_token;
+  String? accessToken;
   late int? theme;
   CacheConfig? cache;
   String? lastLogin;

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'jcTypeList.dart';
+part of 'jc_type_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

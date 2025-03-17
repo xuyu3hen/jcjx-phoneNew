@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../index.dart';
 
 enum ImageFormat { png, jpg, jpeg, gif, webp }
 
@@ -21,6 +22,9 @@ class JhImageUtils {
   ///
   /// image: AssetImage('assets/images/set.png')
   /// widget: Image.asset('assets/images/set.png', fit: BoxFit.cover, width: 50, height: 50.0),
+
+  
+
   static ImageProvider getAssetImage(String name, {ImageFormat format = ImageFormat.png}) {
     //    print('路径-- '+ getImgPath(name, format: format));
     return AssetImage(getImgPath(name, format: format));

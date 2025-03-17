@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 
 
 class MainScanner extends StatefulWidget{
-  MainScanner({Key? key}) : super(key: key);
+  const MainScanner({Key? key}) : super(key: key);
   @override
-  _MainScanner createState() => _MainScanner();
+  State createState() => _MainScanner();
 }
 
 class _MainScanner extends State<MainScanner>{

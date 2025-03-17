@@ -1,4 +1,4 @@
-import 'package:jcjx_phone/models/accessToken.dart';
+import 'package:jcjx_phone/models/access_token.dart';
 
 import '../index.dart';
 
@@ -20,9 +20,9 @@ class UserModel extends ProfileChangeNotifier {
   AccessToken? get accessToken => _profile.data;
 
   // 校验APPToken是否有效
-  bool get isLogin => _profile.data?.access_token != null;
+  bool get isLogin => _profile.data?.accessToken != null;
 
-  //TODO更新用户信息及相关widget
+// widget
   // set user(User? user) {
   //   if(user?.userLoginName != _profile.lastLogin) {
   //     print('wsfafds${_profile.lastLogin}');

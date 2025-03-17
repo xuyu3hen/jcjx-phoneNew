@@ -14,6 +14,7 @@ class JtMessageList extends DataList{
   List<JtMessage>? rows;
 
   factory JtMessageList.fromJson(Map<String,dynamic> json) => _$JtMessageListFromJson(json);
+  @override
   Map<String, dynamic> toJson() => _$JtMessageListToJson(this);
 }
 

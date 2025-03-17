@@ -15,7 +15,7 @@ Profile _$ProfileFromJson(Map<String, dynamic> json) => Profile(
       permissions: json['permissions'] == null
           ? null
           : Permissions.fromJson(json['permissions'] as Map<String, dynamic>),
-      access_token: json['access_token'] as String?,
+      accessToken: json['access_token'] as String?,
       theme: json['theme'] as int?,
       cache: json['cache'] == null
           ? null
@@ -28,7 +28,7 @@ Map<String, dynamic> _$ProfileToJson(Profile instance) => <String, dynamic>{
       'msg': instance.msg,
       'data': instance.data,
       'permissions': instance.permissions,
-      'access_token': instance.access_token,
+      'access_token': instance.accessToken,
       'theme': instance.theme,
       'cache': instance.cache,
       'lastLogin': instance.lastLogin,

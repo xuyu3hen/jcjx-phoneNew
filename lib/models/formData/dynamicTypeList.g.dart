@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'dynamicTypeList.dart';
+part of 'dynamic_type_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

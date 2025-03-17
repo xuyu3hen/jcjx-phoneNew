@@ -1,12 +1,12 @@
-class repairTimes {
+class RepairTimes {
   int? total;
   List<Rows>? rows;
   int? code;
   String? msg;
 
-  repairTimes({this.total, this.rows, this.code, this.msg});
+  RepairTimes({this.total, this.rows, this.code, this.msg});
 
-  repairTimes.fromJson(Map<String, dynamic> json) {
+  RepairTimes.fromJson(Map<String, dynamic> json) {
     total = json['total'];
     if (json['rows']!= null) {
       rows = [];

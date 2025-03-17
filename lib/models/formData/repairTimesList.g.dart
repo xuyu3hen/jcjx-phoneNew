@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'repairTimesList.dart';
+part of 'repair_times_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

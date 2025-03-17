@@ -1,6 +1,6 @@
 
 
-import 'package:jcjx_phone/models/prework/packageUser.dart';
+import 'package:jcjx_phone/models/prework/package_user.dart';
 
 
 class MainDataStructure {

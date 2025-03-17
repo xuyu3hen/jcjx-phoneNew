@@ -1,4 +1,4 @@
-import 'package:jcjx_phone/models/prework/workInstructPackageUser%20.dart';
+import 'package:jcjx_phone/models/prework/work_instruct_package_user.dart';
 
 class PackageUserData{
   List<PackageUserList>? packageUserList;

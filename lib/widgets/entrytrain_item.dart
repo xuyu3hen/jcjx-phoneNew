@@ -115,7 +115,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
             image: NetworkImage(
               "http://10.102.72.103:8080/fileserver/FileOperation/previewImage?url=$url",
               headers: {
-                "Authorization":Global.profile.data!.access_token!,
+                "Authorization":Global.profile.data!.accessToken!,
               }
           ),)
         );

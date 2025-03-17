@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'repairPlanList.dart';
+part of 'repair_plan_list.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

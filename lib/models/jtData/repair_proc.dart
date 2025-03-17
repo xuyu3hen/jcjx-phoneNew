@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
-import '../formData/repairProcList.dart';
+import '../formData/repair_proc_list.dart';
 part 'repair_proc.g.dart';
 
 @JsonSerializable()

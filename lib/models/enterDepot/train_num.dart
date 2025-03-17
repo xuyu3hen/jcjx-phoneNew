@@ -7,14 +7,14 @@ class InnerData {
   List<ItemData>? data;
 
   InnerData({
-    required this.data, required List ,
+    required this.data, required list ,
   });
 
   factory InnerData.fromJson(Map<String, dynamic> json) {
     return InnerData(
       data: (json['data'] as List?)
          ?.map((e) => ItemData.fromJson(e))
-         .toList(), List: null,
+         .toList(), list: null,
     );
   }
 

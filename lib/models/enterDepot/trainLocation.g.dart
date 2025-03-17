@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'trainLocation.dart';
+part of 'train_location.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

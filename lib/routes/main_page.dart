@@ -93,10 +93,10 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             physics: const NeverScrollableScrollPhysics(),
             controller: pageController,
             onPageChanged: onPageChanged,
-            children: <Widget>[
-              const NormalMainPage(),
+            children: const <Widget>[
+              NormalMainPage(),
               MainScanner(),
-              const PersonPage(),
+              PersonPage(),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(

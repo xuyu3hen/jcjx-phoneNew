@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'getWorkPackage.dart';
+part of 'get_work_package.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator

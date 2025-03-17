@@ -30,7 +30,7 @@ class _MyPageItems extends State<MyPageItems> {
                 ),
               ],
             ),
-            _LoginTitle(context),
+            _loginTitle(context),
           ],
         ));
   }
@@ -54,7 +54,7 @@ class _MyPageItems extends State<MyPageItems> {
         },
       );
 
-  Widget _LoginTitle(BuildContext context) {
+  Widget _loginTitle(BuildContext context) {
     UserModel usermodel = Provider.of<UserModel>(context);
     if (usermodel.isLogin) {
       return ListTile(
