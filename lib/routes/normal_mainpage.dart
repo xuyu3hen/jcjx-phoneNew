@@ -31,14 +31,20 @@ class _NormalMainPageState extends State<NormalMainPage> {
         // log('${r.sysMessageVO}');
         r.sysMessageVO?.forEach((element) {
           if (element.model == "互检") {
-            setState(() {
+            if(mounted){
+              setState(() {
               mutualNum = element.number2!;
             });
+            }
+            
           }
           if (element.model == "专检") {
-            setState(() {
+            if(mounted){
+              setState(() {
               specialNum = element.number2!;
             });
+            }
+            
           }
         });
       } else {

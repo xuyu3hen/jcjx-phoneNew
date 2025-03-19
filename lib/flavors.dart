@@ -27,7 +27,7 @@ class F {
       case Flavor.env_dev:
         return 'http://10.105.84.122:8080';
       case Flavor.env_release:
-        return 'http://10.102.81.45:8080';
+        return 'http://10.102.81.15:30652';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';
       default:
@@ -40,7 +40,7 @@ class F {
       case Flavor.env_dev:
         return 'http://10.105.84.122:8080';
       case Flavor.env_release:
-        return 'http://10.102.81.45:8080';
+        return 'http://10.102.81.15:30652';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';
       default:
@@ -64,7 +64,7 @@ class F {
   static String get version {
     switch (appFlavor) {
       case Flavor.env_dev:
-        return '1.1.4';
+        return '1.1.5';
       case Flavor.env_release:
         return '1.0.0';
       case Flavor.env_test:

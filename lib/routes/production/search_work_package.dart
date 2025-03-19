@@ -172,7 +172,6 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
   //置为A端或B端作业包
   Future<void> setEnds(List<WorkPackage> workPackageList) async {
     try {
-
       await ProductApi().updateTaskInstructPackage(workPackageList);
     } catch (e, stackTrace) {
       logger.e('setAEnds 方法中发生异常: $e\n堆栈信息: $stackTrace');
@@ -429,28 +428,34 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton(
-                        onPressed: () async {
-                          if (isLoadingA) return; // 如果正在加载，直接返回，防止重复点击
-                          setState(() {
-                            isLoadingA = true; // 设置加载状态为 true
-                          });
+                        onPressed: isLoadingA
+                            ? null // 如果正在加载，禁用按钮
+                            : () async {
+                                if (isLoadingA) return; // 如果正在加载，直接返回，防止重复点击
+                                setState(() {
+                                  isLoadingA = true; // 设置加载状态为 true
+                                });
 
-                          try {
-                            List<WorkPackage> workPackageListAEnds = [];
-                            for (WorkPackage package in selectedWorkPackages) {
-                              package.ends = 'A';
-                              workPackageListAEnds.add(package);
-                            }
-                            await setEnds(workPackageListAEnds); // 等待操作完成
-                            await getWorkPackage();
-                            setState(() {
-                              isLoadingA = false; // 无论成功或失败，都重置加载状态
-                              
-                            });
-                          } catch (e, stackTrace) {
-                            logger.e('Error: $e\nStackTrace: $stackTrace');
-                          }
-                        },
+                                try {
+                                  List<WorkPackage> workPackageListAEnds = [];
+                                  for (WorkPackage package
+                                      in selectedWorkPackages) {
+                                    package.ends = 'A';
+                                    workPackageListAEnds.add(package);
+                                  }
+                                  await setEnds(workPackageListAEnds); // 等待操作完成
+                                  await getWorkPackage();
+                                  setState(() {
+                                    isLoadingA = false; // 无论成功或失败，都重置加载状态
+                                  });
+                                } catch (e, stackTrace) {
+                                  logger
+                                      .e('Error: $e\nStackTrace: $stackTrace');
+                                  setState(() {
+                                    isLoadingA = false; // 确保在异常情况下也重置加载状态
+                                  });
+                                }
+                              },
                         style: ButtonStyle(
                           minimumSize: MaterialStateProperty.all(Size(
                               MediaQuery.of(context).size.width / 3 - 10,
@@ -458,6 +463,15 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           padding: MaterialStateProperty.all(
                               const EdgeInsets.symmetric(
                                   horizontal: 0, vertical: 10)),
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.disabled)) {
+                                return Colors.grey; // 禁用时为灰色
+                              }
+                              return Theme.of(context).primaryColor; // 默认颜色
+                            },
+                          ),
                         ),
                         child: isLoadingA
                             ? const CircularProgressIndicator() // 显示加载指示器
@@ -465,27 +479,34 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                                 style: TextStyle(fontSize: 18)),
                       ),
                       ElevatedButton(
-                        onPressed: () async {
-                          if (isLoadingB) return; // 如果正在加载，直接返回，防止重复点击
-                          setState(() {
-                            isLoadingB = true; // 设置加载状态为 true
-                          });
+                        onPressed: isLoadingB
+                            ? null // 如果正在加载，禁用按钮
+                            : () async {
+                                if (isLoadingB) return; // 如果正在加载，直接返回，防止重复点击
+                                setState(() {
+                                  isLoadingB = true; // 设置加载状态为 true
+                                });
 
-                          try {
-                            List<WorkPackage> workPackageListBEnds = [];
-                            for (WorkPackage package in selectedWorkPackages) {
-                              package.ends = 'B';
-                              workPackageListBEnds.add(package);
-                            }
-                            await setEnds(workPackageListBEnds); // 等待操作完成
-                            await getWorkPackage();
-                            setState(() {
-                              isLoadingB = false; // 无论成功或失败，都重置加载状态
-                            });
-                          } catch (e, stackTrace) {
-                            logger.e('Error: $e\nStackTrace: $stackTrace');
-                          }
-                        },
+                                try {
+                                  List<WorkPackage> workPackageListBEnds = [];
+                                  for (WorkPackage package
+                                      in selectedWorkPackages) {
+                                    package.ends = 'B';
+                                    workPackageListBEnds.add(package);
+                                  }
+                                  await setEnds(workPackageListBEnds); // 等待操作完成
+                                  await getWorkPackage();
+                                  setState(() {
+                                    isLoadingB = false; // 无论成功或失败，都重置加载状态
+                                  });
+                                } catch (e, stackTrace) {
+                                  logger
+                                      .e('Error: $e\nStackTrace: $stackTrace');
+                                  setState(() {
+                                    isLoadingB = false; // 确保在异常情况下也重置加载状态
+                                  });
+                                }
+                              },
                         style: ButtonStyle(
                           minimumSize: MaterialStateProperty.all(Size(
                               MediaQuery.of(context).size.width / 3 - 10,
@@ -493,6 +514,15 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           padding: MaterialStateProperty.all(
                               const EdgeInsets.symmetric(
                                   horizontal: 0, vertical: 10)),
+                          backgroundColor:
+                              MaterialStateProperty.resolveWith<Color>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.disabled)) {
+                                return Colors.grey; // 禁用时为灰色
+                              }
+                              return Theme.of(context).primaryColor; // 默认颜色
+                            },
+                          ),
                         ),
                         child: isLoadingB
                             ? const CircularProgressIndicator() // 显示加载指示器
@@ -502,9 +532,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                       ElevatedButton(
                         onPressed: () async {
                           startWork(selectedWorkPackages);
-                          setState(() {
-                            getWorkPackage();
-                          });
+                          await getWorkPackage();
                         },
                         style: ButtonStyle(
                           minimumSize: MaterialStateProperty.all(Size(
@@ -513,6 +541,8 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           padding: MaterialStateProperty.all(
                               const EdgeInsets.symmetric(
                                   horizontal: 0, vertical: 10)),
+                          backgroundColor: MaterialStateProperty.all(
+                              Colors.lightGreen), // 设置为浅绿色
                         ),
                         child: const Text('开工', style: TextStyle(fontSize: 18)),
                       ),

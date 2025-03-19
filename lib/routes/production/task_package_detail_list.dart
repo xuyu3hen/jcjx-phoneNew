@@ -550,7 +550,10 @@ class _NewPageState extends State<NewPage> {
     if (r == 200) {
       showToast("完成成功");
       //进行页面跳转跳转到作业包模块
-      //目前目前没有解决跳转问题
+      //todo 目前目前没有解决跳转问题
+  
+      // 返回到之前的界面
+      Navigator.of(context).pop();
     }
     } catch (e, stackTrace) {
       logger.e('completeCertainPackage error:$e, stackTrace:$stackTrace');
