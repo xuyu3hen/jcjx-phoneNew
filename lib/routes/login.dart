@@ -17,6 +17,7 @@ class _LoginRouteState extends State<LoginRoute> {
   bool pwdShow = false;
   bool rememberPassword = false; // 记住密码选项
   final String _credentialsKey = 'credentials';
+  bool _isManualInput = false;
   @override
   void initState() {
     super.initState();
@@ -172,7 +173,7 @@ class _LoginRouteState extends State<LoginRoute> {
           ),
           // 登录表单
           Padding(
-            padding: const EdgeInsets.only(top:100.0),
+            padding: const EdgeInsets.only(top: 100.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -185,73 +186,81 @@ class _LoginRouteState extends State<LoginRoute> {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
                         return Text('Error: ${snapshot.error}');
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return TextFormField(
-                          autofocus: _nameAutoFouce,
-                          controller: _unameController,
-                          decoration: InputDecoration(
-                            labelText: "用户名",
-                            hintText: "用户名",
-                            prefixIcon: const Icon(Icons.person),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.8),
-                          ),
-                          // 校验用户名
-                          validator: (v) {
-                            return v == null || v.trim().isNotEmpty
-                                ? null
-                                : "用户名不能为空";
-                          },
-                        );
                       } else {
-                        return Column(
-                          children: [
-                            DropdownButtonFormField<String>(
-                              value: _unameController.text.isNotEmpty
-                                  ? _unameController.text
-                                  : null,
-                              items: snapshot.data!.map((String username) {
-                                return DropdownMenuItem<String>(
-                                  value: username,
-                                  child: Text(username),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
+                        List<String> usernames = snapshot.data ?? [];
+                        if (_isManualInput) {
+                          // 如果是手动输入模式，显示 TextFormField
+                          return TextFormField(
+                            controller: _unameController,
+                            decoration: InputDecoration(
+                              labelText: "请输入用户名",
+                              hintText: "请输入用户名",
+                              prefixIcon: const Icon(Icons.person),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.8),
+                            ),
+                            validator: (v) {
+                              return v == null || v.trim().isNotEmpty
+                                  ? null
+                                  : "用户名不能为空";
+                            },
+                            autofocus: _nameAutoFouce, // 确保聚焦
+                          );
+                        } else {
+                          // 否则显示 DropdownButtonFormField
+                          return DropdownButtonFormField<String>(
+                            value: _unameController.text.isNotEmpty
+                                ? _unameController.text
+                                : null,
+                            items: [
+                              // 添加一个选项用于手动输入
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('手动输入用户名'),
+                              ),
+                              ...usernames
+                                  .map((username) => DropdownMenuItem<String>(
+                                        value: username,
+                                        child: Text(username),
+                                      ))
+                                  .toList(),
+                            ],
+                            onChanged: (String? newValue) {
+                              setState(() {
+                                if (newValue == '') {
+                                  // 切换到手动输入模式
+                                  _isManualInput = true;
+                                  _unameController.clear();
+                                  // 确保焦点转移到 TextFormField
+                                  FocusScope.of(context)
+                                      .requestFocus(FocusNode());
+                                } else {
+                                  // 选择已有用户名
+                                  _isManualInput = false;
                                   _unameController.text = newValue ?? '';
                                   _loadPasswordForUsername(newValue ?? '');
-                                });
-                              },
-                              decoration: InputDecoration(
-                                labelText: "选择用户",
-                                hintText: "选择用户",
-                                prefixIcon: const Icon(Icons.people),
-                                filled: true,
-                                fillColor: Colors.white.withOpacity(0.8),
-                              ),
+                                }
+                              });
+                            },
+                            decoration: InputDecoration(
+                              labelText: "选择或输入用户名",
+                              hintText: "选择或输入用户名",
+                              prefixIcon: const Icon(Icons.person),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.8),
                             ),
-                            TextFormField(
-                              controller: _unameController,
-                              decoration: InputDecoration(
-                                labelText: "用户名",
-                                hintText: "用户名",
-                                prefixIcon: const Icon(Icons.person),
-                                filled: true,
-                                fillColor: Colors.white.withOpacity(0.8),
-                              ),
-                              // 校验用户名
-                              validator: (v) {
-                                return v == null || v.trim().isNotEmpty
-                                    ? null
-                                    : "用户名不能为空";
-                              },
-                            ),
-                          ],
-                        );
+                            validator: (v) {
+                              return v == null || v.trim().isNotEmpty
+                                  ? null
+                                  : "用户名不能为空";
+                            },
+                          );
+                        }
                       }
                     },
                   ),
                   const SizedBox(height: 16),
+// 密码输入框保持不变
                   TextFormField(
                     controller: _pwdController,
                     autofocus: !_nameAutoFouce,
@@ -271,9 +280,7 @@ class _LoginRouteState extends State<LoginRoute> {
                       filled: true,
                       fillColor: Colors.white.withOpacity(0.8),
                     ),
-                    // 密文密码显示
                     obscureText: !pwdShow,
-                    // 校验空值
                     validator: (v) {
                       return v == null || v.trim().isNotEmpty
                           ? null
