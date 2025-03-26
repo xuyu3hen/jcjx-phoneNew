@@ -4,8 +4,6 @@ import '../index.dart';
 class NormalMainPage extends StatefulWidget {
   const NormalMainPage({super.key});
 
-
-  
   @override
   State createState() => _NormalMainPageState();
 }
@@ -31,20 +29,18 @@ class _NormalMainPageState extends State<NormalMainPage> {
         // log('${r.sysMessageVO}');
         r.sysMessageVO?.forEach((element) {
           if (element.model == "互检") {
-            if(mounted){
+            if (mounted) {
               setState(() {
-              mutualNum = element.number2!;
-            });
+                mutualNum = element.number2!;
+              });
             }
-            
           }
           if (element.model == "专检") {
-            if(mounted){
+            if (mounted) {
               setState(() {
-              specialNum = element.number2!;
-            });
+                specialNum = element.number2!;
+              });
             }
-            
           }
         });
       } else {
@@ -52,8 +48,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
       }
     } catch (e, stackTrace) {
       //显示异常以及异常所在 行 异常内容
-      logger.e( "getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace");
-
+      logger.e("getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace");
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -206,6 +201,10 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return Column(
       children: [
         const SizedBox(height: 30),
+        const ListTile(
+          title: Text("预派工，机统28",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -323,6 +322,10 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return Column(
       children: [
         const SizedBox(height: 30),
+        const ListTile(
+          title: Text("预派工，机统28",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
@@ -335,6 +338,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 '检修进度',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
+                
               ),
             ),
           ],
