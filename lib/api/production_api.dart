@@ -71,6 +71,12 @@ class ProductApi extends AppApi {
         data: workPackages,
       );
       logger.i(r.data["data"]);
+      if((r.data["data"])['data'] != null){
+        Map<String, dynamic> data = (r.data["data"])['data'];
+        if(data['code'] == 500){
+          showToast(data['msg']);
+        }
+      }
       return r.data["data"];
     } catch (e, stackTrace) {
       logger.e(e, stackTrace);

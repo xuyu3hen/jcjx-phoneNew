@@ -95,43 +95,61 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
     }
   }
 
-  Future<void> initData() async {
-    try {
-      var r = await ProductApi().getDynamicType();
-      var permissionResponse = await LoginApi().getpermissions();
-      if (r.toMapList().isEmpty) {
-        logger.e('动力类型列表为空');
-        return;
-      }
-      Map<String, dynamic> initDynamicTypeSelected = r.toMapList()[0];
-      Map<String, dynamic> queryParameters = {
-        'dynamicCode': initDynamicTypeSelected['code'],
-        'pageNum': 0,
-        'pageSize': 0
-      };
-      var r1 = await ProductApi().getJcType(queryParametrs: queryParameters);
-      Map<String, dynamic> initJcTypeSelected = r1.toMapList()[0];
-      Map<String, dynamic> queryParameters1 = {
-        'typeName': initJcTypeSelected["name"],
-        'pageNum': 0,
-        'pageSize': 0
-      };
-      //获取车号
-      var r2 = await ProductApi()
-          .getRepairPlanList(queryParametrs: queryParameters1);
-      setState(() {
-        dynamicTypeList = r.toMapList();
-        dynamciTypeSelected = dynamicTypeList[0];  
-        jcTypeList = r1.toMapList();
-        jcTypeListSelected = jcTypeList[0];
-        trainNumCodeList = r2.toMapList();
-        trainNumSelected = trainNumCodeList[0];
-        permissions = permissionResponse;
-      });
-    } catch (e, stackTrace) {
-      logger.e('initData 方法中发生异常: $e\n堆栈信息: $stackTrace');
+Future<void> initData() async {
+  try {
+    // 获取动力类型列表
+    var r = await ProductApi().getDynamicType();
+    var permissionResponse = await LoginApi().getpermissions();
+
+    if (r.toMapList().isEmpty) {
+      logger.e('动力类型列表为空');
+      return;
     }
+
+    // 初始化动力类型选择项
+    Map<String, dynamic> initDynamicTypeSelected = r.toMapList()[0];
+    Map<String, dynamic> queryParameters = {
+      'dynamicCode': initDynamicTypeSelected['code'],
+      'pageNum': 0,
+      'pageSize': 0
+    };
+
+    // 获取机型列表
+    var r1 = await ProductApi().getJcType(queryParametrs: queryParameters);
+    Map<String, dynamic> initJcTypeSelected = r1.toMapList()[0];
+    Map<String, dynamic> queryParameters1 = {
+      'typeName': initJcTypeSelected["name"],
+      'pageNum': 0,
+      'pageSize': 0
+    };
+
+    // 获取车号列表
+    var r2 = await ProductApi().getRepairPlanList(queryParametrs: queryParameters1);
+    trainNumCodeList = r2.toMapList();
+    trainNumSelected = trainNumCodeList[0];
+
+    // 构建查询作业包参数
+    Map<String, dynamic> queryParameters2 = {
+      'trainEntryCode': trainNumSelected["code"],
+    };
+
+    // 获取作业包
+    var r3 = await ProductApi().getWorkPackage(queryParametrs: queryParameters2);
+    workPackageList = r3;
+
+    // 更新状态
+    setState(() {
+      dynamicTypeList = r.toMapList();
+      dynamciTypeSelected = dynamicTypeList[0];
+      jcTypeList = r1.toMapList();
+      jcTypeListSelected = jcTypeList[0];
+      permissions = permissionResponse;
+    });
+  } catch (e, stackTrace) {
+    logger.e('initData 方法中发生异常: $e\n堆栈信息: $stackTrace');
   }
+}
+
 
   void getDynamicType() async {
     try {
