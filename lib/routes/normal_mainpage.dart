@@ -202,7 +202,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
       children: [
         const SizedBox(height: 30),
         const ListTile(
-          title: Text("预派工，机统28",
+          title: Text("检修进度",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         Row(
@@ -323,7 +323,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
       children: [
         const SizedBox(height: 30),
         const ListTile(
-          title: Text("预派工，机统28",
+          title: Text("检修进度",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         Row(

@@ -41,7 +41,7 @@ class _FeatureContainer extends State<FeatureContainer> {
             child: Container(
               constraints: BoxConstraints.tightFor(width: (widget.width!)/6, height: (widget.width!)/6),
               decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
+                color: Colors.white,
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black54,
