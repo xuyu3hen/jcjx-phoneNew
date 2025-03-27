@@ -193,7 +193,7 @@ class BaseDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: 通过ThemeProvider进行主题管理
+    //  通过ThemeProvider进行主题管理
     // final provider = Provider.of<ThemeProvider>(context);
     var confirmTextColor = KColors.dynamicColor(context, Theme.of(context).primaryColor, KColors.kThemeColor);
 

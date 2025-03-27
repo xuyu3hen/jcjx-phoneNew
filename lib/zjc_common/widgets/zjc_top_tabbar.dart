@@ -92,7 +92,7 @@ class _ZjcTopTabBarState extends State<ZjcTopTabBar> with SingleTickerProviderSt
 
   @override
   void initState() {
-    // TODO: implement initState
+    // implement initState
     super.initState();
 
     _tabController = TabController(length: widget.tabModelArr.length, vsync: this);
@@ -115,7 +115,7 @@ class _ZjcTopTabBarState extends State<ZjcTopTabBar> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    // TODO: 通过ThemeProvider进行主题管理
+    // 通过ThemeProvider进行主题管理
     // final provider = Provider.of<ThemeProvider>(context);
     var bgColor = KColors.dynamicColor(context, const Color(0xFFF2F2F2), KColors.kTabBarBgDarkColor); // 242
     // var indicatorColor = KColors.dynamicColor(context, provider.getThemeColor(), KColors.kThemeColor);
@@ -210,7 +210,7 @@ class _ZjcTopTabBarState extends State<ZjcTopTabBar> with SingleTickerProviderSt
 //        ),
       body: TabBarView(
         controller: _tabController,
-        // TODO：调整参数使禁用滑动可行
+        // 调整参数使禁用滑动可行
         physics: widget.isScrollable == true?null:const NeverScrollableScrollPhysics(),
         children: widget.tabModelArr.map((item) => item.widget!).toList(),
       ),

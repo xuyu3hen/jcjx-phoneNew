@@ -350,7 +350,7 @@ class _JhCascadePickerViewState extends State<JhCascadePickerView> with TickerPr
   }
 
   Widget _mainWidget(Color bgColor, Color textColor, Color lineColor) {
-    // TODO: 通过ThemeProvider进行主题管理
+    //通过ThemeProvider进行主题管理/ 
     // final provider = Provider.of<ThemeProvider>(context);
     // var indicatorColor = KColors.dynamicColor(context, provider.getThemeColor(), KColors.kThemeColor);
     // var labelColor = KColors.dynamicColor(context, provider.getThemeColor(), KColors.kThemeColor);

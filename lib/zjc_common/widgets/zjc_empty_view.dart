@@ -57,7 +57,7 @@ class _ZjcEmptyViewState extends State<ZjcEmptyView> {
     var textColor = const Color(0xFFB1BBC3);
     var bgColor = KColors.kThemeColor;
 
-    // TODO: 通过ThemeProvider进行主题管理
+    // 通过ThemeProvider进行主题管理
     // final provider = Provider.of<ThemeProvider>(context);
     // 按钮背景色
     bgColor = KColors.dynamicColor(context, Theme.of(context).primaryColor, KColors.kThemeColor);

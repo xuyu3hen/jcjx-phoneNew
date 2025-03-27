@@ -1,5 +1,5 @@
 import '../index.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 
 // 该参数用于程序样式控制(主题颜色)
@@ -30,7 +30,7 @@ class Global {
     WidgetsFlutterBinding.ensureInitialized();
 
     _prefs = await SharedPreferences.getInstance();
-    var _profile = _prefs.getString("profile");
+    // var _profile = _prefs.getString("profile");
 
     // if(_profile != null) {
     //   try {

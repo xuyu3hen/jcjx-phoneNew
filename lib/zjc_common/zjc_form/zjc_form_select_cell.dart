@@ -59,7 +59,7 @@ class ZjcFormSelectCell extends StatefulWidget {
   final Color? bgColor; // 背景颜色，默认白色
 
   @override
-  _ZjcFormSelectCellState createState() => _ZjcFormSelectCellState();
+  State createState() => _ZjcFormSelectCellState();
 }
 
 class _ZjcFormSelectCellState extends State<ZjcFormSelectCell> {

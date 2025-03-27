@@ -2,7 +2,6 @@
 ///  description: 封装permission_handler
 
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 // import '/project/configs/project_config.dart';
 import '../widgets/zjc_dialog.dart';
@@ -44,7 +43,7 @@ class ZjcPermissionUtils {
 
   static _showDialog(String message) {
     Future.delayed(const Duration(milliseconds: 200), () {
-      // TODO:这里context树待观察
+      // 这里context树待观察
       BuildContext context = MainPage.navigatorKey.currentContext!;
       ZjcDialog.show(context, title: '提示', content: message, clickBtnPop: false, onConfirm: () {
         Navigator.of(context).pop(false);

@@ -234,7 +234,6 @@ class _FaultReportPageState extends State<FaultReportPage> {
                 Wrap(
                   children: repairNoticeFiles.asMap().entries.map((entry) {
                     final index = entry.key;
-                    final file = entry.value;
                     return Stack(
                       children: [
                         Container(

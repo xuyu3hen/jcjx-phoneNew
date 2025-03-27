@@ -201,7 +201,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
         'repairMainNodeCode': procNodeSelected["code"],
       };
       logger.i(queryParameters);
-      var r = await ProductApi()
+      await ProductApi()
           .syncWorkPackageToPackageUser(queryParametrs: queryParameters);
 
     } catch (e, stackTrace) {

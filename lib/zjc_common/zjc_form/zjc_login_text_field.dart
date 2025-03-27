@@ -83,7 +83,7 @@ class _ZjcLoginTextFieldState extends State<ZjcLoginTextField> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    //  implement initState
     super.initState();
 
     _textController = widget.controller ?? TextEditingController();
@@ -118,7 +118,7 @@ class _ZjcLoginTextFieldState extends State<ZjcLoginTextField> {
 
   @override
   void didUpdateWidget(covariant ZjcLoginTextField oldWidget) {
-    // TODO: implement didUpdateWidget
+    // implement didUpdateWidget
     super.didUpdateWidget(oldWidget);
 
     if (widget.text != oldWidget.text) {
@@ -141,7 +141,7 @@ class _ZjcLoginTextFieldState extends State<ZjcLoginTextField> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    // : implement dispose
 
     _focusNode!.unfocus();
     _textController!.dispose();
@@ -173,7 +173,7 @@ class _ZjcLoginTextFieldState extends State<ZjcLoginTextField> {
     var hintTextStyle = TextStyle(fontSize: _hintTextFontSize, color: hintColor);
     var underlineColor = KColors.dynamicColor(context, Theme.of(context).primaryColor, KColors.kFocusedBorderDarkColor);
 
-    // TODO: 通过ThemeProvider进行主题管理
+    // 通过ThemeProvider进行主题管理
     // final provider = Provider.of<ThemeProvider>(context);
     // var themeColor = KColors.dynamicColor(context, provider.getThemeColor(), KColors.kThemeColor);
     var themeColor = KColors.dynamicColor(context, Theme.of(context).primaryColor, KColors.kThemeColor);
