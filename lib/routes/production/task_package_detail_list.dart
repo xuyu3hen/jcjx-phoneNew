@@ -461,8 +461,10 @@ class NewPage extends StatefulWidget {
 }
 
 class _NewPageState extends State<NewPage> {
-  late List<Map<String, dynamic>> mutualListData = [];
-  late List<Map<String, dynamic>> specialListData = [];
+  late List<Map<String, dynamic>> mutualListData =
+      widget.mutualList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
+  late List<Map<String, dynamic>> specialListData =
+      widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
   // 互检筛选人员
   Map<String, dynamic> mutualSelected = {};
   // 专检筛选人员
@@ -471,13 +473,12 @@ class _NewPageState extends State<NewPage> {
   late final List<File> _images = [];
   //图片筛选
   final ImagePicker picker = ImagePicker();
-
   var logger = AppLogger.logger;
 
   @override
   void initState() {
     super.initState();
-    // 将 mutualList 转换为 mutualListData
+    initMutualAndSpecial();
   }
 
   // 获取图片函数
@@ -529,49 +530,58 @@ class _NewPageState extends State<NewPage> {
 
   //完成作业项图片上传
   void completeCertainPackage() async {
-    try{
-          List<TaskCertainPackageList> list = [];
-    for (SecondShowPackage secondShowPackage in widget.secondPackageList!) {
-      secondShowPackage.taskCertainPackageList?.mutualInspectionId =
-          mutualSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionId =
-          specialSelected['userId'];
-      secondShowPackage.taskCertainPackageList?.mutualInspectionName =
-          mutualSelected['nickName'];
-      secondShowPackage.taskCertainPackageList?.specialInspectionName =
-          specialSelected['nickName'];
-      list.add(secondShowPackage.taskCertainPackageList!);
-    }
-    //展示list内容。每个元素值
-    for (TaskCertainPackageList taskCertainPackageList in list) {
-      logger.i(taskCertainPackageList.toJson());
-    }
-    var r = await ProductApi().finishCertainPackage(list);
-    if (r == 200) {
-      showToast("完成成功");
-      //进行页面跳转跳转到作业包模块
-      //todo 目前目前没有解决跳转问题
-  
-      // 返回到之前的界面
-      Navigator.of(context).pop();
-    }
+    try {
+      List<TaskCertainPackageList> list = [];
+      for (SecondShowPackage secondShowPackage in widget.secondPackageList!) {
+        secondShowPackage.taskCertainPackageList?.mutualInspectionId =
+            mutualSelected['userId'];
+        secondShowPackage.taskCertainPackageList?.specialInspectionId =
+            specialSelected['userId'];
+        secondShowPackage.taskCertainPackageList?.mutualInspectionName =
+            mutualSelected['nickName'];
+        secondShowPackage.taskCertainPackageList?.specialInspectionName =
+            specialSelected['nickName'];
+        list.add(secondShowPackage.taskCertainPackageList!);
+      }
+      //展示list内容。每个元素值
+      for (TaskCertainPackageList taskCertainPackageList in list) {
+        logger.i(taskCertainPackageList.toJson());
+      }
+      var r = await ProductApi().finishCertainPackage(list);
+      if (r == 200) {
+        showToast("完成成功");
+        //进行页面跳转跳转到作业包模块
+        //todo 目前目前没有解决跳转问题
+
+        // 返回到之前的界面
+        Navigator.of(context).pop();
+      }
     } catch (e, stackTrace) {
       logger.e('completeCertainPackage error:$e, stackTrace:$stackTrace');
     }
+  }
 
+  //初始化互检专检人员
+  void initMutualAndSpecial() async {
+    try {
+      if(specialListData.isNotEmpty){
+              mutualSelected['nickName'] = specialListData[0]['nickName'];
+      mutualSelected['userId'] = specialListData[0]['userId'];
+      }
+      if(mutualListData.isNotEmpty){
+        specialSelected['nickName'] = mutualListData[0]['nickName'];
+      specialSelected['userId'] = mutualListData[0]['userId'];
+      }
+      setState(() {
+        
+      });
+    } catch (e, stackTrace) {
+      logger.e('initMutualAndSpecial error:$e, stackTrace:$stackTrace');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    mutualListData =
-        widget.mutualList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
-    // 将 specialList 转换为 specialListData
-    logger.i(mutualListData);
-    specialListData =
-        widget.specialList?.map((userInfo) => userInfo.toJson()).toList() ?? [];
-    logger.i(specialListData);
-    //刷新界面
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('上传作业项图片以及互检专检人员'),
