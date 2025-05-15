@@ -395,6 +395,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
       map['auditUserId'] = 1026;
       map['auditUserName'] = '赖文圣';
       map['status'] = 0;
+      logger.i(element.toString());
       shuntingNoticeList.add(map);
     }
     // 显示提交成功的提示

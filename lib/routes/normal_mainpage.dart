@@ -448,6 +448,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
                 Icon(Icons.check_circle, color: Colors.blue[200]),
+
                 () => Navigator.pushNamed(context, 'speciallist'),
                 '专检',
                 width: (MediaQuery.of(context).size.width),
