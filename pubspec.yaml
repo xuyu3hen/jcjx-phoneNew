@@ -121,6 +121,7 @@ flutter:
   assets:
     - img/avatar-default.png
     - assets/
+    - assets/chuke-ca.crt
     - assets/empty/
 
   # An image asset can refer to one or more resolution-specific "variants", see

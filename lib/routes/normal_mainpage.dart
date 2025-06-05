@@ -148,25 +148,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
   }
 
   // 构建页面主体内容的方法
-  Widget _buildBody() {
-    // 功能选
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: <Widget>[
-        // 工班长相关操作功能区域（根据权限显示）
-        if (Global.profile.permissions!.roles.contains("gongzhang"))
-          _buildGongzhangSection(),
-        // 其他相关操作功能区域
-        if (Global.profile.permissions!.roles.contains("builder") ||
-            Global.profile.permissions!.roles.contains("chejianjishuyuan") ||
-            Global.profile.permissions!.roles.contains("jicheyanshouyuan"))
-          _buildBuilderSection(),
-        if (Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
-          _buildZhurenyanjiuyuanSection(),
-      ],
-    );
-  }
-
+Widget _buildBody() {
+  return ListView(
+    children: <Widget>[
+      // if (Global.profile.permissions != null &&
+      //     Global.profile.permissions!.roles.contains("gongzhang"))
+        _buildGongzhangSection(),
+      // if (Global.profile.permissions != null &&
+      //     (Global.profile.permissions!.roles.contains("builder") ||
+      //         Global.profile.permissions!.roles.contains("chejianjishuyuan") ||
+      //         Global.profile.permissions!.roles.contains("jicheyanshouyuan")))
+      //   _buildBuilderSection(),
+      // if (Global.profile.permissions != null &&
+      //     Global.profile.permissions!.roles.contains("zhurenyanshoushi"))
+      //   _buildZhurenyanjiuyuanSection(),
+    ],
+  );
+}
   Widget _buildZhurenyanjiuyuanSection() {
     return Column(
       children: [
@@ -196,9 +194,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
-  // 构建工班长相关操作功能区域
-  Widget _buildGongzhangSection() {
-    return Column(
+Widget _buildGongzhangSection() {
+  //让界面能够不溢出 能上下滑动
+  
+  return SingleChildScrollView(
+    child: Column(
       children: [
         const SizedBox(height: 30),
         const ListTile(
@@ -253,23 +253,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
           ],
         ),
         const ListTile(
-          title: Text("预派工，机统28",
+          title: Text("预派工",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            SizedBox(
-              width: (MediaQuery.of(context).size.width) / 3,
-              height: (MediaQuery.of(context).size.width) / 4,
-              child: FeatureContainer(
-                Icon(Icons.post_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'submit28'),
-                '机统28提报',
-                width: (MediaQuery.of(context).size.width),
-                height: (MediaQuery.of(context).size.height),
-              ),
-            ),
+            // SizedBox(
+            //   width: (MediaQuery.of(context).size.width) / 3,
+            //   height: (MediaQuery.of(context).size.width) / 4,
+            //   child: FeatureContainer(
+            //     Icon(Icons.post_add, color: Colors.blue[200]),
+            //     () => Navigator.pushNamed(context, 'submit28'),
+            //     '机统28提报',
+            //     width: (MediaQuery.of(context).size.width),
+            //     height: (MediaQuery.of(context).size.height),
+            //   ),
+            // ),
             SizedBox(
               width: (MediaQuery.of(context).size.width) / 3,
               height: (MediaQuery.of(context).size.width) / 4,
@@ -294,8 +294,91 @@ class _NormalMainPageState extends State<NormalMainPage> {
             ),
           ],
         ),
-        //增加间距
+        // 增加间距
         const SizedBox(height: 15),
+        const ListTile(
+          title: Text("作业包，机统28",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.post_add, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'submit28'),
+                '机统28提报',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+            // SizedBox(
+            //   width: (MediaQuery.of(context).size.width) / 3,
+            //   height: (MediaQuery.of(context).size.width) / 4,
+            //   child: FeatureContainer(
+            //     Icon(Icons.build, color: Colors.amber[300]),
+            //     () => Navigator.pushNamed(context, 'repairlist'),
+            //     '不合格项处置',
+            //     width: (MediaQuery.of(context).size.width),
+            //     height: (MediaQuery.of(context).size.height),
+            //   ),
+            // ),
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.folder, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'getWorkPackage'),
+                '领取作业包',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.build, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'searchWorkPackage'),
+                '查看作业包',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 15),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.group_rounded, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'mutuallist'),
+                '互检',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+                num: mutualNum,
+              ),
+            ),
+            SizedBox(
+              width: (MediaQuery.of(context).size.width) / 3,
+              height: (MediaQuery.of(context).size.width) / 4,
+              child: FeatureContainer(
+                Icon(Icons.check_circle, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'speciallist'),
+                '专检',
+                width: (MediaQuery.of(context).size.width),
+                height: (MediaQuery.of(context).size.height),
+                num: specialNum,
+              ),
+            ),
+          ],
+        ),
         // Row(
         //   //临修机车导入标识
         //   mainAxisAlignment: MainAxisAlignment.start,
@@ -314,8 +397,9 @@ class _NormalMainPageState extends State<NormalMainPage> {
         //   ],6
         // ),
       ],
-    );
-  }
+    ),
+  );
+}
 
   // 构建操作者相关的操的界面
   Widget _buildBuilderSection() {
@@ -448,7 +532,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
               height: (MediaQuery.of(context).size.width) / 4,
               child: FeatureContainer(
                 Icon(Icons.check_circle, color: Colors.blue[200]),
-
                 () => Navigator.pushNamed(context, 'speciallist'),
                 '专检',
                 width: (MediaQuery.of(context).size.width),

@@ -366,7 +366,7 @@ Future<void> initData() async {
                       labelKey: 'trainNum',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择检修地点",
+                      title: "选择车号",
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
