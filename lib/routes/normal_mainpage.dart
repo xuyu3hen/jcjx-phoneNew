@@ -378,6 +378,18 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   num: specialNum,
                 ),
               ),
+              SizedBox(
+                width: (MediaQuery.of(context).size.width) / 3,
+                height: (MediaQuery.of(context).size.width) / 4,
+                child: FeatureContainer(
+                  Icon(Icons.assignment, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'jt28list'),
+                  '机统28施修',
+                  width: (MediaQuery.of(context).size.width),
+                  height: (MediaQuery.of(context).size.height),
+                  num: specialNum,
+                ),
+              )
             ],
           ),
           // Row(
@@ -521,7 +533,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               child: FeatureContainer(
                 Icon(Icons.group_rounded, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'mutuallist'),
-                '互检',
+                '互检1',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
                 num: mutualNum,
@@ -546,7 +558,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               child: FeatureContainer(
                 Icon(Icons.check_circle, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'jt28list'),
-                '机统28专检',
+                '机统28',
                 width: (MediaQuery.of(context).size.width),
                 height: (MediaQuery.of(context).size.height),
                 num: specialNum,

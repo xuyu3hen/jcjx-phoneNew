@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 
 import '../index.dart';
-import '../config/loadCA.dart';
+// import '../config/loadCA.dart';
 export 'package:dio/dio.dart' show DioException;
 
 class AppApi {
