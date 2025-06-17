@@ -383,8 +383,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.width) / 4,
                 child: FeatureContainer(
                   Icon(Icons.assignment, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28list'),
-                  '机统28施修',
+                  () => Navigator.pushNamed(context, 'jt28'),
+                  '机统28',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
                   num: specialNum,
@@ -407,7 +407,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //         height: (MediaQuery.of(context).size.height),
           //       ),
           //     )
-          //   ],6
+          //   ],
           // ),
         ],
       ),
@@ -552,18 +552,18 @@ class _NormalMainPageState extends State<NormalMainPage> {
               ),
               // 机统28展示
             ),
-            SizedBox(
-              width: (MediaQuery.of(context).size.width) / 3,
-              height: (MediaQuery.of(context).size.width) / 4,
-              child: FeatureContainer(
-                Icon(Icons.check_circle, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28list'),
-                '机统28',
-                width: (MediaQuery.of(context).size.width),
-                height: (MediaQuery.of(context).size.height),
-                num: specialNum,
-              ),
-            )
+            // SizedBox(
+            //   width: (MediaQuery.of(context).size.width) / 3,
+            //   height: (MediaQuery.of(context).size.width) / 4,
+            //   child: FeatureContainer(
+            //     Icon(Icons.check_circle, color: Colors.blue[200]),
+            //     () => Navigator.pushNamed(context, 'jt28'),
+            //     '机统28',
+            //     width: (MediaQuery.of(context).size.width),
+            //     height: (MediaQuery.of(context).size.height),
+            //     num: specialNum,
+            //   ),
+            // )
           ],
         ),
       ],
