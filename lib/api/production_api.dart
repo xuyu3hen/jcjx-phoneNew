@@ -71,9 +71,9 @@ class ProductApi extends AppApi {
         data: workPackages,
       );
       logger.i(r.data["data"]);
-      if((r.data["data"])['data'] != null){
+      if ((r.data["data"])['data'] != null) {
         Map<String, dynamic> data = (r.data["data"])['data'];
-        if(data['code'] == 500){
+        if (data['code'] == 500) {
           showToast(data['msg']);
         }
       }
@@ -163,6 +163,8 @@ class ProductApi extends AppApi {
     }
   }
 
+
+
   // 获取车号（本质查询检修计划）
   Future<RepairPlanList> getRepairPlanList({
     Map<String, dynamic>? queryParametrs,
@@ -172,7 +174,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/selectAll",
         queryParameters: queryParametrs,
       );
-      // log("getRepairPlanList${r.data}");
+      log("getRepairPlanList${r.data}");
       return RepairPlanList.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
@@ -230,23 +232,40 @@ class ProductApi extends AppApi {
     }
   }
 
+    // 通过车号查询机车计划信息
+  Future<dynamic> getTrainInfoByPlan({
+    Map<String, dynamic>? queryParametrs,
+  }) async{
+    try {
+      var r = await AppApi.dio.get(
+        "/plan/repairPlan/getRepairPlanByTrainNum",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+      return r.data["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
   //查询修制
   Future<RepairSysResponse> selectRepairSys({
     Map<String, dynamic>? queryParametrs,
   }) async {
     try {
-    logger.i('code');
-    //get中使用queryParameters，post中使用data
-    logger.i(queryParametrs!['dynamicCode']);
-    var r = await AppApi.dio.get(
-      "/subparts/repairSys/selectAll",
-      queryParameters: queryParametrs,
-    );
-    logger.i((r.data["data"])["data"]);
-    return RepairSysResponse.fromJson((r.data["data"])["data"]);
+      logger.i('code');
+      //get中使用queryParameters，post中使用data
+      logger.i(queryParametrs!['dynamicCode']);
+      var r = await AppApi.dio.get(
+        "/subparts/repairSys/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return RepairSysResponse.fromJson((r.data["data"])["data"]);
     } catch (e, stackTrace) {
       logger.e(e, stackTrace);
-      return  RepairSysResponse();
+      return RepairSysResponse();
     }
   }
 
@@ -725,6 +744,21 @@ class ProductApi extends AppApi {
         data: queryParametrs,
       );
       logger.i(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  //保存机车入段信息
+  Future<dynamic> trainEntrySave(
+      Map<String, dynamic> queryParametrs) async {
+    try {
+      var r = await AppApi.dio2.post(
+        "/dispatch/trainEntry/save",
+        data: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+      return r.data["data"];
     } catch (e) {
       _handleException(e);
     }

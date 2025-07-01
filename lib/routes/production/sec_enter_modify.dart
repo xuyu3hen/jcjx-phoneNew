@@ -70,7 +70,6 @@ class _SecEnterModifyState extends State<SecEnterModify> {
     }catch (e, stackTrace) {
       logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
-    
   }
 
   Future<String> newEntry() async {
@@ -134,6 +133,17 @@ class _SecEnterModifyState extends State<SecEnterModify> {
           Column(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
+              //手动输入机型 
+                // ZjcFormInputCell(
+                //   title: "机型",
+                //   hintText: "请输入机型",
+                //   text: trainNumSelected["trainType"],
+                //   showRedStar: true,
+                //   clickCallBack: () {},
+                // ),
+              //手动输入车号
+
+              //选择机型 
               ZjcFormSelectCell(
                 title: "车号",
                 text: trainNumSelected["name"],

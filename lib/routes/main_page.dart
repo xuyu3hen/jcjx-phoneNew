@@ -57,7 +57,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         // 新增入段
         "sec_enter": (context) => const SecEnter(),
         // 新增入段修改
-        "sec_enter_modify": (context) => const SecEnterModify(),
+        // "sec_enter_modify": (context) => const SecEnterModify(),
+        "sec_enter_modify": (context) => const SecEnterModifyNew(),
         // 机统28
         "submit28": (context) => const Vehicle28Form(),
         "dispatchlist": (context) => const DispatchList(),
