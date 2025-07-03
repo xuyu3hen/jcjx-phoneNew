@@ -139,6 +139,7 @@ class ProductApi extends AppApi {
         "/subparts/jcDynamicType/selectAll",
         queryParameters: queryParametrs,
       );
+      logger.i(r.data["data"]);
       logger.i((r.data["data"])["data"]["rows"]);
       return DynamicTypeList.fromJson((r.data["data"])["data"]);
     } catch (e) {

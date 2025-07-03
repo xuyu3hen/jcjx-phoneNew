@@ -155,7 +155,7 @@ class _EntryTrainItem extends State<EntryTrainItem> {
           width: MediaQuery.of(context).size.width,
           child: Image(
             image: NetworkImage(
-                "http://10.102.72.103:8080/fileserver/FileOperation/previewImage?url=$url",
+                "https://10.102.81.45/jcjx/prod-api/fileserver/FileOperation/previewImage?bucketName=&url=$url",
                 headers: {
                   "Authorization": Global.profile.data!.accessToken!,
                 }),

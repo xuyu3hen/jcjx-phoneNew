@@ -251,6 +251,23 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     );
   }
 
+  // 上传防溜函数
+  Future<dynamic> uploadSlip(val) async {
+    if (faultPics.isNotEmpty) {
+      var file = faultPics[0];
+      logger.i(file);
+      logger.i('val' + val);
+      var r = await ProductApi().upSlipImg(
+          queryParametrs: {"trainEntryCode": val}, imagedata: File(file.path));
+      if (r == 200) {
+        showToast("上传成功");
+        SmartDialog.dismiss();
+        // _image = null;
+        // widget.updateList.call();
+      }
+    }
+  }
+
   Future<String> newEntry() async {
     try {
       if (isSubmitting) {
@@ -272,9 +289,33 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       };
       try {
         var r = await ProductApi().trainEntrySave(queryParameter);
-        if (r["code"] == "S_T_S001") {
-          showToast("新增入修成功");
-          return r["data"];
+        if (r["code"] == "S_F_S000") {
+          logger.i("trainEntrySave success: ${r['data']['code']}");
+
+          if (r['data'] == null || r['data']['code'] == null) {
+            logger.e('trainEntrySave data or code is null');
+            showToast("基础信息保存成功，但缺少必要数据无法上传图片");
+            return "";
+          }
+
+          if (faultPics.isEmpty) {
+            logger.w('没有选择图片，跳过上传');
+            showToast("基础信息保存成功，但未选择图片");
+            return r["code"];
+          }
+
+          try {
+            SmartDialog.showLoading(msg: '正在上传图片...');
+            await uploadSlip(r['data']['code']);
+            showToast("新增入修成功");
+            return r["code"];
+          } catch (e, stackTrace) {
+            logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
+            showToast("图片上传失败，但基础信息已保存");
+            return "";
+          } finally {
+            SmartDialog.dismiss();
+          }
         } else {
           showToast("新增入修失败");
           return "";
@@ -290,10 +331,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     }
   }
 
-  void searchTrainInfo() async {
-    
-  }
-
   Widget _buildBody() {
     return Stack(children: [
       ListView(children: [
@@ -304,18 +341,14 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             showRedStar: true,
             rightWidget: IconButton(
               icon: const Icon(Icons.search),
-              onPressed: (){
-
-              }, 
-              ),
-
-            inputCallBack: (value){
+              onPressed: () {},
+            ),
+            inputCallBack: (value) {
               setState(() {
                 trainNumSelected["trainNum"] = value;
               });
-            },  
-          ), 
-          
+            },
+          ),
 
           // ZjcFormSelectCell(
           //   title: "车号",
@@ -506,7 +539,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             },
           ),
           // 车号填写
-          
 
           ZjcFormSelectCell(
             title: "检修地点",
@@ -574,8 +606,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               ],
             ),
           ),
-          //底部放置一个按钮是迎检 绿色 始终处于界面底部
-// 在 build 方法中添加 bottomNavigationBar 参数
         ])
       ])
     ]);
