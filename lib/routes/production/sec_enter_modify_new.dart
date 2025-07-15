@@ -94,6 +94,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           dynamicTypeList = r.toMapList();
           permissions = permissionResponse;
           logger.i(permissions.toJson());
+          dynamicTypeSelected["code"] = r.toMapList()[0]["code"];
+          dynamicTypeSelected["name"] = r.toMapList()[0]["name"];
         });
       }
     } catch (e, stackTrace) {
@@ -240,6 +242,30 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     }
   }
 
+  void getRepairPlanByTrainNum() async {
+    try { 
+         Map<String, dynamic> queryParameters = {
+      'trainNum': trainNumSelected["trainNum"]
+    };
+    var r =
+        await ProductApi().getTrainInfoByPlan(queryParametrs: queryParameters);
+    setState(() {
+      jcTypeListSelected["name"] = r['trainType'];
+      jcTypeListSelected["code"] = r['trainTypeCode'];
+      //修程信息
+      repairSelected["name"] = r["repairProc"];
+      //将主键进行选取
+      repairSelected["code"] = r["repairProcCode"];
+      repairTimesSelected['name'] = r["repairTimes"];
+      repairTimesSelected['code'] = r["repairTimesCode"];
+
+    });
+    } catch (e, stackTrace) {
+      logger.e('getRepairPlanByTrainNum 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+ 
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -280,6 +306,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'dynamicCode': dynamicTypeSelected["code"],
         'dynamicName': dynamicTypeSelected["name"],
         'typeCode': jcTypeListSelected["code"],
+        'typeName': jcTypeListSelected["name"],
         'trainNum': trainNumSelected['trainNum'],
         'trainNumCode': trainNumSelected['code'],
         'repairTimes': repairTimesSelected["name"],
@@ -341,7 +368,9 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             showRedStar: true,
             rightWidget: IconButton(
               icon: const Icon(Icons.search),
-              onPressed: () {},
+              onPressed: () {
+                getRepairPlanByTrainNum();
+              },
             ),
             inputCallBack: (value) {
               setState(() {

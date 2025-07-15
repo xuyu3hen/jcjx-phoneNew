@@ -148,8 +148,25 @@ class _EntryTrainItem extends State<EntryTrainItem> {
   }
 
   // 照片查看
+  // void showPicDialog(url) async {
+  //   SmartDialog.show(builder: (context) {
+  //     return SizedBox(
+  //         height: MediaQuery.of(context).size.height,
+  //         width: MediaQuery.of(context).size.width,
+  //         child: Image(
+  //           image: NetworkImage(
+  //               "https://10.102.81.45/jcjx/prod-api/fileserver/FileOperation/previewImage?bucketName=&url=$url",
+  //               headers: {
+  //                 "Authorization": Global.profile.data!.accessToken!,
+  //               }),
+  //         ));
+  //   });
+  // }
+
+    // 照片查看
   void showPicDialog(url) async {
     SmartDialog.show(builder: (context) {
+      final response =  ProductApi().downloadFile(queryParametrs: url);
       return SizedBox(
           height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,

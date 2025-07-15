@@ -238,12 +238,12 @@ class ProductApi extends AppApi {
     Map<String, dynamic>? queryParametrs,
   }) async{
     try {
-      var r = await AppApi.dio.get(
+      var r = await AppApi.dio.post(
         "/plan/repairPlan/getRepairPlanByTrainNum",
         queryParameters: queryParametrs,
       );
-      logger.i(r.data["data"]);
-      return r.data["data"];
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
     } catch (e) {
       _handleException(e);
       return null;
@@ -617,6 +617,15 @@ class ProductApi extends AppApi {
       _handleException(e);
       return WorkPackageList(data: []);
     }
+  }
+
+  Future<dynamic> getRepairPlanByTrainNumber(
+      {Map<String, dynamic>? queryParametrs}) async{
+        var r = await AppApi.dio.post("/plan/repairPlan/getRepairPlanByTrainNum",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r);
+      return r;
   }
 
   //开工
