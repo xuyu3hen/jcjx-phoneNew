@@ -96,6 +96,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           logger.i(permissions.toJson());
           dynamicTypeSelected["code"] = r.toMapList()[0]["code"];
           dynamicTypeSelected["name"] = r.toMapList()[0]["name"];
+          getJcType();
         });
       }
     } catch (e, stackTrace) {
@@ -243,27 +244,78 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   }
 
   void getRepairPlanByTrainNum() async {
-    try { 
-         Map<String, dynamic> queryParameters = {
-      'trainNum': trainNumSelected["trainNum"]
-    };
-    var r =
-        await ProductApi().getTrainInfoByPlan(queryParametrs: queryParameters);
-    setState(() {
-      jcTypeListSelected["name"] = r['trainType'];
-      jcTypeListSelected["code"] = r['trainTypeCode'];
-      //修程信息
-      repairSelected["name"] = r["repairProc"];
-      //将主键进行选取
-      repairSelected["code"] = r["repairProcCode"];
-      repairTimesSelected['name'] = r["repairTimes"];
-      repairTimesSelected['code'] = r["repairTimesCode"];
-
-    });
+    try {
+      Map<String, dynamic> queryParameters = {
+        'trainNum': trainNumSelected["trainNum"]
+      };
+      var r = await ProductApi()
+          .getTrainInfoByPlan(queryParametrs: queryParameters);
+      if (r == null) {
+        //展示信息该车号无检修计划
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('提示'),
+                content: const Text('该车无检修计划'),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('确定'),
+                  ),
+                ],
+              );
+            });
+      } else if (r['isEntry'] == false) {
+        // 提示该车号已有检修计划已自动补全相关信息
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                  title: const Text('提示'),
+                  content: const Text('该车有检修计划已自动补全相关信息'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('确定'),
+                    ),
+                  ]);
+            });
+      } else if (r['isEntry'] == true) {
+        // 提示该车号已经入段请不要重复入段
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                  title: const Text('提示'),
+                  content: const Text('该车已经入段请不要重复入段'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('确定'),
+                    ),
+                  ]);
+            });
+      }
+      setState(() {
+        jcTypeListSelected["name"] = r['trainType'];
+        jcTypeListSelected["code"] = r['trainTypeCode'];
+        //修程信息
+        repairSelected["name"] = r["repairProc"];
+        //将主键进行选取
+        repairSelected["code"] = r["repairProcCode"];
+        repairTimesSelected['name'] = r["repairTimes"];
+        repairTimesSelected['code'] = r["repairTimesCode"];
+      });
     } catch (e, stackTrace) {
       logger.e('getRepairPlanByTrainNum 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
- 
   }
 
   @override
@@ -286,7 +338,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       var r = await ProductApi().upSlipImg(
           queryParametrs: {"trainEntryCode": val}, imagedata: File(file.path));
       if (r == 200) {
-        showToast("上传成功");
+        // showToast("上传成功");
         SmartDialog.dismiss();
         // _image = null;
         // widget.updateList.call();
@@ -327,24 +379,24 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
 
           if (faultPics.isEmpty) {
             logger.w('没有选择图片，跳过上传');
-            showToast("基础信息保存成功，但未选择图片");
+            // showToast("基础信息保存成功，但未选择图片");
             return r["code"];
           }
 
           try {
-            SmartDialog.showLoading(msg: '正在上传图片...');
+            SmartDialog.showLoading(msg: '正在入段');
             await uploadSlip(r['data']['code']);
-            showToast("新增入修成功");
+            // showToast("新增入修成功");
             return r["code"];
           } catch (e, stackTrace) {
             logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
-            showToast("图片上传失败，但基础信息已保存");
+            // showToast("图片上传失败，但基础信息已保存");
             return "";
           } finally {
             SmartDialog.dismiss();
           }
         } else {
-          showToast("新增入修失败");
+          // showToast("新增入修失败");
           return "";
         }
       } finally {
@@ -366,11 +418,24 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             title: "车号",
             hintText: "请输入车号",
             showRedStar: true,
-            rightWidget: IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                getRepairPlanByTrainNum();
-              },
+            rightWidget: Container(
+              margin: const EdgeInsets.only(top: 8, bottom: 8),
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  getRepairPlanByTrainNum();
+                },
+                icon: const Icon(Icons.search), // 可选：保留小图标
+                label: const Text("查询检修计划"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue[100],
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size(120, 35),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
             ),
             inputCallBack: (value) {
               setState(() {
