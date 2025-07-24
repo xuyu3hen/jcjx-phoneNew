@@ -548,7 +548,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
-              "completeStatus": completeStatus
+              "completeStatus": completeStatus ,
+              "status": 0
             };
             if (completeStatus == 1) {
               queryParameters["team"] = teamCode;

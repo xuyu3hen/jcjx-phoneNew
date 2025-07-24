@@ -148,6 +148,20 @@ class ProductApi extends AppApi {
     }
   }
 
+  // 故障零部件查询
+  Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async{
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/jcConfigNode/getAllConfigTreeByCode",
+        queryParameters: queryParametrs,
+      );
+      // logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
   // 机车型号
   Future<JcTypeList> getJcType({
     Map<String, dynamic>? queryParametrs,
@@ -163,8 +177,6 @@ class ProductApi extends AppApi {
       return JcTypeList();
     }
   }
-
-
 
   // 获取车号（本质查询检修计划）
   Future<RepairPlanList> getRepairPlanList({
@@ -233,10 +245,10 @@ class ProductApi extends AppApi {
     }
   }
 
-    // 通过车号查询机车计划信息
+  // 通过车号查询机车计划信息
   Future<dynamic> getTrainInfoByPlan({
     Map<String, dynamic>? queryParametrs,
-  }) async{
+  }) async {
     try {
       var r = await AppApi.dio.post(
         "/plan/repairPlan/getRepairPlanByTrainNum",
@@ -267,6 +279,22 @@ class ProductApi extends AppApi {
     } catch (e, stackTrace) {
       logger.e(e, stackTrace);
       return RepairSysResponse();
+    }
+  }
+
+  // 查询机统28相关 tasks/vJtWebSearch/selectAll
+  Future<dynamic> selectRepairSys28({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/vJtWebSearch/selectAll",
+        queryParameters: queryParametrs,
+      );
+      // logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
     }
   }
 
@@ -620,12 +648,13 @@ class ProductApi extends AppApi {
   }
 
   Future<dynamic> getRepairPlanByTrainNumber(
-      {Map<String, dynamic>? queryParametrs}) async{
-        var r = await AppApi.dio.post("/plan/repairPlan/getRepairPlanByTrainNum",
-        queryParameters: queryParametrs,
-      );
-      logger.i(r);
-      return r;
+      {Map<String, dynamic>? queryParametrs}) async {
+    var r = await AppApi.dio.post(
+      "/plan/repairPlan/getRepairPlanByTrainNum",
+      queryParameters: queryParametrs,
+    );
+    logger.i(r);
+    return r;
   }
 
   //开工
@@ -760,8 +789,7 @@ class ProductApi extends AppApi {
   }
 
   //保存机车入段信息
-  Future<dynamic> trainEntrySave(
-      Map<String, dynamic> queryParametrs) async {
+  Future<dynamic> trainEntrySave(Map<String, dynamic> queryParametrs) async {
     try {
       var r = await AppApi.dio2.post(
         "/dispatch/trainEntry/save",

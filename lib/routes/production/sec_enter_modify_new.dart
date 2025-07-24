@@ -368,7 +368,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       };
       try {
         var r = await ProductApi().trainEntrySave(queryParameter);
-        if (r["code"] == "S_F_S000") {
+        if (r["code"] == "S_F_S000" && r["data"]["code"] != 500) {
           logger.i("trainEntrySave success: ${r['data']['code']}");
 
           if (r['data'] == null || r['data']['code'] == null) {
@@ -396,8 +396,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             SmartDialog.dismiss();
           }
         } else {
-          // showToast("新增入修失败");
-          return "";
+          if (r["data"]["code"] == 500) {
+            showToast("存在相同在修机车");
+          }
+        return "";
         }
       } finally {
         setState(() {
@@ -443,7 +445,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               });
             },
           ),
-
           // ZjcFormSelectCell(
           //   title: "车号",
           //   text: trainNumSelected["trainNum"],
