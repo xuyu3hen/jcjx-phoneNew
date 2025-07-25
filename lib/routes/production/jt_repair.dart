@@ -25,7 +25,10 @@ class _JtRepairPageState extends State<JtRepairPage> {
   // 机统28信息
   late List<dynamic> sys28List = [];
 
-  late Map<String, dynamic> permissions = {};
+  // 零件信息
+  late Map<String, dynamic> faultPart = {};
+
+  Permissions? permissions;
 
   late TextEditingController repairDetailsController = TextEditingController();
 
@@ -38,17 +41,19 @@ class _JtRepairPageState extends State<JtRepairPage> {
       TextEditingController();
 
   late TextEditingController qualityInspectorController =
-
       TextEditingController();
 
   List<dynamic> faultPartList = [];
 
   List<Map<String, dynamic>> faultPartListInfo = [];
 
-    // 当前选中的节点
+  // 当前选中的节点
   Map<String, dynamic>? selectedNode;
 
-    // 显示选择器
+  // 
+  late Map<String, dynamic> faultInfo;
+
+  // 显示选择器
   // void _showTreePicker(BuildContext context) {
   //   showModalBottomSheet(
   //     context: context,
@@ -65,6 +70,205 @@ class _JtRepairPageState extends State<JtRepairPage> {
   //     ),
   //   );
   // }
+
+   /// 显示故障零部件列表
+  // ... existing code ...
+  /// 显示故障零部件列表
+  void _showFaultPartList(BuildContext context, Map<String, dynamic> item) async {
+    try {
+      // 显示加载提示
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
+
+      // 获取零部件数据
+     await getFaultPart();
+
+      // 关闭加载提示
+      Navigator.of(context).pop();
+
+      // 显示零部件列表
+      if (faultPartListInfo.isNotEmpty) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (BuildContext context) {
+            return FractionallySizedBox(
+              heightFactor: 0.8,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    // 顶部标题栏
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          '零部件列表',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    // 零部件列表
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: faultPartListInfo.length,
+                        itemBuilder: (context, index) {
+                          final part = faultPartListInfo[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: ListTile(
+                              title: Text(part['name'] ?? '未知名称'),
+                              subtitle: Text('编码: ${part['code'] ?? '无'}'),
+                              trailing: const Icon(Icons.arrow_forward_ios),
+                              onTap: () {
+                                _showPartDetail(context, part);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      } else {
+        // 没有数据时显示提示
+        // 使用根导航器上下文显示 SnackBar
+        ScaffoldMessenger.of(Navigator.of(context).context).showSnackBar(
+          const SnackBar(content: Text("未查询到零部件信息")),
+        );
+      }
+    } catch (e) {
+      // 出错时关闭加载提示并显示错误信息
+      Navigator.of(context).pop();
+      // 使用根导航器上下文显示 SnackBar
+      ScaffoldMessenger.of(Navigator.of(context).context).showSnackBar(
+        SnackBar(content: Text("查询失败: $e")),
+      );
+    }
+  }
+// ... existing code ...
+
+    /// 显示零部件详细信息
+  // ... existing code ...
+  /// 显示零部件详细信息
+  void _showPartDetail(BuildContext context, Map<String, dynamic> part) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          heightFactor: 0.7,
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // 顶部标题栏
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      '零部件详情',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                // 详细信息列表
+                Expanded(
+                  child: ListView(
+                    children: [
+                      _buildDetailItem('名称', part['name'] ?? '无'),
+                      _buildDetailItem('编码', part['code'] ?? '无'),
+                      _buildDetailItem('类型', part['type'] ?? '无'),
+                      _buildDetailItem('规格', part['spec'] ?? '无'),
+                      _buildDetailItem('单位', part['unit'] ?? '无'),
+                      _buildDetailItem('备注', part['remark'] ?? '无'),
+                    ],
+                  ),
+                ),
+                // 选择按钮
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        faultyPartController.text = part['name'] ?? '';
+                        faultPart['name'] = part['name'];
+                        faultPart['code'] = part['code']; 
+                        getUserList();
+                      });
+                      Navigator.of(context).pop(); // 关闭详情弹窗
+                      Navigator.of(context).pop(); // 关闭列表弹窗
+                    },
+                    child: const Text('选择此零部件'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+// ... existing code ...
+
+  /// 构建详情信息项
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showRepairDialog(BuildContext context, Map<String, dynamic> item) {
     // 设置默认值（从 item 中获取，如果存在）
@@ -123,10 +327,20 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   },
                 ),
                 const SizedBox(height: 10),
+                // ... existing code ...
+                // ... existing code ...
                 TextField(
                   controller: faultyPartController,
                   decoration: const InputDecoration(labelText: "故障零部件"),
                 ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () {
+                     _showFaultPartList(context, item);
+                  },
+                  child: const Text("查询零部件信息"),
+                ),
+              
                 const SizedBox(height: 10),
                 TextField(
                   controller: mutualInspectorController,
@@ -211,7 +425,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
       var permissionResponse = await LoginApi().getpermissions();
       setState(() {
         dynamicTypeList = r.toMapList();
-        permissions = permissionResponse as Map<String, dynamic>;
+        permissions = permissionResponse;
         logger.i(permissions);
       });
     } catch (e, stackTrace) {
@@ -236,19 +450,22 @@ class _JtRepairPageState extends State<JtRepairPage> {
     }
   }
 
-  void getFaultPart() async {
+  Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
         'typeCode': jcTypeListSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0,
+        'name': faultyPartController.text,
       };
       logger.i(queryParameters);
       var r = await ProductApi().getFaultPart(queryParameters);
       if (mounted) {
         setState(() {
           //将List<dynamic>转换为List<Map<String, dynamic>>
-          faultPartListInfo =
-              r.map((item) => item as Map<String, dynamic>).toList();
-          faultPartList = r;
+          faultPartListInfo = (r['rows'] as List)
+              .map((item) => item as Map<String, dynamic>)
+              .toList();
         });
       }
     } catch (e, stackTrace) {
@@ -277,11 +494,32 @@ class _JtRepairPageState extends State<JtRepairPage> {
     }
   }
 
+
+ //获取互检专检人员信息 
+  void getUserList() async{
+    try {
+        Map<String, dynamic> queryParameters = {
+        'configNodeCode': jcTypeListSelected["code"],
+        'riskLevel': faultInfo["riskLevel"],
+        'team': 100
+      };
+      logger.i(queryParameters);
+      var r = await ProductApi().getCheckPerson(queryParameters);
+      if (mounted) {
+        setState(() {
+       
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getTrainInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28"),
+        title: const Text("机统28施修"),
       ),
       body: _buildBody(),
     );
@@ -414,11 +652,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                           ],
                         ),
                         // 判断 completeStatus 是否为 0，如果是，则显示“施修”按钮
-                        trailing: item['completeStatus'] == 0
+                        trailing: item['completeStatus'] == 0 &&
+                                item['repairName'] == permissions?.user.nickName
                             ? ElevatedButton(
                                 onPressed: () {
-                                  getFaultPart();
                                   _showRepairDialog(context, item);
+                                  faultInfo = item;
                                   // 处理施修按钮点击事件
                                   // 可以在这里调用相应的业务逻辑
                                   // 例如：navigateToRepairDetails(item['id']);
@@ -445,95 +684,3 @@ class _JtRepairPageState extends State<JtRepairPage> {
 }
 
 
-// class TreePicker extends StatefulWidget {
-//   final List<Map<String, dynamic>> data;
-//   final String labelKey;
-//   final String valueKey;
-//   final String childrenKey;
-//   final Function(Map<String, dynamic>, List<Map<String, dynamic>>) onSelected;
-
-//   TreePicker({
-//     required this.data,
-//     required this.labelKey,
-//     required this.valueKey,
-//     required this.childrenKey,
-//     required this.onSelected,
-//   });
-
-//   @override
-//   _TreePickerState createState() => _TreePickerState();
-// }
-
-// class _TreePickerState extends State<TreePicker> {
-//   late List<Map<String, dynamic>> currentLevel;
-//   late List<List<Map<String, dynamic>>> path;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     currentLevel = widget.data;
-//     path = [];
-//   }
-
-//   void _selectNode(Map<String, dynamic> node) {
-//     if (node.containsKey(widget.childrenKey) &&
-//         node[widget.childrenKey] is List) {
-//       // 如果有子节点，进入下一层
-//       path.add(currentLevel);
-//       currentLevel = (node[widget.childrenKey] as List)
-//           .map((e) => e as Map<String, dynamic>)
-//           .toList();
-//     } else {
-//       // 如果是叶子节点，触发选择回调
-//       widget.onSelected(node, [...path, currentLevel]);
-//       Navigator.of(context).pop();
-//     }
-//     setState(() {});
-//   }
-
-//   void _goBack() {
-//     if (path.isNotEmpty) {
-//       currentLevel = path.removeLast();
-//       setState(() {});
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       height: 400,
-//       padding: const EdgeInsets.all(16),
-//       child: Column(
-//         children: [
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               if (path.isNotEmpty)
-//                 IconButton(
-//                   icon: Icon(Icons.arrow_back),
-//                   onPressed: _goBack,
-//                 ),
-//               Text(
-//                 path.isEmpty ? '选择节点' : '选择子节点',
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//               ),
-//               SizedBox(width: 48), // 保持对齐
-//             ],
-//           ),
-//           Expanded(
-//             child: ListView.builder(
-//               itemCount: currentLevel.length,
-//               itemBuilder: (context, index) {
-//                 var item = currentLevel[index];
-//                 return ListTile(
-//                   title: Text(item[widget.labelKey]),
-//                   onTap: () => _selectNode(item),
-//                 );
-//               },
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }

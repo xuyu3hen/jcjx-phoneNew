@@ -152,16 +152,36 @@ class ProductApi extends AppApi {
   Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async{
     try {
       var r = await AppApi.dio.get(
-        "/subparts/jcConfigNode/getAllConfigTreeByCode",
+        "/subparts/jcConfigNode/selectAll",
         queryParameters: queryParametrs,
       );
-      // logger.i((r.data["data"])['data']);
+      logger.i((r.data["data"])['data']);
       return (r.data["data"])["data"];
     } catch (e) {
       _handleException(e);
       return [];
     }
   }
+
+// 查询互检专检人员
+Future<dynamic> getCheckPerson(Map<String, dynamic>? queryParametrs) async{
+    try {
+      var r = await AppApi.dio.post(
+        "/subparts/riskLevelPost/getUserList",
+        data: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+}
+}
+
+
+
+
+  // 列表查询机型
+
   // 机车型号
   Future<JcTypeList> getJcType({
     Map<String, dynamic>? queryParametrs,
