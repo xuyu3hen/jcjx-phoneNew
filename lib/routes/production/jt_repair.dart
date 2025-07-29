@@ -50,31 +50,13 @@ class _JtRepairPageState extends State<JtRepairPage> {
   // 当前选中的节点
   Map<String, dynamic>? selectedNode;
 
-  // 
+  //
   late Map<String, dynamic> faultInfo;
 
-  // 显示选择器
-  // void _showTreePicker(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     builder: (context) => TreePicker(
-  //       data: faultPartListInfo,
-  //       labelKey: 'nodeName',
-  //       valueKey: 'infoCode',
-  //       childrenKey: 'children',
-  //       onSelected: (selectedItem, selectedPath) {
-  //         setState(() {
-  //           selectedNode = selectedItem;
-  //         });
-  //       },
-  //     ),
-  //   );
-  // }
-
-   /// 显示故障零部件列表
-  // ... existing code ...
+// ... existing code ...
   /// 显示故障零部件列表
-  void _showFaultPartList(BuildContext context, Map<String, dynamic> item) async {
+  void _showFaultPartList(
+      BuildContext context) async {
     try {
       // 显示加载提示
       showDialog(
@@ -88,7 +70,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
       );
 
       // 获取零部件数据
-     await getFaultPart();
+      await getFaultPart();
 
       // 关闭加载提示
       Navigator.of(context).pop();
@@ -154,24 +136,28 @@ class _JtRepairPageState extends State<JtRepairPage> {
         );
       } else {
         // 没有数据时显示提示
-        // 使用根导航器上下文显示 SnackBar
-        ScaffoldMessenger.of(Navigator.of(context).context).showSnackBar(
-          const SnackBar(content: Text("未查询到零部件信息")),
-        );
+        // 使用传入的 context 显示 SnackBar，并确保 widget 仍然挂载
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("未查询到零部件信息")),
+          );
+        }
       }
     } catch (e) {
       // 出错时关闭加载提示并显示错误信息
       Navigator.of(context).pop();
-      // 使用根导航器上下文显示 SnackBar
-      ScaffoldMessenger.of(Navigator.of(context).context).showSnackBar(
-        SnackBar(content: Text("查询失败: $e")),
-      );
+      // 使用传入的 context 显示 SnackBar，并确保 widget 仍然挂载
+      // if (context.mounted) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     SnackBar(content: Text("查询失败: $e")),
+      //   );
+      // }
     }
   }
 // ... existing code ...
+// ... existing code ...
 
-    /// 显示零部件详细信息
-  // ... existing code ...
+  /// 显示零部件详细信息
   /// 显示零部件详细信息
   void _showPartDetail(BuildContext context, Map<String, dynamic> part) {
     showModalBottomSheet(
@@ -226,7 +212,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
                       setState(() {
                         faultyPartController.text = part['name'] ?? '';
                         faultPart['name'] = part['name'];
-                        faultPart['code'] = part['code']; 
+                        faultPart['code'] = part['code'];
                         getUserList();
                       });
                       Navigator.of(context).pop(); // 关闭详情弹窗
@@ -242,7 +228,6 @@ class _JtRepairPageState extends State<JtRepairPage> {
       },
     );
   }
-// ... existing code ...
 
   /// 构建详情信息项
   Widget _buildDetailItem(String label, String value) {
@@ -270,7 +255,9 @@ class _JtRepairPageState extends State<JtRepairPage> {
     );
   }
 
-  void _showRepairDialog(BuildContext context, Map<String, dynamic> item) {
+
+// ... existing code ...
+  void _showRepairDialog() {
     // 设置默认值（从 item 中获取，如果存在）
     showDialog(
       context: context,
@@ -282,7 +269,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("故障现象：${item['faultDescription']}"),
+                Text("故障现象：${faultInfo['faultDescription']}"),
                 const SizedBox(height: 10),
                 TextField(
                   controller: repairDetailsController,
@@ -336,11 +323,11 @@ class _JtRepairPageState extends State<JtRepairPage> {
                 const SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
-                     _showFaultPartList(context, item);
+                    _showFaultPartList(context);
                   },
                   child: const Text("查询零部件信息"),
                 ),
-              
+
                 const SizedBox(height: 10),
                 TextField(
                   controller: mutualInspectorController,
@@ -381,9 +368,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                 print("专检人员: $qualityInspector");
 
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("提交成功")),
-                );
+                // 确保 widget 仍然挂载后再显示 SnackBar
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("提交成功")),
+                  );
+                }
               },
               child: const Text("提交"),
             ),
@@ -392,6 +382,8 @@ class _JtRepairPageState extends State<JtRepairPage> {
       },
     );
   }
+// ... existing code ...
+
 
   //获取机统28信息
   void getInfo() async {
@@ -399,7 +391,8 @@ class _JtRepairPageState extends State<JtRepairPage> {
       'pageNum': 0,
       'pageSize': 0,
       'status': 0,
-      'trainEntryCode': trainNumSelected['code']
+      'trainEntryCode': trainNumSelected['code'],
+      'repairName': permissions?.user.nickName,
     };
     var r =
         await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
@@ -494,11 +487,10 @@ class _JtRepairPageState extends State<JtRepairPage> {
     }
   }
 
-
- //获取互检专检人员信息 
-  void getUserList() async{
+  //获取互检专检人员信息
+  void getUserList() async {
     try {
-        Map<String, dynamic> queryParameters = {
+      Map<String, dynamic> queryParameters = {
         'configNodeCode': jcTypeListSelected["code"],
         'riskLevel': faultInfo["riskLevel"],
         'team': 100
@@ -506,9 +498,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
       logger.i(queryParameters);
       var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
-        setState(() {
-       
-        });
+        setState(() {});
       }
     } catch (e, stackTrace) {
       logger.e('getTrainInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
@@ -656,8 +646,9 @@ class _JtRepairPageState extends State<JtRepairPage> {
                                 item['repairName'] == permissions?.user.nickName
                             ? ElevatedButton(
                                 onPressed: () {
-                                  _showRepairDialog(context, item);
                                   faultInfo = item;
+                                  _showRepairDialog();
+                                  
                                   // 处理施修按钮点击事件
                                   // 可以在这里调用相应的业务逻辑
                                   // 例如：navigateToRepairDetails(item['id']);
@@ -673,8 +664,6 @@ class _JtRepairPageState extends State<JtRepairPage> {
                     );
                   },
                 ),
-// ... existing code ...
-// ... existing code ...
             ],
           ),
         ],
@@ -682,5 +671,3 @@ class _JtRepairPageState extends State<JtRepairPage> {
     );
   }
 }
-
-

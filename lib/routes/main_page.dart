@@ -82,6 +82,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
         'repairProgress': (context) => const RepairProgress(),
         'jt28': (context) => const JtRepairPage(), 
+        'jt28Show':(context) => const JtShow(),
       },
       builder: FlutterSmartDialog.init(),
     );

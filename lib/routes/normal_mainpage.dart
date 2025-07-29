@@ -384,7 +384,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 child: FeatureContainer(
                   Icon(Icons.assignment, color: Colors.blue[200]),
                   () => Navigator.pushNamed(context, 'jt28'),
-                  '机统28',
+                  '机统28施修',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
                   num: specialNum,
@@ -392,6 +392,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
               )
             ],
           ),
+          Row(
+             mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(
+                width: (MediaQuery.of(context).size.width) / 3,
+                height: (MediaQuery.of(context).size.width) / 4,
+                child: FeatureContainer(
+                  Icon(Icons.group_rounded, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'jt28Show'),
+                  '机统28展示',
+                  width: (MediaQuery.of(context).size.width),
+                  height: (MediaQuery.of(context).size.height),
+                  num: mutualNum,
+                ),
+              ),
+              ] 
+          )
           // Row(
           //   //临修机车导入标识
           //   mainAxisAlignment: MainAxisAlignment.start,
