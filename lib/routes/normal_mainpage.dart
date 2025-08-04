@@ -387,7 +387,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   '机统28施修',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
-                  num: specialNum,
+              
                 ),
               )
             ],
@@ -404,7 +404,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   '机统28展示',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
-                  num: mutualNum,
+              
                 ),
               ),
               ] 

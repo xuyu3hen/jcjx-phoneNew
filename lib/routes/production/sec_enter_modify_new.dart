@@ -634,7 +634,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             },
           ),
           // 车号填写
-
           ZjcFormSelectCell(
             title: "检修地点",
             text: stopLocationSelected["realLocation"],
@@ -682,7 +681,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   assetType: APC.AssetType.image,
                   maxAssets: 1,
                   selectedAssets: assestPics,
-                  // bgColor: Colors.grey,
                   callBack: (assetEntityList) async {
                     logger.i('assetEntityList-------------');
                     logger.i(assetEntityList);

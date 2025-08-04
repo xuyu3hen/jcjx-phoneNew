@@ -65,9 +65,12 @@ class _DataDisplayPageState extends State<PreTrainWork> {
 
   void getTrainInfo() async {
     var r = await ProductApi().getNotEnterTrainPlan();
-    setState(() {
+    if(mounted){
+      setState(() {
       trainNotEnter = r; // 假设 r 是包含机型车号信息的列表
     });
+    }
+    
   }
 }
 

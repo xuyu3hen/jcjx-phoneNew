@@ -86,75 +86,85 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
 
   // 获取专互检信息
   void getSpecialMutual() async {
-    try{
-         if (selectedWorkItems.isNotEmpty) {
-      Map<String, dynamic> queryParameters = {
-        'pageNum': 0,
-        'pageSize': 0,
-        'dictType': 'tech_risk_level',
-        'dictLabel': selectedWorkItems[0].riskLevel,
-        'status': 0
-      };
-      var r = await ProductApi().getDictCode(queryParameters);
-      int dictCode = r['rows'][0]['dictCode'];
-      logger.i(dictCode);
-      Map<String, dynamic> queryParameters1 = {
-        'pageNum': 0,
-        'pageSize': 0,
-        'riskLevelCode': dictCode,
-      };
-      List<int> mutualIdList = [];
-      List<int> specialIdList = [];
-      var r1 = await ProductApi().getPostByRiskLevel(queryParameters1);
-      for (var item in r1['rows']) {
-        if (item['controlLevelName'] == '互检') {
-          mutual.add(item);
-          mutualIdList.add(item['postId']);
-        } else {
-          special.add(item);
-          specialIdList.add(item['postId']);
+    try {
+      mutual = [];
+      special = [];
+      if (selectedWorkItems.isNotEmpty) {
+        Map<String, dynamic> queryParameters = {
+          'pageNum': 0,
+          'pageSize': 0,
+          'dictType': 'tech_risk_level',
+          'dictLabel': selectedWorkItems[0].riskLevel,
+          'status': 0
+        };
+        var r = await ProductApi().getDictCode(queryParameters);
+        int dictCode = r['rows'][0]['dictCode'];
+        logger.i(dictCode);
+        Map<String, dynamic> queryParameters1 = {
+          'pageNum': 0,
+          'pageSize': 0,
+          'riskLevelCode': dictCode,
+        };
+        List<int> mutualIdList = [];
+        List<int> specialIdList = [];
+        var r1 = await ProductApi().getPostByRiskLevel(queryParameters1);
+        for (var item in r1['rows']) {
+          if (item['controlLevelName'] == '互检') {
+            // 检查是否已存在相同的postId，避免重复添加
+            bool exists = mutual.any((element) => element['postId'] == item['postId']);
+            if (!exists) {
+              mutual.add(item);
+              mutualIdList.add(item['postId']);
+            }
+          } else {
+            // 检查是否已存在相同的postId，避免重复添加
+            bool exists = special.any((element) => element['postId'] == item['postId']);
+            if (!exists) {
+              special.add(item);
+              specialIdList.add(item['postId']);
+            }
+          }
+        }
+        var r2 = await ProductApi().getUserListByPostIdList(mutualIdList);
+        for (var item in mutual) {
+          Map<String, dynamic> info = r2[item['postId'].toString()][0];
+          item['name'] = info['nickName'];
+          item['userId'] = info['userId'];
+
+          //’1123，1134‘ 123匹配上的规则 仍然可以完善
+          if (selectedWorkItems[0]
+              .mutualInspectionPersonnel
+              .toString()
+              .contains(item['userId'].toString())) {
+            item['associated'] = true;
+          } else {
+            item['associated'] = false;
+          }
+
+          logger.i(item);
+        }
+        var r3 = await ProductApi().getUserListByPostIdList(specialIdList);
+        for (var item in special) {
+          Map<String, dynamic> info = r3[item['postId'].toString()][0];
+          item['name'] = info['nickName'];
+          item['userId'] = info['userId'];
+
+          //workInstructPackageUserList的userId
+          if (selectedWorkItems[0]
+              .specialInspectionPersonnel
+              .toString()
+              .contains(item['userId'].toString())) {
+            item['associated'] = true;
+          } else {
+            item['associated'] = false;
+          }
+          logger.i(item);
+        }
+        if (mounted) {
+          setState(() {});
         }
       }
-      var r2 = await ProductApi().getUserListByPostIdList(mutualIdList);
-      for (var item in mutual) {
-        Map<String, dynamic> info = r2[item['postId'].toString()][0];
-        item['name'] = info['nickName'];
-        item['userId'] = info['userId'];
-
-        //’1123，1134‘ 123匹配上的规则 仍然可以完善
-        if (selectedWorkItems[0]
-            .mutualInspectionPersonnel
-            .toString()
-            .contains(item['userId'].toString())) {
-          item['associated'] = true;
-        } else {
-          item['associated'] = false;
-        }
-
-        logger.i(item);
-      }
-      var r3 = await ProductApi().getUserListByPostIdList(specialIdList);
-      for (var item in special) {
-        Map<String, dynamic> info = r3[item['postId'].toString()][0];
-        item['name'] = info['nickName'];
-        item['userId'] = info['userId'];
-
-        //workInstructPackageUserList的userId
-        if (selectedWorkItems[0]
-            .specialInspectionPersonnel
-            .toString()
-            .contains(item['userId'].toString())) {
-          item['associated'] = true;
-        } else {
-          item['associated'] = false;
-        }
-        logger.i(item);
-      }
-      if (mounted) {
-        setState(() {});
-      }
-    }
-    }catch(e, stackTrace){
+    } catch (e, stackTrace) {
       logger.e('getSpecialMutual方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }

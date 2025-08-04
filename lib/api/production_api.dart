@@ -30,6 +30,23 @@ class ProductApi extends AppApi {
     }
   }
 
+  // 机统28施修
+  Future<dynamic> jt28SaveOrUpdate(
+    List<Map<String, dynamic>> queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/locomotiveMaintenanceLogDO/saveOrUpdate",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // 预派工查询
   Future<MainDataStructure> getPreDispatchWork({
     Map<String, dynamic>? queryParametrs, // 分页参数
@@ -149,7 +166,7 @@ class ProductApi extends AppApi {
   }
 
   // 故障零部件查询
-  Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async{
+  Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async {
     try {
       var r = await AppApi.dio.get(
         "/subparts/jcConfigNode/selectAll",
@@ -164,7 +181,7 @@ class ProductApi extends AppApi {
   }
 
 // 查询互检专检人员
-Future<dynamic> getCheckPerson(Map<String, dynamic>? queryParametrs) async{
+  Future<dynamic> getCheckPerson(Map<String, dynamic>? queryParametrs) async {
     try {
       var r = await AppApi.dio.post(
         "/subparts/riskLevelPost/getUserList",
@@ -174,11 +191,8 @@ Future<dynamic> getCheckPerson(Map<String, dynamic>? queryParametrs) async{
       return (r.data["data"])["data"];
     } catch (e) {
       _handleException(e);
-}
-}
-
-
-
+    }
+  }
 
   // 列表查询机型
 
@@ -505,6 +519,21 @@ Future<dynamic> getCheckPerson(Map<String, dynamic>? queryParametrs) async{
     } catch (e) {
       _handleException(e);
       return -1; // 根据具体情况返回合适的表示错误的值，这里返回 -1 示意上传失败
+    }
+  }
+
+  //上传机统28图片参数只有二进制文件
+  Future<dynamic> uploadImgJt28({File? imagedata}) async {
+    try {
+      FormData formData = FormData.fromMap(
+          {"uploadFileList": await MultipartFile.fromFile(imagedata!.path)});
+      var r = await AppApi.dio.post("/fileserver/jt28File/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      logger.i(r.data["data"]);
+      return (r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return ''; // 根据具体情况返回合适的表示错误的值，这里返回 -1 示意上传失败
     }
   }
 

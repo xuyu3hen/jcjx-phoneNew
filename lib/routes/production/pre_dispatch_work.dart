@@ -210,6 +210,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   }
 
   //获取作业包
+    //获取作业包
   void getWorkPackage() async {
     try {
       Map<String, dynamic> queryParameters = {
@@ -221,19 +222,20 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
       logger.i(queryParameters);
       var r =
           await JtApi().getPackageUserList(queryParameters: queryParameters);
-      if (r.data != null && r.data!.isNotEmpty) {
-        if (mounted) {
-          setState(() {
+      if (mounted) {
+        setState(() {
+          // 不管是否有数据，都先清空列表
+          packageUserDTOList = [];
+          if (r.data != null && r.data!.isNotEmpty) {
             //将获取的信息列表
             //将r.data进行遍历,获取相关信息进行展示
-            packageUserDTOList = [];
             for (PackageUser item in r.data!) {
               logger.i(item.packageUserDTOList!.length);
               packageUserDTOList?.addAll(item.packageUserDTOList!);
             }
-            // print(packageUserDTOList!.length);
-          });
-        }
+          }
+          // 如果没有数据，packageUserDTOList 保持为空列表
+        });
       }
     } catch (e, stackTrace) {
       logger.e('getWorkPackage 方法中发生异常: $e\n堆栈信息: $stackTrace');
@@ -886,30 +888,32 @@ class _PreWorkListState extends State<PreWorkList> {
                     }
                   },
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '作业项 $workItem',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '风险等级 $riskLevel',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '互检人员 $mutualCheck',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '专检人员 $specialCheck',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
+                              Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '作业项 $workItem',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '风险等级 $riskLevel',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '互检人员 $mutualCheck',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          '专检人员 $specialCheck',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

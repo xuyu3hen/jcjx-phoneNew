@@ -1,4 +1,6 @@
 import '../../index.dart';
+import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class JtRepairPage extends StatefulWidget {
   const JtRepairPage({Key? key}) : super(key: key);
@@ -53,10 +55,42 @@ class _JtRepairPageState extends State<JtRepairPage> {
   //
   late Map<String, dynamic> faultInfo;
 
-// ... existing code ...
+  late List<Map<String, dynamic>> mutualCheckList = [];
+
+  late List<Map<String, dynamic>> specialCheckList = [];
+
+  // 互检人员
+  late Map<String, dynamic> selectedMutualCheck = {};
+
+  // 专检人员
+  late Map<String, dynamic> selectedSpecialCheck = {};
+
+  // 图片传输相关变量定义
+  List<AssetEntity> assestPics = [];
+  List<File> faultPics = [];
+
+  // 上传信息
+  Future<void> submitRepairInfo() async {
+    try {
+      var r = await ProductApi().uploadImgJt28(imagedata: faultPics[0]);
+      Map<String, dynamic> queryParameters = faultInfo;
+      queryParameters['repairStatus'] = repairDetailsController.text;
+      queryParameters['actualStartDate'] = actualStartDateController.text;
+      queryParameters['faultyCompnent'] = faultPart['code'];
+      queryParameters['mutualInspectionPersonel'] = selectedMutualCheck['code'];
+      queryParameters['specialInspectionPersonel'] =
+          selectedSpecialCheck['code'];
+      logger.i(queryParameters);
+      List<Map<String, dynamic>> queryParametersList = [];
+      queryParametersList.add(queryParameters);
+      await ProductApi().jt28SaveOrUpdate(queryParametersList);
+    } catch (e) {
+      logger.e(e);
+    }
+  }
+
   /// 显示故障零部件列表
-  void _showFaultPartList(
-      BuildContext context) async {
+  void _showFaultPartList(BuildContext context) async {
     try {
       // 显示加载提示
       showDialog(
@@ -154,11 +188,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
       // }
     }
   }
-// ... existing code ...
-// ... existing code ...
 
-  /// 显示零部件详细信息
-  /// 显示零部件详细信息
   void _showPartDetail(BuildContext context, Map<String, dynamic> part) {
     showModalBottomSheet(
       context: context,
@@ -255,124 +285,217 @@ class _JtRepairPageState extends State<JtRepairPage> {
     );
   }
 
-
-// ... existing code ...
   void _showRepairDialog() {
-    // 设置默认值（从 item 中获取，如果存在）
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text("施修"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("故障现象：${faultInfo['faultDescription']}"),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: repairDetailsController,
-                  decoration: const InputDecoration(labelText: "施修情况"),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: actualStartDateController,
-                  decoration: const InputDecoration(
-                    labelText: "实际开始修理日期",
-                    suffixIcon: Icon(Icons.calendar_today),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("故障现象：${faultInfo['faultDescription']}"),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: repairDetailsController,
+                    decoration: const InputDecoration(labelText: "施修情况"),
                   ),
-                  readOnly: true,
-                  onTap: () async {
-                    DateTime? initialDate = DateTime.now();
-                    if (actualStartDateController.text.isNotEmpty) {
-                      try {
-                        List<String> parts =
-                            actualStartDateController.text.split('-');
-                        if (parts.length == 3) {
-                          initialDate = DateTime(
-                            int.parse(parts[0]),
-                            int.parse(parts[1]),
-                            int.parse(parts[2]),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: actualStartDateController,
+                    decoration: const InputDecoration(
+                      labelText: "实际开始修理日期",
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () async {
+                      DateTime? initialDate = DateTime.now();
+                      if (actualStartDateController.text.isNotEmpty) {
+                        try {
+                          List<String> parts =
+                              actualStartDateController.text.split('-');
+                          if (parts.length == 3) {
+                            initialDate = DateTime(
+                              int.parse(parts[0]),
+                              int.parse(parts[1]),
+                              int.parse(parts[2]),
+                            );
+                          }
+                        } catch (e) {
+                          initialDate = DateTime.now();
+                        }
+                      }
+
+                      final date = await showDatePicker(
+                        context: dialogContext,
+                        initialDate: initialDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (date != null) {
+                        actualStartDateController.text =
+                            "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: faultyPartController,
+                    decoration: const InputDecoration(labelText: "故障零部件"),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      _showFaultPartList(dialogContext);
+                    },
+                    child: const Text("查询零部件信息"),
+                  ),
+
+                  const SizedBox(height: 10),
+                  // 互检人员选择
+                  ZjcFormSelectCell(
+                    title: "互检人员",
+                    text: selectedMutualCheck['nickName'],
+                    hintText: "请选择",
+                    clickCallBack: () {
+                      if (mutualCheckList.isEmpty) {
+                        // 使用 dialogContext 显示 Toast
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(content: Text("无互检人员信息")),
+                        );
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          dialogContext,
+                          data: mutualCheckList,
+                          labelKey: 'nickName',
+                          valueKey: 'userId',
+                          title: "选择互检人员",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              selectedMutualCheck = {
+                                'nickName': selectItem['nickName'] ?? '',
+                                'userId': selectItem['userId'] ?? '',
+                              };
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // 专检人员选择
+                  ZjcFormSelectCell(
+                      title: "专检人员",
+                      text: selectedSpecialCheck['nickName'],
+                      hintText: "请选择",
+                      clickCallBack: () {
+                        if (specialCheckList.isEmpty) {
+                          // 使用 dialogContext 显示 Toast
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            const SnackBar(content: Text("无专检人员信息")),
+                          );
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            dialogContext,
+                            data: specialCheckList,
+                            labelKey: 'nickName',
+                            valueKey: 'userId',
+                            title: "选择专检人员",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                selectedSpecialCheck?['nickName'] =
+                                    selectItem['nickName'] ?? '';
+                                selectedSpecialCheck?['userId'] =
+                                    selectItem['userId'] ?? '';
+                              });
+                            },
                           );
                         }
-                      } catch (e) {
-                        initialDate = DateTime.now();
-                      }
-                    }
-
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: initialDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (date != null) {
-                      actualStartDateController.text =
-                          "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                // ... existing code ...
-                // ... existing code ...
-                TextField(
-                  controller: faultyPartController,
-                  decoration: const InputDecoration(labelText: "故障零部件"),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    _showFaultPartList(context);
-                  },
-                  child: const Text("查询零部件信息"),
-                ),
-
-                const SizedBox(height: 10),
-                TextField(
-                  controller: mutualInspectorController,
-                  decoration: const InputDecoration(labelText: "互检人员"),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: qualityInspectorController,
-                  decoration: const InputDecoration(labelText: "专检人员"),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    // 图片上传逻辑
-                  },
-                  child: const Text("上传销活图片"),
-                ),
-              ],
+                      }),
+                  const SizedBox(height: 10),
+                  // 在_buildBody()方法中的图片选择器组件
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(20)),
+                        border: Border.all(color: Colors.brown)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('图片',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            minHeight: 120,
+                            maxHeight: 200,
+                          ),
+                          child: ZjcAssetPicker(
+                            assetType: APC.AssetType.image,
+                            maxAssets: 1,
+                            selectedAssets: assestPics,
+                            callBack: (assetEntityList) async {
+                              logger.i('assetEntityList-------------');
+                              logger.i(assetEntityList);
+                              if (assetEntityList.isNotEmpty) {
+                                var asset = assetEntityList[0];
+                                var pic = await asset.file;
+                                logger.i(await asset.file);
+                                logger.i(await asset.originFile);
+                                faultPics.insert(0, pic!);
+                              } else {
+                                faultPics = [];
+                              }
+                              logger.i('assetEntityList-------------');
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: Navigator.of(context).pop,
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text("取消"),
             ),
             TextButton(
-              onPressed: () {
-                final String repairDetails = repairDetailsController.text;
-                final String actualStartDate = actualStartDateController.text;
-                final String faultyPart = faultyPartController.text;
-                final String mutualInspector = mutualInspectorController.text;
-                final String qualityInspector = qualityInspectorController.text;
+              onPressed: () async {
+                Navigator.of(dialogContext).pop(); // 先关闭对话框
 
-                print("施修情况: $repairDetails");
-                print("实际开始修理日期: $actualStartDate");
-                print("故障零部件: $faultyPart");
-                print("互检人员: $mutualInspector");
-                print("专检人员: $qualityInspector");
+                try {
+                  await submitRepairInfo();
 
-                Navigator.of(context).pop();
-                // 确保 widget 仍然挂载后再显示 SnackBar
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("提交成功")),
-                  );
+                  // 延迟到下一帧执行，确保对话框已完全关闭
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("提交成功")),
+                      );
+                    }
+                  });
+                } catch (e) {
+                  // 延迟到下一帧执行，确保对话框已完全关闭
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("提交失败")),
+                      );
+                    }
+                  });
+                  logger.e('提交失败: $e');
                 }
               },
               child: const Text("提交"),
@@ -382,8 +505,6 @@ class _JtRepairPageState extends State<JtRepairPage> {
       },
     );
   }
-// ... existing code ...
-
 
   //获取机统28信息
   void getInfo() async {
@@ -493,12 +614,20 @@ class _JtRepairPageState extends State<JtRepairPage> {
       Map<String, dynamic> queryParameters = {
         'configNodeCode': jcTypeListSelected["code"],
         'riskLevel': faultInfo["riskLevel"],
-        'team': 100
+        'team': faultInfo["team"]
       };
       logger.i(queryParameters);
       var r = await ProductApi().getCheckPerson(queryParameters);
+      Map<String, dynamic> resultMap = Map<String, dynamic>.from(r);
       if (mounted) {
-        setState(() {});
+        setState(() {
+          specialCheckList = (resultMap['互检'] as List<dynamic>)
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+          mutualCheckList = (resultMap['专检'] as List<dynamic>)
+              .map((item) => Map<String, dynamic>.from(item as Map))
+              .toList();
+        });
       }
     } catch (e, stackTrace) {
       logger.e('getTrainInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
@@ -616,8 +745,6 @@ class _JtRepairPageState extends State<JtRepairPage> {
                 child: const Text('搜索机统28'),
               ),
               //展示列表信息
-              // ... existing code ...
-              // ... existing code ...
               if (sys28List.isNotEmpty)
                 ListView.builder(
                   shrinkWrap: true,
@@ -647,8 +774,9 @@ class _JtRepairPageState extends State<JtRepairPage> {
                             ? ElevatedButton(
                                 onPressed: () {
                                   faultInfo = item;
+                                  logger.i(faultInfo);
                                   _showRepairDialog();
-                                  
+
                                   // 处理施修按钮点击事件
                                   // 可以在这里调用相应的业务逻辑
                                   // 例如：navigateToRepairDetails(item['id']);
