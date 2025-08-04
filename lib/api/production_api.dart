@@ -426,10 +426,11 @@ class ProductApi extends AppApi {
   }
 
   //查询机车预派工机车
-  Future<dynamic> getNotEnterTrainPlan() async {
+  Future<dynamic> getNotEnterTrainPlan({Map<String, dynamic>? queryParameters}) async {
     try {
       var r = await AppApi.dio.post(
         "/plan/repairPlan/getNotEnterTrainPlan",
+        data: queryParameters
       );
       logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
@@ -853,12 +854,17 @@ class ProductApi extends AppApi {
 
   Future<dynamic> getDeptTreeByParentIdList(
       {Map<String, dynamic>? queryParametrs}) async {
-    var r = await AppApi.dio.get(
-      "/jcjxsystem/dept/getDeptTreeByParentIdList",
-      queryParameters: queryParametrs,
-    );
-    logger.i((r.data["data"])["data"]);
-    return (r.data["data"])["data"];
+    try {
+      var r = await AppApi.dio.get(
+        "/jcjxsystem/dept/getDeptTreeByParentIdList",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+      return null;
+    }
   }
 
   //获取dispatch/jcRepairSegment/selectAll
@@ -1008,8 +1014,7 @@ class ProductApi extends AppApi {
     }
   }
 
-  //subparts/repairMainNode/selectAll
-
+//subparts/repairMainNode/selectAll
 // 统一异常处理方法
   void _handleException(dynamic e) {
     String errorMessage = "";

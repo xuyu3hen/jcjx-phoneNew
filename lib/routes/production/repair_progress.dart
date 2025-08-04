@@ -257,9 +257,7 @@ class _RepairProgressState extends State<RepairProgress> {
       appBar: AppBar(
         title: const Text('检修进度'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.timeline),
-            tooltip: '全流程节点机车', // 添加 Tooltip
+           TextButton(
             onPressed: () {
               if (processNodeList.isNotEmpty) {
                 Navigator.push(
@@ -273,6 +271,12 @@ class _RepairProgressState extends State<RepairProgress> {
                 showToast("进度图数据为空");
               }
             },
+            child: const Text(
+              '全流程节点机车图',
+              style: TextStyle(
+                color: Colors.black,
+              ),
+            ),
           ),
         ],
       ),
@@ -401,6 +405,7 @@ class _RepairProgressState extends State<RepairProgress> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 '车号: ${item['typeName'] ?? ''}',
@@ -443,6 +448,7 @@ class ProcessNode {
   });
 }
 
+// ... existing code ...
 class FlowChartPage extends StatelessWidget {
   final List<ProcessNode> processNodes;
 
@@ -474,47 +480,54 @@ class FlowChartPage extends StatelessWidget {
         boundaryMargin: const EdgeInsets.all(100),
         minScale: 0.01,
         maxScale: 5.6,
-        child: GraphView(
-          graph: graph,
-          algorithm: SugiyamaAlgorithm(algo),
-          paint: Paint()
-            ..color = Colors.green
-            ..strokeWidth = 1
-            ..style = PaintingStyle.stroke,
-          builder: (Node node) {
-            final processNode = processNodes.firstWhere(
-              (element) => element.id == node.key!.value,
-            );
-            return Container(
-              width: 200, // 设置固定宽度
-              height: 150, // 设置固定高度
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.blue[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('节点: ${processNode.id}'), // 修改文本显示
-                  Text(
-                    '工序节点: ${processNode.name}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          child: GraphView(
+            graph: graph,
+            algorithm: SugiyamaAlgorithm(algo),
+            paint: Paint()
+              ..color = Colors.green
+              ..strokeWidth = 1
+              ..style = PaintingStyle.stroke,
+            builder: (Node node) {
+              final processNode = processNodes.firstWhere(
+                (element) => element.id == node.key!.value,
+              );
+              return Container(
+                width: 200, // 设置固定宽度
+                height: 150, // 设置固定高度
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.blue[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('节点: ${processNode.id}'), // 修改文本显示
+                    Text(
+                      '工序节点: ${processNode.name}',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-
-                  Text(
-                    '机车: ${processNode.locomotives.join(', ')}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            );
-          },
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Text(
+                          '机车: ${processNode.locomotives.join(', ')}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
+// ... existing code ...

@@ -31,11 +31,11 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 筛选修次
   late Map<String, dynamic> repairTimesSelected = {};
   //科室车间列表
-  late List<dynamic> deptList = [];
+  late List<Map<String, dynamic>> deptList = [];
   // 筛选科室车间
   late Map<String, dynamic> deptSelected = {};
   // 班组列表
-  late List<dynamic> groupList = [];
+  late List<Map<String, dynamic>> groupList = [];
   // 筛选班组
   late Map<String, dynamic> groupSelected = {};
   // 工序节点列表
@@ -55,10 +55,40 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void initState() {
     super.initState();
     getDynamicType();
+    getDept();
   }
 
   void initData() async {
     getDynamicType();
+  }
+
+  // 获取科室车间
+  void getDept() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'parentIdList': "231,232,233,234,235,236,237,230",
+      };
+      var r = await ProductApi()
+          .getDeptTreeByParentIdList(queryParametrs: queryParameters);
+      if (mounted) {
+        setState(() {
+          //将 List<dynamic> 转为 List<Map<String, dynamic>>
+          if (r != null) {
+            if (r is List) {
+              deptList = r.map((item) => item as Map<String, dynamic>).toList();
+            } else if (r is Map<String, dynamic>) {
+              deptList = [r];
+            } else {
+              deptList = [];
+            }
+          } else {
+            deptList = [];
+          }
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getDept 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   // 获取动态类型
@@ -174,7 +204,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
         'repairProcCode': repairSelected["code"],
         'pageNum': 0,
         'pageSize': 0,
-        'deptIds': Global.profile.permissions!.user.dept!.parentId
+        'deptIds': deptSelected["deptId"]
       };
       var r = await ProductApi()
           .getRepairMainNodeAll(queryParametrs: queryParameters);
@@ -196,26 +226,24 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     try {
       Map<String, dynamic> queryParameters = {
         'typeCode': jcTypeListSelected["code"],
-        'deptId': Global.profile.permissions!.user.deptId,
+        'deptId': deptSelected["deptId"],
         'repairTimes': repairTimesSelected["name"],
         'repairMainNodeCode': procNodeSelected["code"],
       };
       logger.i(queryParameters);
       await ProductApi()
           .syncWorkPackageToPackageUser(queryParametrs: queryParameters);
-
     } catch (e, stackTrace) {
       logger.e('syncWorkPackageToPackageUser 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
   //获取作业包
-    //获取作业包
   void getWorkPackage() async {
     try {
       Map<String, dynamic> queryParameters = {
         'typeCode': jcTypeListSelected["code"],
-        'deptId': Global.profile.permissions!.user.deptId,
+        'deptId': groupSelected["deptId"],
         'repairTimes': repairTimesSelected["name"],
         'repairMainNodeCode': procNodeSelected["code"],
       };
@@ -224,7 +252,6 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
           await JtApi().getPackageUserList(queryParameters: queryParameters);
       if (mounted) {
         setState(() {
-          // 不管是否有数据，都先清空列表
           packageUserDTOList = [];
           if (r.data != null && r.data!.isNotEmpty) {
             //将获取的信息列表
@@ -378,7 +405,6 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                               //将主键进行选取
                               repairSelected["code"] = selectItem["code"];
                               getRepairTimes();
-                              getRepairMainNode();
                             });
                           }
                         },
@@ -410,6 +436,80 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                               repairTimesSelected["name"] = selectItem["name"];
                               //将主键进行选取
                               repairTimesSelected["code"] = selectItem["code"];
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                // 对科室车间进行筛选
+                ZjcFormSelectCell(
+                  title: "科室车间",
+                  text: deptSelected["deptName"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (deptList.isEmpty) {
+                      showToast("无科室车间");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: deptList,
+                        labelKey: 'deptName',
+                        valueKey: 'deptId',
+                        title: "选择科室车间",
+                        childrenKey: 'children1',
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              logger.i(selectArr);
+                              deptSelected["deptName"] = selectItem["deptName"];
+                              deptSelected["deptId"] = selectItem["deptId"];
+
+                              if (selectItem["children"] != null &&
+                                  selectItem["children"] is List) {
+                                groupList = (selectItem["children"] as List)
+                                    .map((item) => item is Map<String, dynamic>
+                                        ? item
+                                        : Map<String, dynamic>.from(
+                                            item as Map))
+                                    .toList();
+                              } else {
+                                groupList = [];
+                              }
+                              getRepairMainNode();
+                            });
+                          }
+                        },
+                      );
+                    }
+                  },
+                ),
+                // 对班组进行筛选
+                ZjcFormSelectCell(
+                  title: "班组",
+                  text: groupSelected["deptName"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (groupList.isEmpty) {
+                      showToast("无班组信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: groupList,
+                        labelKey: 'deptName',
+                        valueKey: 'deptId',
+                        childrenKey: 'children',
+                        title: "选择班组",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              logger.i(selectArr);
+                              groupSelected["deptName"] =
+                                  selectItem["deptName"];
+                              groupSelected["deptId"] = selectItem["deptId"];
                             });
                           }
                         },
@@ -449,141 +549,182 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                     }
                   },
                 ),
-                // 添加一个同步作业包按钮，当工序节点不是空的时候显示
-                if (procNodeSelected['name'] != '' &&
-                    procNodeSelected['code'] != '')
-                  //展示同步作业包按钮 使用正常绿色按钮
-                  Container(
-                      width: MediaQuery.of(context).size.width,
-                      // 去掉高度的固定计算，让列表自适应内容
-                      decoration: const BoxDecoration(color: Colors.white),
-                      child: Column(children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            syncWorkPackageToPackageUser();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                                255, 146, 231, 147), // 设置按钮颜色为绿色
-                            minimumSize: const Size(
-                                double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
-                          ),
-                          child: const Text('同步作业包'),
-                        ),
-                      ])),
-
-                // 将packageUserDTOList进行展示
-                Container(
+                // 通过搜索按钮 查看作业包  
+                
+                                Container(
                   width: MediaQuery.of(context).size.width,
-                  // 去掉高度的固定计算，让列表自适应内容
                   decoration: const BoxDecoration(color: Colors.white),
-                  child: Column(
-                    children: [
-                      // 数据行
-                      ...(packageUserDTOList?.map((packageUserDTO) {
-                            String station = packageUserDTO.station ?? '';
-                            String mainRepair = packageUserDTO
-                                        .workInstructPackageUserList
-                                        ?.isNotEmpty ==
-                                    true
-                                ? packageUserDTO.workInstructPackageUserList![0]
-                                        .repairPersonnelName ??
-                                    ''
-                                : '';
-                            String assistant = packageUserDTO
-                                        .workInstructPackageUserList
-                                        ?.isNotEmpty ==
-                                    true
-                                ? packageUserDTO.workInstructPackageUserList![0]
-                                        .assistantName ??
-                                    ''
-                                : '';
-                            return InkWell(
-                              onTap: () {
-                                // 点击事件处理函数，跳转到新的界面
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PreWorkList(
-                                      packageUserDTO: packageUserDTO,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                width: MediaQuery.of(context).size.width,
-                                height: 100, // 减少容器高度
-                                margin: const EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border.all(color: Colors.blue),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 5), // 调整内边距
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: selectedPackage == packageUserDTO,
-                                      onChanged: (value) {
-                                        if (mounted) {
-                                          setState(() {
-                                            if (value!) {
-                                              selectedPackage = packageUserDTO;
-                                            } else {
-                                              selectedPackage = null;
-                                            }
-                                          });
-                                        }
-                                      },
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        children: [
-                                          Wrap(
-                                            spacing: 8, // 调整间距
-                                            runSpacing: 4, // 调整行间距
-                                            children: [
-                                              // 增加序号中文
-                                              Text(
-                                                '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
-                                                style: const TextStyle(
-                                                    fontSize: 16), // 放大文字
-                                              ),
-                                              Text(
-                                                '作业包 ${packageUserDTO.packageName ?? ''}',
-                                                style: const TextStyle(
-                                                    fontSize: 16), // 放大文字
-                                              ),
-                                              Text(
-                                                '工位 $station',
-                                                style: const TextStyle(
-                                                    fontSize: 16), // 放大文字
-                                              ),
-                                              Text(
-                                                '主修 $mainRepair',
-                                                style: const TextStyle(
-                                                    fontSize: 16), // 放大文字
-                                              ),
-                                              Text(
-                                                '辅修 $assistant',
-                                                style: const TextStyle(
-                                                    fontSize: 16), // 放大文字
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                  child: Column(children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // 检查必要条件是否已选择
+                        if (jcTypeListSelected["code"] == null || 
+                            jcTypeListSelected["code"] == '') {
+                          showToast("请选择机型");
+                          return;
+                        }
+                        if (repairTimesSelected["code"] == null || 
+                            repairTimesSelected["code"] == '') {
+                          showToast("请选择修次");
+                          return;
+                        }
+                        if (procNodeSelected["code"] == null || 
+                            procNodeSelected["code"] == '') {
+                          showToast("请选择工序节点");
+                          return;
+                        }
+                        
+                        getWorkPackage();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(
+                            255, 70, 130, 180), // 设置按钮颜色为钢蓝色
+                        minimumSize: const Size(
+                            double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+                      ),
+                      child: const Text('搜索作业包'),
+                    ),
+                  ]),
+                ),
+                //展示同步作业包按钮 使用正常绿色按钮
+                Container(
+                    width: MediaQuery.of(context).size.width,
+                    // 去掉高度的固定计算，让列表自适应内容
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: Column(children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          syncWorkPackageToPackageUser();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(
+                              255, 146, 231, 147), // 设置按钮颜色为绿色
+                          minimumSize: const Size(
+                              double.infinity, 60), // 设置按钮宽度为屏幕宽度，高度为60
+                        ),
+                        child: const Text('同步作业包'),
+                      ),
+                    ])),
+                
+            
+
+                  // 将packageUserDTOList进行展示
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    // 去掉高度的固定计算，让列表自适应内容
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: Column(
+                      children: [
+                        // 数据行
+                        ...(packageUserDTOList?.map((packageUserDTO) {
+                              String station = packageUserDTO.station ?? '';
+                              String mainRepair = packageUserDTO
+                                          .workInstructPackageUserList
+                                          ?.isNotEmpty ==
+                                      true
+                                  ? packageUserDTO
+                                          .workInstructPackageUserList![0]
+                                          .repairPersonnelName ??
+                                      ''
+                                  : '';
+                              String assistant = packageUserDTO
+                                          .workInstructPackageUserList
+                                          ?.isNotEmpty ==
+                                      true
+                                  ? packageUserDTO
+                                          .workInstructPackageUserList![0]
+                                          .assistantName ??
+                                      ''
+                                  : '';
+                              return InkWell(
+                                onTap: () {
+                                  // 点击事件处理函数，跳转到新的界面
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PreWorkList(
+                                        packageUserDTO: packageUserDTO,
                                       ),
                                     ),
-                                  ],
+                                  );
+                                },
+                                child: Container(
+                                  width: MediaQuery.of(context).size.width,
+                                  height: 100, // 减少容器高度
+                                  margin:
+                                      const EdgeInsets.symmetric(vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.blue),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 5), // 调整内边距
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value:
+                                            selectedPackage == packageUserDTO,
+                                        onChanged: (value) {
+                                          if (mounted) {
+                                            setState(() {
+                                              if (value!) {
+                                                selectedPackage =
+                                                    packageUserDTO;
+                                              } else {
+                                                selectedPackage = null;
+                                              }
+                                            });
+                                          }
+                                        },
+                                      ),
+                                      Expanded(
+                                        child: Column(
+                                          children: [
+                                            Wrap(
+                                              spacing: 8, // 调整间距
+                                              runSpacing: 4, // 调整行间距
+                                              children: [
+                                                // 增加序号中文
+                                                Text(
+                                                  '序号 ${packageUserDTOList!.indexOf(packageUserDTO) + 1}',
+                                                  style: const TextStyle(
+                                                      fontSize: 16), // 放大文字
+                                                ),
+                                                Text(
+                                                  '作业包 ${packageUserDTO.packageName ?? ''}',
+                                                  style: const TextStyle(
+                                                      fontSize: 16), // 放大文字
+                                                ),
+                                                Text(
+                                                  '工位 $station',
+                                                  style: const TextStyle(
+                                                      fontSize: 16), // 放大文字
+                                                ),
+                                                Text(
+                                                  '主修 $mainRepair',
+                                                  style: const TextStyle(
+                                                      fontSize: 16), // 放大文字
+                                                ),
+                                                Text(
+                                                  '辅修 $assistant',
+                                                  style: const TextStyle(
+                                                      fontSize: 16), // 放大文字
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          }).toList() ??
-                          []),
-                    ],
-                  ),
-                )
+                              );
+                            }).toList() ??
+                            []),
+                      ],
+                    ),
+                  )
               ],
             ),
           ],
@@ -888,7 +1029,7 @@ class _PreWorkListState extends State<PreWorkList> {
                     }
                   },
                 ),
-                              Expanded(
+                Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
