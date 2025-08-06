@@ -117,7 +117,9 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       if (mounted) {
         setState(() {
           jcTypeList = r.toMapList();
-          getRepairSys();
+          jcTypeListSelected["code"] = r.toMapList()[0]["code"];
+          jcTypeListSelected["name"] = r.toMapList()[0]["name"];
+          getRepairProc();
         });
       }
     } catch (e, stackTrace) {
@@ -145,11 +147,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     }
   }
 
-  // 修次
+  // 修程信息
   void getRepairProc() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'repairSysCode': repairSysSelected["code"],
+        // 'repairSysCode': repairSysSelected["code"],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -323,6 +325,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('机车入段'),
+        backgroundColor: Colors.white,
       ),
       body: _buildBody(),
       bottomNavigationBar: _footer(),
@@ -399,7 +402,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           if (r["data"]["code"] == 500) {
             showToast("存在相同在修机车");
           }
-        return "";
+          return "";
         }
       } finally {
         setState(() {
@@ -416,64 +419,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     return Stack(children: [
       ListView(children: [
         Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-          ZjcFormInputCell(
-            title: "车号",
-            hintText: "请输入车号",
-            showRedStar: true,
-            rightWidget: Container(
-              margin: const EdgeInsets.only(top: 8, bottom: 8),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  getRepairPlanByTrainNum();
-                },
-                icon: const Icon(Icons.search), // 可选：保留小图标
-                label: const Text("查询检修计划"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue[100],
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  minimumSize: Size(120, 35),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ),
-            inputCallBack: (value) {
-              setState(() {
-                trainNumSelected["trainNum"] = value;
-              });
-            },
-          ),
-          // ZjcFormSelectCell(
-          //   title: "车号",
-          //   text: trainNumSelected["trainNum"],
-          //   hintText: "请选择",
-          //   showRedStar: true,
-          //   clickCallBack: () {
-          //     if (trainNumCodeList.isEmpty) {
-          //       showToast("无车号可以选择");
-          //     } else {
-          //       ZjcCascadeTreePicker.show(
-          //         context,
-          //         data: trainNumCodeList,
-          //         labelKey: 'trainNum',
-          //         valueKey: 'code',
-          //         childrenKey: 'children',
-          //         title: "选择车号",
-          //         clickCallBack: (selectItem, selectArr) {
-          //           setState(() {
-          //             logger.i(selectArr);
-          //             trainNumSelected["trainNum"] = selectItem["trainNum"];
-          //             trainNumSelected["code"] = selectItem["code"];
-          //           });
-          //         },
-          //       );
-          //     }
-          //   },
-          // ),
-          //配属段信息上传
-          // ZjcFormSelectCell(),
           ZjcFormSelectCell(
             title: "动力类型",
             text: dynamicTypeSelected["name"] ?? '',
@@ -504,135 +449,150 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               }
             },
           ),
-          ZjcFormSelectCell(
-            title: "机型",
-            text: jcTypeListSelected["name"] ?? '',
-            hintText: "请选择",
-            showRedStar: true,
-            clickCallBack: () {
-              if (jcTypeList.isEmpty) {
-                showToast("无机型可以选择");
-              } else {
-                ZjcCascadeTreePicker.show(
-                  context,
-                  data: jcTypeList,
-                  labelKey: 'name',
-                  valueKey: 'code',
-                  childrenKey: 'children',
-                  title: "选择机型",
-                  clickCallBack: (selectItem, selectArr) {
-                    if (mounted) {
-                      setState(() {
-                        logger.i(selectArr);
-                        jcTypeListSelected["name"] = selectItem["name"];
-                        jcTypeListSelected["code"] = selectItem["code"];
-                        // getTrainNumCodeList();
-                        // 在这里添加获取车号等后续逻辑，如果有的话
-                      });
+          Row(
+            children: [
+              Flexible(
+                flex: 1,
+                child: ZjcFormSelectCell(
+                  // 删除 title: "机型",
+                  text: jcTypeListSelected["name"] ?? '',
+                  hintText: "请选择机型",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (jcTypeList.isEmpty) {
+                      showToast("无机型可以选择");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: jcTypeList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择机型",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              logger.i(selectArr);
+                              jcTypeListSelected["name"] = selectItem["name"];
+                              jcTypeListSelected["code"] = selectItem["code"];
+                              // getTrainNumCodeList();
+                              // 在这里添加获取车号等后续逻辑，如果有的话
+                            });
+                          }
+                        },
+                      );
                     }
                   },
-                );
-              }
-            },
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: ZjcFormInputCell(
+                  title: "车号",
+                  hintText: "车号",
+                  showRedStar: true,
+                  rightWidget: Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        getRepairPlanByTrainNum();
+                      },
+                      icon: const Icon(Icons.search), // 可选：保留小图标
+                      label: const Text("查询计划"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightBlue[100],
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 8),
+                        minimumSize: Size(60, 30),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ),
+                  ),
+                  inputCallBack: (value) {
+                    setState(() {
+                      trainNumSelected["trainNum"] = value;
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-
-          // 修制筛选
-          ZjcFormSelectCell(
-            title: "修制",
-            text: repairSysSelected["name"] ?? '',
-            hintText: "请选择",
-            showRedStar: true,
-            clickCallBack: () {
-              if (repairSysList.isEmpty) {
-                showToast("无修制信息");
-              } else {
-                ZjcCascadeTreePicker.show(
-                  context,
-                  data: repairSysList,
-                  labelKey: 'name',
-                  valueKey: 'code',
-                  childrenKey: 'children',
-                  title: "选择修制",
-                  clickCallBack: (selectItem, selectArr) {
-                    if (mounted) {
-                      setState(() {
-                        logger.i(selectArr);
-                        repairSysSelected["name"] = selectItem["name"];
-                        //将主键进行选取
-                        repairSysSelected["code"] = selectItem["code"];
-                        //获取修程信息
-                        getRepairProc();
-                      });
+          Row(
+            children: [
+              Expanded(
+                flex: 1,
+                child: ZjcFormSelectCell(
+                  title: "修程",
+                  text: repairSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (repairList.isEmpty) {
+                      showToast("无修程信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: repairList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择修程",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              logger.i(selectArr);
+                              repairSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              repairSelected["code"] = selectItem["code"];
+                              getRepairTimes();
+                              // getRepairMainNode();
+                            });
+                          }
+                        },
+                      );
                     }
                   },
-                );
-              }
-            },
-          ),
-          //修程筛选框
-          ZjcFormSelectCell(
-            title: "修程",
-            text: repairSelected["name"] ?? '',
-            hintText: "请选择",
-            showRedStar: true,
-            clickCallBack: () {
-              if (repairList.isEmpty) {
-                showToast("无修程信息");
-              } else {
-                ZjcCascadeTreePicker.show(
-                  context,
-                  data: repairList,
-                  labelKey: 'name',
-                  valueKey: 'code',
-                  childrenKey: 'children',
-                  title: "选择修程",
-                  clickCallBack: (selectItem, selectArr) {
-                    if (mounted) {
-                      setState(() {
-                        logger.i(selectArr);
-                        repairSelected["name"] = selectItem["name"];
-                        //将主键进行选取
-                        repairSelected["code"] = selectItem["code"];
-                        getRepairTimes();
-                        // getRepairMainNode();
-                      });
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: ZjcFormSelectCell(
+                  title: "修次",
+                  text: repairTimesSelected["name"] ?? '',
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (repairTImesList.isEmpty) {
+                      showToast("无修次信息");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: repairTImesList,
+                        labelKey: 'name',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择修次",
+                        clickCallBack: (selectItem, selectArr) {
+                          if (mounted) {
+                            setState(() {
+                              logger.i(selectArr);
+                              repairTimesSelected["name"] = selectItem["name"];
+                              //将主键进行选取
+                              repairTimesSelected["code"] = selectItem["code"];
+                            });
+                          }
+                        },
+                      );
                     }
                   },
-                );
-              }
-            },
+                ),
+              ),
+            ],
           ),
-          //修次筛选框
-          ZjcFormSelectCell(
-            title: "修次",
-            text: repairTimesSelected["name"] ?? '',
-            hintText: "请选择",
-            showRedStar: true,
-            clickCallBack: () {
-              if (repairTImesList.isEmpty) {
-                showToast("无修次信息");
-              } else {
-                ZjcCascadeTreePicker.show(
-                  context,
-                  data: repairTImesList,
-                  labelKey: 'name',
-                  valueKey: 'code',
-                  childrenKey: 'children',
-                  title: "选择修次",
-                  clickCallBack: (selectItem, selectArr) {
-                    if (mounted) {
-                      setState(() {
-                        logger.i(selectArr);
-                        repairTimesSelected["name"] = selectItem["name"];
-                        //将主键进行选取
-                        repairTimesSelected["code"] = selectItem["code"];
-                      });
-                    }
-                  },
-                );
-              }
-            },
-          ),
+// ... existing code ...
           // 车号填写
           ZjcFormSelectCell(
             title: "检修地点",

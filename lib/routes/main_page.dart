@@ -99,15 +99,12 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             onPageChanged: onPageChanged,
             children: const <Widget>[
               NormalMainPage(),
-              MainScanner(),
               PersonPage(),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: '主菜单'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.qr_code_2_sharp), label: '扫码'),
+              BottomNavigationBarItem(icon: Icon(Icons.work), label: '工作'),
               BottomNavigationBarItem(
                   icon: Icon(Icons.person), label: '我的'),
             ],
@@ -119,19 +116,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             backgroundColor: Colors.white,
           ),
         ),
-        Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 25.0),
-            child: FloatingActionButton(
-                onPressed: onBigImgTap,
-                backgroundColor: Colors.blue,
-                child: const Icon(
-                  Icons.qr_code_scanner,
-                  color: Colors.white,
-                )),
-          ),
-        ),
+
       ],
     );
   }
