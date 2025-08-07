@@ -54,8 +54,6 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "login": (context) => const LoginRoute(),
         // 入段车辆查看
         "enter_list": (context) => const EnterList(),
-        // 新增入段
-        "sec_enter": (context) => const SecEnter(),
         // 新增入段修改
         // "sec_enter_modify": (context) => const SecEnterModify(),
         "sec_enter_modify": (context) => const SecEnterModifyNew(),

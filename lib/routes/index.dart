@@ -5,7 +5,6 @@ export 'main_scanner.dart';
 export 'qr_searchpage.dart';
 export 'rotable/rotable_mainpage.dart';
 export 'rotable/truck_sacn.dart';
-export 'production/sec_enter.dart';
 export 'production/enter_list.dart';
 export 'person/person_page.dart';
 export 'person/mypageitems.dart';

@@ -426,12 +426,11 @@ class ProductApi extends AppApi {
   }
 
   //查询机车预派工机车
-  Future<dynamic> getNotEnterTrainPlan({Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> getNotEnterTrainPlan(
+      {Map<String, dynamic>? queryParameters}) async {
     try {
-      var r = await AppApi.dio.post(
-        "/plan/repairPlan/getNotEnterTrainPlan",
-        data: queryParameters
-      );
+      var r = await AppApi.dio
+          .post("/plan/repairPlan/getNotEnterTrainPlan", data: queryParameters);
       logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
     } catch (e) {
@@ -587,11 +586,17 @@ class ProductApi extends AppApi {
 
   // 上传防溜照片
   Future<int> upSlipImg(
-      {Map<String, dynamic>? queryParametrs, File? imagedata}) async {
+      {Map<String, dynamic>? queryParametrs, List<File>? imagedataList}) async {
     try {
+      List<MultipartFile> multipartFiles = [];
+      for (var file in imagedataList!) {
+        var multipartFile = await MultipartFile.fromFile(file.path);
+        multipartFiles.add(multipartFile);
+      }
+
       FormData formData = FormData.fromMap({
         "trainEntryCode": queryParametrs!["trainEntryCode"],
-        "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
+        "uploadFileList": multipartFiles
       });
       var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
@@ -835,6 +840,26 @@ class ProductApi extends AppApi {
       logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
+    }
+  }
+
+  //获取配属段信息
+  Future<dynamic> getAssociatedSegment(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      Map<String, dynamic> queryParametrs = {
+        'pageNum':0,
+        'pageSize':0
+      };
+      var r = await AppApi.dio.get(
+        "/dispatch/jcAssignSegment/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
     }
   }
 

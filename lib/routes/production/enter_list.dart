@@ -92,7 +92,7 @@ class _EnterList extends State<EnterList> {
                     );
                   }
                 }
-                return EntryTrainItem(_items[index], () => update());
+                // return EntryTrainItem(_items[index], () => update());
               },
               separatorBuilder: (context, index) => const SizedBox(
                 height: .0,

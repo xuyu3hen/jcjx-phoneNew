@@ -66,6 +66,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   // 筛选的车号信息
   late Map<dynamic, dynamic> trainNumSelected = {};
 
+  //配属段列表
+  late List<Map<String, dynamic>> assignSegmentList = [];
+  //配属段选择
+  late Map<dynamic, dynamic> assignSegmentSelected = {};
+
   late String trainNum = '';
 
   // 图片传输相关变量定义
@@ -80,6 +85,32 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     super.initState();
     getDynamicType();
     getStopLocation();
+    getAssignSegment();
+  }
+
+
+  //获取配属段
+  void getAssignSegment() async {
+    try {
+      var r = await ProductApi().getAssociatedSegment();
+      logger.i('getAssociatedSegment response: $r');
+      if (r != null && r['rows'] != null && r['rows'].isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            //将获取的信息列表
+            assignSegmentList = List<Map<String, dynamic>>.from(r['rows']);
+          });
+        }
+      } else if (r != null && r is List) {
+        if (mounted) {
+          setState(() {
+            assignSegmentList = List<Map<String, dynamic>>.from(r);
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.e('getAssignSegment 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   // 获取动态类型
@@ -314,6 +345,9 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         repairSelected["code"] = r["repairProcCode"];
         repairTimesSelected['name'] = r["repairTimes"];
         repairTimesSelected['code'] = r["repairTimesCode"];
+        //配属段信息
+        assignSegmentSelected['assignSegment'] = r['attachDept'];
+        assignSegmentSelected['code'] = r['attachSegmentCode'];
       });
     } catch (e, stackTrace) {
       logger.e('getRepairPlanByTrainNum 方法中发生异常: $e\n堆栈信息: $stackTrace');
@@ -332,19 +366,26 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     );
   }
 
-  // 上传防溜函数
   Future<dynamic> uploadSlip(val) async {
     if (faultPics.isNotEmpty) {
-      var file = faultPics[0];
-      logger.i(file);
-      logger.i('val' + val);
-      var r = await ProductApi().upSlipImg(
-          queryParametrs: {"trainEntryCode": val}, imagedata: File(file.path));
-      if (r == 200) {
-        // showToast("上传成功");
-        SmartDialog.dismiss();
-        // _image = null;
-        // widget.updateList.call();
+      try {
+        var r = await ProductApi().upSlipImg(
+            queryParametrs: {"trainEntryCode": val}, imagedataList: faultPics);
+        if (r == 200) {
+          // showToast("上传成功");
+          SmartDialog.dismiss();
+          // 上传成功后才清除图片
+          faultPics.clear();
+          assestPics.clear();
+          // _image = null;
+          // widget.updateList.call();
+        } else {
+          // 如果上传失败，抛出异常供上层捕获
+          throw Exception('图片上传失败，服务器返回状态码: $r');
+        }
+      } catch (e, stackTrace) {
+        logger.e('uploadSlip 方法中发生异常: $e\n堆栈信息: $stackTrace');
+        rethrow; // 重新抛出异常
       }
     }
   }
@@ -368,6 +409,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'repairProcName': repairSelected['name'],
         'repairProcCode': repairSelected['code'],
         'repairLocation': stopLocationSelected["code"],
+        'attachSegmentCode': assignSegmentSelected['code'],
+        'attachDept': assignSegmentSelected['assignSegment'],
       };
       try {
         var r = await ProductApi().trainEntrySave(queryParameter);
@@ -389,7 +432,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           try {
             SmartDialog.showLoading(msg: '正在入段');
             await uploadSlip(r['data']['code']);
-            // showToast("新增入修成功");
             return r["code"];
           } catch (e, stackTrace) {
             logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
@@ -400,7 +442,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           }
         } else {
           if (r["data"]["code"] == 500) {
-            showToast("存在相同在修机车");
+            showToast(r["data"]["msg"]);
           }
           return "";
         }
@@ -423,7 +465,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             title: "动力类型",
             text: dynamicTypeSelected["name"] ?? '',
             hintText: "请选择",
-            showRedStar: true,
             clickCallBack: () {
               if (dynamicTypeList.isEmpty) {
                 showToast("无动力类型选择");
@@ -453,72 +494,103 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             children: [
               Flexible(
                 flex: 1,
-                child: ZjcFormSelectCell(
-                  // 删除 title: "机型",
-                  text: jcTypeListSelected["name"] ?? '',
-                  hintText: "请选择机型",
-                  showRedStar: true,
-                  clickCallBack: () {
-                    if (jcTypeList.isEmpty) {
-                      showToast("无机型可以选择");
-                    } else {
-                      ZjcCascadeTreePicker.show(
-                        context,
-                        data: jcTypeList,
-                        labelKey: 'name',
-                        valueKey: 'code',
-                        childrenKey: 'children',
-                        title: "选择机型",
-                        clickCallBack: (selectItem, selectArr) {
-                          if (mounted) {
-                            setState(() {
-                              logger.i(selectArr);
-                              jcTypeListSelected["name"] = selectItem["name"];
-                              jcTypeListSelected["code"] = selectItem["code"];
-                              // getTrainNumCodeList();
-                              // 在这里添加获取车号等后续逻辑，如果有的话
-                            });
-                          }
-                        },
-                      );
-                    }
-                  },
+                child: SizedBox(
+                  height: 60, // 设置统一高度
+                  child: ZjcFormSelectCell(
+                    text: jcTypeListSelected["name"] ?? '',
+                    hintText: "请选择机型",
+                    clickCallBack: () {
+                      if (jcTypeList.isEmpty) {
+                        showToast("无机型可以选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: jcTypeList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择机型",
+                          clickCallBack: (selectItem, selectArr) {
+                            if (mounted) {
+                              setState(() {
+                                logger.i(selectArr);
+                                jcTypeListSelected["name"] = selectItem["name"];
+                                jcTypeListSelected["code"] = selectItem["code"];
+                                // getTrainNumCodeList();
+                                // 在这里添加获取车号等后续逻辑，如果有的话
+                              });
+                            }
+                          },
+                        );
+                      }
+                    },
+                  ),
                 ),
               ),
               Expanded(
                 flex: 2,
-                child: ZjcFormInputCell(
-                  title: "车号",
-                  hintText: "车号",
-                  showRedStar: true,
-                  rightWidget: Container(
-                    margin: const EdgeInsets.only(top: 8, bottom: 8),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        getRepairPlanByTrainNum();
-                      },
-                      icon: const Icon(Icons.search), // 可选：保留小图标
-                      label: const Text("查询计划"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightBlue[100],
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 8),
-                        minimumSize: Size(60, 30),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  height: 60, // 设置统一高度
+                  child: ZjcFormInputCell(
+                    title: "车号",
+                    hintText: "车号",
+                    rightWidget: Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          getRepairPlanByTrainNum();
+                        },
+                        icon: const Icon(Icons.search), // 可选：保留小图标
+                        label: const Text("查询计划"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.lightBlue[100],
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 8),
+                          minimumSize: const Size(60, 30),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
                     ),
+                    inputCallBack: (value) {
+                      setState(() {
+                        trainNumSelected["trainNum"] = value;
+                      });
+                    },
                   ),
-                  inputCallBack: (value) {
-                    setState(() {
-                      trainNumSelected["trainNum"] = value;
-                    });
-                  },
                 ),
               ),
             ],
+          ),
+          ZjcFormSelectCell(
+            title: "配属段",
+            text: assignSegmentSelected["assignSegment"] ?? '',
+            hintText: "请选择",
+            clickCallBack: () {
+              if (assignSegmentList.isEmpty) {
+                showToast("无配属段可选择");
+              } else {
+                ZjcCascadeTreePicker.show(
+                  context,
+                  data: assignSegmentList,
+                  labelKey: 'assignSegment',
+                  valueKey: 'code',
+                  childrenKey: 'children1',
+                  title: "选择配属段",
+                  clickCallBack: (selectItem, selectArr) {
+                    logger.i(selectArr);
+                    if (mounted) {
+                      setState(() {
+                        assignSegmentSelected["code"] = selectItem["code"];
+                        assignSegmentSelected["assignSegment"] = selectItem["assignSegment"];
+                      });
+                    }
+                  },
+                );
+              }
+            },
           ),
           Row(
             children: [
@@ -528,7 +600,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   title: "修程",
                   text: repairSelected["name"] ?? '',
                   hintText: "请选择",
-                  showRedStar: true,
                   clickCallBack: () {
                     if (repairList.isEmpty) {
                       showToast("无修程信息");
@@ -563,7 +634,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   title: "修次",
                   text: repairTimesSelected["name"] ?? '',
                   hintText: "请选择",
-                  showRedStar: true,
                   clickCallBack: () {
                     if (repairTImesList.isEmpty) {
                       showToast("无修次信息");
@@ -592,13 +662,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               ),
             ],
           ),
-// ... existing code ...
-          // 车号填写
           ZjcFormSelectCell(
             title: "检修地点",
             text: stopLocationSelected["realLocation"],
             hintText: "请选择",
-            showRedStar: true,
             clickCallBack: () {
               if (stopLocationList.isEmpty) {
                 showToast("无检修地点可选择");
@@ -622,7 +689,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               }
             },
           ),
-          // 在_buildBody()方法中的图片选择器组件
           Container(
             padding: const EdgeInsets.all(10),
             margin: const EdgeInsets.all(10),
@@ -633,25 +699,26 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('防溜图片',
+                const Text('车号及防溜情况确认',
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
+// ... existing code ...
                 ZjcAssetPicker(
                   assetType: APC.AssetType.image,
-                  maxAssets: 1,
+                  maxAssets: 4,
                   selectedAssets: assestPics,
+                  lineCount: 4,
                   callBack: (assetEntityList) async {
                     logger.i('assetEntityList-------------');
                     logger.i(assetEntityList);
-                    if (assetEntityList.isNotEmpty) {
-                      var asset = assetEntityList[0];
+                    // 不要清空 faultPics，而是重新赋值
+                    faultPics = [];
+                    for (var asset in assetEntityList) {
                       var pic = await asset.file;
                       logger.i(await asset.file);
                       logger.i(await asset.originFile);
-                      faultPics.insert(0, pic!);
-                    } else {
-                      faultPics = [];
+                      faultPics.add(pic!);
                     }
                     logger.i('assetEntityList-------------');
                   },
