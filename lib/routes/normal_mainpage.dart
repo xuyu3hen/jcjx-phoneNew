@@ -19,8 +19,9 @@ class _NormalMainPageState extends State<NormalMainPage> {
   var logger = AppLogger.logger;
 
   @override
-  void initState() {
-    super.initState();
+  void initState()  {
+      super.initState();
+    initPermissions();
   }
 
   @override
@@ -30,6 +31,23 @@ class _NormalMainPageState extends State<NormalMainPage> {
       _timer!.cancel();
     }
     super.dispose();
+  }
+
+  void initPermissions() async{
+        Permissions p = await LoginApi().getpermissions();
+    if (p.code == 200) {
+      Global.profile.permissions = p;
+    } else {
+      showToast("获取用户账号信息失败");
+    }
+    Map<String, dynamic> queryParameters = {};
+    if (Global.profile.permissions?.user.dept?.parentId != null) {
+      queryParameters['idList'] =
+          Global.profile.permissions?.user.dept?.parentId;
+      var r = await ProductApi().getDeptByDeptIdList(queryParameters);
+      logger.i(r);
+      Global.parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
+    }
   }
 
   @override
@@ -49,7 +67,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
-  Widget _buildFeatureItem(Icon icon, VoidCallback onTap, String title, {int? num}) {
+  Widget _buildFeatureItem(Icon icon, VoidCallback onTap, String title,
+      {int? num}) {
     return SizedBox(
       width: (MediaQuery.of(context).size.width) / 3,
       height: (MediaQuery.of(context).size.width) / 4,

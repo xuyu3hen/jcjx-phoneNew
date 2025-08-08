@@ -17,7 +17,7 @@ class Global {
   static late SharedPreferences _prefs;
   static Profile profile = Profile(theme: 0);
 
-
+  static String? parentDeptName;
   
   // 可选的主题列表
   static List<MaterialColor> get themes => _theme;

@@ -132,20 +132,11 @@ class _PersonPageState extends State<PersonPage> {
 
 
   Future<Widget> _buildByState(BuildContext context) async {
-    String? parentDeptName;
     UserModel usermodel = Provider.of<UserModel>(context);
-    Map<String, dynamic> queryParameters = {};
-    if (Global.profile.permissions?.user.dept?.parentId != null) {
-      queryParameters['idList'] =
-          Global.profile.permissions?.user.dept?.parentId;
-      var r = await ProductApi().getDeptByDeptIdList(queryParameters);
-      logger.i(r);
-      parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
-    }
 
- 
+
     if (usermodel.isLogin) {
-      if (parentDeptName != null) {
+      if (Global.parentDeptName != null) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -154,7 +145,7 @@ class _PersonPageState extends State<PersonPage> {
               style: AppConstants.textStylePerson,
             ),
             Text(
-              "$parentDeptName -${Global.profile.permissions?.user.dept?.deptName}",
+              "${Global.parentDeptName} -${Global.profile.permissions?.user.dept?.deptName}",
               style: AppConstants.textStylePerson,
             ),
           ],

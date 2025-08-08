@@ -323,7 +323,6 @@ class _LoginRouteState extends State<LoginRoute> {
         );
         if (mounted) {
           if (r.code == 200) {
-            // print("显示token:${r.data?.access_token}");
             profile = r;
             Global.profile = profile;
             Provider.of<UserModel>(context, listen: false).accessToken =
@@ -333,12 +332,7 @@ class _LoginRouteState extends State<LoginRoute> {
             _saveCredentials(
                 _unameController.text, _pwdController.text, rememberPassword);
 
-            // Permissions p = await LoginApi().getpermissions();
-            // if(p.code == 200){
-            //   Global.profile.permissions = p;
-            // }else{
-            //   showToast("获取用户账号信息失败");
-            // }
+
             AppApi.init();
           } else {
             // 登录失败，显示错误信息
