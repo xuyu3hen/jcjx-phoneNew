@@ -6,6 +6,7 @@ export 'widgets/index.dart';
 export 'utils/index.dart';
 export 'api/index.dart';
 export 'package:flutter/material.dart';
+
 export 'package:provider/provider.dart';
 export 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 export 'myapp.dart';
@@ -25,6 +26,7 @@ export 'dart:convert';
 export 'package:qr_code_scanner/qr_code_scanner.dart';
 export 'package:shared_preferences/shared_preferences.dart';
 export 'package:flutter_xupdate/flutter_xupdate.dart';
+
 
 /*
   // flavors的元素备份

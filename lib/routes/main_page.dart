@@ -1,5 +1,6 @@
 
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
+import 'package:jcjx_phone/routes/production/repair_train.dart';
 import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
@@ -81,6 +82,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'repairProgress': (context) => const RepairProgress(),
         'jt28': (context) => const JtRepairPage(), 
         'jt28Show':(context) => const JtShow(),
+        'trainRepairInfo':(context) => const TrainRepairPage()
       },
       builder: FlutterSmartDialog.init(),
     );

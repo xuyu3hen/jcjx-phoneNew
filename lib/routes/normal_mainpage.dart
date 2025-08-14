@@ -22,6 +22,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
   void initState()  {
       super.initState();
     initPermissions();
+    initRepairProc();
   }
 
   @override
@@ -47,6 +48,20 @@ class _NormalMainPageState extends State<NormalMainPage> {
       var r = await ProductApi().getDeptByDeptIdList(queryParameters);
       logger.i(r);
       Global.parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
+    }
+  }
+
+  // 初始化修程信息
+  void initRepairProc() async  {
+    Map<String, dynamic> queryParameters = {
+      'pageNum':0,
+      'pageSize': 0
+    };
+    var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
+    if(r.code == 200){
+        r.rows?.forEach((element) {
+          Global.repairProcInfo.add(element.toJson());
+        });
     }
   }
 
@@ -107,7 +122,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               ),
               _buildFeatureItem(
                 Icon(Icons.build, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'searchWorkPackage'),
+                () => Navigator.pushNamed(context, 'trainRepairInfo'),
                 '检修作业',
               ),
             ],

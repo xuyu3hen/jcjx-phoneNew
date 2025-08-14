@@ -847,10 +847,7 @@ class ProductApi extends AppApi {
   Future<dynamic> getAssociatedSegment(
       {Map<String, dynamic>? queryParametrs}) async {
     try {
-      Map<String, dynamic> queryParametrs = {
-        'pageNum':0,
-        'pageSize':0
-      };
+      Map<String, dynamic> queryParametrs = {'pageNum': 0, 'pageSize': 0};
       var r = await AppApi.dio.get(
         "/dispatch/jcAssignSegment/selectAll",
         queryParameters: queryParametrs,
@@ -928,12 +925,62 @@ class ProductApi extends AppApi {
   //获取subparts/jcDynamicType/selectAll
   Future<dynamic> getJcDynamicType(
       {Map<String, dynamic>? queryParametrs}) async {
-    var r = await AppApi.dio.get(
-      "/subparts/jcDynamicType/selectAll",
-      queryParameters: queryParametrs,
-    );
-    logger.i(r.data["data"]);
-    return (r.data["data"])["data"];
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/jcDynamicType/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      logger.e(e);
+    }
+  }
+
+  // 获取dispatch/trainEntry/getRepairingTrainEntryByUserId
+  Future<dynamic> getRepairingTrainEntryByUserId(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getRepairingTrainEntryByUserId",
+        queryParameters: queryParametrs,
+      );
+      // logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 获取dispatch/trainEntry/getRepairingTrainEntryByUserId
+  Future<dynamic> getRepairingTrainEntryByUserIdAndRepairProcCode(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCode",
+        queryParameters: queryParametrs,
+      );
+      // logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 获取dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCode
+  Future<dynamic>
+      getRepairingTrainEntryByUserIdAndRepairProcCodeAndRepairSegment(
+          {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCodeAndRepairSegment",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
   }
 
   //获取subparts/jcType/selectAll
