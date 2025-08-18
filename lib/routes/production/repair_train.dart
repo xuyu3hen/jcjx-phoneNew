@@ -694,13 +694,19 @@ class PreparationDetailPage extends StatelessWidget {
   final String? repairMainCode;
   //机车信息
   final Map<String, dynamic>? locoInfo;
+  
   PreparationDetailPage({Key? key, this.locoInfo, this.repairMainCode})
       : super(key: key);
   Map<String, dynamic> numberInfo = {};
 
   //获取待作业数量
   void getNumber() {
-    Map<String, dynamic> params = {};
+
+    Map<String, dynamic> params = {
+      "repairMainNodeCode":,
+      "trainEntryCode":,
+      "userId": Global.profile.permissions?.user.userId
+    };
     ProductApi().getPackageAndInspectionStatistics(queryParametrs: params);
   }
 
