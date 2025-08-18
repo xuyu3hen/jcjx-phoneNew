@@ -502,7 +502,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PreparationDetailPage(locoInfo: repairTrainInfo[index]),
+                builder: (context) =>
+                    PreparationDetailPage(locoInfo: repairTrainInfo[index]),
               ),
             );
           },
@@ -689,9 +690,19 @@ Widget _buildTodoItem(String label, String value) {
 }
 
 class PreparationDetailPage extends StatelessWidget {
-
+  //主流程节点主键
+  final String? repairMainCode;
+  //机车信息
   final Map<String, dynamic>? locoInfo;
-  const PreparationDetailPage({Key? key, this.locoInfo}) : super(key: key);
+  PreparationDetailPage({Key? key, this.locoInfo, this.repairMainCode})
+      : super(key: key);
+  Map<String, dynamic> numberInfo = {};
+
+  //获取待作业数量
+  void getNumber() {
+    Map<String, dynamic> params = {};
+    ProductApi().getPackageAndInspectionStatistics(queryParametrs: params);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -702,7 +713,6 @@ class PreparationDetailPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('检修作业-明细'),
-     
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -729,23 +739,28 @@ class PreparationDetailPage extends StatelessWidget {
             Column(
               children: const [
                 TaskCard(
-                  title: '待整备',
-                  subtitle: '当前机车下未完成项点总数',
+                  title: '待作业',
+                  subtitle: '当前机车下未完成作业包总数',
                   count: '0/4',
                 ),
+                // TaskCard(
+                //   title: '待派工',
+                //   subtitle: '当前机车下需处理的活件总数',
+                //   count: '1',
+                // ),
+                // TaskCard(
+                //   title: '待销活',
+                //   subtitle: '当前机车下本人需要销活的活件总数',
+                //   count: '1',
+                // ),
                 TaskCard(
-                  title: '待派工',
-                  subtitle: '当前机车下需处理的活件总数',
+                  title: '待互检',
+                  subtitle: '当前机车下本人需要互检的活件总数',
                   count: '1',
                 ),
                 TaskCard(
-                  title: '待销活',
-                  subtitle: '当前机车下本人需要销活的活件总数',
-                  count: '1',
-                ),
-                TaskCard(
-                  title: '待专互检',
-                  subtitle: '当前机车下本人需要专互检的活件总数',
+                  title: '待专检',
+                  subtitle: '当前机车下本人需要专检的活件总数',
                   count: '1',
                 ),
               ],
@@ -756,7 +771,6 @@ class PreparationDetailPage extends StatelessWidget {
     );
   }
 
-// ... existing code ...
   Widget _buildTrainInfo() {
     final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
     return Column(
@@ -785,28 +799,28 @@ class PreparationDetailPage extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         // 每一项单独一行显示
-        _InfoItem(label: '停留地点', value: locoInfo?['stopPlace'] != "null-null" 
-            ? (locoInfo?['stopPlace'] ?? '无') 
-            : '无'),
+        _InfoItem(
+            label: '停留地点',
+            value: locoInfo?['stopPlace'] != "null-null"
+                ? (locoInfo?['stopPlace'] ?? '无')
+                : '无'),
         const SizedBox(height: 8),
         _InfoItem(
             label: '工序转入时间',
             value: locoInfo != null && locoInfo!['mainNodeChangeTime'] != null
-                ? timeFormat.format(DateTime.parse(locoInfo!['mainNodeChangeTime']))
+                ? timeFormat
+                    .format(DateTime.parse(locoInfo!['mainNodeChangeTime']))
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
             label: '工序转出时间',
             value: locoInfo != null && locoInfo!['theoreticEndTime'] != null
-                ? timeFormat.format(DateTime.parse(locoInfo!['theoreticEndTime']))
+                ? timeFormat
+                    .format(DateTime.parse(locoInfo!['theoreticEndTime']))
                 : '无'),
-        const SizedBox(height: 8),
-        _InfoItem(label: '调令查询', value: locoInfo?['dispatchOrder'] ?? '无'),
-
       ],
     );
   }
-
 
   Widget _buildActionButtons() {
     return Row(
@@ -817,7 +831,16 @@ class PreparationDetailPage extends StatelessWidget {
             backgroundColor: Colors.tealAccent.shade700,
             foregroundColor: Colors.white,
           ),
-          child: const Text('查看机车详情'),
+          child: const Text('机车详情查询'),
+        ),
+        const SizedBox(width: 16),
+        ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('检修调度命令'),
         ),
         const SizedBox(width: 16),
         ElevatedButton(
@@ -826,7 +849,7 @@ class PreparationDetailPage extends StatelessWidget {
             backgroundColor: Colors.redAccent,
             foregroundColor: Colors.white,
           ),
-          child: const Text('报机统28'),
+          child: const Text('机统28提报'),
         ),
       ],
     );
@@ -878,46 +901,294 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade400,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: () {
+        if (title == '待作业') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyApp()),
+          );
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade400,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            count,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              ],
             ),
+            Text(
+              count,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '检修作业-作业包',
+      theme: ThemeData(primarySwatch: Colors.grey),
+      home: const InspectionPackagePage(),
+    );
+  }
+}
+
+/// 机车信息模型
+class Locomotive {
+  final String id; // 机车编号（如 HXD3C 0016）
+  final DateTime inTime; // 入段时间
+  final String track; // 股道
+  final String planTrain; // 计划车次
+  final String planOut; // 计划出库
+  final String status; // 整备状态（如“整备中”）
+
+  Locomotive({
+    required this.id,
+    required this.inTime,
+    required this.track,
+    required this.planTrain,
+    required this.planOut,
+    required this.status,
+  });
+}
+
+/// 作业项模型（如车内2、车底等）
+class TaskItem {
+  final String name; // 作业名称（如“车内2”）
+  final int completed; // 已完成数量（如 0）
+  final int total; // 总数量（如 16）
+  final String userStatus; // 领用人状态（如“未申领”）
+
+  TaskItem({
+    required this.name,
+    required this.completed,
+    required this.total,
+    required this.userStatus,
+  });
+}
+
+class InspectionPackagePage extends StatefulWidget {
+  const InspectionPackagePage({super.key});
+
+  @override
+  State<InspectionPackagePage> createState() => _InspectionPackagePageState();
+}
+
+class _InspectionPackagePageState extends State<InspectionPackagePage> {
+  // 模拟机车数据
+  final Locomotive _locomotive = Locomotive(
+    id: "HXD3C 0016",
+    inTime: DateTime(2023, 2, 24, 14, 58, 15),
+    track: "J2道机",
+    planTrain: "无",
+    planOut: "无",
+    status: "整备中",
+  );
+
+  // 模拟作业项数据
+  final List<TaskItem> _tasks = [
+    TaskItem(name: "车内2", completed: 0, total: 16, userStatus: "未申领"),
+    TaskItem(name: "车底", completed: 0, total: 8, userStatus: "未申领"),
+    TaskItem(name: "车外", completed: 0, total: 15, userStatus: "未申领"),
+    TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text("整备作业-作业包"),
+        backgroundColor: Colors.white,
+        elevation: 1,
+      ),
+      body: SingleChildScrollView(
+        // 支持滚动（防止内容溢出）
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. 机车基本信息
+            _buildLocomotiveInfo(_locomotive, timeFormat),
+            const SizedBox(height: 16),
+
+            // 2. 作业项列表
+            ..._tasks.map((task) => _buildTaskItem(task)).toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建机车基本信息区域
+  Widget _buildLocomotiveInfo(Locomotive loco, DateFormat timeFormat) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 编号 + 入段时间
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              loco.id,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "入段: ${timeFormat.format(loco.inTime)}",
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // 股道 + 计划车次 + 计划出库 + 状态
+        Row(
+          children: [
+            _buildInfoItem("股道", loco.track),
+            const SizedBox(width: 24),
+            _buildInfoItem("计划车次", loco.planTrain),
+            const SizedBox(width: 24),
+            _buildInfoItem("计划出库", loco.planOut),
+            const SizedBox(width: 24),
+            _buildInfoItem("状态", loco.status),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// 辅助方法：信息项（标签+值）
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
           ),
-        ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建单个作业项（如车内2、车底）
+  Widget _buildTaskItem(TaskItem task) {
+    final progress = task.total == 0 ? 0.0 : task.completed / task.total;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 文件夹图标
+            Icon(
+              Icons.folder,
+              color: Colors.yellow.shade700,
+              size: 32,
+            ),
+            const SizedBox(width: 12),
+
+            // 作业名称 + 进度文本 + 进度条
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 名称 + 进度（如“车内2 0/16”）
+                  Text(
+                    "${task.name} ${task.completed}/${task.total}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // 进度条
+                  LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.grey[200],
+                    color: Colors.blue,
+                    minHeight: 8,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // 领用人状态（如“未申领”）
+            Text(
+              task.userStatus,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -967,6 +967,21 @@ class ProductApi extends AppApi {
     }
   }
 
+  // 获取tasks/taskInstructPackage/getPackageAndInspectionStatistics
+  Future<dynamic> getPackageAndInspectionStatistics(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getPackageAndInspectionStatistics",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
+  }
+
   // 获取dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCode
   Future<dynamic>
       getRepairingTrainEntryByUserIdAndRepairProcCodeAndRepairSegment(

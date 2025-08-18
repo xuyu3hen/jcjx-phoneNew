@@ -6,6 +6,7 @@ import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 import '../../config/filter_data.dart';
 import '../../index.dart';
+import 'package:intl/intl.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
 class Vehicle28Form extends StatefulWidget {
@@ -228,7 +229,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28"),
+        title: const Text("机统28提报"),
       ),
       // resizeToAvoidBottomInset: false,
       body: _buildBody(),
@@ -676,3 +677,5 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     }
   }
 }
+
+
