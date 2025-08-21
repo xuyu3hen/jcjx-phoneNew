@@ -565,7 +565,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                     ),
                   ],
                 ),
-                // ... existing code ...
           ])
           ],
         ));

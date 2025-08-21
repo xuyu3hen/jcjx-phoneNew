@@ -805,18 +805,45 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   count:
                       '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                                    onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                             JtShow()),
+                    );
+                  },
                 ),
                 TaskCard(
                   title: '待互检作业',
                   subtitle: '工序互检作业清单',
                   count: '${numberInfo['mutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                                    onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              MutualList()),
+                    );
+                  },
                 ),
                 TaskCard(
                   title: '待专检作业',
                   subtitle: '工序专检作业清单',
                   count: '${numberInfo['specialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                                    onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              SpecialList()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -1256,7 +1283,6 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
   /// 构建单个作业项（如车内2、车底）
-  /// 构建单个作业项（如车内2、车底）
   Widget _buildTaskItem(Map<String, dynamic> task) {
     final progress = task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
@@ -1265,7 +1291,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const MyApp(),
+            builder: (context) =>  InspectionVertexPage(locoInfo: widget.locoInfo, packageInfo: task,),
           ),
         );
       },
@@ -1333,21 +1359,15 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 }
 
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '检修作业-顶点',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const InspectionVertexPage(),
-    );
-  }
-}
-
 class InspectionVertexPage extends StatefulWidget {
-  const InspectionVertexPage({super.key});
+  
+  Map<String, dynamic>? packageInfo = {};
+  Map<String, dynamic>? locoInfo = {};
+
+  
+  InspectionVertexPage({super.key,  required this.packageInfo,  required this.locoInfo});
+
+
 
   @override
   State<InspectionVertexPage> createState() => _InspectionVertexPageState();
@@ -1365,12 +1385,12 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("整备作业-顶点"),
+        title: const Text("检修作业-顶点"),
         actions: [
           TextButton(
             onPressed: _reportJT6, // 报JT6逻辑（可扩展）
             child: const Text(
-              "报JT6",
+              "报机统28",
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -1382,7 +1402,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. 机车基本信息
-            _buildLocomotiveInfo(),
+            _buildTrainInfo(),
             const SizedBox(height: 16),
 
             // 2. 整备进度条（模拟50%进度）
@@ -1399,7 +1419,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "车外",
+                  "$",
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1428,7 +1448,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  "3右轴箱组装检查",
+                  "$",
                   style: TextStyle(
                     color: Colors.red,
                     fontSize: 16,
@@ -1555,39 +1575,57 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   }
 
   // ---------------------- 辅助方法：机车信息展示 ----------------------
-  Widget _buildLocomotiveInfo() {
+  /// 构建机车基本信息区域
+  Widget _buildTrainInfo() {
+    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 机车编号
-        Text(
-          "HXD3C 0016",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        // 入段时间
-        Text(
-          "入段:2023-02-27 09:32:39",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 8),
-        // 股道、计划车次等信息
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildInfoItem("股道", "J2道机"),
-            const SizedBox(width: 24),
-            _buildInfoItem("计划车次", "无"),
-            const SizedBox(width: 24),
-            _buildInfoItem("计划出库", "无"),
-            const SizedBox(width: 24),
-            _buildInfoItem("状态", "整备中"),
+            Text(
+              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              widget.locoInfo != null &&
+                      widget.locoInfo!['arrivePlatformTime'] != null
+                  ? '入段:${timeFormat.format(DateTime.parse(widget.locoInfo!['arrivePlatformTime']))}'
+                  : '入段:',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
           ],
         ),
+        const SizedBox(height: 8),
+        // 每一项单独一行显示
+        _InfoItem(
+            label: '停留地点',
+            value: widget.locoInfo?['stopPlace'] != "null-null"
+                ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
+            label: '工序转入时间',
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['mainNodeChangeTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['mainNodeChangeTime']))
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
+            label: '工序转出时间',
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['theoreticEndTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['theoreticEndTime']))
+                : '无'),
       ],
     );
   }
