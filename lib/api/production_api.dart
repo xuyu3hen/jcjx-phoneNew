@@ -221,7 +221,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/selectAll",
         queryParameters: queryParametrs,
       );
-      log("getRepairPlanList${r.data}");
+      // log("getRepairPlanList${r.data}");
       return RepairPlanList.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
@@ -692,6 +692,21 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskInstructPackage/getIndividualTaskPackage",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return WorkPackageList(data: []);
+    }
+  }
+
+  // tasks/taskInstructPackage/getPersonalPackageList
+  Future<dynamic> getPersonalPackageList({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getPersonalPackageList",
         queryParameters: queryParametrs,
       );
       logger.i(r.data["data"]);

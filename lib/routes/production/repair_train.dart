@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 import '../../index.dart';
+import '../vehicle28/submit28_work.dart';
+
 
 /// 主页面：机车检修
 class TrainRepairPage extends StatefulWidget {
@@ -689,25 +691,50 @@ Widget _buildTodoItem(String label, String value) {
   );
 }
 
-class PreparationDetailPage extends StatelessWidget {
+class PreparationDetailPage extends StatefulWidget {
   //主流程节点主键
   final String? repairMainCode;
   //机车信息
   final Map<String, dynamic>? locoInfo;
-  
-  PreparationDetailPage({Key? key, this.locoInfo, this.repairMainCode})
+
+  const PreparationDetailPage({Key? key, this.locoInfo, this.repairMainCode})
       : super(key: key);
+
+  @override
+  _PreparationDetailPageState createState() => _PreparationDetailPageState();
+}
+
+class _PreparationDetailPageState extends State<PreparationDetailPage> {
   Map<String, dynamic> numberInfo = {};
 
   //获取待作业数量
-  void getNumber() {
-
+  void getNumber() async {
     Map<String, dynamic> params = {
-      "repairMainNodeCode":,
-      "trainEntryCode":,
+      "trainEntryCode": widget.locoInfo?['code'],
       "userId": Global.profile.permissions?.user.userId
     };
-    ProductApi().getPackageAndInspectionStatistics(queryParametrs: params);
+    try {
+      var r = await ProductApi()
+          .getPackageAndInspectionStatistics(queryParametrs: params);
+      if (mounted) {
+        setState(() {
+          if (r is Map) {
+            numberInfo = Map<String, dynamic>.from(r);
+          } else if (r is Map<String, dynamic>) {
+            numberInfo = r;
+          }
+        });
+      }
+    } catch (e) {
+      // 处理错误情况
+      print('Error fetching package and inspection statistics: $e');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getNumber();
   }
 
   @override
@@ -719,6 +746,8 @@ class PreparationDetailPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('检修作业-明细'),
+        backgroundColor: Colors.white,
+        elevation: 1,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -735,7 +764,7 @@ class PreparationDetailPage extends StatelessWidget {
 
             // 任务统计区
             const Text(
-              '任务处理项',
+              '作业清单',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -743,11 +772,22 @@ class PreparationDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Column(
-              children: const [
+              children: [
                 TaskCard(
-                  title: '待作业',
-                  subtitle: '当前机车下未完成作业包总数',
-                  count: '0/4',
+                  title: '待范围作业',
+                  subtitle: '工序节点范围作业包清单',
+                  count:
+                      '${numberInfo['completePackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                  onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              PackageInfo(locoInfo: widget.locoInfo)),
+                    );
+                  },
                 ),
                 // TaskCard(
                 //   title: '待派工',
@@ -760,14 +800,23 @@ class PreparationDetailPage extends StatelessWidget {
                 //   count: '1',
                 // ),
                 TaskCard(
-                  title: '待互检',
-                  subtitle: '当前机车下本人需要互检的活件总数',
-                  count: '1',
+                  title: '待机统-28作业',
+                  subtitle: '机车机统28作业清单',
+                  count:
+                      '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                 ),
                 TaskCard(
-                  title: '待专检',
-                  subtitle: '当前机车下本人需要专检的活件总数',
-                  count: '1',
+                  title: '待互检作业',
+                  subtitle: '工序互检作业清单',
+                  count: '${numberInfo['mutualInspectionCount'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                ),
+                TaskCard(
+                  title: '待专检作业',
+                  subtitle: '工序专检作业清单',
+                  count: '${numberInfo['specialInspectionCount'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                 ),
               ],
             ),
@@ -786,15 +835,16 @@ class PreparationDetailPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${locoInfo?['typeName'] ?? ''} ${locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              locoInfo != null && locoInfo!['arrivePlatformTime'] != null
-                  ? '入段:${timeFormat.format(DateTime.parse(locoInfo!['arrivePlatformTime']))}'
+              widget.locoInfo != null &&
+                      widget.locoInfo!['arrivePlatformTime'] != null
+                  ? '入段:${timeFormat.format(DateTime.parse(widget.locoInfo!['arrivePlatformTime']))}'
                   : '入段:',
               style: const TextStyle(
                 fontSize: 14,
@@ -807,22 +857,24 @@ class PreparationDetailPage extends StatelessWidget {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: locoInfo?['stopPlace'] != "null-null"
-                ? (locoInfo?['stopPlace'] ?? '无')
+            value: widget.locoInfo?['stopPlace'] != "null-null"
+                ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
             label: '工序转入时间',
-            value: locoInfo != null && locoInfo!['mainNodeChangeTime'] != null
-                ? timeFormat
-                    .format(DateTime.parse(locoInfo!['mainNodeChangeTime']))
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['mainNodeChangeTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['mainNodeChangeTime']))
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
             label: '工序转出时间',
-            value: locoInfo != null && locoInfo!['theoreticEndTime'] != null
-                ? timeFormat
-                    .format(DateTime.parse(locoInfo!['theoreticEndTime']))
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['theoreticEndTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['theoreticEndTime']))
                 : '无'),
       ],
     );
@@ -850,7 +902,14 @@ class PreparationDetailPage extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const Vehicle28Form(),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.redAccent,
             foregroundColor: Colors.white,
@@ -897,25 +956,31 @@ class TaskCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String count;
+  final Map<String, dynamic>? locoInfo;
+  final VoidCallback? onTap;
 
   const TaskCard({
     Key? key,
     required this.title,
     required this.subtitle,
     required this.count,
+    this.locoInfo,
+    this.onTap,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        if (title == '待作业') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MyApp()),
-          );
-        }
-      },
+      onTap: onTap ??
+          () {
+            // 默认的点击处理逻辑
+            if (title == '待作业') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PackageInfo()),
+              );
+            }
+          },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
         padding: const EdgeInsets.all(16.0),
@@ -962,16 +1027,49 @@ class TaskCard extends StatelessWidget {
   }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class PackageInfo extends StatefulWidget {
+  //机车信息
+  final Map<String, dynamic>? locoInfo;
+
+  const PackageInfo({
+    Key? key,
+    this.locoInfo,
+  }) : super(key: key);
+  @override
+  State<PackageInfo> createState() => _PackageInfoState();
+}
+
+class _PackageInfoState extends State<PackageInfo> {
+  var logger = AppLogger.logger;
+
+  List<Map<String, dynamic>> packageList = [];
+
+  void initState() {
+    getWorkPackage();
+  }
+
+  void getWorkPackage() async{
+    Map<String, dynamic> params = {
+      "trainEntryCode": widget.locoInfo?['code'],
+      "userId": Global.profile.permissions?.user.userId
+    };
+    logger.i(params);
+    var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
+    if (mounted) {
+      setState(() {
+        packageList = (r as List<dynamic>)
+            .map((item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map))
+            .toList();
+        logger.i(packageList);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '检修作业-作业包',
-      theme: ThemeData(primarySwatch: Colors.grey),
-      home: const InspectionPackagePage(),
-    );
+    return  InspectionPackagePage(locoInfo: widget.locoInfo, packageList: packageList,);
   }
 }
 
@@ -1010,7 +1108,11 @@ class TaskItem {
 }
 
 class InspectionPackagePage extends StatefulWidget {
-  const InspectionPackagePage({super.key});
+
+
+  final List<Map<String, dynamic>> packageList;
+  final Map<String, dynamic>? locoInfo;
+  const InspectionPackagePage({super.key, this.locoInfo,  required this.packageList});
 
   @override
   State<InspectionPackagePage> createState() => _InspectionPackagePageState();
@@ -1043,9 +1145,16 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              // 如果无法pop，尝试使用maybePop或者给出提示
+              Navigator.maybePop(context);
+            }
+          },
         ),
-        title: const Text("整备作业-作业包"),
+        title: const Text("检修作业-作业包"),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -1056,11 +1165,11 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. 机车基本信息
-            _buildLocomotiveInfo(_locomotive, timeFormat),
+            _buildTrainInfo(),
             const SizedBox(height: 16),
 
             // 2. 作业项列表
-            ..._tasks.map((task) => _buildTaskItem(task)).toList(),
+            ...widget.packageList.map((task) => _buildTaskItem(task)).toList(),
           ],
         ),
       ),
@@ -1068,23 +1177,26 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
   /// 构建机车基本信息区域
-  Widget _buildLocomotiveInfo(Locomotive loco, DateFormat timeFormat) {
+  Widget _buildTrainInfo() {
+    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 编号 + 入段时间
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              loco.id,
+              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             Text(
-              "入段: ${timeFormat.format(loco.inTime)}",
+              widget.locoInfo != null &&
+                      widget.locoInfo!['arrivePlatformTime'] != null
+                  ? '入段:${timeFormat.format(DateTime.parse(widget.locoInfo!['arrivePlatformTime']))}'
+                  : '入段:',
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.grey,
@@ -1093,19 +1205,28 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           ],
         ),
         const SizedBox(height: 8),
-
-        // 股道 + 计划车次 + 计划出库 + 状态
-        Row(
-          children: [
-            _buildInfoItem("股道", loco.track),
-            const SizedBox(width: 24),
-            _buildInfoItem("计划车次", loco.planTrain),
-            const SizedBox(width: 24),
-            _buildInfoItem("计划出库", loco.planOut),
-            const SizedBox(width: 24),
-            _buildInfoItem("状态", loco.status),
-          ],
-        ),
+        // 每一项单独一行显示
+        _InfoItem(
+            label: '停留地点',
+            value: widget.locoInfo?['stopPlace'] != "null-null"
+                ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
+            label: '工序转入时间',
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['mainNodeChangeTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['mainNodeChangeTime']))
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
+            label: '工序转出时间',
+            value: widget.locoInfo != null &&
+                    widget.locoInfo!['theoreticEndTime'] != null
+                ? timeFormat.format(
+                    DateTime.parse(widget.locoInfo!['theoreticEndTime']))
+                : '无'),
       ],
     );
   }
@@ -1135,62 +1256,264 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
   /// 构建单个作业项（如车内2、车底）
-  Widget _buildTaskItem(TaskItem task) {
-    final progress = task.total == 0 ? 0.0 : task.completed / task.total;
+  /// 构建单个作业项（如车内2、车底）
+  Widget _buildTaskItem(Map<String, dynamic> task) {
+    final progress = task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MyApp(),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 文件夹图标
+              Icon(
+                Icons.folder,
+                color: Colors.yellow.shade700,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+
+              // 作业名称 + 进度文本 + 进度条
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 名称 + 进度（如“车内2 0/16”）
+                    Text(
+                      "${task['name']} ${task['completeCount']}/${task['total']}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // 进度条
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.grey[200],
+                      color: Colors.blue,
+                      minHeight: 8,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // 领用人状态（如“未申领”）
+              Text(
+                task['complete'],
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 文件夹图标
-            Icon(
-              Icons.folder,
-              color: Colors.yellow.shade700,
-              size: 32,
-            ),
-            const SizedBox(width: 12),
+    );
+  }
+}
 
-            // 作业名称 + 进度文本 + 进度条
-            Expanded(
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: '检修作业-顶点',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const InspectionVertexPage(),
+    );
+  }
+}
+
+class InspectionVertexPage extends StatefulWidget {
+  const InspectionVertexPage({super.key});
+
+  @override
+  State<InspectionVertexPage> createState() => _InspectionVertexPageState();
+}
+
+class _InspectionVertexPageState extends State<InspectionVertexPage> {
+  // 模拟已采集的照片（可扩展为文件路径列表）
+  final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text("整备作业-顶点"),
+        actions: [
+          TextButton(
+            onPressed: _reportJT6, // 报JT6逻辑（可扩展）
+            child: const Text(
+              "报JT6",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. 机车基本信息
+            _buildLocomotiveInfo(),
+            const SizedBox(height: 16),
+
+            // 2. 整备进度条（模拟50%进度）
+            LinearProgressIndicator(
+              value: 0.5,
+              color: Colors.green,
+              backgroundColor: Colors.grey[300],
+              minHeight: 8,
+            ),
+            const SizedBox(height: 16),
+
+            // 3. 作业区域标题（车外 + 第二工位）
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "车外",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _gotoSecondStation, // 跳转第二工位（可扩展）
+                  child: const Text(
+                    "第二工位",
+                    style: TextStyle(color: Colors.blue),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // 4. 作业项：3右轴箱组装检查（红色强调）
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 红色竖线标记
+                Container(
+                  width: 4,
+                  height: 24,
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  "3右轴箱组装检查",
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 5. 照片采集区（必须采集 + 拍照/删除功能）
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              color: Colors.grey[300],
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 名称 + 进度（如“车内2 0/16”）
-                  Text(
-                    "${task.name} ${task.completed}/${task.total}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // 标题行：必须采集 + 拍照按钮
+                  Row(
+                    children: [
+                      const Text(
+                        "必须采集",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _takePhoto, // 拍照逻辑（可扩展）
+                        icon: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
 
-                  // 进度条
-                  LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: Colors.grey[200],
-                    color: Colors.blue,
-                    minHeight: 8,
-                  ),
+                  // 照片列表（模拟展示）
+                  if (_photos.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      children: _photos.map((photo) {
+                        return Stack(
+                          children: [
+                            // 照片占位（实际可替换为Image）
+                            Container(
+                              width: 80,
+                              height: 80,
+                              color: Colors.black,
+                              alignment: Alignment.center,
+                              child: Text(
+                                photo.split("_").last, // 显示序号
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            // 删除按钮
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: IconButton(
+                                onPressed: () => _deletePhoto(photo),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(height: 24),
 
-            // 领用人状态（如“未申领”）
-            Text(
-              task.userStatus,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+            // 6. 进入下一项按钮
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _gotoNextItem, // 进入下一项逻辑（可扩展）
+                child: const Text("进入下一项"),
               ),
             ),
           ],
@@ -1198,4 +1521,102 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
       ),
     );
   }
+
+  // ---------------------- 交互逻辑（可扩展） ----------------------
+  void _reportJT6() {
+    // 报JT6的业务逻辑（如提交数据、跳转页面）
+    debugPrint("报JT6功能触发");
+  }
+
+  void _gotoSecondStation() {
+    // 跳转第二工位的逻辑（如导航到新页面）
+    debugPrint("跳转第二工位");
+  }
+
+  void _takePhoto() {
+    // 调用相机采集照片（可结合image_picker库实现）
+    debugPrint("拍照功能触发");
+    setState(() {
+      _photos.add("photo_${_photos.length + 1}"); // 模拟新增照片
+    });
+  }
+
+  void _deletePhoto(String photo) {
+    // 删除照片逻辑
+    debugPrint("删除照片：$photo");
+    setState(() {
+      _photos.remove(photo);
+    });
+  }
+
+  void _gotoNextItem() {
+    // 进入下一项的业务逻辑（如校验照片、跳转步骤）
+    debugPrint("进入下一项");
+  }
+
+  // ---------------------- 辅助方法：机车信息展示 ----------------------
+  Widget _buildLocomotiveInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 机车编号
+        Text(
+          "HXD3C 0016",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        // 入段时间
+        Text(
+          "入段:2023-02-27 09:32:39",
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // 股道、计划车次等信息
+        Row(
+          children: [
+            _buildInfoItem("股道", "J2道机"),
+            const SizedBox(width: 24),
+            _buildInfoItem("计划车次", "无"),
+            const SizedBox(width: 24),
+            _buildInfoItem("计划出库", "无"),
+            const SizedBox(width: 24),
+            _buildInfoItem("状态", "整备中"),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.grey,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
 }
+
+
+
+
+

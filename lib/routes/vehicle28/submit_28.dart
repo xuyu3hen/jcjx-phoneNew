@@ -92,6 +92,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   void initState() {
     super.initState();
     getDynamicType();
+
     getUserDeptree();
     getJtType();
     getJt28Dict();
@@ -108,7 +109,9 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           temp.add(item.toJson());
         }
         dynamicList = temp;
-
+        //默认动力类型
+        dynamciTypeSelected = dynamicList[0];
+        getTypeCode();
       });
     }
   }
@@ -248,144 +251,155 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  ZjcFormSelectCell(
-                    title: "动力类型",
-                    text: dynamciTypeSelected["name"],
-                    hintText: "请选择",
-                    showRedStar: true,
-                    clickCallBack: () {
-                      if (dynamicList.isEmpty) {
-                        showToast("无动力类型选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: dynamicList,
-                          labelKey: 'name',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择动力类型",
-                          clickCallBack: (selectItem, selectArr) {
-                            logger.i(selectArr);
-                            setState(() {
-                              dynamciTypeSelected["code"] = selectItem["code"];
-                              dynamciTypeSelected["name"] = selectItem["name"];
-                              getTypeCode();
-                            });
+                  // ZjcFormSelectCell(
+                  //   title: "动力类型",
+                  //   text: dynamciTypeSelected["name"],
+                  //   hintText: "请选择",
+                  //   showRedStar: true,
+                  //   clickCallBack: () {
+                  //     if (dynamicList.isEmpty) {
+                  //       showToast("无动力类型选择");
+                  //     } else {
+                  //       ZjcCascadeTreePicker.show(
+                  //         context,
+                  //         data: dynamicList,
+                  //         labelKey: 'name',
+                  //         valueKey: 'code',
+                  //         childrenKey: 'children',
+                  //         title: "选择动力类型",
+                  //         clickCallBack: (selectItem, selectArr) {
+                  //           logger.i(selectArr);
+                  //           setState(() {
+                  //             dynamciTypeSelected["code"] = selectItem["code"];
+                  //             dynamciTypeSelected["name"] = selectItem["name"];
+                  //             getTypeCode();
+                  //           });
+                  //         },
+                  //       );
+                  //     }
+                  //   },
+                  // ),
+                  // ),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: ZjcFormSelectCell(
+                          title: "机型",
+                          text: jcTypeListSelected["name"],
+                          hintText: "请选择",
+                          
+                          clickCallBack: () {
+                            if (jcTypeList.isEmpty) {
+                              showToast("无机型可以选择");
+                            } else {
+                              ZjcCascadeTreePicker.show(
+                                context,
+                                data: jcTypeList,
+                                labelKey: 'name',
+                                valueKey: 'code',
+                                childrenKey: 'children',
+                                title: "选择机型",
+                                clickCallBack: (selectItem, selectArr) {
+                                  setState(() {
+                                    logger.i(selectArr);
+                                    jcTypeListSelected["name"] = selectItem["name"];
+                                    jcTypeListSelected["code"] = selectItem["code"];
+                                    getTrainNumCodeList();
+                                  });
+                                },
+                              );
+                            }
                           },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                    title: "机型",
-                    text: jcTypeListSelected["name"],
-                    hintText: "请选择",
-                    showRedStar: true,
-                    clickCallBack: () {
-                      if (jcTypeList.isEmpty) {
-                        showToast("无机型可以选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: jcTypeList,
-                          labelKey: 'name',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择机型",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              jcTypeListSelected["name"] = selectItem["name"];
-                              jcTypeListSelected["code"] = selectItem["code"];
-                              getTrainNumCodeList();
-                            });
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: ZjcFormSelectCell(
+                          title: "车号",
+                          text: trainNumSelected["trainNum"],
+                          hintText: "请选择",
+                       
+                          clickCallBack: () {
+                            if (trainNumCodeList.isEmpty) {
+                              showToast("无车号可以选择");
+                            } else {
+                              ZjcCascadeTreePicker.show(
+                                context,
+                                data: trainNumCodeList,
+                                labelKey: 'trainNum',
+                                valueKey: 'code',
+                                childrenKey: 'children',
+                                title: "选择检修地点",
+                                clickCallBack: (selectItem, selectArr) {
+                                  setState(() {
+                                    logger.i(selectArr);
+                                    trainNumSelected["trainNum"] =
+                                        selectItem["trainNum"];
+                                    trainNumSelected["code"] = selectItem["code"];
+                                    
+                                  });
+                                },
+                              );
+                            }
                           },
-                        );
-                      }
-                    },
+                        ),
+                      ),
+                    ],
                   ),
-                  ZjcFormSelectCell(
-                    title: "车号",
-                    text: trainNumSelected["trainNum"],
-                    hintText: "请选择",
-                    showRedStar: true,
-                    clickCallBack: () {
-                      if (trainNumCodeList.isEmpty) {
-                        showToast("无车号可以选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: trainNumCodeList,
-                          labelKey: 'trainNum',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择检修地点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              trainNumSelected["trainNum"] =
-                                  selectItem["trainNum"];
-                              trainNumSelected["code"] = selectItem["code"];
-                              
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                    title: "检修作业来源",
-                    text: repairWorkResource["name"],
-                    hintText: "请选择",
-                    showRedStar: true,
-                    clickCallBack: () {
-                      ZjcCascadeTreePicker.show(
-                        context,
-                        data: jtTypeList,
-                        labelKey: 'name',
-                        valueKey: 'code',
-                        title: "选择检修作业来源",
-                        clickCallBack: (selectItem, selectArr) {
-                          logger.i(selectArr);
-                          setState(() {
-                            repairWorkResource["name"] = selectItem["name"];
-                            repairWorkResource["code"] = selectItem["code"];
-                            riskLevel = selectItem["riskLevel"];
-                          });
-                        },
-                      );
-                    },
-                  ),
-                  ZjcFormInputCell(
-                    title: "风险等级",
-                    showRedStar: true,
-                    text: riskLevel,
-                    enabled: false,
-                  ),
-                  ZjcFormSelectCell(
-                    title: "加工方法",
-                    text: requiredProcessingMethod["dictName"],
-                    hintText: "请选择",
-                    showRedStar: true,
-                    clickCallBack: () {
-                      ZjcCascadeTreePicker.show(
-                        context,
-                        data: jt28DictList,
-                        labelKey: 'dictName',
-                        valueKey: 'code',
-                        title: "选择加工方法",
-                        clickCallBack: (selectItem, selectArr) {
-                          logger.i(selectArr);
-                          setState(() {
-                            requiredProcessingMethod["dictName"] =
-                                selectItem["dictName"];
-                            requiredProcessingMethod["code"] =
-                                selectItem["code"];
-                          });
-                        },
-                      );
-                    },
-                  ),
+                  // ZjcFormSelectCell(
+                  //   title: "检修作业来源",
+                  //   text: repairWorkResource["name"],
+                  //   hintText: "请选择",
+                  //   showRedStar: true,
+                  //   clickCallBack: () {
+                  //     ZjcCascadeTreePicker.show(
+                  //       context,
+                  //       data: jtTypeList,
+                  //       labelKey: 'name',
+                  //       valueKey: 'code',
+                  //       title: "选择检修作业来源",
+                  //       clickCallBack: (selectItem, selectArr) {
+                  //         logger.i(selectArr);
+                  //         setState(() {
+                  //           repairWorkResource["name"] = selectItem["name"];
+                  //           repairWorkResource["code"] = selectItem["code"];
+                  //           riskLevel = selectItem["riskLevel"];
+                  //         });
+                  //       },
+                  //     );
+                  //   },
+                  // ),
+                  // ZjcFormInputCell(
+                  //   title: "风险等级",
+                  //   showRedStar: true,
+                  //   text: riskLevel,
+                  //   enabled: false,
+                  // ),
+                  // ZjcFormSelectCell(
+                  //   title: "加工方法",
+                  //   text: requiredProcessingMethod["dictName"],
+                  //   hintText: "请选择",
+                  //   showRedStar: true,
+                  //   clickCallBack: () {
+                  //     ZjcCascadeTreePicker.show(
+                  //       context,
+                  //       data: jt28DictList,
+                  //       labelKey: 'dictName',
+                  //       valueKey: 'code',
+                  //       title: "选择加工方法",
+                  //       clickCallBack: (selectItem, selectArr) {
+                  //         logger.i(selectArr);
+                  //         setState(() {
+                  //           requiredProcessingMethod["dictName"] =
+                  //               selectItem["dictName"];
+                  //           requiredProcessingMethod["code"] =
+                  //               selectItem["code"];
+                  //         });
+                  //       },
+                  //     );
+                  //   },
+                  // ),
                   ZjcFormInputCell(
                     title: "故障现象",
                     text: faultDesc,
@@ -417,56 +431,56 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                     },
                   ),
                   // 自动派活组
-                  if (completeStatus == 1) ...[
-                    ZjcFormSelectCell(
-                      title: "科室车间",
-                      hintText: "请选择",
-                      showRedStar: true,
-                      text: workshop,
-                      clickCallBack: () {
-                        ZjcCascadeTreePicker.show(context,
-                            isShowSearch: false,
-                            data: deptTree,
-                            labelKey: 'label',
-                            valueKey: 'label',
-                            childrenKey: 'child',
-                            title: "选择科室车间",
-                            clickCallBack: (selectItem, selectArr) {
-                          setState(() {
-                            workshop = selectItem["label"];
-                            if (selectItem["children"] != null) {
-                              teamTree = selectItem["children"];
-                            }
-                            team = "";
-                          });
-                        });
-                      },
-                    ),
-                    ZjcFormSelectCell(
-                      title: "班组",
-                      hintText: "请选择",
-                      showRedStar: true,
-                      text: team,
-                      clickCallBack: () {
-                        if (teamTree.isEmpty) {
-                          showToast("请先选择科室车间");
-                        } else {
-                          ZjcCascadeTreePicker.show(context,
-                              isShowSearch: false,
-                              data: teamTree,
-                              labelKey: 'label',
-                              valueKey: 'id',
-                              title: "选择班组",
-                              clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              team = selectItem["label"];
-                              teamCode = selectItem["id"];
-                            });
-                            // getJtUsers();
-                          });
-                        }
-                      },
-                    ),
+                  // if (completeStatus == 1) ...[
+                  //   ZjcFormSelectCell(
+                  //     title: "科室车间",
+                  //     hintText: "请选择",
+                  //     showRedStar: true,
+                  //     text: workshop,
+                  //     clickCallBack: () {
+                  //       ZjcCascadeTreePicker.show(context,
+                  //           isShowSearch: false,
+                  //           data: deptTree,
+                  //           labelKey: 'label',
+                  //           valueKey: 'label',
+                  //           childrenKey: 'child',
+                  //           title: "选择科室车间",
+                  //           clickCallBack: (selectItem, selectArr) {
+                  //         setState(() {
+                  //           workshop = selectItem["label"];
+                  //           if (selectItem["children"] != null) {
+                  //             teamTree = selectItem["children"];
+                  //           }
+                  //           team = "";
+                  //         });
+                  //       });
+                  //     },
+                  //   ),
+                  //   ZjcFormSelectCell(
+                  //     title: "班组",
+                  //     hintText: "请选择",
+                  //     showRedStar: true,
+                  //     text: team,
+                  //     clickCallBack: () {
+                  //       if (teamTree.isEmpty) {
+                  //         showToast("请先选择科室车间");
+                  //       } else {
+                  //         ZjcCascadeTreePicker.show(context,
+                  //             isShowSearch: false,
+                  //             data: teamTree,
+                  //             labelKey: 'label',
+                  //             valueKey: 'id',
+                  //             title: "选择班组",
+                  //             clickCallBack: (selectItem, selectArr) {
+                  //           setState(() {
+                  //             team = selectItem["label"];
+                  //             teamCode = selectItem["id"];
+                  //           });
+                  //           // getJtUsers();
+                  //         });
+                  //       }
+                  //     },
+                  //   ),
                     // ZjcFormSelectCell(
                     //   title: "施修人员",
                     //   hintText: "请选择",
@@ -488,39 +502,71 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                     //     );
                     //   },
                     // ),
-                  ],
+                  // ],
                   // if(faultPics.isNotEmpty)
                   // Container(child: Image.file(faultPics[0],width: 200,height: 200,),),
                   // 图片传输
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    margin: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: const BorderRadius.all(Radius.circular(20)),
-                        border: Border.all(color: Colors.brown)),
-                    child: ZjcAssetPicker(
-                      assetType: APC.AssetType.image,
-                      maxAssets: 1,
-                      selectedAssets: assestPics,
-                      // bgColor: Colors.grey,
-                      callBack: (assetEntityList) async {
-                        logger.i('assetEntityList-------------');
-                        logger.i(assetEntityList);
-                        if (assetEntityList.isNotEmpty) {
-                          var asset = assetEntityList[0];
-                          var pic = await asset.file;
-                          logger.i(await asset.file);
-                          logger.i(await asset.originFile);
-                          faultPics.insert(0, pic!);
-                        } else {
-                          faultPics = [];
-                        }
-                        logger.i('assetEntityList-------------');
-                      },
+                                    // ... existing code ...
+                
+                // 故障视频及图片
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
+                      child: Text(
+                        '故障视频及图片',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ])
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: const BorderRadius.all(Radius.circular(20)),
+                          border: Border.all(color: Colors.brown)),
+                      child: ZjcAssetPicker(
+                        assetType: APC.AssetType.imageAndVideo,
+                        maxAssets: 9,
+                        selectedAssets: assestPics,
+                        // bgColor: Colors.grey,
+                        callBack: (assetEntityList) async {
+                          logger.i('assetEntityList-------------');
+                          logger.i(assetEntityList);
+                          if (assetEntityList.isNotEmpty) {
+                            // 清空之前的文件列表
+                            List<File> files = [];
+                            
+                            // 处理所有选定的资源（图片和视频）
+                            for (var asset in assetEntityList) {
+                              var file = await asset.file;
+                              if (file != null) {
+                                files.add(file);
+                              }
+                            }
+                            
+                            setState(() {
+                              assestPics = assetEntityList;
+                              faultPics = files;
+                            });
+                          } else {
+                            setState(() {
+                              faultPics = [];
+                              assestPics = [];
+                            });
+                          }
+                          logger.i('assetEntityList-------------');
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                // ... existing code ...
+          ])
           ],
         ));
   }
@@ -550,6 +596,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus ,
+              
+
               "status": 0
             };
             if (completeStatus == 1) {
