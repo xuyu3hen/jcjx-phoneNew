@@ -126,7 +126,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
-        "检修作业-机车",
+        "检修作业-机车（派工）",
         style: TextStyle(color: Colors.black),
       ),
       backgroundColor: Colors.white,
