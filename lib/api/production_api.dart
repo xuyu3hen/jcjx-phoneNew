@@ -703,7 +703,8 @@ class ProductApi extends AppApi {
   }
 
   // tasks/taskInstructPackage/getPersonalPackageList
-  Future<dynamic> getPersonalPackageList({Map<String, dynamic>? queryParametrs}) async {
+  Future<dynamic> getPersonalPackageList(
+      {Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskInstructPackage/getPersonalPackageList",
@@ -978,6 +979,23 @@ class ProductApi extends AppApi {
       // logger.i((r.data["data"])["data"]);
       return (r.data["data"])["data"];
     } catch (e) {
+      return [];
+    }
+  }
+
+  // 获取dispatch/trainEntry/getRepairingAllTrainEntryByRepairProcCode
+  Future<List> getRepairingAllTrainEntryByRepairProcCode(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getRepairingAllTrainEntryByRepairProcCode",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data);
+      return (r.data["data"])["data"];
+      // logger.i((r.data["data"])["data"]);
+    } catch (e) {
+      logger.e(e);
       return [];
     }
   }

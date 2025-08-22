@@ -7,14 +7,14 @@ import '../../index.dart';
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
-class Vehicle28Form extends StatefulWidget {
-  const Vehicle28Form({Key? key}) : super(key: key);
+class Vehicle28FormManage extends StatefulWidget {
+  const Vehicle28FormManage({Key? key}) : super(key: key);
 
   @override
-  State createState() => _Vehicle28FormState();
+  State createState() => _Vehicle28FormManageState();
 }
 
-class _Vehicle28FormState extends State<Vehicle28Form> {
+class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   // 动力类型
   // List<DynamicType> dynamicList = [];
   String? dynamicCode;
@@ -35,6 +35,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   Map<dynamic, dynamic> requiredProcessingMethod = {"dictName": "", "code": ""};
   // 故障现象
   String? faultDesc;
+  // 施修方案
+  String? repairPlan;
   // 故障假设
   String? faultAssumption;
   // 故障零部件
@@ -76,7 +78,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   List<dynamic> jtTypeList = [];
   // 加工方法
   List<dynamic> jt28DictList = [];
-
+  // 假设类别
+  List<String> assumeTypeList = ['正常', '人工', '自然'];
+  // 派工方式
+  List<String> assignTypeList = ['自检自修', '工长派工'];
+  String selectedAssumeType = '正常';
   // 自动派活
   bool isAssigned = false;
   String completeLabel = "自检自修";
@@ -90,7 +96,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   void initState() {
     super.initState();
     getDynamicType();
-
     getUserDeptree();
     getJtType();
     getJt28Dict();
@@ -229,7 +234,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28-提报（作业）"),
+        title: const Text("机统28-提报（管理）"),
       ),
       // resizeToAvoidBottomInset: false,
       body: _buildBody(),
@@ -407,7 +412,16 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                       faultDesc = value;
                     },
                   ),
-
+                  ZjcFormInputCell(
+                    title: "施修方案",
+                    text: faultDesc,
+                    maxLines: 7,
+                    maxLength: 300,
+                    showRedStar: true,
+                    inputCallBack: (value) {
+                      repairPlan = value;
+                    },
+                  ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -444,6 +458,62 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                               setState(() {
                                 completeStatus = selected ? 1 : completeStatus;
                                 completeLabel = '工长派工';
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "假设类别",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ChoiceChip(
+                            label: const Text('正常'),
+                            selected: selectedAssumeType == '正常',
+                            selectedColor: Colors.lightBlueAccent,
+                            backgroundColor: Colors.grey[300],
+                            onSelected: (bool selected) {
+                              setState(() {
+                                selectedAssumeType =
+                                    selected ? '正常' : selectedAssumeType;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 20),
+                          ChoiceChip(
+                            label: const Text('人工'),
+                            selected: selectedAssumeType == '人工',
+                            selectedColor: Colors.lightBlueAccent,
+                            backgroundColor: Colors.grey[300],
+                            onSelected: (bool selected) {
+                              setState(() {
+                                selectedAssumeType =
+                                    selected ? '人工' : selectedAssumeType;
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 20),
+                          ChoiceChip(
+                            label: const Text('自然'),
+                            selected: selectedAssumeType == '自然',
+                            selectedColor: Colors.lightBlueAccent,
+                            backgroundColor: Colors.grey[300],
+                            onSelected: (bool selected) {
+                              setState(() {
+                                selectedAssumeType =
+                                    selected ? '自然' : selectedAssumeType;
                               });
                             },
                           ),

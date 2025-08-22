@@ -1,7 +1,6 @@
 import 'package:intl/intl.dart';
 import '../../index.dart';
-import '../vehicle28/submit28_work.dart';
-
+import '../vehicle28/submit28_manage.dart';
 
 /// 主页面：机车检修
 class TrainRepairPage extends StatefulWidget {
@@ -805,13 +804,11 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   count:
                       '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                                    onTap: () {
+                  onTap: () {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                             JtShow()),
+                      MaterialPageRoute(builder: (context) => JtShow()),
                     );
                   },
                 ),
@@ -820,13 +817,11 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   subtitle: '工序互检作业清单',
                   count: '${numberInfo['mutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                                    onTap: () {
+                  onTap: () {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              MutualList()),
+                      MaterialPageRoute(builder: (context) => MutualList()),
                     );
                   },
                 ),
@@ -835,13 +830,11 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   subtitle: '工序专检作业清单',
                   count: '${numberInfo['specialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                                    onTap: () {
+                  onTap: () {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              SpecialList()),
+                      MaterialPageRoute(builder: (context) => SpecialList()),
                     );
                   },
                 ),
@@ -1075,7 +1068,7 @@ class _PackageInfoState extends State<PackageInfo> {
     getWorkPackage();
   }
 
-  void getWorkPackage() async{
+  void getWorkPackage() async {
     Map<String, dynamic> params = {
       "trainEntryCode": widget.locoInfo?['code'],
       "userId": Global.profile.permissions?.user.userId
@@ -1096,7 +1089,10 @@ class _PackageInfoState extends State<PackageInfo> {
 
   @override
   Widget build(BuildContext context) {
-    return  InspectionPackagePage(locoInfo: widget.locoInfo, packageList: packageList,);
+    return InspectionPackagePage(
+      locoInfo: widget.locoInfo,
+      packageList: packageList,
+    );
   }
 }
 
@@ -1135,11 +1131,10 @@ class TaskItem {
 }
 
 class InspectionPackagePage extends StatefulWidget {
-
-
   final List<Map<String, dynamic>> packageList;
   final Map<String, dynamic>? locoInfo;
-  const InspectionPackagePage({super.key, this.locoInfo,  required this.packageList});
+  const InspectionPackagePage(
+      {super.key, this.locoInfo, required this.packageList});
 
   @override
   State<InspectionPackagePage> createState() => _InspectionPackagePageState();
@@ -1284,14 +1279,18 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   /// 构建单个作业项（如车内2、车底）
   Widget _buildTaskItem(Map<String, dynamic> task) {
-    final progress = task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
+    final progress =
+        task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>  InspectionVertexPage(locoInfo: widget.locoInfo, packageInfo: task,),
+            builder: (context) => InspectionVertexPage(
+              locoInfo: widget.locoInfo,
+              packageInfo: task,
+            ),
           ),
         );
       },
@@ -1358,16 +1357,12 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 }
 
-
 class InspectionVertexPage extends StatefulWidget {
-  
   Map<String, dynamic>? packageInfo = {};
   Map<String, dynamic>? locoInfo = {};
 
-  
-  InspectionVertexPage({super.key,  required this.packageInfo,  required this.locoInfo});
-
-
+  InspectionVertexPage(
+      {super.key, required this.packageInfo, required this.locoInfo});
 
   @override
   State<InspectionVertexPage> createState() => _InspectionVertexPageState();
@@ -1375,23 +1370,59 @@ class InspectionVertexPage extends StatefulWidget {
 
 class _InspectionVertexPageState extends State<InspectionVertexPage> {
   // 模拟已采集的照片（可扩展为文件路径列表）
+  var logger = AppLogger.logger;
+
   final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+  int _currentIndex = 0;
+
+  Map<String, dynamic>? currentPackage;
+
+  @override
+  void initState() {
+    if (widget.packageInfo?["taskCertainPackageList"] is List) {
+      packagePoints = (widget.packageInfo?["taskCertainPackageList"] as List)
+          .map((item) => item is Map<String, dynamic>
+              ? item
+              : Map<String, dynamic>.from(item as Map))
+          .toList();
+    }
+    logger.i(packagePoints);
+  }
+
+  List<Map<String, dynamic>> packagePoints = [];
 
   @override
   Widget build(BuildContext context) {
+    int number = packagePoints.length;
+    Map<String, dynamic> currentPackagePoint = {};
+
+    if (packagePoints.isNotEmpty) {
+      if (_currentIndex < packagePoints.length) {
+        currentPackagePoint = packagePoints[_currentIndex];
+      }
+    }
+    List<Map<String, dynamic>> taskContentItemList = [];
+    if (currentPackagePoint['taskContentItemList'] != null &&
+        currentPackagePoint['taskContentItemList'] is List) {
+      taskContentItemList = (currentPackagePoint['taskContentItemList'] as List)
+          .where((item) => item is Map<String, dynamic>)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    }
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text("检修作业-顶点"),
+        title: const Text("检修作业-项点"),
+        backgroundColor: Colors.white,
         actions: [
           TextButton(
             onPressed: _reportJT6, // 报JT6逻辑（可扩展）
             child: const Text(
               "报机统28",
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.black),
             ),
           ),
         ],
@@ -1405,9 +1436,9 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             _buildTrainInfo(),
             const SizedBox(height: 16),
 
-            // 2. 整备进度条（模拟50%进度）
+            // 2. 整备进度条
             LinearProgressIndicator(
-              value: 0.5,
+              value: _currentIndex + 1 / number,
               color: Colors.green,
               backgroundColor: Colors.grey[300],
               minHeight: 8,
@@ -1418,9 +1449,9 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "$",
-                  style: TextStyle(
+                Text(
+                  currentPackagePoint['name']?.toString() ?? '未知项点',
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1428,35 +1459,35 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 TextButton(
                   onPressed: _gotoSecondStation, // 跳转第二工位（可扩展）
                   child: const Text(
-                    "第二工位",
+                    "作业内容",
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            // const SizedBox(height: 8),
 
-            // 4. 作业项：3右轴箱组装检查（红色强调）
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 红色竖线标记
-                Container(
-                  width: 4,
-                  height: 24,
-                  color: Colors.red,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  "$",
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            // // 4. 作业项：3右轴箱组装检查（红色强调）
+            // Row(
+            //   crossAxisAlignment: CrossAxisAlignment.start,
+            //   children: [
+            //     // 红色竖线标记
+            //     Container(
+            //       width: 4,
+            //       height: 24,
+            //       color: Colors.red,
+            //     ),
+            //     const SizedBox(width: 8),
+            //     const Text(
+            //       "$",
+            //       style: TextStyle(
+            //         color: Colors.red,
+            //         fontSize: 16,
+            //         fontWeight: FontWeight.bold,
+            //       ),
+            //     ),
+            //   ],
+            // ),
             const SizedBox(height: 16),
 
             // 5. 照片采集区（必须采集 + 拍照/删除功能）
@@ -1527,13 +1558,30 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               ),
             ),
             const SizedBox(height: 24),
-
+            // 展示taskContentItemList
+            taskContentItemList.isEmpty
+                ? const Center(
+                    child: Text('暂无数据'),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: taskContentItemList.length,
+                    itemBuilder: (context, index) {
+                      return 
+                        taskContentItemList[index]['name']
+                      ;
+                    },
+                  ),
+              const SizedBox(height: 20),
             // 6. 进入下一项按钮
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _gotoNextItem, // 进入下一项逻辑（可扩展）
-                child: const Text("进入下一项"),
+                child: _currentIndex < (packagePoints.length) - 1
+                    ? const Text("进入下一项")
+                    : const Text("完成"),
               ),
             ),
           ],
@@ -1571,7 +1619,16 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   void _gotoNextItem() {
     // 进入下一项的业务逻辑（如校验照片、跳转步骤）
-    debugPrint("进入下一项");
+    if (packagePoints != null && _currentIndex < packagePoints!.length - 1) {
+      // 如果还有下一项，则更新索引以显示下一项
+      setState(() {
+        _currentIndex++;
+      });
+    } else {
+      // 如果已经是最后一项，可以执行完成操作
+      debugPrint("已完成所有项");
+      // 可以在这里添加完成所有项后的逻辑，例如显示完成提示或跳转页面
+    }
   }
 
   // ---------------------- 辅助方法：机车信息展示 ----------------------
@@ -1653,8 +1710,3 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     );
   }
 }
-
-
-
-
-

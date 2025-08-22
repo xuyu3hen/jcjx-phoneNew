@@ -112,7 +112,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
             children: <Widget>[
               _buildFeatureItem(
                 Icon(Icons.people, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'submit28'),
+                () => Navigator.pushNamed(context, 'repairTrainManage'),
                 '开工点名',
               ),
               _buildFeatureItem(
@@ -133,7 +133,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
             children: <Widget>[
               _buildFeatureItem(
                 Icon(Icons.post_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'submit28'),
+                () => Navigator.pushNamed(context, 'jt28submitManage'),
                 '报机统28',
               ),
               _buildFeatureItem(
@@ -262,7 +262,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 height: (MediaQuery.of(context).size.width) / 4,
                 child: FeatureContainer(
                   Icon(Icons.post_add, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'submit28'),
+                  () => Navigator.pushNamed(context, 'jt28submitManage'),
                   '机统28提报',
                   width: (MediaQuery.of(context).size.width),
                   height: (MediaQuery.of(context).size.height),
