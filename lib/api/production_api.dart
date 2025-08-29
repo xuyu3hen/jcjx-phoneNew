@@ -194,7 +194,21 @@ class ProductApi extends AppApi {
     }
   }
 
-  // 列表查询机型
+  // tasks/taskContentItem/saveOrUpdate
+  Future<dynamic> saveOrUpdateTaskContentItem(
+      List<Map<String, dynamic>> queryParametrs) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskContentItem/saveOrUpdate",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
 
   // 机车型号
   Future<JcTypeList> getJcType({
@@ -584,6 +598,20 @@ class ProductApi extends AppApi {
     // }
   }
 
+  // 查看分配作业包
+  Future<dynamic> getAssignPackage(Map<String, dynamic>? queryParametrs) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getTaskPackageByTrainEntryCode",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
   // 上传防溜照片
   Future<int> upSlipImg(
       {Map<String, dynamic>? queryParametrs, List<File>? imagedataList}) async {
@@ -654,6 +682,36 @@ class ProductApi extends AppApi {
     }
   }
 
+  // jcjxsystem/sysUser/selectAll
+  Future<dynamic> getTeamUser({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/jcjxsystem/sysUser/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(((r.data["data"])["data"])['rows']);
+      return ((r.data["data"])["data"])['rows'];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  // /tasks/taskInstructPackage/update
+  Future<dynamic> updateTaskInstructPackageRepairInfo(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskInstructPackage/update",
+        data: queryParametrs,
+      );
+      logger.i(r.data);
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      return -1;
+    }
+  }
+
   //获取班组作业包
   Future<PackageUserData> getTeamWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {
@@ -699,6 +757,21 @@ class ProductApi extends AppApi {
     } catch (e) {
       _handleException(e);
       return WorkPackageList(data: []);
+    }
+  }
+
+  // 获取作业包 tasks/taskInstructPackage/selectAll
+  Future<dynamic> getInstructPackage(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+      return WorkPackageList.fromJson(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
     }
   }
 
@@ -991,7 +1064,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/getRepairingAllTrainEntryByRepairProcCode",
         queryParameters: queryParametrs,
       );
-      logger.i(r.data);
+      logger.i((r.data["data"])["data"]);
       return (r.data["data"])["data"];
       // logger.i((r.data["data"])["data"]);
     } catch (e) {
@@ -1006,6 +1079,21 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskInstructPackage/getPackageAndInspectionStatistics",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 获取tasks/locomotiveMaintenanceLogDO/getTaskDistributionStatus
+  Future<dynamic> getTaskDistributionStatus(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/getTaskDistributionStatus",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])["data"]);
@@ -1128,8 +1216,8 @@ class ProductApi extends AppApi {
       );
       logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
-    } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+    } catch (e) {
+      logger.e(e);
       return null;
     }
   }

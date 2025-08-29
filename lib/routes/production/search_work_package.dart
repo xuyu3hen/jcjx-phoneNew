@@ -1,7 +1,8 @@
 import 'package:jcjx_phone/index.dart';
 
 class SearchWorkPackage extends StatefulWidget {
-  const SearchWorkPackage({super.key});
+  Map<String, dynamic>? loco;
+  SearchWorkPackage({super.key, this.loco});
 
   @override
   State<SearchWorkPackage> createState() => _DataDisplayPageState();

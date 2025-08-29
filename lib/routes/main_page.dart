@@ -2,7 +2,7 @@
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
 import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
-import 'package:jcjx_phone/routes/repair_train_manage.dart';
+import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
@@ -78,7 +78,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "packageviewer": (context) => const PackageViewer(),
         "preDispatchWork": (context) => const PreDispatchWork(),
         "getWorkPackage": (context) => const GetWorkPackage(),
-        "searchWorkPackage": (context) => const SearchWorkPackage(),
+        "searchWorkPackage": (context) =>  SearchWorkPackage(),
         'preTrainWork': (context) => const PreTrainWork(),
         'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
         'repairProgress': (context) => const RepairProgress(),

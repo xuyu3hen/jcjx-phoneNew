@@ -1,16 +1,14 @@
 import 'package:intl/intl.dart';
-import '../../index.dart';
-import '../vehicle28/submit28_manage.dart';
+import '../../../index.dart';
 
-/// 主页面：机车检修
-class TrainRepairPage extends StatefulWidget {
-  const TrainRepairPage({super.key});
+class TrainRepairPageManage extends StatefulWidget {
+  const TrainRepairPageManage({super.key});
 
   @override
-  State<TrainRepairPage> createState() => _TrainRepairPageState();
+  State<TrainRepairPageManage> createState() => _TrainRepairPageManageState();
 }
 
-class _TrainRepairPageState extends State<TrainRepairPage> {
+class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   int _currentTab = 0; // 0: 在整机车，1: 已整机车
 
   // 创建 Logger 实例
@@ -54,13 +52,12 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
         }
       });
       Map<String, dynamic> params = {
-        'userId': Global.profile.permissions?.user.userId,
+        // 'userId': Global.profile.permissions?.user.userId,
         'repairProcCode': repairProcCode1
       };
       logger.i('params: $params');
       var response = await ProductApi()
-          .getRepairingTrainEntryByUserIdAndRepairProcCode(
-              queryParametrs: params);
+          .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
 
       if (mounted) {
         setState(() {
@@ -74,7 +71,6 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
               for (Map<String, dynamic> element in repairMainNodeInfo) {
                 count1 = count1 + (element['count'] as int? ?? 0);
               }
-              logger.i('count1: $count1');
             }
             if (repairMainNode == 'C5') {
               repairMainNodeInfo1 = response
@@ -86,7 +82,6 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                 logger.i(element);
                 count2 = count2 + (element['count'] as int? ?? 0);
               }
-              logger.i('count2: $count2');
             }
             if (repairMainNode == '临修') {
               repairMainNodeInfo2 = response
@@ -97,7 +92,6 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
               for (Map<String, dynamic> element in repairMainNodeInfo2) {
                 count3 = count3 + (element['count'] as int? ?? 0);
               }
-              logger.i('count3: $count3');
             }
           } else {
             repairMainNodeInfo = [];
@@ -127,7 +121,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
-        "检修作业-机车",
+        "检修作业-机车（派工）",
         style: TextStyle(color: Colors.black),
       ),
       backgroundColor: Colors.white,
@@ -690,6 +684,7 @@ Widget _buildTodoItem(String label, String value) {
   );
 }
 
+//机车派工详情
 class PreparationDetailPage extends StatefulWidget {
   //主流程节点主键
   final String? repairMainCode;
@@ -713,8 +708,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
       "userId": Global.profile.permissions?.user.userId
     };
     try {
-      var r = await ProductApi()
-          .getPackageAndInspectionStatistics(queryParametrs: params);
+      var r =
+          await ProductApi().getTaskDistributionStatus(queryParametrs: params);
       if (mounted) {
         setState(() {
           if (r is Map) {
@@ -744,7 +739,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('检修作业-明细'),
+        title: const Text('检修作业-明细（派工）'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -773,36 +768,30 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
             Column(
               children: [
                 TaskCard(
-                  title: '待范围作业',
+                  title: '范围作业派工',
                   subtitle: '工序节点范围作业包清单',
                   count:
-                      '${numberInfo['completePackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
+                      '${numberInfo['hasDispatchedPackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () {
+                  onTap: () async {
                     // 在这里处理待作业的点击事件
-                    Navigator.push(
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              PackageInfo(locoInfo: widget.locoInfo)),
+                              PackageArrangeInfo(locoInfo: widget.locoInfo)),
                     );
+                    // 如果从派工页面返回了true，则刷新当前页面
+                    if (result == true) {
+                      getNumber(); // 重新获取数据
+                    }
                   },
                 ),
-                // TaskCard(
-                //   title: '待派工',
-                //   subtitle: '当前机车下需处理的活件总数',
-                //   count: '1',
-                // ),
-                // TaskCard(
-                //   title: '待销活',
-                //   subtitle: '当前机车下本人需要销活的活件总数',
-                //   count: '1',
-                // ),
                 TaskCard(
-                  title: '待机统-28作业',
+                  title: '机统-28作业派工',
                   subtitle: '机车机统28作业清单',
                   count:
-                      '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
+                      '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -813,9 +802,10 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '待互检作业',
+                  title: '互检作业派工',
                   subtitle: '工序互检作业清单',
-                  count: '${numberInfo['mutualInspectionCount'] ?? 0}',
+                  count:
+                      '${numberInfo['hasDispatchedMutualInspectionCount'] ?? 0}/${numberInfo['totalMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -826,9 +816,10 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '待专检作业',
+                  title: '专检作业派工',
                   subtitle: '工序专检作业清单',
-                  count: '${numberInfo['specialInspectionCount'] ?? 0}',
+                  count:
+                      '${numberInfo['hasDispatchedSpecialInspectionCount'] ?? 0}/${numberInfo['totalMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -972,6 +963,7 @@ class _InfoItem extends StatelessWidget {
   }
 }
 
+// ... existing code ...
 class TaskCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -991,16 +983,7 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap ??
-          () {
-            // 默认的点击处理逻辑
-            if (title == '待作业') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PackageInfo()),
-              );
-            }
-          },
+      onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0),
         padding: const EdgeInsets.all(16.0),
@@ -1032,13 +1015,31 @@ class TaskCard extends StatelessWidget {
                 ),
               ],
             ),
-            Text(
-              count,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Text(
+                  count,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  child: const Text('派工'),
+                ),
+              ],
             ),
           ],
         ),
@@ -1047,35 +1048,34 @@ class TaskCard extends StatelessWidget {
   }
 }
 
-//待范围作业
-class PackageInfo extends StatefulWidget {
+class PackageArrangeInfo extends StatefulWidget {
   //机车信息
   final Map<String, dynamic>? locoInfo;
 
-  const PackageInfo({
+  const PackageArrangeInfo({
     Key? key,
     this.locoInfo,
   }) : super(key: key);
   @override
-  State<PackageInfo> createState() => _PackageInfoState();
+  State<PackageArrangeInfo> createState() => _PackageArrangeInfoState();
 }
 
-class _PackageInfoState extends State<PackageInfo> {
+class _PackageArrangeInfoState extends State<PackageArrangeInfo> {
   var logger = AppLogger.logger;
 
   List<Map<String, dynamic>> packageList = [];
 
+  @override
   void initState() {
-    getWorkPackage();
+    super.initState();
+    getPackageManage();
+    logger.i(widget.locoInfo);
   }
 
-  void getWorkPackage() async {
-    Map<String, dynamic> params = {
-      "trainEntryCode": widget.locoInfo?['code'],
-      "userId": Global.profile.permissions?.user.userId
-    };
+  void getPackageManage() async {
+    Map<String, dynamic> params = {"trainEntryCode": widget.locoInfo?['code']};
     logger.i(params);
-    var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
+    var r = await ProductApi().getAssignPackage(params);
     if (mounted) {
       setState(() {
         packageList = (r as List<dynamic>)
@@ -1134,6 +1134,7 @@ class TaskItem {
 class InspectionPackagePage extends StatefulWidget {
   final List<Map<String, dynamic>> packageList;
   final Map<String, dynamic>? locoInfo;
+
   const InspectionPackagePage(
       {super.key, this.locoInfo, required this.packageList});
 
@@ -1142,6 +1143,8 @@ class InspectionPackagePage extends StatefulWidget {
 }
 
 class _InspectionPackagePageState extends State<InspectionPackagePage> {
+  List<Map<String, dynamic>> packageList = [];
+  var logger = AppLogger.logger;
   // 模拟机车数据
   final Locomotive _locomotive = Locomotive(
     id: "HXD3C 0016",
@@ -1161,23 +1164,46 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    getPackageManage();
+  }
+
+  void getPackageManage() async {
+    Map<String, dynamic> params = {"trainEntryCode": widget.locoInfo?['code']};
+    logger.i(params);
+    var r = await ProductApi().getAssignPackage(params);
+    if (mounted) {
+      setState(() {
+        packageList = (r as List<dynamic>)
+            .map((item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map))
+            .toList();
+        logger.i(packageList);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
-
+    // ... existing code ...
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () {
+          onPressed: () async {
             if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+              // 返回前刷新界面
+              Navigator.pop(context, true); // 传递true表示需要刷新
             } else {
               // 如果无法pop，尝试使用maybePop或者给出提示
               Navigator.maybePop(context);
             }
           },
         ),
-        title: const Text("检修作业-作业包"),
+        title: const Text("检修作业-作业包(派工)"),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -1280,20 +1306,20 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   /// 构建单个作业项（如车内2、车底）
   Widget _buildTaskItem(Map<String, dynamic> task) {
-    final progress =
-        task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
+    // final progress =
+    //     task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => InspectionVertexPage(
-              locoInfo: widget.locoInfo,
-              packageInfo: task,
-            ),
-          ),
-        );
+        // Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => InspectionVertexPage(
+        //       locoInfo: widget.locoInfo,
+        //       packageInfo: task,
+        //     ),
+        //   ),
+        // );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -1302,6 +1328,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey[300]!),
         ),
+        // ... existing code ...
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Row(
@@ -1320,36 +1347,71 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 名称 + 进度（如“车内2 0/16”）
+                    // 名称 + 进度（如"车内2 0/16"）
                     Text(
-                      "${task['name']} ${task['completeCount']}/${task['total']}",
+                      "${task['name']} ",
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 4),
-
-                    // 进度条
-                    LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.grey[200],
-                      color: Colors.blue,
-                      minHeight: 8,
-                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
 
-              // 领用人状态（如“未申领”）
-              // Text(
-              //   task['complete'],
-              //   style: const TextStyle(
-              //     fontSize: 14,
-              //     color: Colors.grey,
-              //   ),
-              // ),
+              // 主修人和辅修人信息
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 主修
+                  Text(
+                    "主修人：${task['executorName'] ?? '未指定'}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // 辅修
+                  Text(
+                    "辅修人：${task['assistantName'] ?? '未指定'}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+
+              // 作业人员查询按钮
+              ElevatedButton(
+                onPressed: () async {
+                  // 作业人员查询按钮点击事件
+                  // _onWorkerQueryPressed(task);
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          RollCallPage(packageCode: task['code']),
+                    ),
+                  );
+                  // 如果从派工页面返回了true，则刷新当前页面
+                  if (result == true) {
+                    getPackageManage(); // 重新获取数据
+                    showToast("人员信息已更新");
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(60, 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                child: const Text('作业\n人员\n查询', textAlign: TextAlign.center),
+              ),
+
+              const SizedBox(width: 12),
             ],
           ),
         ),
@@ -1358,479 +1420,310 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 }
 
-class InspectionVertexPage extends StatefulWidget {
-  Map<String, dynamic>? packageInfo = {};
-  Map<String, dynamic>? locoInfo = {};
-
-  InspectionVertexPage(
-      {super.key, required this.packageInfo, required this.locoInfo});
-
-  @override
-  State<InspectionVertexPage> createState() => _InspectionVertexPageState();
+/// 班组模型
+class Team {
+  String name; // 班组名（如“北折一组”）
+  late List<Member> members; // 成员列表
+  Team(this.name, this.members);
 }
 
-class _InspectionVertexPageState extends State<InspectionVertexPage> {
-  // 模拟已采集的照片（可扩展为文件路径列表）
-  var logger = AppLogger.logger;
+/// 成员模型
+class Member {
+  final String name; // 姓名（如“曹阳”）
+  final int id; // 工号（如“3368”）
+  Member(this.name, this.id);
+}
 
-  final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
-  //展示照片文件
-  final List<XFile> _files = [];
-  int _currentIndex = 0;
+/// 检修项模型
+class InspectionItem {
+  final String name; // 项名称（如“车底”）
+  bool isChecked; // 是否勾选
+  InspectionItem(this.name, this.isChecked);
+}
 
-  Map<String, dynamic>? currentPackage;
-
-  //作业项点内容
-  List<Map<String, dynamic>> packagePoints = [];
-
-  Map<String, dynamic> currentPackagePoint = {};
-
-  List<Map<String, dynamic>> taskContentItemList = [];
+class RollCallPage extends StatefulWidget {
+  final String packageCode;
+  final Function()? onRefresh;
+  const RollCallPage({super.key, required this.packageCode, this.onRefresh});
 
   @override
-  void initState() {
-    if (widget.packageInfo?["taskCertainPackageList"] is List) {
-      packagePoints = (widget.packageInfo?["taskCertainPackageList"] as List)
-          .map((item) => item is Map<String, dynamic>
-              ? item
-              : Map<String, dynamic>.from(item as Map))
-          .toList();
+  State<RollCallPage> createState() => _RollCallPageState();
+}
+
+// ... existing code ...
+class _RollCallPageState extends State<RollCallPage> {
+  String? deptName = Global.profile.permissions?.user.dept?.deptName;
+
+  // 班组数据（模拟）
+  late Team _team;
+
+  // 当前选中的成员（默认选第一个）
+  late Member _selectedMember;
+
+  // 机型选项（模拟下拉）
+  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
+  String _selectedModel = 'HXD3CA';
+
+  // 检修项列表（模拟状态）
+  final List<InspectionItem> _inspectionItems = [
+    InspectionItem('主修', false),
+    InspectionItem('辅修', false),
+  ];
+
+  // 添加搜索控制器和过滤后的成员列表
+  final TextEditingController _searchController = TextEditingController();
+  List<Member> _filteredMembers = [];
+
+  var logger = AppLogger.logger;
+
+  void getUserList() async {
+    Map<String, dynamic> params = {
+      "deptId": Global.profile.permissions?.user.dept?.deptId,
+      "pageNum": 0,
+      "pageSize": 0,
+    };
+    try {
+      var response = await ProductApi().getTeamUser(queryParametrs: params);
+
+      if (response is List) {
+        // 将List<dynamic>转换为List<Map<String, dynamic>>
+        List<Map<String, dynamic>> userList = response
+            .map((item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map))
+            .toList();
+        print(userList);
+        // 根据获取的用户列表更新_team.members
+        if (userList.isNotEmpty) {
+          List<Member> members = userList.map((user) {
+            return Member(
+              user['nickName'] ?? '未知用户',
+              user['userId'] ?? '未知ID',
+            );
+          }).toList();
+
+          setState(() {
+            _team.members = members;
+            _filteredMembers = members; // 同时更新过滤列表
+            if (members.isNotEmpty) {
+              _selectedMember = members[0]; // 更新选中的成员为第一个
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // 错误处理
+      print('获取用户列表失败: $e');
     }
-    logger.i(packagePoints);
+  }
+
+  // 添加过滤成员的方法
+  void _filterMembers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredMembers = _team.members;
+      } else {
+        _filteredMembers = _team.members
+            .where((member) =>
+                member.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
   }
 
   @override
+  void initState() {
+    super.initState();
+    // 初始化团队数据
+    _team = Team(deptName ?? '默认班组', []);
+    // 监听搜索框输入
+    _searchController.addListener(() {
+      _filterMembers(_searchController.text);
+    });
+    getUserList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void setRepairInfo() async {
+    Map<String, dynamic> params = {
+      "code": widget.packageCode,
+    };
+    if (_inspectionItems[0].isChecked) {
+      params['executorId'] = _selectedMember.id;
+      params['executorName'] = _selectedMember.name;
+    }
+    if (_inspectionItems[1].isChecked) {
+      params['assistantId'] = _selectedMember.id;
+      params['assistantName'] = _selectedMember.name;
+    }
+    try {
+      logger.i(params);
+      var response = await ProductApi()
+          .updateTaskInstructPackageRepairInfo(queryParametrs: params);
+
+      if (response is List) {
+        // 将List<dynamic>转换为List<Map<String, dynamic>>
+      }
+      if (response['code'] == 200) {
+        showToast("确认成功");
+      }
+    } catch (e) {
+      // 错误处理
+      print('获取用户列表失败: $e');
+    }
+  }
+
+  int _selectedInspectionIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    int number = packagePoints.length;
-
-    if (packagePoints.isNotEmpty) {
-      if (_currentIndex < packagePoints.length) {
-        currentPackagePoint = packagePoints[_currentIndex];
-      }
-    }
-    List<Map<String, dynamic>> taskInstructContentList = [];
-    if (currentPackagePoint['taskInstructContentList'] != null &&
-        currentPackagePoint['taskInstructContentList'] is List) {
-      taskInstructContentList =
-          (currentPackagePoint['taskInstructContentList'] as List)
-              .where((item) => item is Map<String, dynamic>)
-              .map((item) => item as Map<String, dynamic>)
-              .toList();
-    }
-
-    for (Map<String, dynamic> item in taskInstructContentList) {
-      if (item['taskContentItemList'] != null &&
-          item['taskContentItemList'] is List) {
-        taskContentItemList.addAll((item['taskContentItemList'] as List)
-            .where((item) => item is Map<String, dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList());
-      }
-    }
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              // 返回前刷新界面
+              Navigator.pop(context, true); // 传递true表示需要刷新
+            } else {
+              // 如果无法pop，尝试使用maybePop或者给出提示
+              Navigator.maybePop(context);
+            }
+          },
         ),
-        title: const Text("检修作业-项点"),
+        title: const Text('开工点名(检修)'),
         backgroundColor: Colors.white,
-        actions: [
-          TextButton(
-            onPressed: _reportJT6, 
-            child: const Text(
-              "报机统28",
-              style: TextStyle(color: Colors.black),
+        elevation: 1,
+      ),
+      body: Row(
+        children: [
+          // 左侧：人员列表
+          Container(
+            width: 160,
+            color: Colors.white,
+            child: ListView(
+              children: [
+                // 班组名称
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    _team.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // 添加搜索框
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: '搜索用户...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                  ),
+                ),
+                // 成员列表
+                ..._filteredMembers.map((member) {
+                  final isSelected = member == _selectedMember;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedMember = member;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      color: isSelected ? Colors.green : Colors.white,
+                      child: Text(
+                        '${member.name}(${member.id})',
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.black,
+                          fontSize: 16, // 增大字体
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal, // 选中时加粗
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          // 右侧：详情区域
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.grey[200],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  // 检修项列表
+                  Column(
+                    children: _inspectionItems.asMap().entries.map((entry) {
+                      int idx = entry.key;
+                      InspectionItem item = entry.value;
+                      return RadioListTile<int>(
+                        title: Text(item.name),
+                        value: idx,
+                        groupValue: _selectedInspectionIndex,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedInspectionIndex = value ?? -1;
+                            // 重置所有项的选中状态
+                            for (int i = 0; i < _inspectionItems.length; i++) {
+                              _inspectionItems[i].isChecked =
+                                  (i == _selectedInspectionIndex);
+                            }
+                          });
+                        },
+                        activeColor: Colors.green,
+                      );
+                    }).toList(),
+                  ),
+                  const Spacer(),
+                  // 底部按钮：固定检修项
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 可扩展：提交检修项逻辑
+                        setRepairInfo();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
+                      child: const Text(
+                        '确认',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. 机车基本信息
-            _buildTrainInfo(),
-            const SizedBox(height: 16),
-
-            // 2. 整备进度条
-            LinearProgressIndicator(
-              value: (_currentIndex+1) / number,
-              color: Colors.green,
-              backgroundColor: Colors.grey[300],
-              minHeight: 8,
-            ),
-            const SizedBox(height: 16),
-
-            // 3. 作业区域标题（车外 + 第二工位）
-// ... existing code ...
-            // 3. 作业区域标题（车外 + 第二工位）
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Text(
-                      currentPackagePoint['name']?.toString() ?? '未知项点',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: _gotoSecondStation, // 跳转第二工位（可扩展）
-                  child: const Text(
-                    "作业内容",
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-// ... existing code ...
-// ... existing code ...
-            // const SizedBox(height: 8),
-
-            // // 4. 作业项：3右轴箱组装检查（红色强调）
-            // Row(
-            //   crossAxisAlignment: CrossAxisAlignment.start,
-            //   children: [
-            //     // 红色竖线标记
-            //     Container(
-            //       width: 4,
-            //       height: 24,
-            //       color: Colors.red,
-            //     ),
-            //     const SizedBox(width: 8),
-            //     const Text(
-            //       "$",
-            //       style: TextStyle(
-            //         color: Colors.red,
-            //         fontSize: 16,
-            //         fontWeight: FontWeight.bold,
-            //       ),
-            //     ),
-            //   ],
-            // ),
-            const SizedBox(height: 16),
-
-            // 5. 照片采集区（必须采集 + 拍照/删除功能）
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              color: Colors.grey[300],
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 标题行：必须采集 + 拍照按钮
-                  Row(
-                    children: [
-                      const Text(
-                        "必须采集",
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: _takePhoto, // 拍照逻辑（可扩展）
-                        icon: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // 照片列表（模拟展示）
-                  if (_files.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      children: _files.map((photo) {
-                        return Stack(
-                          children: [
-                            // 照片占位（实际可替换为Image）
-
-                            Container(
-                              width: 80,
-                              height: 80,
-                              color: Colors.black,
-                              alignment: Alignment.center,
-                              child: Image.file(
-                                File(photo.path),
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-
-                            // 删除按钮
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: IconButton(
-                                onPressed: () => _deletePhoto(photo),
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.red,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            // 展示taskContentItemList
-
-            taskContentItemList.isEmpty
-                ? const Center(
-                    child: Text('暂无数据'),
-                  )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: taskContentItemList.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(text: '数据名称:'),
-                              TextSpan(
-                                text:
-                                    '${taskContentItemList[index]['name'] ?? ''}',
-                                style: const TextStyle(color: Colors.blue),
-                              ),
-                              TextSpan(text: '最小值可等于:'),
-                              TextSpan(
-                                text:
-                                    '${taskContentItemList[index]['limitMin'] ?? ''}',
-                                style: const TextStyle(color: Colors.blue),
-                              ),
-                              TextSpan(text: '最大值可等于:'),
-                              TextSpan(
-                                text:
-                                    '${taskContentItemList[index]['limitMax'] ?? ''}',
-                                style: const TextStyle(color: Colors.blue),
-                              ),
-                              TextSpan(text: '单位'),
-                              TextSpan(
-                                text:
-                                    '${taskContentItemList[index]['limitUnit'] ?? ''}',
-                                style: const TextStyle(color: Colors.blue),
-                              ),
-                            ],
-                          ),
-                        ),
-                        subtitle: TextField(
-                          decoration: const InputDecoration(
-                            hintText: '请输入实际数值',
-                            border: OutlineInputBorder(),
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            // 在这里处理输入值的变化
-                            // 你可以将值保存到 taskContentItemList[index] 的某个字段中
-                            taskContentItemList[index]['realValue'] = value;
-                          },
-                        ),
-                      );
-                    }),
-            const SizedBox(height: 20),
-            // 6. 进入下一项按钮
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _gotoNextItem, // 进入下一项逻辑（可扩展）
-                child: _currentIndex < (packagePoints.length) - 1
-                    ? const Text("进入下一项")
-                    : const Text("完成"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------------------- 交互逻辑（可扩展） ----------------------
-  void _reportJT6() {
-    // 报JT6的业务逻辑（如提交数据、跳转页面）
-    debugPrint("报JT6功能触发");
-  }
-
-  void _gotoSecondStation() {
-    // 跳转第二工位的逻辑（如导航到新页面）
-    debugPrint("跳转第二工位");
-  }
-
-// ... existing code ...
-  void _takePhoto() async {
-    // 调用相机采集照片（可结合image_picker库实现）
-    debugPrint("拍照功能触发");
-
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-
-    if (photo != null) {
-      setState(() {
-        _photos.add(photo.path);
-        _files.add(photo);
-      });
-    }
-  }
-
-  void _deletePhoto(XFile photo) {
-    // 删除照片逻辑
-    debugPrint("删除照片：$photo");
-    setState(() {
-      _files.remove(photo);
-    });
-  }
-
-  void _gotoNextItem() {
-    // 进入下一项的业务逻辑（如校验照片、跳转步骤）
-    upLoadFileList();
-    saveContentItem();
-    completePackage();
-    // 将图片清空
-    _files.clear();
-    if (packagePoints != null && _currentIndex < packagePoints!.length - 1) {
-      // 如果还有下一项，则更新索引以显示下一项
-      setState(() {
-        _currentIndex++;
-      });
-    } else {
-      debugPrint("已完成所有项");
-      Navigator.of(context).pop();
-    }
-  }
-
-  void upLoadFileList() async {
-    try {
-      List<File> files = _files.map((xFile) => File(xFile.path)).toList();
-      logger.i(currentPackagePoint['code']);
-      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
-        'certainPackageCodeList': currentPackagePoint['code'],
-      }, imagedatas: files);
-    } catch (e) {
-      logger.e(e);
-    }
-  }
-
-  void completePackage() async {
-    try {
-      List<TaskCertainPackageList> queryParameters = [];
-      TaskCertainPackageList taskCertainPackageList = TaskCertainPackageList(
-        code: currentPackagePoint['code'],
-      );
-      queryParameters.add(taskCertainPackageList);
-      var r = await ProductApi().finishCertainPackage(queryParameters);
-      logger.i(r);
-    } catch (e) {
-      logger.e(e);
-    }
-  }
-
-  //保存作业项数据
-  void saveContentItem() async {
-    try {
-      var r =
-          await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);
-      logger.i(r);
-    } catch (e) {
-      logger.e(e);
-    }
-  }
-
-  // ---------------------- 辅助方法：机车信息展示 ----------------------
-  /// 构建机车基本信息区域
-  Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              widget.locoInfo != null &&
-                      widget.locoInfo!['arrivePlatformTime'] != null
-                  ? '入段:${timeFormat.format(DateTime.parse(widget.locoInfo!['arrivePlatformTime']))}'
-                  : '入段:',
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // 每一项单独一行显示
-        _InfoItem(
-            label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
-                ? (widget.locoInfo?['stopPlace'] ?? '无')
-                : '无'),
-        const SizedBox(height: 8),
-        _InfoItem(
-            label: '工序转入时间',
-            value: widget.locoInfo != null &&
-                    widget.locoInfo!['mainNodeChangeTime'] != null
-                ? timeFormat.format(
-                    DateTime.parse(widget.locoInfo!['mainNodeChangeTime']))
-                : '无'),
-        const SizedBox(height: 8),
-        _InfoItem(
-            label: '工序转出时间',
-            value: widget.locoInfo != null &&
-                    widget.locoInfo!['theoreticEndTime'] != null
-                ? timeFormat.format(
-                    DateTime.parse(widget.locoInfo!['theoreticEndTime']))
-                : '无'),
-      ],
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
