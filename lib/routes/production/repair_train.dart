@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:jcjx_phone/routes/production/jt_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
 
@@ -808,7 +809,14 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => JtShow()),
+                      MaterialPageRoute(
+                          builder: (context) => JtWorkList(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),
@@ -1278,80 +1286,82 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     );
   }
 
-  /// 构建单个作业项（如车内2、车底）
+  // 构建单个作业项（如车内2、车底）
   Widget _buildTaskItem(Map<String, dynamic> task) {
     final progress =
         task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => InspectionVertexPage(
-              locoInfo: widget.locoInfo,
-              packageInfo: task,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 文件夹图标
+            Icon(
+              Icons.folder,
+              color: Colors.yellow.shade700,
+              size: 32,
             ),
-          ),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // 文件夹图标
-              Icon(
-                Icons.folder,
-                color: Colors.yellow.shade700,
-                size: 32,
-              ),
-              const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-              // 作业名称 + 进度文本 + 进度条
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 名称 + 进度（如“车内2 0/16”）
-                    Text(
-                      "${task['name']} ${task['completeCount']}/${task['total']}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+            // 作业名称 + 进度文本 + 进度条
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 名称 + 进度（如“车内2 0/16”）
+                  Text(
+                    "${task['name']} ${task['completeCount']}/${task['total']}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 4),
+                  ),
+                  const SizedBox(height: 4),
 
-                    // 进度条
-                    LinearProgressIndicator(
-                      value: progress,
-                      backgroundColor: Colors.grey[200],
-                      color: Colors.blue,
-                      minHeight: 8,
-                    ),
-                  ],
-                ),
+                  // 进度条
+                  LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.grey[200],
+                    color: Colors.blue,
+                    minHeight: 8,
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
+            ),
+            const SizedBox(width: 12),
 
-              // 领用人状态（如“未申领”）
-              // Text(
-              //   task['complete'],
-              //   style: const TextStyle(
-              //     fontSize: 14,
-              //     color: Colors.grey,
-              //   ),
-              // ),
-            ],
-          ),
+            // 开工按钮
+            ElevatedButton(
+              onPressed: () async {
+                task['startTime'] = DateTime.now().toString();
+                List<Map<String, dynamic>> queryParametrs = [task];
+                ProductApi().startWork(queryParametrs);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InspectionVertexPage(
+                      locoInfo: widget.locoInfo,
+                      packageInfo: task,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green, // 背景色设为绿色
+                foregroundColor: Colors.white, // 文字颜色设为白色
+              ),
+              child: const Text('开工'),
+            ),
+            const SizedBox(width: 12),
+          ],
         ),
       ),
     );
@@ -1437,7 +1447,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         backgroundColor: Colors.white,
         actions: [
           TextButton(
-            onPressed: _reportJT6, 
+            onPressed: _reportJT6,
             child: const Text(
               "报机统28",
               style: TextStyle(color: Colors.black),
@@ -1456,15 +1466,13 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
             // 2. 整备进度条
             LinearProgressIndicator(
-              value: (_currentIndex+1) / number,
+              value: (_currentIndex + 1) / number,
               color: Colors.green,
               backgroundColor: Colors.grey[300],
               minHeight: 8,
             ),
             const SizedBox(height: 16),
 
-            // 3. 作业区域标题（车外 + 第二工位）
-// ... existing code ...
             // 3. 作业区域标题（车外 + 第二工位）
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1482,7 +1490,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                   ),
                 ),
                 TextButton(
-                  onPressed: _gotoSecondStation, // 跳转第二工位（可扩展）
+                  onPressed: _gotoSecondStation,
                   child: const Text(
                     "作业内容",
                     style: TextStyle(color: Colors.blue),
@@ -1490,8 +1498,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 ),
               ],
             ),
-// ... existing code ...
-// ... existing code ...
             // const SizedBox(height: 8),
 
             // // 4. 作业项：3右轴箱组装检查（红色强调）
@@ -1673,7 +1679,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     debugPrint("跳转第二工位");
   }
 
-// ... existing code ...
   void _takePhoto() async {
     // 调用相机采集照片（可结合image_picker库实现）
     debugPrint("拍照功能触发");

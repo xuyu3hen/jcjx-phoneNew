@@ -666,10 +666,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
     return SafeArea(
         child: InkWell(
       onTap: () async {
-        if ((faultDesc == null ||
-            repairWorkResource['code'] == "" ||
-            riskLevel == null ||
-            requiredProcessingMethod['code'] == "")) {
+        if (false) {
           showToast("内容未填写完");
         } else {
           var submit;
@@ -687,7 +684,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus,
-
+              "repairScheme": repairPlan,
+              "faultAssumption": selectedAssumeType, 
               "status": 0
             };
             if (completeStatus == 1) {

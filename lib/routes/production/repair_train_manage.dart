@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:jcjx_phone/routes/production/jt_assign.dart';
 import '../../../index.dart';
 
 class TrainRepairPageManage extends StatefulWidget {
@@ -797,7 +798,15 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => JtShow()),
+                      MaterialPageRoute(
+                          builder: (context) => JtWorkAssign(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),
