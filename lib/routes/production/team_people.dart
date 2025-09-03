@@ -14,13 +14,6 @@ class Member {
   Member(this.name, this.id);
 }
 
-/// 检修项模型
-class InspectionItem {
-  final String name; // 项名称（如“车底”）
-  bool isChecked; // 是否勾选
-  InspectionItem(this.name, this.isChecked);
-}
-
 class JtAssignPeople extends StatefulWidget {
   final String jtCode;
   const JtAssignPeople({super.key, required this.jtCode});
@@ -29,7 +22,6 @@ class JtAssignPeople extends StatefulWidget {
   State<JtAssignPeople> createState() => _JtAssignPeopleState();
 }
 
-// ... existing code ...
 class _JtAssignPeopleState extends State<JtAssignPeople> {
   String? deptName = Global.profile.permissions?.user.dept?.deptName;
 
@@ -39,15 +31,9 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
   // 当前选中的成员（默认选第一个）
   late Member _selectedMember;
 
-  // 机型选项（模拟下拉）
-  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
-  String _selectedModel = 'HXD3CA';
-
-  // 检修项列表（模拟状态）
-  final List<InspectionItem> _inspectionItems = [
-    InspectionItem('主修', false),
-    InspectionItem('辅修', false),
-  ];
+  // 主修和辅修人员
+  Member? _mainRepairMember;
+  Member? _assistantMember;
 
   // 添加搜索控制器和过滤后的成员列表
   final TextEditingController _searchController = TextEditingController();
@@ -77,7 +63,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
           List<Member> members = userList.map((user) {
             return Member(
               user['nickName'] ?? '未知用户',
-              user['userId'] ?? '未知ID',
+              user['userId'] ?? 0,
             );
           }).toList();
 
@@ -129,35 +115,72 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
   }
 
   void setRepairInfo() async {
-    Map<String, dynamic> params = {
-      // "code": widget.packageCode,
-    };
-    if (_inspectionItems[0].isChecked) {
-      params['executorId'] = _selectedMember.id;
-      params['executorName'] = _selectedMember.name;
-    }
-    if (_inspectionItems[1].isChecked) {
-      params['assistantId'] = _selectedMember.id;
-      params['assistantName'] = _selectedMember.name;
-    }
     try {
-      logger.i(params);
-      var response = await ProductApi()
-          .updateTaskInstructPackageRepairInfo(queryParametrs: params);
+      // 必须至少选择一个主修或辅修人员
+      if (_mainRepairMember == null && _assistantMember == null) {
+        showToast("请至少选择一名主修或辅修人员");
+        return;
+      }
 
-      if (response is List) {
-        // 将List<dynamic>转换为List<Map<String, dynamic>>
+      // 构建参数
+      Map<String, dynamic> params = {
+        "code": widget.jtCode,
+        'completeStatus': 0
+      };
+
+      // 设置主修人员
+      if (_mainRepairMember != null) {
+        params['repairPersonnel'] = _mainRepairMember!.id;
+        params['repairName'] = _mainRepairMember!.name;
       }
-      if (response['code'] == 200) {
-        showToast("确认成功");
+
+      // 设置辅修人员
+      if (_assistantMember != null) {
+        params['assistant'] = _assistantMember!.id;
+        params['assistantName'] = _assistantMember!.name;
       }
+
+      logger.i(params);
+      
+      // 调用API更新用户信息
+      var response = await ProductApi().updateUserId(params);
+
+      if (response['code'] == "S_T_S003") {
+        showToast("分配成功");
+      } 
     } catch (e) {
-      // 错误处理
-      print('获取用户列表失败: $e');
+      print('分配人员失败: $e');
+      showToast("分配失败，请重试");
     }
   }
 
-  int _selectedInspectionIndex = -1;
+  // 设置主修人员
+  void _setMainRepair(Member member) {
+    setState(() {
+      _mainRepairMember = member;
+    });
+  }
+
+  // 设置辅修人员
+  void _setAssistant(Member member) {
+    setState(() {
+      _assistantMember = member;
+    });
+  }
+
+  // 清除主修人员
+  void _clearMainRepair() {
+    setState(() {
+      _mainRepairMember = null;
+    });
+  }
+
+  // 清除辅修人员
+  void _clearAssistant() {
+    setState(() {
+      _assistantMember = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,7 +198,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
             }
           },
         ),
-        title: const Text('开工点名(检修)'),
+        title: const Text('开工点名(机统28)'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -185,7 +208,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
           Container(
             width: 160,
             color: Colors.white,
-            child: ListView(
+            child: Column(
               children: [
                 // 班组名称
                 Container(
@@ -201,7 +224,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                     ),
                   ),
                 ),
-                // 添加搜索框
+                // 添加搜索框（固定在顶部）
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
@@ -216,34 +239,109 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                     ),
                   ),
                 ),
-                // 成员列表
-                ..._filteredMembers.map((member) {
-                  final isSelected = member == _selectedMember;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedMember = member;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      color: isSelected ? Colors.green : Colors.white,
-                      child: Text(
-                        '${member.name}(${member.id})',
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontSize: 16, // 增大字体
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal, // 选中时加粗
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                // 成员列表（可滚动部分）
+                Expanded(
+                  child: ListView(
+                    children: [
+                      // 成员列表
+                      ..._filteredMembers.map((member) {
+                        final isSelected = member == _selectedMember;
+                        final isMainRepair = member == _mainRepairMember;
+                        final isAssistant = member == _assistantMember;
+                        
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMember = member;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            color: isSelected ? Colors.blue[100] : Colors.white,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${member.name}',
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.blue : Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: isSelected
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    // 主修按钮
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        if (_mainRepairMember == member) {
+                                          _clearMainRepair();
+                                        } else {
+                                          _setMainRepair(member);
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isMainRepair 
+                                            ? Colors.green 
+                                            : Colors.grey[300],
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        minimumSize: const Size(0, 0),
+                                      ),
+                                      child: Text(
+                                        '主修',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isMainRepair 
+                                              ? Colors.white 
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    // 辅修按钮
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        if (_assistantMember == member) {
+                                          _clearAssistant();
+                                        } else {
+                                          _setAssistant(member);
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: isAssistant 
+                                            ? Colors.orange 
+                                            : Colors.grey[300],
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        minimumSize: const Size(0, 0),
+                                      ),
+                                      child: Text(
+                                        '辅修',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isAssistant 
+                                              ? Colors.white 
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -256,28 +354,62 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  // 检修项列表
-                  Column(
-                    children: _inspectionItems.asMap().entries.map((entry) {
-                      int idx = entry.key;
-                      InspectionItem item = entry.value;
-                      return RadioListTile<int>(
-                        title: Text(item.name),
-                        value: idx,
-                        groupValue: _selectedInspectionIndex,
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedInspectionIndex = value ?? -1;
-                            // 重置所有项的选中状态
-                            for (int i = 0; i < _inspectionItems.length; i++) {
-                              _inspectionItems[i].isChecked =
-                                  (i == _selectedInspectionIndex);
-                            }
-                          });
-                        },
-                        activeColor: Colors.green,
-                      );
-                    }).toList(),
+                  const Text(
+                    '已选择人员：',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // 显示已选择的主修人员
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text(
+                          '主修：',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _mainRepairMember != null
+                                ? '${_mainRepairMember!.name}'
+                                : '未选择',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // 显示已选择的辅修人员
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Text(
+                          '辅修：',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _assistantMember != null
+                                ? '${_assistantMember!.name}'
+                                : '未选择',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   // 底部按钮：固定检修项
@@ -285,7 +417,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
-                        // 可扩展：提交检修项逻辑
+                        // 提交检修项逻辑
                         setRepairInfo();
                       },
                       style: ElevatedButton.styleFrom(

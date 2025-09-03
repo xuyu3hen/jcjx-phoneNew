@@ -1615,7 +1615,7 @@ class _RollCallPageState extends State<RollCallPage> {
           Container(
             width: 160,
             color: Colors.white,
-            child: ListView(
+            child: Column(
               children: [
                 // 班组名称
                 Container(
@@ -1631,7 +1631,7 @@ class _RollCallPageState extends State<RollCallPage> {
                     ),
                   ),
                 ),
-                // 添加搜索框
+                // 添加搜索框（固定在顶部）
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: TextField(
@@ -1646,34 +1646,41 @@ class _RollCallPageState extends State<RollCallPage> {
                     ),
                   ),
                 ),
-                // 成员列表
-                ..._filteredMembers.map((member) {
-                  final isSelected = member == _selectedMember;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedMember = member;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      color: isSelected ? Colors.green : Colors.white,
-                      child: Text(
-                        '${member.name}(${member.id})',
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                          fontSize: 16, // 增大字体
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal, // 选中时加粗
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                // 成员列表（可滚动部分）
+                Expanded(
+                  child: ListView(
+                    children: [
+                      // 成员列表
+                      ..._filteredMembers.map((member) {
+                        final isSelected = member == _selectedMember;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMember = member;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            color: isSelected ? Colors.green : Colors.white,
+                            child: Text(
+                              '${member.name}',
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontSize: 16, // 增大字体
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal, // 选中时加粗
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

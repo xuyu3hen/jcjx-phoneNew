@@ -402,7 +402,7 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => JtAssignPeople(
-                                          jtCode: '',
+                                          jtCode: item['code'],
                                         ),
                                       ),
                                     );

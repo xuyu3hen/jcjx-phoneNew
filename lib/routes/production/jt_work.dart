@@ -1,4 +1,5 @@
 import '../../index.dart';
+import 'jt_startwork.dart';
 
 //机统28作业列表
 class JtWorkList extends StatefulWidget {
@@ -81,8 +82,10 @@ class _JtShowPageState extends State<JtWorkList> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 1,
+      'completeStatus': 0,
       'trainEntryCode': widget.trainEntryCode,
+      'reppairName': Global.profile.permissions?.user.userName,
+      'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -236,7 +239,7 @@ class _JtShowPageState extends State<JtWorkList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业-派工"),
+        title: const Text("机统28作业"),
       ),
       body: _buildBody(),
     );
@@ -340,7 +343,8 @@ class _JtShowPageState extends State<JtWorkList> {
                                 child: ListTile(
                                   contentPadding: EdgeInsets.zero,
                                   title: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -349,8 +353,8 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 "故障现象: ${item['faultDescription']}"),
                                           ),
                                           Expanded(
-                                            child:
-                                                Text("施修方案: ${item['repairScheme']}"),
+                                            child: Text(
+                                                "施修方案: ${item['repairScheme']}"),
                                           ),
                                         ],
                                       ),
@@ -373,15 +377,16 @@ class _JtShowPageState extends State<JtWorkList> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child:
-                                                Text("提报人: ${item['reporterName']}"),
+                                            child: Text(
+                                                "提报人: ${item['reporterName']}"),
                                           ),
                                           Expanded(
-                                            child:
-                                                Text("提报时间: ${item['reportDate']}"),
+                                            child: Text(
+                                                "提报时间: ${item['reportDate']}"),
                                           ),
                                           Expanded(
-                                            child: Text("流水号: ${item['deptName']}"),
+                                            child: Text(
+                                                "流水号: ${item['deptName']}"),
                                           ),
                                         ],
                                       ),
@@ -394,7 +399,22 @@ class _JtShowPageState extends State<JtWorkList> {
                                 height: 120,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // TODO: 实现派工逻辑
+                                    // 跳转到FaultDisposalPage()
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FaultDisposalPage(
+                                          faultDescription:
+                                          item['faultDescription']??"",
+                                          typeName: widget.typeName,
+                                          trainEntryCode: widget.trainEntryCode,
+                                          trainNum: widget.trainNum,
+                                          repairScheme: item['repairScheme']??"",
+                                          trainNumCode: widget.trainNumCode,
+                                          typeCode: widget.typeCode,
+                                        ),
+                                      ),
+                                    );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,

@@ -47,6 +47,23 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /tasks/locomotiveMaintenanceLogDO/updateUserId
+  Future<dynamic> updateUserId(
+    Map<String, dynamic> queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/locomotiveMaintenanceLogDO/update",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // 预派工查询
   Future<MainDataStructure> getPreDispatchWork({
     Map<String, dynamic>? queryParametrs, // 分页参数
