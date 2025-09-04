@@ -182,6 +182,24 @@ class ProductApi extends AppApi {
     }
   }
 
+  //  获取加工方法 /tasks/jt28Dict/selectAll
+  Future<dynamic> getProcessMethod(
+    Map<String, dynamic>? queryParametrs, // 分页参数
+  ) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/jt28Dict/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(((r.data["data"]))["data"]["rows"]);
+      return (((r.data["data"]))["data"]["rows"]);
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+
   // 故障零部件查询
   Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async {
     try {

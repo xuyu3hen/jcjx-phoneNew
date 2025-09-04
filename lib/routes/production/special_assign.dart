@@ -1,14 +1,14 @@
-import '../../index.dart';
-import 'jt_startwork.dart';
+import 'package:jcjx_phone/routes/production/team_people.dart';
 
-//机统28作业列表
-class JtWorkList extends StatefulWidget {
+import '../../index.dart';
+
+class SpecialAssign extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;
   final String typeName;
   final String typeCode;
   final String trainEntryCode;
-  const JtWorkList(
+  const SpecialAssign(
       {Key? key,
       required this.trainNum,
       required this.trainNumCode,
@@ -17,10 +17,10 @@ class JtWorkList extends StatefulWidget {
       required this.trainEntryCode})
       : super(key: key);
   @override
-  State<JtWorkList> createState() => _JtShowPageState();
+  State<SpecialAssign> createState() => _JtShowPageState();
 }
 
-class _JtShowPageState extends State<JtWorkList> {
+class _JtShowPageState extends State<SpecialAssign> {
   late Map<String, dynamic> info = {};
 
   var logger = AppLogger.logger;
@@ -82,10 +82,8 @@ class _JtShowPageState extends State<JtWorkList> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 0,
+      'completeStatus': 1,
       'trainEntryCode': widget.trainEntryCode,
-      'reppairName': Global.profile.permissions?.user.userName,
-      'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -239,7 +237,7 @@ class _JtShowPageState extends State<JtWorkList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业"),
+        title: const Text("专检作业-派工"),
       ),
       body: _buildBody(),
     );
@@ -363,7 +361,6 @@ class _JtShowPageState extends State<JtWorkList> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
                                                 // 可以打开新页面或弹窗展示图片
                                               },
                                               style: ElevatedButton.styleFrom(
@@ -399,35 +396,20 @@ class _JtShowPageState extends State<JtWorkList> {
                                 height: 120,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    // 跳转到FaultDisposalPage()
+                                    // TODO: 实现派工逻辑
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => FaultDisposalPage(
-                                          faultDescription:
-                                          item['faultDescription']??"",
-                                          typeName: widget.typeName,
-                                          trainEntryCode: widget.trainEntryCode,
-                                          trainNum: widget.trainNum,
-                                          repairScheme: item['repairScheme']??"",
-                                          trainNumCode: widget.trainNumCode,
-                                          typeCode: widget.typeCode,
-                                          code: item['code']
+                                        builder: (context) => JtAssignPeople(
+                                          jtCode: item['code'],
                                         ),
                                       ),
                                     );
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
-                                    padding: const EdgeInsets.all(10),
                                   ),
-                                  child: const Text(
-                                    "开工",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                                  child: const Text("派工"),
                                 ),
                               ),
                             ],

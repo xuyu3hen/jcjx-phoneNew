@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_assign.dart';
+import 'package:jcjx_phone/routes/production/mutual_assign.dart';
+import 'package:jcjx_phone/routes/production/special_assign.dart';
 import '../../../index.dart';
 
 class TrainRepairPageManage extends StatefulWidget {
@@ -820,7 +822,14 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MutualList()),
+                      MaterialPageRoute(builder: (context) => MutualAssign(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),
@@ -834,7 +843,14 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SpecialList()),
+                      MaterialPageRoute(builder: (context) => SpecialAssign(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),

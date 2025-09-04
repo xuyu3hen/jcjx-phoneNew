@@ -1,4 +1,7 @@
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+
 import '../../index.dart';
+import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
 class FaultDisposalPage extends StatefulWidget {
   final String trainNum;
@@ -8,6 +11,7 @@ class FaultDisposalPage extends StatefulWidget {
   final String trainEntryCode;
   final String repairScheme;
   final String faultDescription;
+  final String code;
 
   const FaultDisposalPage(
       {super.key,
@@ -17,7 +21,8 @@ class FaultDisposalPage extends StatefulWidget {
       required this.repairScheme,
       required this.faultDescription,
       required this.trainNumCode,
-      required this.typeCode});
+      required this.typeCode,
+      required this.code});
 
   @override
   State<FaultDisposalPage> createState() => _FaultDisposalPageState();
@@ -29,7 +34,11 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   String _trainNum = '';
   String _faultPhenomenon = '';
   String _repairPlan = '';
-  
+
+  // 故障图片
+  List<AssetEntity> assestPics = [];
+  List<File> faultPics = [];
+
   // 输入控制器（管理各输入框内容）
   final TextEditingController _processingMethodController =
       TextEditingController();
@@ -38,10 +47,39 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
 
   bool _isLoading = true;
 
+  // 加工方法列表
+  List<Map<String, dynamic>> _processMethodList = [];
+  Map<String, dynamic> dynamicMethodSelected = {};
+
+  var logger = AppLogger.logger;
+
+  // 获取加工方法
+  void getProcessMethod() async {
+    try {
+      Map<String, dynamic> params = {"pageNum": 0, 'pageSize': 0};
+
+      var response = await ProductApi().getProcessMethod(params);
+      logger.i(response);
+
+      if (response != null && response is List && response.isNotEmpty) {
+        //将List<dynamic>转换为List<Map<String,dynamic>>
+        _processMethodList = response
+            .map((item) => {
+                  'code': item['code'],
+                  'dictName': item['dictName'],
+                })
+            .toList();
+      }
+    } catch (e) {
+      print('获取机统28数据失败: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _loadJt28Data();
+    getProcessMethod();
   }
 
   // 加载机统28数据
@@ -51,7 +89,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
         "trainEntryCode": widget.trainEntryCode,
       };
 
-      var response = await ProductApi().selectRepairSys28(queryParametrs: params);
+      var response =
+          await ProductApi().selectRepairSys28(queryParametrs: params);
 
       if (response != null && response is List && response.isNotEmpty) {
         // 获取第一条记录
@@ -60,20 +99,20 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
         setState(() {
           // 设置机型
           _model = data['trainType'] ?? widget.typeName;
-          
+
           // 设置机车号
           _trainNum = data['trainNum'] ?? widget.trainNum;
-          
+
           // 设置故障现象
-          _faultPhenomenon = data['faultPhenomenon'] ?? 
-              data['faultDesc'] ?? 
+          _faultPhenomenon = data['faultPhenomenon'] ??
+              data['faultDesc'] ??
               widget.faultDescription;
-          
+
           // 设置施修方案
-          _repairPlan = data['repairScheme'] ?? 
-              data['repairProgram'] ?? 
+          _repairPlan = data['repairScheme'] ??
+              data['repairProgram'] ??
               widget.repairScheme;
-          
+
           _isLoading = false;
         });
       } else {
@@ -166,10 +205,35 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
             const SizedBox(height: 16),
 
             // 4. 加工方法 输入框
-            _buildLabeledInput(
-              label: '加工方法',
-              controller: _processingMethodController,
+            ZjcFormSelectCell(
+              title: "加工方法",
+              text: dynamicMethodSelected["dictName"],
+              hintText: "请选择",
+              showRedStar: true,
+              clickCallBack: () {
+                if (_processMethodList.isEmpty) {
+                  showToast("无动力类型选择");
+                } else {
+                  ZjcCascadeTreePicker.show(
+                    context,
+                    data: _processMethodList,
+                    labelKey: 'dictName',
+                    valueKey: 'code',
+                    childrenKey: 'children',
+                    title: "选择动力类型",
+                    clickCallBack: (selectItem, selectArr) {
+                      logger.i(selectArr);
+                      setState(() {
+                        dynamicMethodSelected["code"] = selectItem["code"];
+                        dynamicMethodSelected["dictName"] = selectItem["dictName"];
+                        logger.i(dynamicMethodSelected);
+                      });
+                    },
+                  );
+                }
+              },
             ),
+
             const SizedBox(height: 16),
 
             // 5. 施修情况（红色标签 + 文本域）
@@ -209,20 +273,55 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('修复视频及图片'),
-                const SizedBox(height: 4),
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
+                  child: Text(
+                    '故障视频及图片',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: const Text(
-                    '点击上传视频或图片',
-                    style: TextStyle(color: Colors.grey),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  margin: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.all(Radius.circular(20)),
+                      border: Border.all(color: Colors.brown)),
+                  child: ZjcAssetPicker(
+                    assetType: APC.AssetType.imageAndVideo,
+                    maxAssets: 9,
+                    selectedAssets: assestPics,
+                    // bgColor: Colors.grey,
+                    callBack: (assetEntityList) async {
+                      logger.i('assetEntityList-------------');
+                      logger.i(assetEntityList);
+                      if (assetEntityList.isNotEmpty) {
+                        // 清空之前的文件列表
+                        List<File> files = [];
+
+                        // 处理所有选定的资源（图片和视频）
+                        for (var asset in assetEntityList) {
+                          var file = await asset.file;
+                          if (file != null) {
+                            files.add(file);
+                          }
+                        }
+
+                        setState(() {
+                          assestPics = assetEntityList;
+                          faultPics = files;
+                        });
+                      } else {
+                        setState(() {
+                          faultPics = [];
+                          assestPics = [];
+                        });
+                      }
+                      logger.i('assetEntityList-------------');
+                    },
                   ),
                 ),
               ],
@@ -232,11 +331,98 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
             // 7. 申请专互检 按钮
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  // 模拟“申请专互检”逻辑（可扩展为接口请求）
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('申请专互检操作已触发')),
-                  );
+                onPressed: () async {
+                  var submit;
+                  List<Map<String, dynamic>> l = [];
+                  try {
+                    SmartDialog.showLoading();
+                    Map<String, dynamic> queryParameters = {
+                      "code": widget.code,
+                      "processMethod": dynamicMethodSelected['dictName'],
+                      "repairStatus": _repairSituationController.text,
+                      "completeStatus": 2
+                    };
+                    logger.i(queryParameters);
+                    if (faultPics.isNotEmpty) {
+                      await JtApi().uploadMixJt(imagedata: faultPics).then(
+                            (value) async => {
+                              if (value['data'] != null && value['data'] != "")
+                                {
+                                  queryParameters["repairPicture"] =
+                                      value['data'],
+                                  l.insert(0, queryParameters),
+                                  submit = await JtApi()
+                                      .uploadJt28(queryParametrs: l),
+                                  if (submit['data'] != null)
+                                    {
+                                      showToast("${submit['data']}"),
+                                      // SmartDialog.dismiss(status: SmartStatus.loading)
+                                    }
+                                }
+                              else
+                                {
+                                  showToast("图片上传失败，请检查网络连接"),
+                                  // SmartDialog.dismiss(status: SmartStatus.loading)
+                                }
+                            },
+                          );
+                    } else {
+                      logger.i("$queryParameters");
+                      l.insert(0, queryParameters);
+                      submit = await JtApi().uploadJt28(queryParametrs: l);
+                      if (submit["code"] == "S_T_S003") {
+                        showToast("${submit['message']}");
+                        // SmartDialog.dismiss(status: SmartStatus.loading);
+                      } else {
+                        showToast("机统28提报失败，请检查网络连接");
+                        // SmartDialog.dismiss(status: SmartStatus.loading);
+                      }
+                    }
+                  } on DioException catch (e) {
+                    showToast("故障提报失败");
+                    logger.i(e.toString());
+                  } finally {
+                    SmartDialog.dismiss(status: SmartStatus.loading);
+                    if (submit['code'] == "S_T_S003") {
+                      SmartDialog.show(
+                          clickMaskDismiss: false,
+                          builder: (con) {
+                            return Container(
+                              height: 150,
+                              width: 200,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: <Widget>[
+                                  const Text(
+                                    "机统28提报成功",
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                  ConstrainedBox(
+                                    constraints: const BoxConstraints.expand(
+                                        height: 30, width: 160),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () {
+                                        SmartDialog.dismiss().then((value) =>
+                                            Navigator.of(context).pop());
+                                      },
+                                      label: const Text('确定'),
+                                      icon: const Icon(Icons
+                                          .system_security_update_good_sharp),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          });
+                    }
+                  }
                 },
                 child: const Text('申请专互检'),
               ),
@@ -247,6 +433,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
     );
   }
 
+// ... existing code ...
   // 封装“带标签的文本展示”
   Widget _buildLabeledText({
     required String label,
@@ -259,10 +446,6 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(4),
-          ),
           child: Text(text),
         ),
       ],
@@ -281,10 +464,6 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
         Text(label),
         const SizedBox(height: 4),
         Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(4),
-          ),
           padding: const EdgeInsets.all(8),
           height: height,
           child: SingleChildScrollView(
@@ -294,6 +473,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
       ],
     );
   }
+// ... existing code ...
 
   // 封装“带标签的单行输入框”
   Widget _buildLabeledInput({
