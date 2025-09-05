@@ -82,7 +82,7 @@ class _JtShowPageState extends State<SpecialAssign> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 1,
+      'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
     };
     logger.i(widget.trainNumCode);
@@ -387,6 +387,30 @@ class _JtShowPageState extends State<SpecialAssign> {
                                           ),
                                         ],
                                       ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "主修: ${item['repairName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName']}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']}"),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -400,7 +424,7 @@ class _JtShowPageState extends State<SpecialAssign> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => JtAssignPeople(
+                                        builder: (context) => SpecialAssignPeople(
                                           jtCode: item['code'],
                                         ),
                                       ),
@@ -484,6 +508,316 @@ class _JtShowPageState extends State<SpecialAssign> {
                   ),
                 )
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 班组模型
+class Team {
+  String name; // 班组名（如“北折一组”）
+  late List<Member> members; // 成员列表
+  Team(this.name, this.members);
+}
+
+/// 成员模型
+class Member {
+  final String name; // 姓名（如“曹阳”）
+  final int id; // 工号（如“3368”）
+  Member(this.name, this.id);
+}
+
+/// 检修项模型
+class InspectionItem {
+  final String name; // 项名称（如“车底”）
+  bool isChecked; // 是否勾选
+  InspectionItem(this.name, this.isChecked);
+}
+
+class SpecialAssignPeople extends StatefulWidget {
+  final String jtCode;
+
+  const SpecialAssignPeople({super.key, required this.jtCode});
+
+  @override
+  State<SpecialAssignPeople> createState() => _SpecialAssignPeopleState();
+}
+
+// ... existing code ...
+class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
+  String? deptName = Global.profile.permissions?.user.dept?.deptName;
+
+  // 班组数据（模拟）
+  late Team _team;
+
+  // 当前选中的成员（默认选第一个）
+  late Member _selectedMember;
+
+  // 机型选项（模拟下拉）
+  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
+  String _selectedModel = 'HXD3CA';
+
+  // 检修项列表（模拟状态）
+  final List<InspectionItem> _inspectionItems = [
+    InspectionItem('主修', false),
+    InspectionItem('辅修', false),
+  ];
+
+  // 添加搜索控制器和过滤后的成员列表
+  final TextEditingController _searchController = TextEditingController();
+  List<Member> _filteredMembers = [];
+
+  var logger = AppLogger.logger;
+
+  void getUserList() async {
+    Map<String, dynamic> params = {
+      "deptId": Global.profile.permissions?.user.dept?.deptId,
+      "pageNum": 0,
+      "pageSize": 0,
+    };
+    try {
+      var response = await ProductApi().getTeamUser(queryParametrs: params);
+
+      if (response is List) {
+        // 将List<dynamic>转换为List<Map<String, dynamic>>
+        List<Map<String, dynamic>> userList = response
+            .map((item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map))
+            .toList();
+        print(userList);
+        // 根据获取的用户列表更新_team.members
+        if (userList.isNotEmpty) {
+          List<Member> members = userList.map((user) {
+            return Member(
+              user['nickName'] ?? '未知用户',
+              user['userId'] ?? '未知ID',
+            );
+          }).toList();
+
+          setState(() {
+            _team.members = members;
+            _filteredMembers = members; // 同时更新过滤列表
+            if (members.isNotEmpty) {
+              _selectedMember = members[0]; // 更新选中的成员为第一个
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // 错误处理
+      print('获取用户列表失败: $e');
+    }
+  }
+
+  // 添加过滤成员的方法
+  void _filterMembers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredMembers = _team.members;
+      } else {
+        _filteredMembers = _team.members
+            .where((member) =>
+                member.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化团队数据
+    _team = Team(deptName ?? '默认班组', []);
+    // 监听搜索框输入
+    _searchController.addListener(() {
+      _filterMembers(_searchController.text);
+    });
+    getUserList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void setRepairInfo() async {
+      try{
+      // 构建参数
+      Map<String, dynamic> params = {
+        "code": widget.jtCode,
+      };
+
+      // 设置专检人员
+      if (_selectedMember != null) {
+        params['specialInspectionPersonnel'] = _selectedMember.id;
+        params['specialName'] = _selectedMember.name;
+      }
+      logger.i(params);
+      // 调用API更新用户信息
+      var response = await ProductApi().updateUserId(params);
+      if (response['code'] == "S_T_S003") {
+        showToast("分配成功");
+      } 
+    } catch (e) {
+      print('分配人员失败: $e');
+      showToast("分配失败，请重试");
+    }
+  }
+
+  int _selectedInspectionIndex = -1;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              // 返回前刷新界面
+              Navigator.pop(context, true); // 传递true表示需要刷新
+            } else {
+              // 如果无法pop，尝试使用maybePop或者给出提示
+              Navigator.maybePop(context);
+            }
+          },
+        ),
+        title: const Text('开工点名(专检)'),
+        backgroundColor: Colors.white,
+        elevation: 1,
+      ),
+      body: Row(
+        children: [
+          // 左侧：人员列表
+          Container(
+            width: 160,
+            color: Colors.white,
+            child: Column(
+              children: [
+                // 班组名称
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Text(
+                    _team.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                // 添加搜索框（固定在顶部）
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: '搜索用户...',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    ),
+                  ),
+                ),
+                // 成员列表（可滚动部分）
+                Expanded(
+                  child: ListView(
+                    children: [
+                      // 成员列表
+                      ..._filteredMembers.map((member) {
+                        final isSelected = member == _selectedMember;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedMember = member;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            color: isSelected ? Colors.green : Colors.white,
+                            child: Text(
+                              '${member.name}',
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.black,
+                                fontSize: 16, // 增大字体
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal, // 选中时加粗
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 右侧：详情区域
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.grey[200],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  // 检修项列表
+                  Column(
+                    children: _inspectionItems.asMap().entries.map((entry) {
+                      int idx = entry.key;
+                      InspectionItem item = entry.value;
+                      return RadioListTile<int>(
+                        title: Text(item.name),
+                        value: idx,
+                        groupValue: _selectedInspectionIndex,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedInspectionIndex = value ?? -1;
+                            // 重置所有项的选中状态
+                            for (int i = 0; i < _inspectionItems.length; i++) {
+                              _inspectionItems[i].isChecked =
+                                  (i == _selectedInspectionIndex);
+                            }
+                          });
+                        },
+                        activeColor: Colors.green,
+                      );
+                    }).toList(),
+                  ),
+                  const Spacer(),
+                  // 底部按钮：固定检修项
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // 可扩展：提交检修项逻辑
+                        setRepairInfo();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
+                      child: const Text(
+                        '确认',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
