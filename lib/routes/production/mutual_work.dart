@@ -1,14 +1,16 @@
+import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
+
 import '../../index.dart';
 import 'jt_startwork.dart';
 
 //机统28作业列表
-class JtWorkList extends StatefulWidget {
+class MutualWorkList extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;
   final String typeName;
   final String typeCode;
   final String trainEntryCode;
-  const JtWorkList(
+  const MutualWorkList(
       {Key? key,
       required this.trainNum,
       required this.trainNumCode,
@@ -17,10 +19,10 @@ class JtWorkList extends StatefulWidget {
       required this.trainEntryCode})
       : super(key: key);
   @override
-  State<JtWorkList> createState() => _JtShowPageState();
+  State<MutualWorkList> createState() => _JtShowPageState();
 }
 
-class _JtShowPageState extends State<JtWorkList> {
+class _JtShowPageState extends State<MutualWorkList> {
   late Map<String, dynamic> info = {};
 
   var logger = AppLogger.logger;
@@ -82,10 +84,10 @@ class _JtShowPageState extends State<JtWorkList> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 0,
+      'completeStatus': 2,
       'trainEntryCode': widget.trainEntryCode,
-      'reppairName': Global.profile.permissions?.user.userName,
-      'status': 0
+      'mutualName': Global.profile.permissions?.user.nickName,
+      // 'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -390,6 +392,30 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "主修: ${item['repairName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName']}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']}"),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -403,17 +429,18 @@ class _JtShowPageState extends State<JtWorkList> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => FaultDisposalPage(
-                                          faultDescription:
-                                          item['faultDescription']??"",
-                                          typeName: widget.typeName,
-                                          trainEntryCode: widget.trainEntryCode,
-                                          trainNum: widget.trainNum,
-                                          repairScheme: item['repairScheme']??"",
-                                          trainNumCode: widget.trainNumCode,
-                                          typeCode: widget.typeCode,
-                                          code: item['code']
-                                        ),
+                                        builder: (context) => MutualDisposalPage(
+                                            faultDescription:
+                                                item['faultDescription'] ?? "",
+                                            typeName: widget.typeName,
+                                            trainEntryCode:
+                                                widget.trainEntryCode,
+                                            trainNum: widget.trainNum,
+                                            repairScheme:
+                                                item['repairScheme'] ?? "",
+                                            trainNumCode: widget.trainNumCode,
+                                            typeCode: widget.typeCode,
+                                            code: item['code']),
                                       ),
                                     );
                                   },

@@ -1,14 +1,16 @@
+import 'package:jcjx_phone/routes/production/special_startwork.dart';
+
 import '../../index.dart';
 import 'jt_startwork.dart';
 
 //机统28作业列表
-class JtWorkList extends StatefulWidget {
+class SpecialWorkList extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;
   final String typeName;
   final String typeCode;
   final String trainEntryCode;
-  const JtWorkList(
+  const SpecialWorkList(
       {Key? key,
       required this.trainNum,
       required this.trainNumCode,
@@ -17,10 +19,10 @@ class JtWorkList extends StatefulWidget {
       required this.trainEntryCode})
       : super(key: key);
   @override
-  State<JtWorkList> createState() => _JtShowPageState();
+  State<SpecialWorkList> createState() => _JtShowPageState();
 }
 
-class _JtShowPageState extends State<JtWorkList> {
+class _JtShowPageState extends State<SpecialWorkList> {
   late Map<String, dynamic> info = {};
 
   var logger = AppLogger.logger;
@@ -80,11 +82,11 @@ class _JtShowPageState extends State<JtWorkList> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
+        'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 0,
+      'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
-      'reppairName': Global.profile.permissions?.user.userName,
+      'specialName': Global.profile.permissions?.user.userName,
       'status': 0
     };
     logger.i(widget.trainNumCode);
@@ -388,6 +390,30 @@ class _JtShowPageState extends State<JtWorkList> {
                                             child: Text(
                                                 "流水号: ${item['deptName']}"),
                                           ),
+                                                  Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "主修: ${item['repairName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName']}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']}"),
+                                          ),
+                                        ],
+                                      ),
                                         ],
                                       ),
                                     ],
@@ -403,7 +429,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => FaultDisposalPage(
+                                        builder: (context) => SpecialDisposalPage(
                                           faultDescription:
                                           item['faultDescription']??"",
                                           typeName: widget.typeName,

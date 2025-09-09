@@ -1,7 +1,9 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
+import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
+import 'mutual_work.dart';
 
 /// 主页面：机车检修
 class TrainRepairPage extends StatefulWidget {
@@ -812,7 +814,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       MaterialPageRoute(
                           builder: (context) => JtWorkList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
                                 typeName: widget.locoInfo?['typeName'] ?? '',
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
@@ -829,7 +832,15 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => MutualList()),
+                      MaterialPageRoute(
+                          builder: (context) => MutualWorkList(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),
@@ -842,7 +853,15 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => SpecialList()),
+                      MaterialPageRoute(
+                          builder: (context) => SpecialWorkList(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
                     );
                   },
                 ),
@@ -1339,27 +1358,32 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮
-            ElevatedButton(
-              onPressed: () async {
-                task['startTime'] = DateTime.now().toString();
-                List<Map<String, dynamic>> queryParametrs = [task];
-                ProductApi().startWork(queryParametrs);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => InspectionVertexPage(
-                      locoInfo: widget.locoInfo,
-                      packageInfo: task,
+            const SizedBox(width: 12),
+
+            // 开工按钮 - 仅在任务未完成时显示
+            if (task['completeCount'] < task['total'])
+              ElevatedButton(
+                onPressed: () async {
+                  task['startTime'] = DateTime.now().toString();
+                  List<Map<String, dynamic>> queryParametrs = [task];
+                  ProductApi().startWork(queryParametrs);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InspectionVertexPage(
+                        locoInfo: widget.locoInfo,
+                        packageInfo: task,
+                      ),
                     ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // 背景色设为绿色
-                foregroundColor: Colors.white, // 文字颜色设为白色
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, // 背景色设为绿色
+                  foregroundColor: Colors.white, // 文字颜色设为白色
+                ),
+                child: const Text('开工'),
               ),
-              child: const Text('开工'),
-            ),
+            const SizedBox(width: 12),
             const SizedBox(width: 12),
           ],
         ),
