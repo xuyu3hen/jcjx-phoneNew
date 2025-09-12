@@ -21,6 +21,13 @@ class Global {
 
   //修程信息
   static List<Map<String, dynamic>> repairProcInfo = [];
+
+  //机型信息
+  static List<Map<String, dynamic>> typeInfo = [];
+
+  static List<Map<String, dynamic>> repairInfo = [];
+
+  static List<Map<String, dynamic>> faultPartList = [];
   
   // 可选的主题列表
   static List<MaterialColor> get themes => _theme;

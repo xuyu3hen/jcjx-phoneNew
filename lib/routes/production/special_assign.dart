@@ -538,7 +538,6 @@ class InspectionItem {
 
 class SpecialAssignPeople extends StatefulWidget {
   final String jtCode;
-
   const SpecialAssignPeople({super.key, required this.jtCode});
 
   @override
@@ -561,8 +560,7 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
 
   // 检修项列表（模拟状态）
   final List<InspectionItem> _inspectionItems = [
-    InspectionItem('主修', false),
-    InspectionItem('辅修', false),
+    InspectionItem('施修', false),
   ];
 
   // 添加搜索控制器和过滤后的成员列表
@@ -645,13 +643,12 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
   }
 
   void setRepairInfo() async {
-      try{
+    try{
       // 构建参数
       Map<String, dynamic> params = {
         "code": widget.jtCode,
       };
-
-      // 设置专检人员
+      // 设置主修人员
       if (_selectedMember != null) {
         params['specialInspectionPersonnel'] = _selectedMember.id;
         params['specialName'] = _selectedMember.name;
@@ -824,3 +821,4 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
     );
   }
 }
+

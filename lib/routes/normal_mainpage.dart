@@ -18,11 +18,62 @@ class _NormalMainPageState extends State<NormalMainPage> {
 
   var logger = AppLogger.logger;
 
+  // 动力类型列表
+  late List<Map<String, dynamic>> dynamicTypeList = [];
+  // 筛选的动力类型信息
+  late Map<dynamic, dynamic> dynamicTypeSelected = {};
+  // 机型列表
+  late List<Map<String, dynamic>> jcTypeList = [];
+
   @override
-  void initState()  {
-      super.initState();
+  void initState() {
+    super.initState();
     initPermissions();
     initRepairProc();
+    getDynamicType();
+    
+  }
+
+  
+
+  // 获取动态类型
+  void getDynamicType() async {
+    try {
+      //获取动力类型
+      var r = await ProductApi().getDynamicType();
+      //获取用户信息
+      var permissionResponse = await LoginApi().getpermissions();
+      if (mounted) {
+        setState(() {
+          dynamicTypeList = r.toMapList();
+          dynamicTypeSelected["code"] = r.toMapList()[0]["code"];
+          dynamicTypeSelected["name"] = r.toMapList()[0]["name"];
+          getJcType();
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getDynamicType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  // 获取机型
+  void getJcType() async {
+    try {
+      Map<String, dynamic> queryParameters = {
+        'dynamicCode': dynamicTypeSelected["code"],
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getJcType(queryParametrs: queryParameters);
+      logger.i(r.toJson());
+      if (mounted) {
+        setState(() {
+          Global.typeInfo = r.toMapList();     
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getJcType 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
   }
 
   @override
@@ -34,8 +85,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
     super.dispose();
   }
 
-  void initPermissions() async{
-        Permissions p = await LoginApi().getpermissions();
+  void initPermissions() async {
+    Permissions p = await LoginApi().getpermissions();
     if (p.code == 200) {
       Global.profile.permissions = p;
     } else {
@@ -52,16 +103,13 @@ class _NormalMainPageState extends State<NormalMainPage> {
   }
 
   // 初始化修程信息
-  void initRepairProc() async  {
-    Map<String, dynamic> queryParameters = {
-      'pageNum':0,
-      'pageSize': 0
-    };
+  void initRepairProc() async {
+    Map<String, dynamic> queryParameters = {'pageNum': 0, 'pageSize': 0};
     var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
-    if(r.code == 200){
-        r.rows?.forEach((element) {
-          Global.repairProcInfo.add(element.toJson());
-        });
+    if (r.code == 200) {
+      r.rows?.forEach((element) {
+        Global.repairProcInfo.add(element.toJson());
+      });
     }
   }
 

@@ -204,7 +204,7 @@ class ProductApi extends AppApi {
   Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async {
     try {
       var r = await AppApi.dio.get(
-        "/subparts/jcConfigNode/selectAll",
+        "/subparts/jcConfigNode/getPrefixConfigNode",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])['data']);
@@ -270,7 +270,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/selectAll",
         queryParameters: queryParametrs,
       );
-      // log("getRepairPlanList${r.data}");
+      log("getRepairPlanList${r.data}");
       return RepairPlanList.fromJson((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
@@ -374,7 +374,7 @@ class ProductApi extends AppApi {
         "/tasks/vJtWebSearch/selectAll",
         queryParameters: queryParametrs,
       );
-      // logger.i((r.data["data"])['data']);
+      logger.i((r.data["data"])['data']);
       return (r.data["data"])["data"];
     } catch (e, stackTrace) {
       logger.e(e, stackTrace);

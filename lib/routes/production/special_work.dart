@@ -51,7 +51,8 @@ class _JtShowPageState extends State<SpecialWorkList> {
   late TextEditingController actualStartDateController =
       TextEditingController();
 
-  late TextEditingController faultyPartController = TextEditingController();
+  late TextEditingController faultyPartController =
+      TextEditingController();
 
   late TextEditingController mutualInspectorController =
       TextEditingController();
@@ -86,8 +87,8 @@ class _JtShowPageState extends State<SpecialWorkList> {
       'pageSize': pageSize,
       'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
-      'specialName': Global.profile.permissions?.user.userName,
-      'status': 0
+      'specialName': Global.profile.permissions?.user.nickName,
+      //  'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -241,7 +242,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业"),
+        title: const Text("专检作业"),
       ),
       body: _buildBody(),
     );
@@ -390,7 +391,9 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                             child: Text(
                                                 "流水号: ${item['deptName']}"),
                                           ),
-                                                  Row(
+                                        ],
+                                      ),
+                                      Row(
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -412,8 +415,6 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                             child: Text(
                                                 "互检: ${item['mutualName']}"),
                                           ),
-                                        ],
-                                      ),
                                         ],
                                       ),
                                     ],
@@ -438,7 +439,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                           repairScheme: item['repairScheme']??"",
                                           trainNumCode: widget.trainNumCode,
                                           typeCode: widget.typeCode,
-                                          code: item['code']
+                                          code: item['code'], trainInfo: item,
                                         ),
                                       ),
                                     );

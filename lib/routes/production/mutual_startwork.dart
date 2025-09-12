@@ -12,6 +12,7 @@ class MutualDisposalPage extends StatefulWidget {
   final String repairScheme;
   final String faultDescription;
   final String code;
+  final Map<String, dynamic> trainInfo;
 
   const MutualDisposalPage(
       {super.key,
@@ -22,7 +23,8 @@ class MutualDisposalPage extends StatefulWidget {
       required this.faultDescription,
       required this.trainNumCode,
       required this.typeCode,
-      required this.code});
+      required this.code,
+      required this.trainInfo});
 
   @override
   State<MutualDisposalPage> createState() => _MutualDisposalPageState();
@@ -47,9 +49,18 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
 
   bool _isLoading = true;
 
+  bool _isChecked = false;
+
   // 加工方法列表
   List<Map<String, dynamic>> _processMethodList = [];
   Map<String, dynamic> dynamicMethodSelected = {};
+  Map<String, dynamic> faultPartListInfo = {};
+  Map<String, dynamic>? _selectedFaultPart;
+  
+  // 添加用于零部件搜索的控制器
+  final TextEditingController _searchController = TextEditingController();
+  List<Map<String, dynamic>> _filteredFaultPartList = [];
+  bool _isSearching = false;
 
   var logger = AppLogger.logger;
 
@@ -75,14 +86,41 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
     }
   }
 
+  // 筛选故障零部件列表
+  void _filterParts(String query) {
+    if (query.isEmpty) {
+      // 如果查询为空，清空列表
+      setState(() {
+        _filteredFaultPartList = [];
+        _isSearching = false;
+      });
+    } else {
+      // 根据查询关键词筛选零部件
+      setState(() {
+        _filteredFaultPartList = Global.faultPartList.where((part) {
+          final partName = part['name'] as String? ?? '';
+          return partName.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+        _isSearching = true;
+      });
+    }
+  }
+  
   @override
   void initState() {
     super.initState();
     _loadJt28Data();
-    getProcessMethod();
+    // 初始化筛选列表为空
+    _filteredFaultPartList = [];
+    // 添加搜索监听器
+    _searchController.addListener(() {
+      _filterParts(_searchController.text);
+    });
+    // getProcessMethod();
+    // getFaultPart();
   }
 
-  // 加载机统28数据
+  // 加工方法
   void _loadJt28Data() async {
     try {
       Map<String, dynamic> params = {
@@ -143,6 +181,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
     // 页面销毁时释放控制器资源
     _processingMethodController.dispose();
     _repairSituationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -155,7 +194,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
         ),
         body: const Center(
           child: CircularProgressIndicator(),
-        ),
+        )
       );
     }
 
@@ -189,95 +228,196 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
             const SizedBox(height: 16),
 
             // 2. 故障现象 文本域
-            _buildLabeledTextBlock(
-              label: '故障现象',
-              text: _faultPhenomenon,
-              height: 60,
-            ),
-            const SizedBox(height: 16),
-
-            // 3. 施修方案 文本域
-            _buildLabeledTextBlock(
-              label: '施修方案',
-              text: _repairPlan,
-              height: 60,
-            ),
-            const SizedBox(height: 16),
-
-            // 4. 加工方法 输入框
-            ZjcFormSelectCell(
-              title: "加工方法",
-              text: dynamicMethodSelected["dictName"],
-              hintText: "请选择",
-              showRedStar: true,
-              clickCallBack: () {
-                if (_processMethodList.isEmpty) {
-                  showToast("无动力类型选择");
-                } else {
-                  ZjcCascadeTreePicker.show(
-                    context,
-                    data: _processMethodList,
-                    labelKey: 'dictName',
-                    valueKey: 'code',
-                    childrenKey: 'children',
-                    title: "选择动力类型",
-                    clickCallBack: (selectItem, selectArr) {
-                      logger.i(selectArr);
-                      setState(() {
-                        dynamicMethodSelected["code"] = selectItem["code"];
-                        dynamicMethodSelected["dictName"] =
-                            selectItem["dictName"];
-                        logger.i(dynamicMethodSelected);
-                      });
-                    },
-                  );
-                }
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // 5. 施修情况（红色标签 + 文本域）
-            Column(
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '施修情况',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: _buildLabeledTextBlock(
+                    label: '故障现象',
+                    text: _faultPhenomenon,
+                    height: 60,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  height: 120,
-                  child: TextField(
-                    controller: _repairSituationController,
-                    maxLines: null, // 支持多行
-                    expands: true, // 填充父容器高度
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '请输入施修情况...',
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildLabeledTextBlock(
+                    label: '施修方案',
+                    text: _repairPlan,
+                    height: 60,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
+            //  展示 加工方法 trainInfo['processMethondName'] 施修人  trainInfo['repairName'] 申请时间 trainInfo['repairCompletionDate']
+
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildLabeledText(
+                    label: '加工方法',
+                    text: widget.trainInfo['processMethodName'] ?? '',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildLabeledText(
+                    label: '施修人',
+                    text: widget.trainInfo['repairName'] ?? '',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildLabeledText(
+                    label: '申请时间',
+                    text: widget.trainInfo['repairCompletionDate'] ?? '',
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // 展示施修情况trainInfo['repairStatus']
+            _buildLabeledTextBlock(
+              label: '施修情况',
+              text: widget.trainInfo['repairStatus'] ?? '',
+              height: 60,
+            ),
+            // 展示修复视频及图片（占位区域）
+            const SizedBox(height: 16),
+
             // 6. 修复视频及图片（占位区域）
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                   
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text("修复视频及图片"),
+                  ),
+                ),
+              ],
+            ),
+            //故障零部件构型确认在faultPartListInfo1中进行筛选
+            const SizedBox(height: 16),
+             //故障零部件构型确认在faultPartListInfo1中进行筛选
+            const SizedBox(height: 16),
+                       //故障零部件构型确认在faultPartListInfo1中进行筛选
+            const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '故障零部件构型确认',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 10),
+                      // 添加搜索框
+                      TextField(
+                        controller: _searchController,
+                        decoration: const InputDecoration(
+                          labelText: '搜索故障零部件',
+                          hintText: '输入零部件名称进行搜索',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // 下拉选择框用于选择故障零部件
+                      DropdownButtonFormField<Map<String, dynamic>>(
+                        hint: Text(_isSearching 
+                            ? _filteredFaultPartList.isEmpty 
+                                ? '未找到匹配项' 
+                                : '请选择故障零部件'
+                            : ''),
+                        value: _selectedFaultPart,
+                        onChanged: (Map<String, dynamic>? newValue) {
+                          setState(() {
+                            _selectedFaultPart = newValue;
+                          });
+                        },
+                        items: _filteredFaultPartList.map<DropdownMenuItem<Map<String, dynamic>>>((part) {
+                          return DropdownMenuItem<Map<String, dynamic>>(
+                            value: part,
+                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.7,
+                              child: Text(
+                                part['name'] ?? '未知部件',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        decoration: const InputDecoration(
+                          labelText: '故障零部件',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      // 显示选中的零部件信息
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            //快奖申报勾选框
+              Row(
+                children: [
+                  Checkbox(
+                    value: _isChecked,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        _isChecked = value!;
+                      });
+                    },
+                  ),
+                  const Text('快奖申报'),
+                ],
+              ),
+
+            // 工时系数填写数字
+            
+            Row(
+              children: [
+                const Text('工时系数'),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    controller: _processingMethodController,
+                    decoration: const InputDecoration(
+                      hintText: '请填写工时系数填写数字',
+                    ),
+                  ),
+                ),
+              ],
+            ),      
+            // 6.
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Padding(
                   padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
                   child: Text(
-                    '故障视频及图片',
+                    '专互检视频及图片',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -339,9 +479,12 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                     SmartDialog.showLoading();
                     Map<String, dynamic> queryParameters = {
                       "code": widget.code,
-                      "processMethod": dynamicMethodSelected['dictName'],
-                      "repairStatus": _repairSituationController.text,
-                      "completeStatus": 2
+                      "awardApplication": dynamicMethodSelected['dictName'],
+                      //工时系数
+                      "workHourFactor": _processingMethodController.text,
+                      "completeStatus": 3,
+                      "status": widget.trainInfo['status'],
+                      'faultyComponent': _selectedFaultPart?['code'],
                     };
                     logger.i(queryParameters);
                     if (faultPics.isNotEmpty) {
@@ -349,7 +492,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                             (value) async => {
                               if (value['data'] != null && value['data'] != "")
                                 {
-                                  queryParameters["repairPicture"] =
+                                  queryParameters["mutualInspectionPicture"] =
                                       value['data'],
                                   l.insert(0, queryParameters),
                                   submit = await JtApi()
@@ -434,8 +577,6 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
     );
   }
 
-// ... existing code ...
-  // 封装“带标签的文本展示”
   Widget _buildLabeledText({
     required String label,
     required String text,
@@ -453,7 +594,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
     );
   }
 
-  // 封装“带标签的多行文本展示”
+  // 封装"带标签的多行文本展示"
   Widget _buildLabeledTextBlock({
     required String label,
     required String text,
@@ -476,7 +617,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
   }
 // ... existing code ...
 
-  // 封装“带标签的单行输入框”
+  // 封装"带标签的单行输入框"
   Widget _buildLabeledInput({
     required String label,
     required TextEditingController controller,

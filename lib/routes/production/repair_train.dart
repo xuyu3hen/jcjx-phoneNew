@@ -34,9 +34,32 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   @override
   void initState() {
     super.initState();
-    getRepairingTrainInfo('C4');
-    getRepairingTrainInfo('C5');
-    getRepairingTrainInfo('临修');
+    _loadInitialData();
+  }
+
+  // 初始化数据加载，使用异步并行加载提高速度
+  Future<void> _loadInitialData() async {
+    try {
+      // 并行加载所有数据以提高速度
+      await Future.wait([
+        getRepairingTrainInfo('C4'),
+        getRepairingTrainInfo('C5'),
+        getRepairingTrainInfo('临修'),
+      ]);
+      
+      // 数据加载完成后，自动加载第一个标签的第一个工序节点
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   //C4
@@ -113,11 +136,14 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     }
   }
 
+  bool _isLoading = true; // 添加加载状态标识
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
     );
   }
 
@@ -155,143 +181,194 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _currentTab = 0;
-                      repairTrainInfo = [];
-                    });
+                    if (_currentTab != 0) {
+                      setState(() {
+                        _currentTab = 0;
+                      });
+                      // 延迟加载第一个工序节点的内容，提高响应速度
+                      Future.microtask(() => _loadFirstProcessNode(0));
+                    }
                   },
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      Center(
-                        child: Text(
-                          "C4",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                _currentTab == 0 ? Colors.black : Colors.grey,
-                            fontWeight: _currentTab == 0
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _currentTab == 0
+                              ? Colors.blue
+                              : Colors.transparent,
+                          width: 3.0,
                         ),
                       ),
-                      // 红点提示（动态显示）
-                      if (count1 > 0)
-                        Container(
-                          width: 20,
-                          height: 20,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Center(
                           child: Text(
-                            "$count1",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
+                            "C4",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color:
+                                  _currentTab == 0 ? Colors.blue : Colors.grey,
+                              fontWeight: _currentTab == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
-                    ],
+                        // 红点提示（动态显示）
+                        if (count1 > 0)
+                          Container(
+                            width: 22,
+                            height: 22,
+                            margin: const EdgeInsets.only(right: 12, top: 2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "$count1",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               // 标签：C5
-
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _currentTab = 1;
-                      repairTrainInfo = [];
-                    });
+                    if (_currentTab != 1) {
+                      setState(() {
+                        _currentTab = 1;
+                      });
+                      // 延迟加载第一个工序节点的内容，提高响应速度
+                      Future.microtask(() => _loadFirstProcessNode(1));
+                    }
                   },
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      Center(
-                        child: Text(
-                          "C5",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                _currentTab == 1 ? Colors.black : Colors.grey,
-                            fontWeight: _currentTab == 1
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _currentTab == 1
+                              ? Colors.green
+                              : Colors.transparent,
+                          width: 3.0,
                         ),
                       ),
-                      // 红点提示（动态显示）
-                      if (count2 > 0)
-                        Container(
-                          width: 20,
-                          height: 20,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Center(
                           child: Text(
-                            "$count2",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
+                            "C5",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color:
+                                  _currentTab == 1 ? Colors.green : Colors.grey,
+                              fontWeight: _currentTab == 1
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
-                    ],
+                        // 红点提示（动态显示）
+                        if (count2 > 0)
+                          Container(
+                            width: 22,
+                            height: 22,
+                            margin: const EdgeInsets.only(right: 12, top: 2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "$count2",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    setState(() {
-                      _currentTab = 2;
-                      repairTrainInfo = [];
-                    });
+                    if (_currentTab != 2) {
+                      setState(() {
+                        _currentTab = 2;
+                      });
+                      // 延迟加载第一个工序节点的内容，提高响应速度
+                      Future.microtask(() => _loadFirstProcessNode(2));
+                    }
                   },
-                  child: Stack(
-                    alignment: Alignment.topRight,
-                    children: [
-                      Center(
-                        child: Text(
-                          "临修",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                _currentTab == 2 ? Colors.black : Colors.grey,
-                            fontWeight: _currentTab == 2
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: _currentTab == 2
+                              ? Colors.orange
+                              : Colors.transparent,
+                          width: 3.0,
                         ),
                       ),
-                      // 红点提示（动态显示）
-                      if (count3 > 0)
-                        Container(
-                          width: 20,
-                          height: 20,
-                          margin: const EdgeInsets.only(right: 16),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.topRight,
+                      children: [
+                        Center(
                           child: Text(
-                            "$count3",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
+                            "临修",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: _currentTab == 2
+                                  ? Colors.orange
+                                  : Colors.grey,
+                              fontWeight: _currentTab == 2
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                           ),
                         ),
-                    ],
+                        // 红点提示（动态显示）
+                        if (count3 > 0)
+                          Container(
+                            width: 22,
+                            height: 22,
+                            margin: const EdgeInsets.only(right: 12, top: 2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "$count3",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -323,10 +400,41 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     );
   }
 
+   void _loadFirstProcessNode(int tabIndex) {
+    // 根据标签索引选择对应的工序节点数据
+    List<Map<String, dynamic>> procList = [];
+    if (tabIndex == 0) {
+      procList = repairMainNodeInfo;
+    } else if (tabIndex == 1) {
+      procList = repairMainNodeInfo1;
+    } else if (tabIndex == 2) {
+      procList = repairMainNodeInfo2;
+    }
+
+    // 更新工序节点页面数据
+    repairMainNodePage = procList;
+
+    // 如果工序节点列表不为空，自动选择第一个
+    if (procList.isNotEmpty) {
+      final firstProc = procList[0];
+      _currentProcTag = firstProc['repairMainNodeCode'];
+      repairTrainInfo = (firstProc['trainEntryList'] as List<dynamic>)
+          .map((item) => item is Map<String, dynamic>
+              ? item
+              : Map<String, dynamic>.from(item as Map))
+          .toList();
+    } else {
+      // 如果没有工序节点，清空相关数据
+      _currentProcTag = '';
+      repairTrainInfo = [];
+    }
+  }
+
+
+    List<Map<String, dynamic>> repairMainNodePage = [];
   /// 构建工序节点标签列表
 
   Widget _buildProcTagList() {
-    List<Map<String, dynamic>> repairMainNodePage = [];
     if (_currentTab == 0) {
       repairMainNodePage = repairMainNodeInfo;
     } else if (_currentTab == 1) {

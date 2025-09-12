@@ -135,7 +135,7 @@ class _JtShowPageState extends State<MutualWorkList> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getInfo();
     });
-
+    getFaultPart();
     super.initState();
   }
 
@@ -175,28 +175,28 @@ class _JtShowPageState extends State<MutualWorkList> {
     }
   }
 
-  Future<void> getFaultPart() async {
-    try {
-      Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
-        'pageNum': 0,
-        'pageSize': 0,
-        'name': faultyPartController.text,
-      };
-      logger.i(queryParameters);
-      var r = await ProductApi().getFaultPart(queryParameters);
-      if (mounted) {
-        setState(() {
-          //将List<dynamic>转换为List<Map<String, dynamic>>
-          faultPartListInfo = (r['rows'] as List)
-              .map((item) => item as Map<String, dynamic>)
-              .toList();
-        });
-      }
-    } catch (e, stackTrace) {
-      logger.e('getFaultPart 方法中发生异常: $e\n堆栈信息: $stackTrace');
-    }
-  }
+  // Future<void> getFaultPart() async {
+  //   try {
+  //     Map<String, dynamic> queryParameters = {
+  //       'typeCode': jcTypeListSelected["code"],
+  //       'pageNum': 0,
+  //       'pageSize': 0,
+  //       'name': faultyPartController.text,
+  //     };
+  //     logger.i(queryParameters);
+  //     var r = await ProductApi().getFaultPart(queryParameters);
+  //     if (mounted) {
+  //       setState(() {
+  //         //将List<dynamic>转换为List<Map<String, dynamic>>
+  //         faultPartListInfo = (r['rows'] as List)
+  //             .map((item) => item as Map<String, dynamic>)
+  //             .toList();
+  //       });
+  //     }
+  //   } catch (e, stackTrace) {
+  //     logger.e('getFaultPart 方法中发生异常: $e\n堆栈信息: $stackTrace');
+  //   }
+  // }
 
   void getTrainNumCodeList() async {
     try {
@@ -234,6 +234,40 @@ class _JtShowPageState extends State<MutualWorkList> {
       }
     } catch (e, stackTrace) {
       logger.e('getTrainInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+      
+  //机车构型信息
+  List<Map<String, dynamic>> faultPartListInfo1 = [];
+
+
+  //故障信息
+  Future<void> getFaultPart() async {
+    logger.i(Global.typeInfo);
+
+   
+    try {
+      Map<String, dynamic> queryParameters = {
+        'typeCode': widget.typeCode,
+        'pageNum': 0,
+        'pageSize': 0,
+        // 'name': faultyPartController.text,
+      };
+      logger.i(queryParameters);
+      var r = await ProductApi().getFaultPart(queryParameters);
+      if (mounted) {
+        setState(() {
+          //将List<dynamic>转换为List<Map<String, dynamic>>
+          Global.faultPartList = (r['rows'] as List)
+              .map((item) => item as Map<String, dynamic>)
+              .toList();
+          logger.i(Global.faultPartList);
+
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('getFaultPart 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -440,7 +474,9 @@ class _JtShowPageState extends State<MutualWorkList> {
                                                 item['repairScheme'] ?? "",
                                             trainNumCode: widget.trainNumCode,
                                             typeCode: widget.typeCode,
-                                            code: item['code']),
+                                            code: item['code'],
+                                            trainInfo: item),
+                                            
                                       ),
                                     );
                                   },

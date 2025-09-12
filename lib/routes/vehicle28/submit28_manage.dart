@@ -133,17 +133,79 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   }
 
   // 车号
-  void getTrainNumCodeList() async {
-    var r = await ProductApi().getRepairPlanList(queryParametrs: {
-      "pageNum": 0,
-      "pageSize": 0,
-      "typeName": jcTypeListSelected["name"]
-    });
-    logger.i(r.rows);
-    setState(() {
-      trainNum = "";
-      trainNumCodeList = r.toMapList();
-    });
+
+  int pageNum = 0;
+  int pageSize = 0;
+  bool isLoading = false;
+  bool hasMore = true;
+
+  // 车号（支持分页加载）
+  void getTrainNumCodeList({bool isLoadMore = false}) async {
+    if (isLoading) return;
+    
+    if (!isLoadMore) {
+      // 刷新数据
+      pageNum = 1;
+      hasMore = true;
+    } else {
+      // 加载更多
+      if (!hasMore) return;
+      pageNum++;
+    }
+    
+    try {
+      isLoading = true;
+      
+      // 构建查询车号参数
+      Map<String, dynamic> queryParameters = {
+        'typeName': jcTypeListSelected["name"],
+        'pageNum': pageNum,
+        'pageSize': pageSize
+      };
+      
+      if (!isLoadMore) {
+        // 只在初次加载时显示loading
+        SmartDialog.showLoading(msg: '加载车号中...');
+      }
+      
+      // 获取车号
+      var r = await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
+      
+      if (!isLoadMore) {
+        SmartDialog.dismiss();
+      }
+      
+      if (mounted) {
+        setState(() {
+          if (isLoadMore) {
+            // 加载更多数据
+            trainNumCodeList.addAll(r.toMapList());
+          } else {
+            // 刷新数据
+            trainNumCodeList = r.toMapList();
+          }
+          
+          // 判断是否还有更多数据
+          if (r.toMapList().length < pageSize) {
+            hasMore = false;
+          }
+        });
+      }
+      
+    } catch (e, stackTrace) {
+      if (!isLoadMore) {
+        SmartDialog.dismiss();
+      }
+      logger.e('getTrainNumCodeList 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      if (mounted) {
+        if (!isLoadMore) {
+          pageNum--; // 恢复页码
+        }
+        showToast("获取车号失败，请重试");
+      }
+    } finally {
+      isLoading = false;
+    }
   }
 
   // 零部件
@@ -332,7 +394,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                                 labelKey: 'trainNum',
                                 valueKey: 'code',
                                 childrenKey: 'children',
-                                title: "选择检修地点",
+                                title: "选择车号",
                                 clickCallBack: (selectItem, selectArr) {
                                   setState(() {
                                     logger.i(selectArr);
