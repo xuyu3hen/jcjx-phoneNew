@@ -84,6 +84,7 @@ class _JtShowPageState extends State<JtWorkAssign> {
       'pageSize': pageSize,
       'status': 0,
       'trainEntryCode': widget.trainEntryCode,
+      'teamName': Global.profile.permissions?.user.dept?.deptName
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -383,8 +384,8 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                                 "提报时间: ${item['reportDate']}"),
                                           ),
                                           Expanded(
-                                            child: Text(
-                                                "流水号: ${item['deptName']}"),
+                                            child:
+                                                Text("部门: ${item['teamName']}"),
                                           ),
                                         ],
                                       ),
@@ -420,9 +421,8 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    // TODO: 实现派工逻辑
-                                    Navigator.push(
+                                  onPressed: () async{
+                                    final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => JtAssignPeople(
@@ -430,6 +430,10 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                         ),
                                       ),
                                     );
+                                    if (result == true) {
+                                      getInfo(); // 重新获取数据
+                                      showToast("人员信息已更新");
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,

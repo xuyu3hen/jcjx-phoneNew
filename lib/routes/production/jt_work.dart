@@ -84,8 +84,8 @@ class _JtShowPageState extends State<JtWorkList> {
       'pageSize': pageSize,
       'completeStatus': 0,
       'trainEntryCode': widget.trainEntryCode,
-      'reppairName': Global.profile.permissions?.user.userName,
-      'status': 0
+      'repairName': Global.profile.permissions?.user.nickName,
+      'status': 0,
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -374,7 +374,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
-                                      Row(
+                                                Row(
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -386,7 +386,35 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "流水号: ${item['deptName']}"),
+                                                "部门: ${item['deptName']}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "班组: ${item['teamName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "主修: ${item['repairName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName']}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']}"),
                                           ),
                                         ],
                                       ),

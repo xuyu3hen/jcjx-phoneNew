@@ -2,13 +2,13 @@ import 'package:jcjx_phone/routes/production/team_people.dart';
 
 import '../../index.dart';
 
-class SpecialAssign extends StatefulWidget {
+class JtWorkAssignTeam extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;
   final String typeName;
   final String typeCode;
   final String trainEntryCode;
-  const SpecialAssign(
+  const JtWorkAssignTeam(
       {Key? key,
       required this.trainNum,
       required this.trainNumCode,
@@ -17,10 +17,10 @@ class SpecialAssign extends StatefulWidget {
       required this.trainEntryCode})
       : super(key: key);
   @override
-  State<SpecialAssign> createState() => _JtShowPageState();
+  State<JtWorkAssignTeam> createState() => _JtShowPageState();
 }
 
-class _JtShowPageState extends State<SpecialAssign> {
+class _JtShowPageState extends State<JtWorkAssignTeam> {
   late Map<String, dynamic> info = {};
 
   var logger = AppLogger.logger;
@@ -82,8 +82,10 @@ class _JtShowPageState extends State<SpecialAssign> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      'completeStatus': 3,
+      'status': 0,
       'trainEntryCode': widget.trainEntryCode,
+      'completeStatus': 1,
+      'deptId': Global.profile.permissions?.user.dept?.deptId
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -237,7 +239,7 @@ class _JtShowPageState extends State<SpecialAssign> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("专检作业-派工"),
+        title: const Text("机统28作业-班组派工"),
       ),
       body: _buildBody(),
     );
@@ -361,6 +363,7 @@ class _JtShowPageState extends State<SpecialAssign> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
+                                                // TODO: 实现查看报修图片的逻辑
                                                 // 可以打开新页面或弹窗展示图片
                                               },
                                               style: ElevatedButton.styleFrom(
@@ -382,16 +385,16 @@ class _JtShowPageState extends State<SpecialAssign> {
                                                 "提报时间: ${item['reportDate']}"),
                                           ),
                                           Expanded(
-                                            child:
-                                                Text("部门: ${item['deptName']}"),
+                                            child: Text(
+                                                "部门: ${item['deptName']}"),
                                           ),
                                         ],
                                       ),
                                       Row(
                                         children: [
                                           Expanded(
-                                            child:
-                                                Text("班组: ${item['teamName']}"),
+                                            child: Text(
+                                                "班组: ${item['teamName']}"),
                                           ),
                                           Expanded(
                                             child: Text(
@@ -423,22 +426,25 @@ class _JtShowPageState extends State<SpecialAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     // TODO: 实现派工逻辑
-                                    Navigator.push(
+                                    final result =  await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) =>
-                                            SpecialAssignPeople(
-                                          jtCode: item['code'],
+                                        builder: (context) => JtAssignTeam(jtCode: item['code'],
+                                          
                                         ),
                                       ),
                                     );
+                                    if(result == true){
+                                        getInfo();
+                                        showToast('数据已更新');
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
-                                  child: const Text("派工"),
+                                  child: const Text("班组派工"),
                                 ),
                               ),
                             ],
@@ -520,18 +526,21 @@ class _JtShowPageState extends State<SpecialAssign> {
   }
 }
 
-/// 班组模型
-class Team {
+
+
+
+/// 车间模型
+class Chejian {
   String name; // 班组名（如“北折一组”）
-  late List<Member> members; // 成员列表
-  Team(this.name, this.members);
+  late List<Team> members; // 成员列表
+  Chejian(this.name, this.members);
 }
 
-/// 成员模型
-class Member {
+/// 班组模型
+class Team {
   final String name; // 姓名（如“曹阳”）
   final int id; // 工号（如“3368”）
-  Member(this.name, this.id);
+  Team(this.name, this.id);
 }
 
 /// 检修项模型
@@ -541,23 +550,23 @@ class InspectionItem {
   InspectionItem(this.name, this.isChecked);
 }
 
-class SpecialAssignPeople extends StatefulWidget {
+class JtAssignTeam extends StatefulWidget {
   final String jtCode;
-  const SpecialAssignPeople({super.key, required this.jtCode});
+  const JtAssignTeam({super.key, required this.jtCode});
 
   @override
-  State<SpecialAssignPeople> createState() => _SpecialAssignPeopleState();
+  State<JtAssignTeam> createState() => _JtAssignTeamState();
 }
 
 // ... existing code ...
-class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
+class _JtAssignTeamState extends State<JtAssignTeam> {
   String? deptName = Global.profile.permissions?.user.dept?.deptName;
 
   // 班组数据（模拟）
-  late Team _team;
+  late Chejian _team;
 
   // 当前选中的成员（默认选第一个）
-  late Member _selectedMember;
+  late Team _selectedMember;
 
   // 机型选项（模拟下拉）
   final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
@@ -565,38 +574,35 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
 
   // 检修项列表（模拟状态）
   final List<InspectionItem> _inspectionItems = [
-    InspectionItem('施修', false),
+    InspectionItem('派工', false),
   ];
 
   // 添加搜索控制器和过滤后的成员列表
   final TextEditingController _searchController = TextEditingController();
-  List<Member> _filteredMembers = [];
+  List<Team> _filteredMembers = [];
 
   var logger = AppLogger.logger;
 
-  void getUserList() async {
+  void getTeamList() async {
     Map<String, dynamic> params = {
-      "deptId": Global.profile.permissions?.user.dept?.deptId,
-      "pageNum": 0,
-      "pageSize": 0,
+      "parentIdList": Global.profile.permissions?.user.dept?.deptId,
     };
     try {
-      var response = await ProductApi().getTeamUser(queryParametrs: params);
-
+      var response = await ProductApi().getDeptByParentIdList(queryParametrs: params);
       if (response is List) {
         // 将List<dynamic>转换为List<Map<String, dynamic>>
-        List<Map<String, dynamic>> userList = response
+        List<Map<String, dynamic>> teamList = response
             .map((item) => item is Map<String, dynamic>
                 ? item
                 : Map<String, dynamic>.from(item as Map))
             .toList();
-        print(userList);
+        print(teamList);
         // 根据获取的用户列表更新_team.members
-        if (userList.isNotEmpty) {
-          List<Member> members = userList.map((user) {
-            return Member(
-              user['nickName'] ?? '未知用户',
-              user['userId'] ?? '未知ID',
+        if (teamList.isNotEmpty) {
+          List<Team> members = teamList.map((user) {
+            return Team(
+              user['deptName'] ?? '未知用户',
+              user['deptId'] ?? '未知ID',
             );
           }).toList();
 
@@ -633,12 +639,12 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
   void initState() {
     super.initState();
     // 初始化团队数据
-    _team = Team(deptName ?? '默认班组', []);
+    _team = Chejian(deptName ?? '默认班组', []);
     // 监听搜索框输入
     _searchController.addListener(() {
       _filterMembers(_searchController.text);
     });
-    getUserList();
+    getTeamList();
   }
 
   @override
@@ -648,22 +654,22 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
   }
 
   void setRepairInfo() async {
-    try {
+    try{
       // 构建参数
       Map<String, dynamic> params = {
         "code": widget.jtCode,
       };
       // 设置主修人员
       if (_selectedMember != null) {
-        params['specialInspectionPersonnel'] = _selectedMember.id;
-        params['specialName'] = _selectedMember.name;
+        params['team'] = _selectedMember.id;
+        params['teamName'] = _selectedMember.name;
       }
       logger.i(params);
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
       if (response['code'] == "S_T_S003") {
         showToast("分配成功");
-      }
+      } 
     } catch (e) {
       print('分配人员失败: $e');
       showToast("分配失败，请重试");
@@ -688,7 +694,7 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
             }
           },
         ),
-        title: const Text('开工点名(专检)'),
+        title: const Text('班组派工'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),

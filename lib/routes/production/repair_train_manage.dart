@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_assign.dart';
+import 'package:jcjx_phone/routes/production/jt_assign_team.dart';
 import 'package:jcjx_phone/routes/production/mutual_assign.dart';
 import 'package:jcjx_phone/routes/production/special_assign.dart';
 import '../../../index.dart';
@@ -46,7 +47,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         getRepairingTrainInfo('C5'),
         getRepairingTrainInfo('临修'),
       ]);
-      
+
       // 数据加载完成后，自动加载第一个标签的第一个工序节点
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -136,9 +137,9 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
     );
   }
 
@@ -885,39 +886,63 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       '${numberInfo['hasDispatchedPackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () async {
-                    // 在这里处理待作业的点击事件
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              PackageArrangeInfo(locoInfo: widget.locoInfo)),
-                    );
-                    // 如果从派工页面返回了true，则刷新当前页面
-                    if (result == true) {
-                      getNumber(); // 重新获取数据
+                    if (Global.profile.permissions!.roles
+                        .contains('gongzhang')) {
+                      // 在这里处理待作业的点击事件
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                PackageArrangeInfo(locoInfo: widget.locoInfo)),
+                      );
+                      // 如果从派工页面返回了true，则刷新当前页面
+                      if (result == true) {
+                        getNumber(); // 重新获取数据
+                      }
+                    } else {
+                      showToast('只有工长有范围派工权限');
                     }
                   },
                 ),
                 TaskCard(
-                  title: '机统-28作业派工',
+                  title: '机统28-作业派工',
                   subtitle: '机车机统28作业清单',
                   count:
                       '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
-                    // 在这里处理待作业的点击事件
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => JtWorkAssign(
-                                trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode:
-                                    widget.locoInfo?['trainNumCode'] ?? '',
-                                typeName: widget.locoInfo?['typeName'] ?? '',
-                                typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                trainEntryCode: widget.locoInfo?['code'] ?? '',
-                              )),
-                    );
+                    List<String>? roles = Global.profile.permissions?.roles;
+                    if (roles!.contains("chejianzhuren")) {
+                      // 在这里处理待作业的点击事件
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => JtWorkAssignTeam(
+                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                  trainNumCode:
+                                      widget.locoInfo?['trainNumCode'] ?? '',
+                                  typeName: widget.locoInfo?['typeName'] ?? '',
+                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                  trainEntryCode:
+                                      widget.locoInfo?['code'] ?? '',
+                                )),
+                      );
+                    } else if (roles.contains("gongzhang")) {
+                      // 在这里处理待作业的点击事件
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => JtWorkAssign(
+                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                  trainNumCode:
+                                      widget.locoInfo?['trainNumCode'] ?? '',
+                                  typeName: widget.locoInfo?['typeName'] ?? '',
+                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                  trainEntryCode:
+                                      widget.locoInfo?['code'] ?? '',
+                                )),
+                      );
+                    }
                   },
                 ),
                 TaskCard(
@@ -1353,7 +1378,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(height: 16),
 
             // 2. 作业项列表
-            ...widget.packageList.map((task) => _buildTaskItem(task)).toList(),
+            ...packageList.map((task) => _buildTaskItem(task)).toList(),
           ],
         ),
       ),

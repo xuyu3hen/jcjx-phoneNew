@@ -687,6 +687,8 @@ class ProductApi extends AppApi {
     }
   }
 
+  
+
   // 文件下载
   Future<dynamic> downloadFile({
     Map<String, dynamic>? queryParametrs,
@@ -995,6 +997,21 @@ class ProductApi extends AppApi {
       return r.data["data"];
     } catch (e) {
       _handleException(e);
+    }
+  }
+
+    Future<dynamic> getDeptByParentIdList(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/jcjxsystem/dept/getDeptByParentIdList",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+      return null;
     }
   }
 

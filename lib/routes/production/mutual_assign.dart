@@ -372,7 +372,7 @@ class _JtShowPageState extends State<MutualAssign> {
                                           ),
                                         ],
                                       ),
-                                      Row(
+                                    Row(
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -384,12 +384,16 @@ class _JtShowPageState extends State<MutualAssign> {
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "流水号: ${item['deptName']}"),
+                                                "部门: ${item['deptName']}"),
                                           ),
                                         ],
                                       ),
                                       Row(
                                         children: [
+                                          Expanded(
+                                            child: Text(
+                                                "班组: ${item['teamName']}"),
+                                          ),
                                           Expanded(
                                             child: Text(
                                                 "主修: ${item['repairName']}"),
@@ -420,9 +424,9 @@ class _JtShowPageState extends State<MutualAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async{
                                     // TODO: 实现派工逻辑
-                                    Navigator.push(
+                                    final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => MutualAssignPeople(
@@ -430,6 +434,10 @@ class _JtShowPageState extends State<MutualAssign> {
                                         ),
                                       ),
                                     );
+                                    if(result == true){
+                                      getInfo();
+                                      showToast('分配成功');
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
@@ -710,21 +718,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
                     ),
                   ),
                 ),
-                // 添加搜索框（固定在顶部）
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: '搜索用户...',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    ),
-                  ),
-                ),
+                
                 // 成员列表（可滚动部分）
                 Expanded(
                   child: ListView(

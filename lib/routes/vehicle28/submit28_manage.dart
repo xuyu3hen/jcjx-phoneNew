@@ -476,7 +476,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                   ),
                   ZjcFormInputCell(
                     title: "施修方案",
-                    text: faultDesc,
+                    text: repairPlan,
                     maxLines: 7,
                     maxLength: 300,
                     showRedStar: true,

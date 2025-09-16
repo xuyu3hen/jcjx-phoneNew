@@ -654,11 +654,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     return SafeArea(
         child: InkWell(
       onTap: () async {
-        if ((faultDesc == null ||
-            repairWorkResource['code'] == "" ||
-            riskLevel == null ||
-            requiredProcessingMethod['code'] == "")) {
-          showToast("内容未填写完");
+        if (false) {
         } else {
           var submit;
           List<Map<String, dynamic>> l = [];
@@ -687,7 +683,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                   Global.profile.permissions?.user.userId;
             }
             if (faultPics.isNotEmpty) {
-              await JtApi().uploadJt(imagedata: faultPics[0]).then(
+              await JtApi().uploadMixJt(imagedata: faultPics).then(
                     (value) async => {
                       if (value['data'] != null && value['data'] != "")
                         {
