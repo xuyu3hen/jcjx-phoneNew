@@ -98,9 +98,14 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
       // 根据查询关键词筛选零部件
       setState(() {
         _filteredFaultPartList = Global.faultPartList.where((part) {
-          final partName = part['name'] as String? ?? '';
-          return partName.toLowerCase().contains(query.toLowerCase());
+          // 确保part是Map类型并且name字段存在
+          if (part is Map) {
+            final partName = part['nodeName']?.toString() ?? '';
+            return partName.toLowerCase().contains(query.toLowerCase());
+          }
+          return false;
         }).toList();
+        logger.i(_filteredFaultPartList);
         _isSearching = true;
       });
     }
@@ -307,10 +312,6 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
             ),
             //故障零部件构型确认在faultPartListInfo1中进行筛选
             const SizedBox(height: 16),
-             //故障零部件构型确认在faultPartListInfo1中进行筛选
-            const SizedBox(height: 16),
-                       //故障零部件构型确认在faultPartListInfo1中进行筛选
-            const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -361,7 +362,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                             child: SizedBox(
                               width: MediaQuery.of(context).size.width * 0.7,
                               child: Text(
-                                part['name'] ?? '未知部件',
+                                part['nodeName'] ?? '未知部件',
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),

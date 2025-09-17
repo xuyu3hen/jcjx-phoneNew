@@ -207,7 +207,7 @@ class ProductApi extends AppApi {
         "/subparts/jcConfigNode/getPrefixConfigNode",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])['data']);
+      // logger.i((r.data["data"])['data']);
       return (r.data["data"])["data"];
     } catch (e) {
       _handleException(e);

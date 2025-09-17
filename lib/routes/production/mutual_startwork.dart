@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 import '../../index.dart';
@@ -68,10 +70,8 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
   void getProcessMethod() async {
     try {
       Map<String, dynamic> params = {"pageNum": 0, 'pageSize': 0};
-
       var response = await ProductApi().getProcessMethod(params);
       logger.i(response);
-
       if (response != null && response is List && response.isNotEmpty) {
         //将List<dynamic>转换为List<Map<String,dynamic>>
         _processMethodList = response
@@ -98,9 +98,14 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
       // 根据查询关键词筛选零部件
       setState(() {
         _filteredFaultPartList = Global.faultPartList.where((part) {
-          final partName = part['name'] as String? ?? '';
-          return partName.toLowerCase().contains(query.toLowerCase());
+          // 确保part是Map类型并且name字段存在
+          if (part is Map) {
+            final partName = part['nodeName']?.toString() ?? '';
+            return partName.toLowerCase().contains(query.toLowerCase());
+          }
+          return false;
         }).toList();
+        logger.i(_filteredFaultPartList);
         _isSearching = true;
       });
     }
@@ -116,11 +121,10 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
     _searchController.addListener(() {
       _filterParts(_searchController.text);
     });
-    // getProcessMethod();
-    // getFaultPart();
+    logger.i(Global.faultPartList.length);
   }
 
-  // 加工方法
+
   void _loadJt28Data() async {
     try {
       Map<String, dynamic> params = {
@@ -307,10 +311,6 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
             ),
             //故障零部件构型确认在faultPartListInfo1中进行筛选
             const SizedBox(height: 16),
-             //故障零部件构型确认在faultPartListInfo1中进行筛选
-            const SizedBox(height: 16),
-                       //故障零部件构型确认在faultPartListInfo1中进行筛选
-            const SizedBox(height: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -360,10 +360,13 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                             value: part,
                             child: SizedBox(
                               width: MediaQuery.of(context).size.width * 0.7,
+                                            child: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.7,
                               child: Text(
-                                part['name'] ?? '未知部件',
-                                overflow: TextOverflow.ellipsis,
+                                part['nodeName']?.toString() ?? part['name']?.toString() ?? '未知部件',
+                                softWrap: true,
                               ),
+                            ),
                             ),
                           );
                         }).toList(),

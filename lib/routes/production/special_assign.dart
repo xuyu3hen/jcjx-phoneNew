@@ -423,9 +423,8 @@ class _JtShowPageState extends State<SpecialAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () {
-                                    // TODO: 实现派工逻辑
-                                    Navigator.push(
+                                  onPressed: () async{
+                                    var result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
@@ -434,6 +433,9 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         ),
                                       ),
                                     );
+                                    if(result == true){
+                                      getInfo();
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,

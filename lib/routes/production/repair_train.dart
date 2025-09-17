@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
+import 'package:jcjx_phone/routes/production/package_complete.dart';
 import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
@@ -46,7 +47,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
         getRepairingTrainInfo('C5'),
         getRepairingTrainInfo('临修'),
       ]);
-      
+
       // 数据加载完成后，自动加载第一个标签的第一个工序节点
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -141,9 +142,9 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
     );
   }
 
@@ -400,7 +401,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     );
   }
 
-   void _loadFirstProcessNode(int tabIndex) {
+  void _loadFirstProcessNode(int tabIndex) {
     // 根据标签索引选择对应的工序节点数据
     List<Map<String, dynamic>> procList = [];
     if (tabIndex == 0) {
@@ -430,8 +431,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     }
   }
 
+  List<Map<String, dynamic>> repairMainNodePage = [];
 
-    List<Map<String, dynamic>> repairMainNodePage = [];
   /// 构建工序节点标签列表
 
   Widget _buildProcTagList() {
@@ -1469,7 +1470,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮 - 仅在任务未完成时显示
-            if (task['completeCount'] < task['total'])
+            if (task['completeCount'] < task['total'] &&
+                task['wholePackage'] == true)
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();
@@ -1490,8 +1492,40 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   foregroundColor: Colors.white, // 文字颜色设为白色
                 ),
                 child: const Text('开工'),
+              )
+            else if (task['wholePackage'] == false)
+              ElevatedButton(
+                onPressed: () async {
+                  task['startTime'] = DateTime.now().toString();
+
+                  List<Map<String, dynamic>> queryParametrs = [task];
+                  ProductApi().startWork(queryParametrs);
+             
+                  List<Map<String, dynamic>> taskList = task['taskCertainPackageList'] != null
+                      ? (task['taskCertainPackageList'] as List<dynamic>)
+                          .map((item) => item is Map<String, dynamic>
+                              ? item
+                              : Map<String, dynamic>.from(item as Map))
+                          .toList()
+                      : [];
+                  
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PackagePartInfo(
+                        locoInfo: widget.locoInfo,
+                        taskInstructContentList: taskList,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, // 背景色设为绿色
+                  foregroundColor: Colors.white, // 文字颜色设为白色
+                ),
+                child: const Text('分包'),
               ),
-            const SizedBox(width: 12),
             const SizedBox(width: 12),
           ],
         ),
