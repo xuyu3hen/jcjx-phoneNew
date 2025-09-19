@@ -653,6 +653,13 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                           )),
                       const SizedBox(height: 8),
                       Text(
+                          "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          )),
+                      const SizedBox(height: 8),
+                      Text(
                           "工序转入时间：${loco['mainNodeChangeTime'] != null ? timeFormat.format(DateTime.parse(loco['mainNodeChangeTime'])) : ''}",
                           style: const TextStyle(
                             fontSize: 14,
@@ -1030,6 +1037,13 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
             label: '停留地点',
             value: widget.locoInfo?['stopPlace'] != "null-null"
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+        // 每一项单独一行显示
+        _InfoItem(
+            label: '工序节点',
+            value: widget.locoInfo?['repairMainNodeName'] != ''
+                ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
@@ -1419,6 +1433,12 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             label: '停留地点',
             value: widget.locoInfo?['stopPlace'] != "null-null"
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+                _InfoItem(
+            label: '工序节点',
+            value: widget.locoInfo?['repairMainNodeName'] != ''
+                ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(

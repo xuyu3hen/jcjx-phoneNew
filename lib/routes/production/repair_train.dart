@@ -659,6 +659,13 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                           )),
                       const SizedBox(height: 8),
                       Text(
+                          "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          )),
+                      const SizedBox(height: 8),
+                      Text(
                           "工序转入时间：${loco['mainNodeChangeTime'] != null ? timeFormat.format(DateTime.parse(loco['mainNodeChangeTime'])) : ''}",
                           style: const TextStyle(
                             fontSize: 14,
@@ -1017,6 +1024,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
+                _InfoItem(
+            label: '工序节点',
+            value: widget.locoInfo?['repairMainNodeName'] != ''
+                ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
         _InfoItem(
             label: '工序转入时间',
             value: widget.locoInfo != null &&
@@ -1202,7 +1215,7 @@ class _PackageInfoState extends State<PackageInfo> {
   List<Map<String, dynamic>> packageList = [];
 
   void initState() {
-    getWorkPackage();
+    // getWorkPackage();
   }
 
   void getWorkPackage() async {
@@ -1296,6 +1309,33 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
   ];
 
+  var logger = AppLogger.logger;
+
+  List<Map<String, dynamic>> packageList = [];
+
+  void initState() {
+    getWorkPackage();
+  }
+
+  void getWorkPackage() async {
+    Map<String, dynamic> params = {
+      "trainEntryCode": widget.locoInfo?['code'],
+      "userId": Global.profile.permissions?.user.userId
+    };
+    logger.i(params);
+    var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
+    if (mounted) {
+      setState(() {
+        packageList = (r as List<dynamic>)
+            .map((item) => item is Map<String, dynamic>
+                ? item
+                : Map<String, dynamic>.from(item as Map))
+            .toList();
+        logger.i(packageList);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
@@ -1328,7 +1368,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(height: 16),
 
             // 2. 作业项列表
-            ...widget.packageList.map((task) => _buildTaskItem(task)).toList(),
+            ...packageList.map((task) => _buildTaskItem(task)).toList(),
           ],
         ),
       ),
@@ -1369,6 +1409,12 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             label: '停留地点',
             value: widget.locoInfo?['stopPlace'] != "null-null"
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+                _InfoItem(
+            label: '工序节点',
+            value: widget.locoInfo?['repairMainNodeName'] != ''
+                ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
@@ -1470,22 +1516,25 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮 - 仅在任务未完成时显示
-            if (task['completeCount'] < task['total'] &&
-                task['wholePackage'] == true)
+            if (task['completeCount'] == 0 && task['wholePackage'] == true)
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();
                   List<Map<String, dynamic>> queryParametrs = [task];
                   ProductApi().startWork(queryParametrs);
-                  Navigator.push(
+                  var result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => InspectionVertexPage(
-                        locoInfo: widget.locoInfo,
-                        packageInfo: task,
-                      ),
+                          locoInfo: widget.locoInfo,
+                          packageInfo: task,
+                          count: 0),
                     ),
                   );
+                  if (result == true) {
+                    showToast('更新成功');
+                    getWorkPackage();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green, // 背景色设为绿色
@@ -1493,23 +1542,47 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ),
                 child: const Text('开工'),
               )
-            else if (task['wholePackage'] == false)
+            else if (task['completeCount'] < task['total'] &&
+                task['wholePackage'] == true)
+              ElevatedButton(
+                onPressed: () async {
+                  var result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InspectionVertexPage(
+                          locoInfo: widget.locoInfo,
+                          packageInfo: task,
+                          count: task['completeCount']),
+                    ),
+                  );
+                  if (result == true) {
+                    showToast('更新成功');
+                    getWorkPackage();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green, // 背景色设为绿色
+                  foregroundColor: Colors.white, // 文字颜色设为白色
+                ),
+                child: const Text('继续作业'),
+              )
+            else if (task['completeCount'] < task['total'] &&
+                task['wholePackage'] == false)
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();
 
                   List<Map<String, dynamic>> queryParametrs = [task];
                   ProductApi().startWork(queryParametrs);
-             
-                  List<Map<String, dynamic>> taskList = task['taskCertainPackageList'] != null
-                      ? (task['taskCertainPackageList'] as List<dynamic>)
-                          .map((item) => item is Map<String, dynamic>
-                              ? item
-                              : Map<String, dynamic>.from(item as Map))
-                          .toList()
-                      : [];
-                  
 
+                  List<Map<String, dynamic>> taskList =
+                      task['taskCertainPackageList'] != null
+                          ? (task['taskCertainPackageList'] as List<dynamic>)
+                              .map((item) => item is Map<String, dynamic>
+                                  ? item
+                                  : Map<String, dynamic>.from(item as Map))
+                              .toList()
+                          : [];
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -1525,6 +1598,23 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   foregroundColor: Colors.white, // 文字颜色设为白色
                 ),
                 child: const Text('分包'),
+              )
+            else if (task['completeCount'] == task['total'])
+              //展示已完成按钮
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '已完成',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             const SizedBox(width: 12),
           ],
@@ -1537,9 +1627,13 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 class InspectionVertexPage extends StatefulWidget {
   Map<String, dynamic>? packageInfo = {};
   Map<String, dynamic>? locoInfo = {};
+  int count;
 
   InspectionVertexPage(
-      {super.key, required this.packageInfo, required this.locoInfo});
+      {super.key,
+      required this.packageInfo,
+      required this.locoInfo,
+      required this.count});
 
   @override
   State<InspectionVertexPage> createState() => _InspectionVertexPageState();
@@ -1572,6 +1666,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               : Map<String, dynamic>.from(item as Map))
           .toList();
     }
+
+    _currentIndex = widget.count;
     logger.i(packagePoints);
   }
 
@@ -1607,7 +1703,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true),
         ),
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
@@ -1631,11 +1727,25 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             const SizedBox(height: 16),
 
             // 2. 整备进度条
-            LinearProgressIndicator(
-              value: (_currentIndex + 1) / number,
-              color: Colors.green,
-              backgroundColor: Colors.grey[300],
-              minHeight: 8,
+            Row(
+              children: [
+                Expanded(
+                  child: LinearProgressIndicator(
+                    value: (_currentIndex + 1) / number,
+                    color: Colors.green,
+                    backgroundColor: Colors.grey[300],
+                    minHeight: 8,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '${_currentIndex + 1}/$number',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -1765,7 +1875,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
             taskContentItemList.isEmpty
                 ? const Center(
-                    child: Text('暂无数据'),
+                    child: Text(''),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
@@ -1885,7 +1995,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       });
     } else {
       debugPrint("已完成所有项");
-      Navigator.of(context).pop();
+      Navigator.pop(context, true);
     }
   }
 

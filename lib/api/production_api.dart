@@ -199,7 +199,6 @@ class ProductApi extends AppApi {
     }
   }
 
-
   // 故障零部件查询
   Future<dynamic> getFaultPart(Map<String, dynamic>? queryParametrs) async {
     try {
@@ -687,8 +686,6 @@ class ProductApi extends AppApi {
     }
   }
 
-  
-
   // 文件下载
   Future<dynamic> downloadFile({
     Map<String, dynamic>? queryParametrs,
@@ -794,6 +791,21 @@ class ProductApi extends AppApi {
     } catch (e) {
       _handleException(e);
       return WorkPackageList(data: []);
+    }
+  }
+
+  // 获取作业项 /tasks/taskCertainPackage/selectAll
+  Future<dynamic> getTaskCertainPackage({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskCertainPackage/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(((r.data["data"])["data"])["rows"]);
+      return ((r.data["data"])["data"])["rows"];
+    } catch (e) {
+      _handleException(e);
+      return RepairPlan();
     }
   }
 
@@ -1000,7 +1012,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    Future<dynamic> getDeptByParentIdList(
+  Future<dynamic> getDeptByParentIdList(
       {Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(

@@ -100,8 +100,28 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
   ];
 
+  List<Map<String, dynamic>> packageListUse = [];
+
   void initState() {
-    print(widget.packageList);
+    packageListUse = widget.packageList;
+    getCertainPackage();
+  }
+
+  void getCertainPackage() async {
+    Map<String, dynamic> params = {
+      "packageCode": widget.packageList[0]['packageCode'],
+    };
+    var certainPackageList =
+        await ProductApi().getTaskCertainPackage(queryParametrs: params);
+    if (mounted) {
+      setState(() {
+        //将List<dynamic>转换为List<Map<String, dynamic>>
+           packageListUse = (certainPackageList as List)
+            .where((item) => item is Map)
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .toList();
+      });
+    }
   }
 
   @override
@@ -134,9 +154,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             // 1. 机车基本信息
             _buildTrainInfo(),
             const SizedBox(height: 16),
-
             // 2. 作业项列表
-            ...widget.packageList.map((task) => _buildTaskItem(task)).toList(),
+            ...packageListUse.map((task) => _buildTaskItem(task)).toList(),
           ],
         ),
       ),
@@ -173,10 +192,16 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         ),
         const SizedBox(height: 8),
         // 每一项单独一行显示
-        _InfoItem(
+        _InfoItem( 
             label: '停留地点',
             value: widget.locoInfo?['stopPlace'] != "null-null"
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+                _InfoItem(
+            label: '工序节点',
+            value: widget.locoInfo?['repairMainNodeName'] != ''
+                ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
@@ -273,7 +298,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   task['startTime'] = DateTime.now().toString();
                   List<Map<String, dynamic>> queryParametrs = [task];
                   ProductApi().startWork(queryParametrs);
-                  Navigator.push(
+                  var result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => InspectionVertexOnePage(
@@ -282,6 +307,10 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       ),
                     ),
                   );
+                  if(result == true){
+                    showToast('更新成功');
+                    getCertainPackage();
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green, // 背景色设为绿色
@@ -696,7 +725,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
       });
     } else {
       debugPrint("已完成所有项");
-      Navigator.of(context).pop();
+      Navigator.pop(context, true);
     }
   }
 

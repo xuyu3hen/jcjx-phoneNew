@@ -88,7 +88,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     getAssignSegment();
   }
 
-
   //获取配属段
   void getAssignSegment() async {
     try {
@@ -240,7 +239,9 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               'code': item.code,
               'deptName': item.deptName,
               'realLocation':
-                  '${item.deptName}-${item.trackNum}-${item.areaName}'
+                  '${item.deptName}-${item.trackNum}-${item.areaName}',
+              'areaName': item.areaName,
+              'trackNum': item.trackNum,
             });
           }
         }
@@ -409,9 +410,13 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'repairProcName': repairSelected['name'],
         'repairProcCode': repairSelected['code'],
         'repairLocation': stopLocationSelected["code"],
+        'trackNum': stopLocationSelected['trackNum'],
+        'stoppingPlace': stopLocationSelected['areaName'],
         'attachSegmentCode': assignSegmentSelected['code'],
         'attachDept': assignSegmentSelected['assignSegment'],
+
       };
+      print(queryParameter);
       try {
         var r = await ProductApi().trainEntrySave(queryParameter);
         if (r["code"] == "S_F_S000" && r["data"]["code"] != 500) {
@@ -584,7 +589,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                     if (mounted) {
                       setState(() {
                         assignSegmentSelected["code"] = selectItem["code"];
-                        assignSegmentSelected["assignSegment"] = selectItem["assignSegment"];
+                        assignSegmentSelected["assignSegment"] =
+                            selectItem["assignSegment"];
                       });
                     }
                   },
@@ -683,6 +689,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                       stopLocationSelected["code"] = selectItem["code"];
                       stopLocationSelected["realLocation"] =
                           selectItem["realLocation"];
+                      stopLocationSelected["areaName"] = selectItem["areaName"];
+                      stopLocationSelected["trackNum"] = selectItem["trackNum"];
                     });
                   },
                 );
