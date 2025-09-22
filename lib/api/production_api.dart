@@ -675,16 +675,36 @@ class ProductApi extends AppApi {
     Map<String, dynamic>? queryParametrs,
   }) async {
     try {
-      var r = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
-          queryParameters: queryParametrs);
-      logger.i("previewImage${r.data}");
-      return r.data;
+      // 直接获取字节响应，指定responseType为bytes
+      var response = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
+          queryParameters: queryParametrs,
+          options: Options(responseType: ResponseType.bytes));
+      
+      logger.i("previewImage bytes length: ${response.data?.length}");
+      
+      // 处理字节流数据
+      if (response.data != null) {
+        // response.data 应该是 Uint8List 类型的字节数据
+        if (response.data is Uint8List) {
+          return Image.memory(response.data as Uint8List);
+        } 
+        // 如果是 List<int>，转换为 Uint8List
+        else if (response.data is List<int>) {
+          return Image.memory(Uint8List.fromList(response.data as List<int>));
+        }
+      }
+      
+      // 如果没有有效的数据，返回null
+      return null;
     } catch (e) {
       _handleException(e);
+      logger.e("previewImage 错误: $e");
       // 根据实际情况返回合适的默认图片或者抛出异常等，这里简单返回null
       return null;
     }
   }
+      
+
 
   // 文件下载
   Future<dynamic> downloadFile({
@@ -795,7 +815,8 @@ class ProductApi extends AppApi {
   }
 
   // 获取作业项 /tasks/taskCertainPackage/selectAll
-  Future<dynamic> getTaskCertainPackage({Map<String, dynamic>? queryParametrs}) async {
+  Future<dynamic> getTaskCertainPackage(
+      {Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskCertainPackage/selectAll",
@@ -862,6 +883,24 @@ class ProductApi extends AppApi {
       logger.i(r.data["data"]);
     } catch (e) {
       _handleException(e);
+    }
+  }
+
+
+
+  // 查看故障视频及图片 /fileserver/jt28File/getByGroupId
+  Future<dynamic> getFaultVideoAndImage(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/fileserver/jt28File/getByGroupId",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
     }
   }
 

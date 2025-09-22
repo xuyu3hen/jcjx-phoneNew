@@ -233,6 +233,104 @@ class _JtShowPageState extends State<MutualAssign> {
     }
   }
 
+    late Image image;
+  Future<Image?> getPreviewImage(Map<String, dynamic> photo) async{
+    Map<String, dynamic> queryParameters = {
+      'url': photo['downloadUrl'] 
+    };
+    logger.i(queryParameters);
+    var r = await ProductApi().previewImage(queryParametrs: queryParameters);
+    return r;
+  }
+
+    // 添加图片预览方法
+  void _previewImage(Map<String, dynamic> photo) async{
+    Image? i = await getPreviewImage(photo);
+    // 实现图片预览逻辑
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(photo['fileName'] ?? '图片预览'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 修正内容显示部分，添加错误处理和占位符
+              if (i != null)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: i,
+                )
+              else if (photo['dowanloadUrl'] != null)
+                Image.network(
+                  photo['dowanloadUrl'],
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Column(
+                      children: const [
+                        Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                        SizedBox(height: 10),
+                        Text('图片加载失败'),
+                      ],
+                    );
+                  },
+                )
+              else
+                const Column(
+                  children: [
+                    Icon(Icons.image, size: 50, color: Colors.grey),
+                    SizedBox(height: 10),
+                    Text('无图片可显示'),
+                  ],
+                ),
+              const SizedBox(height: 10),
+              if (photo['fileName'] != null)
+                Text('文件名: ${photo['fileName']}')
+              else
+                const Text('未知文件'),
+              if (photo['fileSize'] != null)
+                Text('文件大小: ${photo['fileSize']} bytes'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  List<Map<String, dynamic>> photoList = [];
+    void getPhotoList(String groupId) async{
+    Map<String, dynamic> queryParameters = {
+      'groupId': groupId,
+    };
+    var r = await ProductApi().getFaultVideoAndImage(queryParametrs: queryParameters);
+    //将List<dynamic>转换为List<Map<String, dynamic>>
+    photoList = (r as List)
+        .map((item) => item as Map<String, dynamic>)
+        .toList();
+    logger.i(photoList);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -361,8 +459,44 @@ class _JtShowPageState extends State<MutualAssign> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
+                                                                                               // TODO: 实现查看报修图片的逻辑
                                                 // 可以打开新页面或弹窗展示图片
+                                                if(item['repairPicture'] != null){
+                                                  getPhotoList(item['repairPicture']);
+                                                }
+                                                
+                                                //展示photoList
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text("故障视频及图片"),
+                                                      content: photoList.isNotEmpty
+                                                          ? Column(
+                                                              mainAxisSize: MainAxisSize.min,
+                                                              children: photoList.map((photo) {
+                                                                return ListTile(
+                                                                  title: Text(photo['fileName'] ?? ''),
+                                                                  onTap: () {
+                                                                    // TODO: 实现图片预览功能
+                                                                    // 这里可以导航到图片预览页面或者显示图片预览对话框
+                                                                    _previewImage(photo);
+                                                                  },
+                                                                );
+                                                              }).toList(),
+                                                            )
+                                                          : const Text('暂无图片'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () {
+                                                            Navigator.of(context).pop();
+                                                          },
+                                                          child: const Text('关闭'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,

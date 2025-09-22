@@ -759,7 +759,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                   Global.profile.permissions?.user.userId;
             }
             if (faultPics.isNotEmpty) {
-              await JtApi().uploadJt(imagedata: faultPics[0]).then(
+              await JtApi().uploadMixJt(imagedata: faultPics).then(
                     (value) async => {
                       if (value['data'] != null && value['data'] != "")
                         {
@@ -782,7 +782,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             } else {
               log("$queryParameters");
               l.insert(0, queryParameters);
-              submit = await JtApi().uploadJt28(queryParametrs: l);
+              // submit = await JtApi().uploadMixJt(queryParameters);
               if (submit["code"] == "S_T_S003") {
                 showToast("${submit['message']}");
                 // SmartDialog.dismiss(status: SmartStatus.loading);
