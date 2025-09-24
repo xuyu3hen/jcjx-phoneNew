@@ -84,6 +84,7 @@ class _JtShowPageState extends State<MutualAssign> {
       'pageSize': pageSize,
       'completeStatus': 2,
       'trainEntryCode': widget.trainEntryCode,
+      'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -478,8 +479,7 @@ class _JtShowPageState extends State<MutualAssign> {
                                                                 return ListTile(
                                                                   title: Text(photo['fileName'] ?? ''),
                                                                   onTap: () {
-                                                                    // TODO: 实现图片预览功能
-                                                                    // 这里可以导航到图片预览页面或者显示图片预览对话框
+                                                                    
                                                                     _previewImage(photo);
                                                                   },
                                                                 );

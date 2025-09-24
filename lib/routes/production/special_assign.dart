@@ -84,6 +84,7 @@ class _JtShowPageState extends State<SpecialAssign> {
       'pageSize': pageSize,
       'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
+      'status': 0
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);

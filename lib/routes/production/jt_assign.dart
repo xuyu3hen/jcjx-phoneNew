@@ -357,13 +357,18 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                           ),
                                         ],
                                       ),
-                                      Row(
+// ... existing code ...
+                                  Row(
                                         children: [
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
-                                                // 可以打开新页面或弹窗展示图片
+                                                // 修复：直接调用PhotoPreviewDialog.show方法
+                                                PhotoPreviewDialog.show(
+                                                    context,
+                                                    item['repairPicture'],
+                                                    ProductApi()
+                                                        .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -373,6 +378,7 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                           ),
                                         ],
                                       ),
+// ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
@@ -421,7 +427,7 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () async{
+                                  onPressed: () async {
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(

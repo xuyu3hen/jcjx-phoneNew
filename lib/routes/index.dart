@@ -36,4 +36,6 @@ export 'production/search_work_package.dart';
 export 'production/get_work_package.dart';
 export 'production/sec_enter_modify_new.dart';
 export 'production/jt_show.dart';
+export 'production/photo_preview.dart';
+
 

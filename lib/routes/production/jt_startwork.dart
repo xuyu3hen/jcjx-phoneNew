@@ -12,6 +12,7 @@ class FaultDisposalPage extends StatefulWidget {
   final String repairScheme;
   final String faultDescription;
   final String code;
+  final String repairPicture;
 
   const FaultDisposalPage(
       {super.key,
@@ -22,7 +23,8 @@ class FaultDisposalPage extends StatefulWidget {
       required this.faultDescription,
       required this.trainNumCode,
       required this.typeCode,
-      required this.code});
+      required this.code,
+      required this.repairPicture});
 
   @override
   State<FaultDisposalPage> createState() => _FaultDisposalPageState();
@@ -204,6 +206,24 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
             ),
             const SizedBox(height: 16),
 
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
+                      PhotoPreviewDialog.show(context, widget.repairPicture,
+                          ProductApi().getFaultVideoAndImage);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text("查看故障视频及图片"),
+                  ),
+                ),
+              ],
+            ),
+
             // 4. 加工方法 输入框
             ZjcFormSelectCell(
               title: "加工方法",
@@ -225,7 +245,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                       logger.i(selectArr);
                       setState(() {
                         dynamicMethodSelected["code"] = selectItem["code"];
-                        dynamicMethodSelected["dictName"] = selectItem["dictName"];
+                        dynamicMethodSelected["dictName"] =
+                            selectItem["dictName"];
                         logger.i(dynamicMethodSelected);
                       });
                     },
@@ -276,7 +297,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                 const Padding(
                   padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
                   child: Text(
-                    '故障视频及图片',
+                    '施修情况图片',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -424,8 +445,9 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                     }
                   }
                 },
-                child: const Text('申请专互检'),
+                child: const Text('销活申请'),
               ),
+              // 增加一个按钮放行
             ),
           ],
         ),

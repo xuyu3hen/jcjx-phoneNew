@@ -51,8 +51,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
   late TextEditingController actualStartDateController =
       TextEditingController();
 
-  late TextEditingController faultyPartController =
-      TextEditingController();
+  late TextEditingController faultyPartController = TextEditingController();
 
   late TextEditingController mutualInspectorController =
       TextEditingController();
@@ -83,7 +82,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
     });
 
     Map<String, dynamic> queryParameters = {
-        'pageNum': pageNum,
+      'pageNum': pageNum,
       'pageSize': pageSize,
       'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
@@ -366,8 +365,24 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
-                                                // 可以打开新页面或弹窗展示图片
+                                                // 使用示例 - 在jt_assign_team.dart中替换原有代码
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    // 使用新的可复用组件展示图片
+                                                    PhotoPreviewDialog.show(
+                                                        context,
+                                                        item['repairPicture'],
+                                                        ProductApi()
+                                                            .getFaultVideoAndImage);
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                  child:
+                                                      const Text("查看故障视频及图片"),
+                                                );
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -430,16 +445,19 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => SpecialDisposalPage(
+                                        builder: (context) =>
+                                            SpecialDisposalPage(
                                           faultDescription:
-                                          item['faultDescription']??"",
+                                              item['faultDescription'] ?? "",
                                           typeName: widget.typeName,
                                           trainEntryCode: widget.trainEntryCode,
                                           trainNum: widget.trainNum,
-                                          repairScheme: item['repairScheme']??"",
+                                          repairScheme:
+                                              item['repairScheme'] ?? "",
                                           trainNumCode: widget.trainNumCode,
                                           typeCode: widget.typeCode,
-                                          code: item['code'], trainInfo: item,
+                                          code: item['code'],
+                                          trainInfo: item,
                                         ),
                                       ),
                                     );

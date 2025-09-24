@@ -464,7 +464,6 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () async{
-                                                // TODO: 实现查看报修图片的逻辑
                                                 // 可以打开新页面或弹窗展示图片
                                                 getPhotoList(item['repairPicture']);
                                                 //展示photoList

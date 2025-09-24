@@ -796,7 +796,6 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);
-            if (submit['code'] == "S_T_S003") {
               SmartDialog.show(
                   clickMaskDismiss: false,
                   builder: (con) {
@@ -822,7 +821,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 SmartDialog.dismiss().then(
-                                    (value) => Navigator.of(context).pop());
+                                    (value) => Navigator.of(context).pop(true));
                               },
                               label: const Text('确定'),
                               icon: const Icon(
@@ -836,7 +835,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             }
           }
         }
-      },
+      ,
       child: Container(
         alignment: Alignment.center,
         color: Colors.blueGrey[100],

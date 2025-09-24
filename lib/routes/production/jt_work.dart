@@ -358,13 +358,18 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
+// ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
                                             child: ElevatedButton(
-                                              onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
-                                                // 可以打开新页面或弹窗展示图片
+                                              onPressed: () async {
+                                                // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
+                                                PhotoPreviewDialog.show(
+                                                    context,
+                                                    item['repairPicture'],
+                                                    ProductApi()
+                                                        .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -374,7 +379,8 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
-                                                Row(
+// ... existing code ...
+                                      Row(
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -385,16 +391,16 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 "提报时间: ${item['reportDate']}"),
                                           ),
                                           Expanded(
-                                            child: Text(
-                                                "部门: ${item['deptName']}"),
+                                            child:
+                                                Text("部门: ${item['deptName']}"),
                                           ),
                                         ],
                                       ),
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                                "班组: ${item['teamName']}"),
+                                            child:
+                                                Text("班组: ${item['teamName']}"),
                                           ),
                                           Expanded(
                                             child: Text(
@@ -432,16 +438,17 @@ class _JtShowPageState extends State<JtWorkList> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => FaultDisposalPage(
-                                          faultDescription:
-                                          item['faultDescription']??"",
-                                          typeName: widget.typeName,
-                                          trainEntryCode: widget.trainEntryCode,
-                                          trainNum: widget.trainNum,
-                                          repairScheme: item['repairScheme']??"",
-                                          trainNumCode: widget.trainNumCode,
-                                          typeCode: widget.typeCode,
-                                          code: item['code']
-                                        ),
+                                            faultDescription:
+                                                item['faultDescription'] ?? "",
+                                            typeName: widget.typeName,
+                                            trainEntryCode:
+                                                widget.trainEntryCode,
+                                            trainNum: widget.trainNum,
+                                            repairScheme:
+                                                item['repairScheme'] ?? "",
+                                            trainNumCode: widget.trainNumCode,
+                                            typeCode: widget.typeCode,
+                                            code: item['code'], repairPicture: item['repairPicture'],),
                                       ),
                                     );
                                   },

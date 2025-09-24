@@ -237,10 +237,8 @@ class _JtShowPageState extends State<MutualWorkList> {
     }
   }
 
-      
   //机车构型信息
   List<Map<String, dynamic>> faultPartListInfo1 = [];
-
 
   //故障信息
   Future<void> getFaultPart() async {
@@ -252,7 +250,7 @@ class _JtShowPageState extends State<MutualWorkList> {
         'pageSize': 1,
         // 'name': faultyPartController.text,
       };
-      
+
       var r = await ProductApi().getFaultPart(queryParameters);
       if (mounted) {
         setState(() {
@@ -396,8 +394,24 @@ class _JtShowPageState extends State<MutualWorkList> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                // TODO: 实现查看报修图片的逻辑
-                                                // 可以打开新页面或弹窗展示图片
+                                                // 使用示例 - 在jt_assign_team.dart中替换原有代码
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    // 使用新的可复用组件展示图片
+                                                    PhotoPreviewDialog.show(
+                                                        context,
+                                                        item['repairPicture'],
+                                                        ProductApi()
+                                                            .getFaultVideoAndImage);
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.green,
+                                                  ),
+                                                  child:
+                                                      const Text("查看故障视频及图片"),
+                                                );
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -460,20 +474,22 @@ class _JtShowPageState extends State<MutualWorkList> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => MutualDisposalPage(
-                                            faultDescription:
-                                                item['faultDescription'] ?? "",
-                                            typeName: widget.typeName,
-                                            trainEntryCode:
-                                                widget.trainEntryCode,
-                                            trainNum: widget.trainNum,
-                                            repairScheme:
-                                                item['repairScheme'] ?? "",
-                                            trainNumCode: widget.trainNumCode,
-                                            typeCode: widget.typeCode,
-                                            code: item['code'],
-                                            trainInfo: item),
-                                            
+                                        builder: (context) =>
+                                            MutualDisposalPage(
+                                                faultDescription:
+                                                    item['faultDescription'] ??
+                                                        "",
+                                                typeName: widget.typeName,
+                                                trainEntryCode:
+                                                    widget.trainEntryCode,
+                                                trainNum: widget.trainNum,
+                                                repairScheme:
+                                                    item['repairScheme'] ?? "",
+                                                trainNumCode:
+                                                    widget.trainNumCode,
+                                                typeCode: widget.typeCode,
+                                                code: item['code'],
+                                                trainInfo: item),
                                       ),
                                     );
                                   },

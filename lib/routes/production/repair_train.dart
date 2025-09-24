@@ -1024,7 +1024,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
-                _InfoItem(
+        _InfoItem(
             label: '工序节点',
             value: widget.locoInfo?['repairMainNodeName'] != ''
                 ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
@@ -1052,38 +1052,44 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.tealAccent.shade700,
-            foregroundColor: Colors.white,
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.tealAccent.shade700,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('机车详情查询'),
           ),
-          child: const Text('机车详情查询'),
         ),
-        const SizedBox(width: 16),
-        ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('检修调度命令'),
           ),
-          child: const Text('检修调度命令'),
         ),
-        const SizedBox(width: 16),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Vehicle28Form(),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            foregroundColor: Colors.white,
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Vehicle28Form(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('机统28提报'),
           ),
-          child: const Text('机统28提报'),
         ),
       ],
     );
@@ -1411,7 +1417,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
-                _InfoItem(
+        _InfoItem(
             label: '工序节点',
             value: widget.locoInfo?['repairMainNodeName'] != ''
                 ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
