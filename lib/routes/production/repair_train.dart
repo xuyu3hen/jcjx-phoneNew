@@ -940,7 +940,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '待互检作业',
+                  title: '待范围互检作业',
                   subtitle: '工序互检作业清单',
                   count: '${numberInfo['mutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
@@ -961,7 +961,49 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '待专检作业',
+                  title: '待范围专检作业',
+                  subtitle: '工序专检作业清单',
+                  count: '${numberInfo['specialInspectionCount'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                  onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => SpecialWorkList(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
+                    );
+                  },
+                ),
+                TaskCard(
+                  title: '待机统28互检作业',
+                  subtitle: '工序互检作业清单',
+                  count: '${numberInfo['mutualInspectionCount'] ?? 0}',
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                  onTap: () {
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => MutualWorkList(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
+                    );
+                  },
+                ),
+                TaskCard(
+                  title: '待机统28专检作业',
                   subtitle: '工序专检作业清单',
                   count: '${numberInfo['specialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard

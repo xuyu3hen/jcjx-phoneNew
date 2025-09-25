@@ -364,25 +364,13 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                         children: [
                                           Expanded(
                                             child: ElevatedButton(
-                                              onPressed: () {
-                                                // 使用示例 - 在jt_assign_team.dart中替换原有代码
-                                                ElevatedButton(
-                                                  onPressed: () async {
-                                                    // 使用新的可复用组件展示图片
-                                                    PhotoPreviewDialog.show(
-                                                        context,
-                                                        item['repairPicture'],
-                                                        ProductApi()
-                                                            .getFaultVideoAndImage);
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.green,
-                                                  ),
-                                                  child:
-                                                      const Text("查看故障视频及图片"),
-                                                );
+                                              onPressed: () async {
+                                                // 使用新的可复用组件展示图片
+                                                PhotoPreviewDialog.show(
+                                                    context,
+                                                    item['repairPicture'],
+                                                    ProductApi()
+                                                        .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,

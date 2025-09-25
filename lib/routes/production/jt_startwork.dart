@@ -369,7 +369,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                             (value) async => {
                               if (value['data'] != null && value['data'] != "")
                                 {
-                                  queryParameters["repairPicture"] =
+                                  queryParameters["repairEndPicture"] =
                                       value['data'],
                                   l.insert(0, queryParameters),
                                   submit = await JtApi()

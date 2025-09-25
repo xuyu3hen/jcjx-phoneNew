@@ -56,7 +56,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
   Map<String, dynamic> dynamicMethodSelected = {};
   Map<String, dynamic> faultPartListInfo = {};
   Map<String, dynamic>? _selectedFaultPart;
-  
+
   // 添加用于零部件搜索的控制器
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredFaultPartList = [];
@@ -110,7 +110,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
       });
     }
   }
-  
+
   @override
   void initState() {
     super.initState();
@@ -194,13 +194,12 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('专检作业-处置'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        )
-      );
+          appBar: AppBar(
+            title: const Text('专检作业-处置'),
+          ),
+          body: const Center(
+            child: CircularProgressIndicator(),
+          ));
     }
 
     return Scaffold(
@@ -300,7 +299,11 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                   
+                      // 使用新的可复用组件展示图片
+                      PhotoPreviewDialog.show(
+                          context,
+                          widget.trainInfo['repairEndPicture'],
+                          ProductApi().getFaultVideoAndImage);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -345,9 +348,9 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                       const SizedBox(height: 10),
                       // 下拉选择框用于选择故障零部件
                       DropdownButtonFormField<Map<String, dynamic>>(
-                        hint: Text(_isSearching 
-                            ? _filteredFaultPartList.isEmpty 
-                                ? '未找到匹配项' 
+                        hint: Text(_isSearching
+                            ? _filteredFaultPartList.isEmpty
+                                ? '未找到匹配项'
                                 : '请选择故障零部件'
                             : ''),
                         value: _selectedFaultPart,
@@ -356,7 +359,9 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                             _selectedFaultPart = newValue;
                           });
                         },
-                        items: _filteredFaultPartList.map<DropdownMenuItem<Map<String, dynamic>>>((part) {
+                        items: _filteredFaultPartList
+                            .map<DropdownMenuItem<Map<String, dynamic>>>(
+                                (part) {
                           return DropdownMenuItem<Map<String, dynamic>>(
                             value: part,
                             child: SizedBox(
@@ -381,22 +386,22 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
               ],
             ),
             //快奖申报勾选框
-              Row(
-                children: [
-                  Checkbox(
-                    value: _isChecked,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isChecked = value!;
-                      });
-                    },
-                  ),
-                  const Text('快奖申报'),
-                ],
-              ),
+            Row(
+              children: [
+                Checkbox(
+                  value: _isChecked,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _isChecked = value!;
+                    });
+                  },
+                ),
+                const Text('快奖申报'),
+              ],
+            ),
 
             // 工时系数填写数字
-            
+
             Row(
               children: [
                 const Text('工时系数'),
@@ -410,7 +415,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                   ),
                 ),
               ],
-            ),      
+            ),
             // 6.
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
