@@ -30,6 +30,41 @@ class ProductApi extends AppApi {
     }
   }
 
+  //  /task/taskCertainPackage/getNeedToMutualInspectionCertainPackageList
+    Future<dynamic> getNeedToMutualInspectionCertainPackageList(
+    Map<String, dynamic>? queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/task/taskCertainPackage/getNeedToMutualInspectionCertainPackageList",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+    }
+    catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }  
+
+    //  /task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList
+    Future<dynamic> getNeedToSpecialInspectionCertainPackageList(
+    Map<String, dynamic>? queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    }
+    catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // 机统28施修
   Future<dynamic> jt28SaveOrUpdate(
     List<Map<String, dynamic>> queryParametrs,

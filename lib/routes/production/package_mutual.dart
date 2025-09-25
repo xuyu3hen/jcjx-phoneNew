@@ -3,7 +3,7 @@ import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
 import '../../index.dart';
 import 'jt_startwork.dart';
 
-//机统28作业列表
+//范围作业互检
 class MutualWorkList extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;

@@ -942,7 +942,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待范围互检作业',
                   subtitle: '工序互检作业清单',
-                  count: '${numberInfo['mutualInspectionCount'] ?? 0}',
+                  count: '${numberInfo['needToMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -963,7 +963,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待范围专检作业',
                   subtitle: '工序专检作业清单',
-                  count: '${numberInfo['specialInspectionCount'] ?? 0}',
+                  count: '${numberInfo['needToSpecialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -984,7 +984,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待机统28互检作业',
                   subtitle: '工序互检作业清单',
-                  count: '${numberInfo['mutualInspectionCount'] ?? 0}',
+                  count: '${numberInfo['jt28NeedToMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -1005,7 +1005,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待机统28专检作业',
                   subtitle: '工序专检作业清单',
-                  count: '${numberInfo['specialInspectionCount'] ?? 0}',
+                  count: '${numberInfo['jt28NeedToSpecialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
