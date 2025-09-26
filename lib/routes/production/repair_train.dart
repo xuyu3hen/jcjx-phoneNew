@@ -1,6 +1,7 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
 import 'package:jcjx_phone/routes/production/package_complete.dart';
+import 'package:jcjx_phone/routes/production/package_mutual.dart';
 import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
@@ -949,7 +950,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => MutualWorkList(
+                          builder: (context) => MutualPackageList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
                                 trainNumCode:
                                     widget.locoInfo?['trainNumCode'] ?? '',

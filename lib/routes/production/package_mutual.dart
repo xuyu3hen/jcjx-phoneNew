@@ -4,13 +4,13 @@ import '../../index.dart';
 import 'jt_startwork.dart';
 
 //范围作业互检
-class MutualWorkList extends StatefulWidget {
+class MutualPackageList extends StatefulWidget {
   final String trainNum;
   final String trainNumCode;
   final String typeName;
   final String typeCode;
   final String trainEntryCode;
-  const MutualWorkList(
+  const MutualPackageList(
       {Key? key,
       required this.trainNum,
       required this.trainNumCode,
@@ -19,10 +19,10 @@ class MutualWorkList extends StatefulWidget {
       required this.trainEntryCode})
       : super(key: key);
   @override
-  State<MutualWorkList> createState() => _JtShowPageState();
+  State<MutualPackageList> createState() => _JtShowPageState();
 }
 
-class _JtShowPageState extends State<MutualWorkList> {
+class _JtShowPageState extends State<MutualPackageList> {
   late Map<String, dynamic> info = {};
 
   var logger = AppLogger.logger;
@@ -270,7 +270,7 @@ class _JtShowPageState extends State<MutualWorkList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("互检作业"),
+        title: const Text("范围作业互检作业"),
       ),
       body: _buildBody(),
     );
