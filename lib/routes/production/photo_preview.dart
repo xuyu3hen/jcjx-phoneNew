@@ -64,6 +64,59 @@ class PhotoPreviewDialog {
       SmartDialog.showToast('加载失败，请检查网络连接');
     }
   }
+
+    static void show2(
+      BuildContext context,
+    List<dynamic> repairList,
+
+  ) async {
+    SmartDialog.showLoading(msg: '加载中...');
+    try {
+
+      // 将List<dynamic>转换为List<Map<String, dynamic>>
+      List<Map<String, dynamic>> photoList = (repairList as List)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+      
+      SmartDialog.dismiss();
+      
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("故障视频及图片"),
+            content: photoList.isNotEmpty
+                ? SizedBox(
+                    width: double.maxFinite,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: photoList.map((photo) {
+                        return ListTile(
+                          title: Text(photo['fileName'] ?? ''),
+                          onTap: () {
+                            _previewImage(context, photo, ProductApi().previewImage);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  )
+                : const Text('暂无图片'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('关闭'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('加载失败，请检查网络连接');
+    }
+  }
   
   /// 预览单张图片
   static void _previewImage(

@@ -184,35 +184,35 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 () => Navigator.pushNamed(context, 'jt28submitManage'),
                 '报机统28',
               ),
-              _buildFeatureItem(
-                Icon(Icons.assignment, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28'),
-                '处理机统28',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.search, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'speciallist'),
-                '机统28查询',
-                num: specialNum,
-              ),
+              // _buildFeatureItem(
+              //   Icon(Icons.assignment, color: Colors.blue[200]),
+              //   () => Navigator.pushNamed(context, 'jt28'),
+              //   '处理机统28',
+              // ),
+              // _buildFeatureItem(
+              //   Icon(Icons.search, color: Colors.blue[200]),
+              //   () => Navigator.pushNamed(context, 'speciallist'),
+              //   '机统28查询',
+              //   num: specialNum,
+              // ),
             ],
           ),
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.alarm, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairProgress'),
-                '检修进度',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.edit_document, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairProgress'),
-                '检修调令',
-              ),
-            ],
-          ),
+          // const SizedBox(height: 15),
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.start,
+          //   children: <Widget>[
+          //     _buildFeatureItem(
+          //       Icon(Icons.alarm, color: Colors.blue[200]),
+          //       () => Navigator.pushNamed(context, 'repairProgress'),
+          //       '检修进度',
+          //     ),
+          //     _buildFeatureItem(
+          //       Icon(Icons.edit_document, color: Colors.blue[200]),
+          //       () => Navigator.pushNamed(context, 'repairProgress'),
+          //       '检修调令',
+          //     ),
+          //   ],
+          // ),
           const Divider(height: 10, indent: 10, endIndent: 10),
         ],
       ),

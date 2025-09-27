@@ -36,16 +36,51 @@ class ProductApi extends AppApi {
   ) async {
     try {
       var r = await AppApi.dio.get(
-        "/task/taskCertainPackage/getNeedToMutualInspectionCertainPackageList",
+        "/tasks/taskCertainPackage/getNeedToMutualInspectionCertainPackageList",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data)['data']);
+      logger.i(((r.data)['data'])['data']);
+      return ((r.data)['data'])['data'];
     }
     catch (e) {
       _handleException(e);
       return [];
     }
   }  
+
+  // /tasks/taskCertainPackage/wholePackageMutualInspection
+    Future<dynamic> wholePackageMutualInspection(
+    Map<String, dynamic>? queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskCertainPackage/wholePackageMutualInspection",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    }catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+    // /tasks/taskCertainPackage/wholePackageSpecialInspection
+    Future<dynamic> wholePackageSpecialInspection(
+    Map<String, dynamic>? queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskCertainPackage/wholePackageMutualInspection",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    }catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
 
     //  /task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList
     Future<dynamic> getNeedToSpecialInspectionCertainPackageList(

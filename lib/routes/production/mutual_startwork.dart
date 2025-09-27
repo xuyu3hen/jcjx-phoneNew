@@ -297,10 +297,10 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      PhotoPreviewDialog.show(
-                          context,
-                          widget.trainInfo['repairEndPicture'],
-                          ProductApi().getFaultVideoAndImage);
+                      // PhotoPreviewDialog.show(
+                      //     context,
+                      //     widget.trainInfo['repairEndPicture'],
+                      //     ProductApi().getFaultVideoAndImage);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,

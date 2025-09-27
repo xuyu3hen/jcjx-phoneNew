@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
+import 'package:jcjx_phone/routes/production/package_mutual_deal.dart';
 
 import '../../index.dart';
 import 'jt_startwork.dart';
@@ -132,10 +135,11 @@ class _JtShowPageState extends State<MutualPackageList> {
     isLoading = false;
 
     // 初始化时加载第一页数据
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      getInfo();
-    });
-    getFaultPart();
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   getInfo();
+    // });
+    // getFaultPart();
+    getMutualRepairInfo();
     super.initState();
   }
 
@@ -266,6 +270,62 @@ class _JtShowPageState extends State<MutualPackageList> {
     }
   }
 
+    List<Map<String, dynamic>> mutualRepairList= [];
+
+  Future<void> getMutualRepairInfo() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    Map<String, dynamic> queryParameters = {
+      'userId': Global.profile.permissions?.user.userId,
+      'trainEntryCode': widget.trainEntryCode,
+      'completeStatus': statusFilterSelected['value']
+    };
+    
+    try {
+      var r = await ProductApi().getNeedToMutualInspectionCertainPackageList(
+        queryParameters
+      );
+      
+      if(r is List) {
+        setState(() {
+          // 先保存所有数据
+          List<Map<String, dynamic>> allData = r.cast<Map<String, dynamic>>();
+
+          total = allData.length;
+          
+          // 根据当前页码和页面大小截取需要显示的数据
+          int start = (pageNum - 1) * pageSize;
+          int end = start + pageSize;
+          if (end > allData.length) {
+            end = allData.length;
+          }
+          
+          if (pageNum == 1) {
+            // 第一页替换数据
+            mutualRepairList = allData.sublist(0, end);
+          } else {
+            // 其他页追加数据
+            mutualRepairList.addAll(allData.sublist(start, end));
+          }
+          
+          isLoading = false;
+        });
+      }
+    } catch (e, s) {
+      logger.e('获取互检信息失败: $e\n堆栈信息: $s');
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("获取数据失败")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,6 +335,13 @@ class _JtShowPageState extends State<MutualPackageList> {
       body: _buildBody(),
     );
   }
+
+    // 添加状态筛选相关变量
+  late List<Map<String, dynamic>> statusFilterList = [
+    {"name": "待互检", "value": 1},
+    {"name": "已开工", "value": 6},
+  ];
+  late Map<String, dynamic> statusFilterSelected = {"name": "待互检", "value": 1};
 
   Widget _buildBody() {
     return Container(
@@ -336,6 +403,36 @@ class _JtShowPageState extends State<MutualPackageList> {
                   ),
                 ],
               ),
+                            Row(
+                children: [
+                  Expanded(
+                    child: ZjcFormSelectCell(
+                      title: "状态",
+                      text: statusFilterSelected["name"],
+                      hintText: "请选择",
+                      showRedStar: true,
+                      clickCallBack: () {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: statusFilterList,
+                          labelKey: 'name',
+                          valueKey: 'value',
+                          title: "选择状态",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              statusFilterSelected =  Map<String, dynamic>.from(selectItem as Map);
+                              // 重置分页并重新加载数据
+                              pageNum = 1;
+                              getMutualRepairInfo();
+                            });
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              //筛选条件
               // 添加分页信息显示和控制
               if (total > 0)
                 Padding(
@@ -349,17 +446,27 @@ class _JtShowPageState extends State<MutualPackageList> {
                   ),
                 ),
               //展示列表信息
-              if (isLoading)
+              if (isLoading && mutualRepairList.isEmpty)
                 const Center(child: CircularProgressIndicator())
-              else if (sys28List.isNotEmpty)
+              else if (mutualRepairList.isNotEmpty)
                 Column(
                   children: [
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: sys28List.length,
+                      itemCount: mutualRepairList.length ,
                       itemBuilder: (context, index) {
-                        Map<String, dynamic> item = sys28List[index];
+                        if (index == mutualRepairList.length) {
+                          // 显示加载指示器
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
+                        
+                        Map<String, dynamic> item = mutualRepairList[index];
                         return Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.blue), // 添加蓝色边框
@@ -381,71 +488,71 @@ class _JtShowPageState extends State<MutualPackageList> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']}"),
+                                                "名称: ${item['name']}"),
                                           ),
+                                          // Expanded(
+                                          //   child: Text(
+                                          //       "施修方案: ${item['repairScheme']}"),
+                                          // ),
+                                        ],
+                                      ),
+                                      // Row(
+                                      //   children: [
+                                      //     Expanded(
+                                      //       child: ElevatedButton(
+                                      //         onPressed: () async {
+                                      //           // 使用新的可复用组件展示图片
+                                      //           PhotoPreviewDialog.show(
+                                      //               context,
+                                      //               item['repairPicture'],
+                                      //               ProductApi()
+                                      //                   .getFaultVideoAndImage);
+                                      //         },
+                                      //         style: ElevatedButton.styleFrom(
+                                      //           backgroundColor: Colors.green,
+                                      //         ),
+                                      //         child: const Text("查看故障视频及图片"),
+                                      //       ),
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                      // Row(
+                                      //   children: [
+                                      //     Expanded(
+                                      //       child: Text(
+                                      //           "提报人: ${item['reporterName']}"),
+                                      //     ),
+                                      //     Expanded(
+                                      //       child: Text(
+                                      //           "提报时间: ${item['reportDate']}"),
+                                      //     ),
+                                      //     Expanded(
+                                      //       child: Text(
+                                      //           "流水号: ${item['deptName']}"),
+                                      //     ),
+                                      //   ],
+                                      // ),
+                                      Row(
+                                        children: [
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']}"),
+                                                "主修: ${item['executorName']}"),
                                           ),
+                                          // Expanded(
+                                          //   child: Text(
+                                          //       "辅修: ${item['assistantName']}"),
+                                          // ),
                                         ],
                                       ),
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                // 使用新的可复用组件展示图片
-                                                PhotoPreviewDialog.show(
-                                                    context,
-                                                    item['repairPicture'],
-                                                    ProductApi()
-                                                        .getFaultVideoAndImage);
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.green,
-                                              ),
-                                              child: const Text("查看故障视频及图片"),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']}"),
+                                                "专检: ${item['specialInspectionPersonnelName']}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "流水号: ${item['deptName']}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName']}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "专检: ${item['specialName']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "互检: ${item['mutualInspectionPersonnelName']}"),
                                           ),
                                         ],
                                       ),
@@ -463,7 +570,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            MutualDisposalPage(
+                                            MutualDisposalPackagePage(
                                                 faultDescription:
                                                     item['faultDescription'] ??
                                                         "",
@@ -477,7 +584,8 @@ class _JtShowPageState extends State<MutualPackageList> {
                                                     widget.trainNumCode,
                                                 typeCode: widget.typeCode,
                                                 code: item['code'],
-                                                trainInfo: item),
+                                                trainInfo: item,
+                                                repairPictures: item['taskCertainContentFileList']??[] ),
                                       ),
                                     );
                                   },
@@ -486,7 +594,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                                     padding: const EdgeInsets.all(10),
                                   ),
                                   child: const Text(
-                                    "开工",
+                                    "互检",
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -499,60 +607,20 @@ class _JtShowPageState extends State<MutualPackageList> {
                         );
                       },
                     ),
-                    // 分页控制按钮
-                    if (total > pageSize)
+                    // 加载更多按钮
+                    if (mutualRepairList.length < total)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ElevatedButton(
-                              onPressed: pageNum <= 1
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        pageNum = 1;
-                                      });
-                                      getInfo();
-                                    },
-                              child: const Text('首页'),
-                            ),
-                            ElevatedButton(
-                              onPressed: pageNum <= 1
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        pageNum--;
-                                      });
-                                      getInfo();
-                                    },
-                              child: const Text('上一页'),
-                            ),
-                            ElevatedButton(
-                              onPressed:
-                                  pageNum >= ((total - 1) ~/ pageSize) + 1
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            pageNum++;
-                                          });
-                                          getInfo();
-                                        },
-                              child: const Text('下一页'),
-                            ),
-                            ElevatedButton(
-                              onPressed: pageNum >=
-                                      ((total - 1) ~/ pageSize) + 1
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        pageNum = ((total - 1) ~/ pageSize) + 1;
-                                      });
-                                      getInfo();
-                                    },
-                              child: const Text('末页'),
-                            ),
-                          ],
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : () {
+                            setState(() {
+                              pageNum++;
+                            });
+                            getMutualRepairInfo();
+                          },
+                          child: isLoading
+                              ? const Text("正在加载...")
+                              : const Text("加载更多"),
                         ),
                       ),
                   ],
@@ -572,3 +640,8 @@ class _JtShowPageState extends State<MutualPackageList> {
     );
   }
 }
+
+
+
+
+

@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
 import 'package:jcjx_phone/routes/production/package_complete.dart';
 import 'package:jcjx_phone/routes/production/package_mutual.dart';
+import 'package:jcjx_phone/routes/production/package_special.dart';
 import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
@@ -945,9 +946,9 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   subtitle: '工序互检作业清单',
                   count: '${numberInfo['needToMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () {
+                  onTap: () async{
                     // 在这里处理待作业的点击事件
-                    Navigator.push(
+                  Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => MutualPackageList(
@@ -958,7 +959,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
                               )),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
                 TaskCard(
@@ -971,7 +977,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => SpecialWorkList(
+                          builder: (context) => SpecialPackageList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
                                 trainNumCode:
                                     widget.locoInfo?['trainNumCode'] ?? '',
