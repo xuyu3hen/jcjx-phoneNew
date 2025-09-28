@@ -27,10 +27,12 @@ class MutualDisposalPackagePage extends StatefulWidget {
       required this.trainNumCode,
       required this.typeCode,
       required this.code,
-      required this.trainInfo, required this.repairPictures});
+      required this.trainInfo,
+      required this.repairPictures});
 
   @override
-  State<MutualDisposalPackagePage> createState() => _MutualDisposalPackagePageState();
+  State<MutualDisposalPackagePage> createState() =>
+      _MutualDisposalPackagePageState();
 }
 
 class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
@@ -68,7 +70,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
   var logger = AppLogger.logger;
 
   List<Map<String, dynamic>> pictureList = [];
-  
+
   // 获取加工方法
   void getProcessMethod() async {
     try {
@@ -301,9 +303,9 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                   child: ElevatedButton(
                     onPressed: () {
                       PhotoPreviewDialog.show2(
-                          context,
-                          widget.repairPictures,
-                         );
+                        context,
+                        widget.repairPictures,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -323,17 +325,16 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                     SmartDialog.showLoading();
                     Map<String, dynamic> queryParameters = {
                       "code": widget.code,
-                      "mutualInspectionName": Global.profile.permissions?.user.nickName,
-                      "mutualInspectionId": Global.profile.permissions?.user.userId,
+                      "mutualInspectionName":
+                          Global.profile.permissions?.user.nickName,
+                      "mutualInspectionId":
+                          Global.profile.permissions?.user.userId,
                       'mutualInspectionTime': DateTime.now().toString(),
                     };
-                    
-                    var result = await ProductApi().wholePackageMutualInspection(queryParameters);
-
+                    var result = await ProductApi()
+                        .wholePackageMutualInspection(queryParameters);
                     SmartDialog.dismiss();
-                    
-               
-                      SmartDialog.show(
+                    SmartDialog.show(
                         clickMaskDismiss: false,
                         builder: (con) {
                           return Container(
@@ -354,11 +355,11 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                                 ),
                                 ConstrainedBox(
                                   constraints: const BoxConstraints.expand(
-                                    height: 30, width: 160),
+                                      height: 30, width: 160),
                                   child: ElevatedButton.icon(
                                     onPressed: () {
                                       SmartDialog.dismiss().then((value) =>
-                                        Navigator.of(context).pop(true));
+                                          Navigator.of(context).pop(true));
                                     },
                                     label: const Text('确定'),
                                     icon: const Icon(Icons
@@ -368,9 +369,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                               ],
                             ),
                           );
-                        }
-                      );
-                   
+                        });
                   } on DioException catch (e) {
                     SmartDialog.dismiss();
                     showToast("互检提报失败");
@@ -384,7 +383,6 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                 child: const Text('合格'),
               ),
             ),
-            
           ],
         ),
       ),

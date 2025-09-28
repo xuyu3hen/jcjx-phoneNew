@@ -119,6 +119,7 @@ class TaskCertainPackageList {
 
     bool? selected;
     bool? expanded;
+    DateTime? completeTime;
 
     TaskCertainPackageList({
         this.code,
@@ -154,6 +155,10 @@ class TaskCertainPackageList {
         this.specialInspectionId,
         this.mutualInspectionName,
         this.specialInspectionName,
+        this.selected,
+        this.expanded,
+        this.completeTime,
+
     });
 
     factory TaskCertainPackageList.fromJson(Map<String,dynamic> json) => _$TaskCertainPackageListFromJson(json);

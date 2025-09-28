@@ -447,7 +447,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, true),
         ),
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
@@ -743,10 +743,11 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
   void completePackage() async {
     try {
-      List<TaskCertainPackageList> queryParameters = [];
-      TaskCertainPackageList taskCertainPackageList = TaskCertainPackageList(
-        code: currentPackagePoint['code'],
-      );
+      List<Map<String,dynamic>> queryParameters = [];
+      Map<String,dynamic> taskCertainPackageList = {
+        'code': currentPackagePoint['code'],
+        'completeTime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+      };
       queryParameters.add(taskCertainPackageList);
       var r = await ProductApi().finishCertainPackage(queryParameters);
       logger.i(r);

@@ -174,6 +174,7 @@ Map<String, dynamic> _$TaskCertainPackageListToJson(
       'specialInspectionName': instance.specialInspectionName,
       'selected': instance.selected,
       'expanded': instance.expanded,
+      
     };
 
 TaskInstructContentList _$TaskInstructContentListFromJson(

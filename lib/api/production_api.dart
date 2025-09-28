@@ -71,7 +71,7 @@ class ProductApi extends AppApi {
   ) async {
     try {
       var r = await AppApi.dio.post(
-        "/tasks/taskCertainPackage/wholePackageMutualInspection",
+        "/tasks/taskCertainPackage/wholePackageSpecialInspection",
         data: queryParametrs,
       );
       logger.i((r.data)['data']);
@@ -88,11 +88,11 @@ class ProductApi extends AppApi {
   ) async {
     try {
       var r = await AppApi.dio.get(
-        "/task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList",
+        "/tasks/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data)['data']);
-      return (r.data)['data'];
+      logger.i(((r.data)['data'])['data']);
+      return ((r.data)['data'])['data'];
     }
     catch (e) {
       _handleException(e);
@@ -689,17 +689,17 @@ class ProductApi extends AppApi {
 
   // 完成作业项
   Future<int> finishCertainPackage(
-      List<TaskCertainPackageList> queryParameters) async {
-    // try {
+      List<Map<String, dynamic>> queryParameters) async {
+    try {
     var r = await AppApi.dio2.post(
         "/tasks/taskCertainPackage/completeTaskCertainPackage",
         data: queryParameters);
-    logger.i("finishCertainPackage${r.data}");
+    logger.i(queryParameters);
     return (r.data["code"]);
-    // } catch (e) {
-    //   _handleException(e);
-    //   return -1;
-    // }
+    } catch (e) {
+      _handleException(e);
+      return -1;
+    }
   }
 
   // 查看分配作业包

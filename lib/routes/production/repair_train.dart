@@ -906,7 +906,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       MaterialPageRoute(
                           builder: (context) =>
                               PackageInfo(locoInfo: widget.locoInfo)),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
                 // TaskCard(
@@ -938,7 +943,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
                               )),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
                 TaskCard(
@@ -985,7 +995,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
                               )),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
                 TaskCard(
@@ -1006,7 +1021,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
                               )),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
                 TaskCard(
@@ -1027,7 +1047,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
                                 trainEntryCode: widget.locoInfo?['code'] ?? '',
                               )),
-                    );
+                    ).then((value) {
+                      // 只有当返回值为true时才刷新数据
+                      if (value == true) {
+                        getNumber();
+                      }
+                    });
                   },
                 ),
               ],
@@ -1401,7 +1426,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
             if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+              Navigator.pop(context,true);
             } else {
               // 如果无法pop，尝试使用maybePop或者给出提示
               Navigator.maybePop(context);
@@ -2068,10 +2093,13 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   void completePackage() async {
     try {
-      List<TaskCertainPackageList> queryParameters = [];
-      TaskCertainPackageList taskCertainPackageList = TaskCertainPackageList(
-        code: currentPackagePoint['code'],
-      );
+      List<Map<String,dynamic>> queryParameters = [];
+      Map<String,dynamic> taskCertainPackageList = {
+        'code': currentPackagePoint['code'],
+        'completeTime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+      }
+        
+        ;
       queryParameters.add(taskCertainPackageList);
       var r = await ProductApi().finishCertainPackage(queryParameters);
       logger.i(r);

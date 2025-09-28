@@ -270,7 +270,7 @@ class _JtShowPageState extends State<MutualPackageList> {
     }
   }
 
-    List<Map<String, dynamic>> mutualRepairList= [];
+  List<Map<String, dynamic>> mutualRepairList = [];
 
   Future<void> getMutualRepairInfo() async {
     setState(() {
@@ -282,26 +282,25 @@ class _JtShowPageState extends State<MutualPackageList> {
       'trainEntryCode': widget.trainEntryCode,
       'completeStatus': statusFilterSelected['value']
     };
-    
+
     try {
-      var r = await ProductApi().getNeedToMutualInspectionCertainPackageList(
-        queryParameters
-      );
-      
-      if(r is List) {
+      var r = await ProductApi()
+          .getNeedToMutualInspectionCertainPackageList(queryParameters);
+
+      if (r is List) {
         setState(() {
           // 先保存所有数据
           List<Map<String, dynamic>> allData = r.cast<Map<String, dynamic>>();
 
           total = allData.length;
-          
+
           // 根据当前页码和页面大小截取需要显示的数据
           int start = (pageNum - 1) * pageSize;
           int end = start + pageSize;
           if (end > allData.length) {
             end = allData.length;
           }
-          
+
           if (pageNum == 1) {
             // 第一页替换数据
             mutualRepairList = allData.sublist(0, end);
@@ -309,7 +308,7 @@ class _JtShowPageState extends State<MutualPackageList> {
             // 其他页追加数据
             mutualRepairList.addAll(allData.sublist(start, end));
           }
-          
+
           isLoading = false;
         });
       }
@@ -331,12 +330,18 @@ class _JtShowPageState extends State<MutualPackageList> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("范围作业互检作业"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, true);
+          },
+        ),
       ),
       body: _buildBody(),
     );
   }
 
-    // 添加状态筛选相关变量
+  // 添加状态筛选相关变量
   late List<Map<String, dynamic>> statusFilterList = [
     {"name": "待互检", "value": 1},
     {"name": "已开工", "value": 6},
@@ -403,7 +408,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                   ),
                 ],
               ),
-                            Row(
+              Row(
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
@@ -420,7 +425,8 @@ class _JtShowPageState extends State<MutualPackageList> {
                           title: "选择状态",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              statusFilterSelected =  Map<String, dynamic>.from(selectItem as Map);
+                              statusFilterSelected =
+                                  Map<String, dynamic>.from(selectItem as Map);
                               // 重置分页并重新加载数据
                               pageNum = 1;
                               getMutualRepairInfo();
@@ -454,7 +460,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: mutualRepairList.length ,
+                      itemCount: mutualRepairList.length,
                       itemBuilder: (context, index) {
                         if (index == mutualRepairList.length) {
                           // 显示加载指示器
@@ -465,7 +471,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                             ),
                           );
                         }
-                        
+
                         Map<String, dynamic> item = mutualRepairList[index];
                         return Container(
                           decoration: BoxDecoration(
@@ -487,8 +493,7 @@ class _JtShowPageState extends State<MutualPackageList> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                                "名称: ${item['name']}"),
+                                            child: Text("名称: ${item['name']}"),
                                           ),
                                           // Expanded(
                                           //   child: Text(
@@ -585,9 +590,16 @@ class _JtShowPageState extends State<MutualPackageList> {
                                                 typeCode: widget.typeCode,
                                                 code: item['code'],
                                                 trainInfo: item,
-                                                repairPictures: item['taskCertainContentFileList']??[] ),
+                                                repairPictures: item[
+                                                        'taskCertainContentFileList'] ??
+                                                    []),
                                       ),
-                                    );
+                                    ).then((value) {
+                                      // 只有当返回值为true时才刷新数据
+                                      if (value == true) {
+                                        getMutualRepairInfo();
+                                      }
+                                    });
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
@@ -612,12 +624,14 @@ class _JtShowPageState extends State<MutualPackageList> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : () {
-                            setState(() {
-                              pageNum++;
-                            });
-                            getMutualRepairInfo();
-                          },
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    pageNum++;
+                                  });
+                                  getMutualRepairInfo();
+                                },
                           child: isLoading
                               ? const Text("正在加载...")
                               : const Text("加载更多"),
@@ -640,8 +654,3 @@ class _JtShowPageState extends State<MutualPackageList> {
     );
   }
 }
-
-
-
-
-

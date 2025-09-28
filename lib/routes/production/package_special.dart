@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
 import 'package:jcjx_phone/routes/production/package_mutual_deal.dart';
+import 'package:jcjx_phone/routes/production/package_special_deal.dart';
 
 import '../../index.dart';
 import 'jt_startwork.dart';
@@ -139,7 +140,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
     //   getInfo();
     // });
     // getFaultPart();
-    getMutualRepairInfo();
+    getSpecialRepairInfo();
     super.initState();
   }
 
@@ -270,9 +271,9 @@ class _JtShowPageState extends State<SpecialPackageList> {
     }
   }
 
-    List<Map<String, dynamic>> mutualRepairList= [];
+  List<Map<String, dynamic>> specialRepairList = [];
 
-  Future<void> getMutualRepairInfo() async {
+  Future<void> getSpecialRepairInfo() async {
     setState(() {
       isLoading = true;
     });
@@ -282,34 +283,33 @@ class _JtShowPageState extends State<SpecialPackageList> {
       'trainEntryCode': widget.trainEntryCode,
       'completeStatus': statusFilterSelected['value']
     };
-    
+
     try {
-      var r = await ProductApi().getNeedToMutualInspectionCertainPackageList(
-        queryParameters
-      );
-      
-      if(r is List) {
+      var r = await ProductApi()
+          .getNeedToSpecialInspectionCertainPackageList(queryParameters);
+
+      if (r is List) {
         setState(() {
           // 先保存所有数据
           List<Map<String, dynamic>> allData = r.cast<Map<String, dynamic>>();
 
           total = allData.length;
-          
+
           // 根据当前页码和页面大小截取需要显示的数据
           int start = (pageNum - 1) * pageSize;
           int end = start + pageSize;
           if (end > allData.length) {
             end = allData.length;
           }
-          
+
           if (pageNum == 1) {
             // 第一页替换数据
-            mutualRepairList = allData.sublist(0, end);
+            specialRepairList = allData.sublist(0, end);
           } else {
             // 其他页追加数据
-            mutualRepairList.addAll(allData.sublist(start, end));
+            specialRepairList.addAll(allData.sublist(start, end));
           }
-          
+
           isLoading = false;
         });
       }
@@ -330,18 +330,19 @@ class _JtShowPageState extends State<SpecialPackageList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("范围作业互检作业"),
+        title: const Text("范围作业专检作业"),
       ),
       body: _buildBody(),
     );
   }
 
-    // 添加状态筛选相关变量
+  // 添加状态筛选相关变量
   late List<Map<String, dynamic>> statusFilterList = [
+    {"name": "待专检", "value": 2},
     {"name": "待互检", "value": 1},
     {"name": "已开工", "value": 6},
   ];
-  late Map<String, dynamic> statusFilterSelected = {"name": "待互检", "value": 1};
+  late Map<String, dynamic> statusFilterSelected = {"name": "待专检", "value": 2};
 
   Widget _buildBody() {
     return Container(
@@ -403,7 +404,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                   ),
                 ],
               ),
-                            Row(
+              Row(
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
@@ -420,10 +421,11 @@ class _JtShowPageState extends State<SpecialPackageList> {
                           title: "选择状态",
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
-                              statusFilterSelected =  Map<String, dynamic>.from(selectItem as Map);
+                              statusFilterSelected =
+                                  Map<String, dynamic>.from(selectItem as Map);
                               // 重置分页并重新加载数据
                               pageNum = 1;
-                              getMutualRepairInfo();
+                              getSpecialRepairInfo();
                             });
                           },
                         );
@@ -446,17 +448,17 @@ class _JtShowPageState extends State<SpecialPackageList> {
                   ),
                 ),
               //展示列表信息
-              if (isLoading && mutualRepairList.isEmpty)
+              if (isLoading && specialRepairList.isEmpty)
                 const Center(child: CircularProgressIndicator())
-              else if (mutualRepairList.isNotEmpty)
+              else if (specialRepairList.isNotEmpty)
                 Column(
                   children: [
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: mutualRepairList.length ,
+                      itemCount: specialRepairList.length,
                       itemBuilder: (context, index) {
-                        if (index == mutualRepairList.length) {
+                        if (index == specialRepairList.length) {
                           // 显示加载指示器
                           return const Center(
                             child: Padding(
@@ -465,8 +467,8 @@ class _JtShowPageState extends State<SpecialPackageList> {
                             ),
                           );
                         }
-                        
-                        Map<String, dynamic> item = mutualRepairList[index];
+
+                        Map<String, dynamic> item = specialRepairList[index];
                         return Container(
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.blue), // 添加蓝色边框
@@ -487,8 +489,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                       Row(
                                         children: [
                                           Expanded(
-                                            child: Text(
-                                                "名称: ${item['name']}"),
+                                            child: Text("名称: ${item['name']}"),
                                           ),
                                           // Expanded(
                                           //   child: Text(
@@ -570,7 +571,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            MutualDisposalPackagePage(
+                                            SpecialDisposalPackagePage(
                                                 faultDescription:
                                                     item['faultDescription'] ??
                                                         "",
@@ -585,16 +586,23 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                                 typeCode: widget.typeCode,
                                                 code: item['code'],
                                                 trainInfo: item,
-                                                repairPictures: item['taskCertainContentFileList']??[] ),
+                                                repairPictures: item[
+                                                        'taskCertainContentFileList'] ??
+                                                    []),
                                       ),
-                                    );
+                                    ).then((value) {
+                                      // 只有当返回值为true时才刷新数据
+                                      if (value == true) {
+                                        getSpecialRepairInfo();
+                                      }
+                                    });
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                     padding: const EdgeInsets.all(10),
                                   ),
                                   child: const Text(
-                                    "互检",
+                                    "专检",
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -608,16 +616,18 @@ class _JtShowPageState extends State<SpecialPackageList> {
                       },
                     ),
                     // 加载更多按钮
-                    if (mutualRepairList.length < total)
+                    if (specialRepairList.length < total)
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : () {
-                            setState(() {
-                              pageNum++;
-                            });
-                            getMutualRepairInfo();
-                          },
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    pageNum++;
+                                  });
+                                  getSpecialRepairInfo();
+                                },
                           child: isLoading
                               ? const Text("正在加载...")
                               : const Text("加载更多"),
@@ -640,8 +650,3 @@ class _JtShowPageState extends State<SpecialPackageList> {
     );
   }
 }
-
-
-
-
-

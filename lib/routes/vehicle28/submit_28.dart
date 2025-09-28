@@ -720,7 +720,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);
-            if (submit['code'] == "S_T_S003") {
+            if (submit['code'] == "S_T_S001") {
               SmartDialog.show(
                   clickMaskDismiss: false,
                   builder: (con) {
