@@ -107,7 +107,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     getCertainPackage();
   }
 
-  void getCertainPackage() async {
+  Future<void> getCertainPackage() async {
     Map<String, dynamic> params = {
       "packageCode": widget.packageList[0]['packageCode'],
     };
@@ -116,10 +116,11 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     if (mounted) {
       setState(() {
         //将List<dynamic>转换为List<Map<String, dynamic>>
-           packageListUse = (certainPackageList as List)
+        packageListUse = (certainPackageList as List)
             .where((item) => item is Map)
             .map((item) => Map<String, dynamic>.from(item as Map))
             .toList();
+  
       });
     }
   }
@@ -134,7 +135,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
             if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+              Navigator.pop(context,true);
             } else {
               // 如果无法pop，尝试使用maybePop或者给出提示
               Navigator.maybePop(context);
@@ -192,13 +193,13 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         ),
         const SizedBox(height: 8),
         // 每一项单独一行显示
-        _InfoItem( 
+        _InfoItem(
             label: '停留地点',
             value: widget.locoInfo?['stopPlace'] != "null-null"
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
-                _InfoItem(
+        _InfoItem(
             label: '工序节点',
             value: widget.locoInfo?['repairMainNodeName'] != ''
                 ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
@@ -292,12 +293,12 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮 - 仅在任务未完成时显示
-            if (task['complete'] == '0')
+         if (task['complete'] != '1')
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();
-                  List<Map<String, dynamic>> queryParametrs = [task];
-                  ProductApi().startWork(queryParametrs);
+                  Map<String, dynamic> queryParametrs = task;
+                  await ProductApi().startCertainPackageWork(queryParametrs);
                   var result = await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -307,9 +308,15 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       ),
                     ),
                   );
-                  if(result == true){
-                    showToast('更新成功');
-                    getCertainPackage();
+
+   
+                  // 检查多种可能的返回值
+                  if (result == true || result == null) {
+                    // 刷新数据，null表示页面被直接关闭
+                    await getCertainPackage();
+                    if (result == true) {
+
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -318,6 +325,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ),
                 child: const Text('开工'),
               )
+// ... existing code ...
             else if (task['complete'] == '1')
               //展示已完成
               Container(
@@ -496,7 +504,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                   ),
                 ),
                 TextButton(
-                  onPressed: _gotoSecondStation,
+                  onPressed: () => _gotoSecondStation(taskInstructContentList),
                   child: const Text(
                     "作业内容",
                     style: TextStyle(color: Colors.blue),
@@ -658,16 +666,46 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                       );
                     }),
             const SizedBox(height: 20),
+
             // 6. 进入下一项按钮
+
+// ... existing code ...
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _gotoNextItem, // 进入下一项逻辑（可扩展）
-                child: _currentIndex < (packagePoints.length) - 1
-                    ? const Text("进入下一项")
-                    : const Text("完成"),
+              child: Column(
+                children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            _files.isEmpty ? null : () async {
+                              // 完成所有操作后返回成功结果
+                              await upLoadFileList();
+                              await saveContentItem();
+                              await completePackage();
+                              // 将图片清空
+                              _files.clear();
+                              if (packagePoints != null && _currentIndex < packagePoints!.length - 1) {
+                                // 如果还有下一项，则更新索引以显示下一项
+                                setState(() {
+                                  _currentIndex++;
+                                });
+                              } else {
+                                debugPrint("已完成所有项");
+                                Navigator.pop(context, true);
+                              }
+                            }, // 当没有图片时禁用按钮
+                        child: _currentIndex < (packagePoints.length) - 1
+                            ? const Text("进入下一项")
+                            : const Text("完成"),
+                      ),
+                    ),
+     
+       
+                ],
               ),
             ),
+// ... existing code ...
           ],
         ),
       ),
@@ -680,9 +718,50 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
     debugPrint("报JT6功能触发");
   }
 
-  void _gotoSecondStation() {
-    // 跳转第二工位的逻辑（如导航到新页面）
-    debugPrint("跳转第二工位");
+_gotoSecondStation(List<Map<String, dynamic>> taskInstructContentList) {
+    logger.i(taskInstructContentList);
+    
+    // 构建显示内容
+    StringBuffer contentBuffer = StringBuffer();
+    for (var i = 0; i < taskInstructContentList.length; i++) {
+      final item = taskInstructContentList[i];
+      final name = item['name'] ?? '无名称';
+      final workContent = item['workContent'] ?? '无工作内容';
+      
+      contentBuffer.writeln('名称: $name');
+      contentBuffer.writeln('工作内容: $workContent');
+      if (i < taskInstructContentList.length - 1) {
+        contentBuffer.writeln('-------------------');
+      }
+    }
+    
+    // 如果列表为空，显示提示信息
+    if (taskInstructContentList.isEmpty) {
+      contentBuffer.writeln('暂无作业内容');
+    }
+    
+    // 使用WidgetsBinding.instance.addPostFrameCallback延迟显示弹窗
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('作业内容'),
+            content: SingleChildScrollView(
+              child: Text(contentBuffer.toString()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('确定'),
+              ),
+            ],
+          );
+        },
+      );
+    });
   }
 
   void _takePhoto() async {
@@ -712,6 +791,13 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
   }
 
   void _gotoNextItem() {
+    // 检查是否上传了必须采集的图片
+    if (_files.isEmpty) {
+      // 如果没有图片，显示提示信息并返回
+      SmartDialog.showToast('请上传"必须采集"的照片');
+      return;
+    }
+
     // 进入下一项的业务逻辑（如校验照片、跳转步骤）
     upLoadFileList();
     saveContentItem();
@@ -729,7 +815,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
     }
   }
 
-  void upLoadFileList() async {
+  Future<void> upLoadFileList() async {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
       logger.i(currentPackagePoint['code']);
@@ -741,12 +827,13 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
     }
   }
 
-  void completePackage() async {
+  Future<void> completePackage() async {
     try {
-      List<Map<String,dynamic>> queryParameters = [];
-      Map<String,dynamic> taskCertainPackageList = {
+      List<Map<String, dynamic>> queryParameters = [];
+      Map<String, dynamic> taskCertainPackageList = {
         'code': currentPackagePoint['code'],
-        'completeTime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+        'completeTime':
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
       };
       queryParameters.add(taskCertainPackageList);
       var r = await ProductApi().finishCertainPackage(queryParameters);
@@ -757,7 +844,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
   }
 
   //保存作业项数据
-  void saveContentItem() async {
+  Future<void> saveContentItem() async {
     try {
       var r =
           await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);

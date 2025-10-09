@@ -912,7 +912,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '机统28-作业派工',
+                  title: '机统28作业派工',
                   subtitle: '机车机统28作业清单',
                   count:
                       '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
@@ -1068,45 +1068,45 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.tealAccent.shade700,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('机车详情查询'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('检修调度命令'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Vehicle28Form(),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('机统28提报'),
-          ),
-        ),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {},
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.tealAccent.shade700,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('机车详情查询'),
+        //   ),
+        // ),
+        // const SizedBox(width: 8),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {},
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.blue,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('检修调度命令'),
+        //   ),
+        // ),
+        // const SizedBox(width: 8),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) => const Vehicle28Form(),
+        //         ),
+        //       );
+        //     },
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.redAccent,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('机统28提报'),
+        //   ),
+        // ),
       ],
     );
   }
@@ -1586,7 +1586,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   // 如果从派工页面返回了true，则刷新当前页面
                   if (result == true) {
                     getPackageManage(); // 重新获取数据
-                    showToast("人员信息已更新");
+                    
                   }
                 },
                 style: ElevatedButton.styleFrom(

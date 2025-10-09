@@ -1126,35 +1126,37 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.tealAccent.shade700,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('机车详情查询'),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('检修调度命令'),
-          ),
-        ),
-        const SizedBox(width: 8),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {},
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.tealAccent.shade700,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('机车详情查询'),
+        //   ),
+        // ),
+        // const SizedBox(width: 8),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {},
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.blue,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('检修调度命令'),
+        //   ),
+        // ),
+        // const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Vehicle28Form(),
+                  builder: (context) => Vehicle28Form(
+                    locoInfo: widget.locoInfo,
+                  ),
                 ),
               );
             },
@@ -1612,8 +1614,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     ),
                   );
                   if (result == true) {
-                    showToast('更新成功');
                     getWorkPackage();
+                    showToast('开始作业成功');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -1636,7 +1638,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     ),
                   );
                   if (result == true) {
-                    showToast('更新成功');
+
                     getWorkPackage();
                   }
                 },
@@ -1663,7 +1665,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                                   : Map<String, dynamic>.from(item as Map))
                               .toList()
                           : [];
-                  Navigator.push(
+                  var result =  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PackagePartInfo(
@@ -1672,6 +1674,10 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       ),
                     ),
                   );
+                  if(result == true){
+                    getWorkPackage();
+                    showToast('分包成功');
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green, // 背景色设为绿色
@@ -1845,13 +1851,15 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                     ),
                   ),
                 ),
+// ... existing code ...
                 TextButton(
-                  onPressed: _gotoSecondStation,
+                  onPressed: () => _gotoSecondStation(taskInstructContentList),
                   child: const Text(
                     "作业内容",
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
+// ... existing code ...
               ],
             ),
             // const SizedBox(height: 8),
@@ -2011,11 +2019,19 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             // 6. 进入下一项按钮
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _gotoNextItem, // 进入下一项逻辑（可扩展）
-                child: _currentIndex < (packagePoints.length) - 1
-                    ? const Text("进入下一项")
-                    : const Text("完成"),
+              child: Column(
+                children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed:
+                            _files.isEmpty ? null : _gotoNextItem, // 当没有图片时禁用按钮
+                        child: _currentIndex < (packagePoints.length) - 1
+                            ? const Text("进入下一项")
+                            : const Text("完成"),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -2030,10 +2046,54 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     debugPrint("报JT6功能触发");
   }
 
-  void _gotoSecondStation() {
-    // 跳转第二工位的逻辑（如导航到新页面）
-    debugPrint("跳转第二工位");
+// ... existing code ...
+ _gotoSecondStation(List<Map<String, dynamic>> taskInstructContentList) {
+    logger.i(taskInstructContentList);
+    
+    // 构建显示内容
+    StringBuffer contentBuffer = StringBuffer();
+    for (var i = 0; i < taskInstructContentList.length; i++) {
+      final item = taskInstructContentList[i];
+      final name = item['name'] ?? '无名称';
+      final workContent = item['workContent'] ?? '无工作内容';
+      
+      contentBuffer.writeln('名称: $name');
+      contentBuffer.writeln('工作内容: $workContent');
+      if (i < taskInstructContentList.length - 1) {
+        contentBuffer.writeln('-------------------');
+      }
+    }
+    
+    // 如果列表为空，显示提示信息
+    if (taskInstructContentList.isEmpty) {
+      contentBuffer.writeln('暂无作业内容');
+    }
+    
+    // 使用WidgetsBinding.instance.addPostFrameCallback延迟显示弹窗
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('作业内容'),
+            content: SingleChildScrollView(
+              child: Text(contentBuffer.toString()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('确定'),
+              ),
+            ],
+          );
+        },
+      );
+    });
   }
+// ... existing code ...
+// ... existing code ...
 
   void _takePhoto() async {
     // 调用相机采集照片（可结合image_picker库实现）
@@ -2062,6 +2122,13 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   }
 
   void _gotoNextItem() {
+    // 检查是否上传了必须采集的图片
+    if (_files.isEmpty) {
+      // 如果没有图片，显示提示信息并返回
+      SmartDialog.showToast('请上传"必须采集"的照片');
+      return;
+    }
+
     // 进入下一项的业务逻辑（如校验照片、跳转步骤）
     upLoadFileList();
     saveContentItem();

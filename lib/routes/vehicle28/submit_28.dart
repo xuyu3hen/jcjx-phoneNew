@@ -5,7 +5,8 @@ import '../../index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
 class Vehicle28Form extends StatefulWidget {
-  const Vehicle28Form({Key? key}) : super(key: key);
+  final Map<dynamic, dynamic>? locoInfo;
+  const Vehicle28Form({Key? key, this.locoInfo}) : super(key: key);
 
   @override
   State createState() => _Vehicle28FormState();
@@ -87,10 +88,16 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   void initState() {
     super.initState();
     getDynamicType();
-
     getUserDeptree();
     getJtType();
     getJt28Dict();
+    setState(() {
+      trainNumSelected["trainNum"] = widget.locoInfo?["trainNum"] ?? "";
+      trainNumSelected['code'] = widget.locoInfo?["trainNumCode"] ?? "";
+      jcTypeListSelected['name'] = widget.locoInfo?["typeName"] ?? "";
+      jcTypeListSelected['code'] = widget.locoInfo?["typeCode"] ?? "";
+    });
+    logger.i(widget.locoInfo);
   }
 
   // 动力类型
@@ -133,7 +140,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   // 车号（支持分页加载）
   void getTrainNumCodeList({bool isLoadMore = false}) async {
     if (isLoading) return;
-    
+
     if (!isLoadMore) {
       // 刷新数据
       pageNum = 1;
@@ -143,29 +150,30 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       if (!hasMore) return;
       pageNum++;
     }
-    
+
     try {
       isLoading = true;
-      
+
       // 构建查询车号参数
       Map<String, dynamic> queryParameters = {
         'typeName': jcTypeListSelected["name"],
         'pageNum': pageNum,
         'pageSize': pageSize
       };
-      
+
       if (!isLoadMore) {
         // 只在初次加载时显示loading
         SmartDialog.showLoading(msg: '加载车号中...');
       }
-      
+
       // 获取车号
-      var r = await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
-      
+      var r =
+          await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
+
       if (!isLoadMore) {
         SmartDialog.dismiss();
       }
-      
+
       if (mounted) {
         setState(() {
           if (isLoadMore) {
@@ -175,14 +183,13 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             // 刷新数据
             trainNumCodeList = r.toMapList();
           }
-          
+
           // 判断是否还有更多数据
           if (r.toMapList().length < pageSize) {
             hasMore = false;
           }
         });
       }
-      
     } catch (e, stackTrace) {
       if (!isLoadMore) {
         SmartDialog.dismiss();
@@ -671,7 +678,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus,
-
               "status": 0
             };
             if (completeStatus == 1) {

@@ -448,7 +448,8 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 item['repairScheme'] ?? "",
                                             trainNumCode: widget.trainNumCode,
                                             typeCode: widget.typeCode,
-                                            code: item['code'], repairPicture: item['repairPicture'],),
+                                            code: item['code'], repairPicture: item['repairPicture'],
+                                            processMainNode: item['processMainNode'] ?? "",),
                                       ),
                                     );
                                   },

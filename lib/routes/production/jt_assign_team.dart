@@ -249,7 +249,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
 
   List<Map<String, dynamic>> photoList = [];
   
-  void getPhotoList(String groupId) async{
+  Future<void> getPhotoList(String groupId) async{
     Map<String, dynamic> queryParameters = {
       'groupId': groupId,
     };
@@ -461,11 +461,12 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                       ),
                                       Row(
                                         children: [
+// ... existing code ...
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () async{
                                                 // 可以打开新页面或弹窗展示图片
-                                                getPhotoList(item['repairPicture']);
+                                                await getPhotoList(item['repairPicture']);
                                                 //展示photoList
                                                 showDialog(
                                                   context: context,
@@ -505,6 +506,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                               child: const Text("查看故障视频及图片"),
                                             ),
                                           ),
+// ... existing code ...
                                         ],
                                       ),
                                       Row(
@@ -571,7 +573,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                     );
                                     if(result == true){
                                         getInfo();
-                                        showToast('数据已更新');
+                                      
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(

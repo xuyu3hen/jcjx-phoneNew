@@ -25,10 +25,11 @@ class F {
   static String get baseURL {
     switch (appFlavor) {
       case Flavor.env_dev:
-        return 'https://10.102.81.15:30652';
+        // return 'https://10.102.81.15:30652';
+        return 'https://10.105.84.122:8080';
       case Flavor.env_release:
         return 'https://10.102.81.15:30652';
-        // return 'https://10.105.84.122:8080';
+      // return 'https://10.105.84.122:8080';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';
       default:
@@ -39,10 +40,11 @@ class F {
   static String get appBaseURL {
     switch (appFlavor) {
       case Flavor.env_dev:
-        return 'https://10.102.81.15:30652';
+        // return 'https://10.102.81.15:30652';
+        return 'https://10.105.84.122:8080';
       case Flavor.env_release:
         return 'https://10.102.81.15:30652';
-        // return 'https://10.105.84.122:8080';
+      // return 'https://10.105.84.122:8080';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';
       default:

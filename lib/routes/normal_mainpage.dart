@@ -182,7 +182,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
               _buildFeatureItem(
                 Icon(Icons.post_add, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'jt28submitManage'),
-                '报机统28',
+                '报机统28（管理）',
               ),
               // _buildFeatureItem(
               //   Icon(Icons.assignment, color: Colors.blue[200]),

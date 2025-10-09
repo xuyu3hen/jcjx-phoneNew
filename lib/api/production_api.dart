@@ -463,6 +463,22 @@ class ProductApi extends AppApi {
     return (r.data["data"])["data"];
   }
 
+  // 获取 /dispatch/releaseShunting/save
+  Future<dynamic> releaseShunting({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/releaseShunting/save",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data);
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
   //上传 plan/repairPlan/addTempPlan
   Future<dynamic> uploadPlan({
     Map<String, dynamic>? queryParametrs,
@@ -813,7 +829,21 @@ class ProductApi extends AppApi {
         "/jcjxsystem/sysUser/selectAll",
         queryParameters: queryParametrs,
       );
-      logger.i(((r.data["data"])["data"])['rows']);
+      // logger.i(((r.data["data"])["data"])['rows']);
+      return ((r.data["data"])["data"])['rows'];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+    // jcjxsystem/sysUser/selectAll
+  Future<dynamic> getUserList1({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/jcjxsystem/sysUser/selectUserList",
+        queryParameters: queryParametrs,
+      );
+      // logger.i(((r.data["data"])["data"])['rows']);
       return ((r.data["data"])["data"])['rows'];
     } catch (e) {
       _handleException(e);
@@ -835,6 +865,21 @@ class ProductApi extends AppApi {
       return -1;
     }
   }
+
+  // /dispatch/releaseShunting/save
+  Future<dynamic> saveReleaseShunting(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/releaseShunting/save",
+        data: queryParametrs,
+      );
+      logger.i((r.data['data'])['data']);
+      return (r.data['data'])['data'];
+    } catch (e) {
+      _handleException(e);
+    }
+      }
 
   //获取班组作业包
   Future<PackageUserData> getTeamWorkPackage(
@@ -948,6 +993,20 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.post(
         "/tasks/taskInstructPackage/startWork",
+        data: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+    Future<void> startCertainPackageWork(
+    Map<String, dynamic>? queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/tasks/taskCertainPackage/certainPackageStartWork",
         data: queryParametrs,
       );
       logger.i(r.data["data"]);
