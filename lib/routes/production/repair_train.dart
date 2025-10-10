@@ -857,6 +857,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
     getNumber();
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -956,9 +958,9 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   subtitle: '工序互检作业清单',
                   count: '${numberInfo['needToMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () async{
+                  onTap: () async {
                     // 在这里处理待作业的点击事件
-                  Navigator.push(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => MutualPackageList(
@@ -1006,7 +1008,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待机统28互检作业',
                   subtitle: '工序互检作业清单',
-                  count: '${numberInfo['jt28NeedToMutualInspectionCount'] ?? 0}',
+                  count:
+                      '${numberInfo['jt28NeedToMutualInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -1032,7 +1035,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 TaskCard(
                   title: '待机统28专检作业',
                   subtitle: '工序专检作业清单',
-                  count: '${numberInfo['jt28NeedToSpecialInspectionCount'] ?? 0}',
+                  count:
+                      '${numberInfo['jt28NeedToSpecialInspectionCount'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     // 在这里处理待作业的点击事件
@@ -1137,17 +1141,17 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         //   ),
         // ),
         // const SizedBox(width: 8),
-        // Expanded(
-        //   child: ElevatedButton(
-        //     onPressed: () {},
-        //     style: ElevatedButton.styleFrom(
-        //       backgroundColor: Colors.blue,
-        //       foregroundColor: Colors.white,
-        //     ),
-        //     child: const Text('检修调度命令'),
-        //   ),
-        // ),
-        // const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('检修调度命令'),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(
             onPressed: () {
@@ -1408,12 +1412,11 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
     if (mounted) {
       setState(() {
-        packageList = (r as List<dynamic>)
+        Global.packageList = (r as List<dynamic>)
             .map((item) => item is Map<String, dynamic>
                 ? item
                 : Map<String, dynamic>.from(item as Map))
             .toList();
-        logger.i(packageList);
       });
     }
   }
@@ -1428,7 +1431,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
             if (Navigator.canPop(context)) {
-              Navigator.pop(context,true);
+              Navigator.pop(context, true);
             } else {
               // 如果无法pop，尝试使用maybePop或者给出提示
               Navigator.maybePop(context);
@@ -1450,7 +1453,14 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(height: 16),
 
             // 2. 作业项列表
-            ...packageList.map((task) => _buildTaskItem(task)).toList(),
+// ... existing code ...
+            // 2. 作业项列表
+            ...Global.packageList.asMap().entries.map((entry) {
+              int index = entry.key;
+              Map<String, dynamic> task = entry.value;
+              return _buildTaskItem(task, index);
+            }).toList(),
+// ... existing code ...
           ],
         ),
       ),
@@ -1543,7 +1553,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
   // 构建单个作业项（如车内2、车底）
-  Widget _buildTaskItem(Map<String, dynamic> task) {
+  Widget _buildTaskItem(Map<String, dynamic> task, [int? index]) {
     final progress =
         task['total'] == 0 ? 0.0 : task['completeCount'] / task['total'];
 
@@ -1572,9 +1582,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 名称 + 进度（如“车内2 0/16”）
                   Text(
-                    "${task['name']} ${task['completeCount']}/${task['total']}",
+                    "${index != null ? '${index + 1}. ' : ''}${task['name']} ${task['completeCount']}/${task['total']}",
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1592,8 +1601,6 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ],
               ),
             ),
-            const SizedBox(width: 12),
-
             // 开工按钮
             const SizedBox(width: 12),
 
@@ -1610,12 +1617,13 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       builder: (context) => InspectionVertexPage(
                           locoInfo: widget.locoInfo,
                           packageInfo: task,
-                          count: 0),
+                          count: 0,
+                          index: index,),
                     ),
                   );
                   if (result == true) {
-                    getWorkPackage();
-                    showToast('开始作业成功');
+                    // getWorkPackage();
+                    setState(() {});
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -1634,12 +1642,15 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       builder: (context) => InspectionVertexPage(
                           locoInfo: widget.locoInfo,
                           packageInfo: task,
-                          count: task['completeCount']),
+                          count: task['completeCount'],
+                          index: index,),
                     ),
                   );
                   if (result == true) {
-
-                    getWorkPackage();
+                    setState(() {
+                      
+                    });
+                    // getWorkPackage();
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -1665,7 +1676,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                                   : Map<String, dynamic>.from(item as Map))
                               .toList()
                           : [];
-                  var result =  await Navigator.push(
+                  var result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PackagePartInfo(
@@ -1674,9 +1685,9 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       ),
                     ),
                   );
-                  if(result == true){
+                  if (result == true) {
                     getWorkPackage();
-                    showToast('分包成功');
+                    setState(() {});
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -1713,12 +1724,14 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 class InspectionVertexPage extends StatefulWidget {
   Map<String, dynamic>? packageInfo = {};
   Map<String, dynamic>? locoInfo = {};
+  int? index;
   int count;
 
   InspectionVertexPage(
       {super.key,
       required this.packageInfo,
       required this.locoInfo,
+      required this.index,
       required this.count});
 
   @override
@@ -1794,13 +1807,13 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
         actions: [
-          TextButton(
-            onPressed: _reportJT6,
-            child: const Text(
-              "报机统28",
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
+          // TextButton(
+          //   onPressed: _reportJT6,
+          //   child: const Text(
+          //     "报机统28",
+          //     style: TextStyle(color: Colors.black),
+          //   ),
+          // ),
         ],
       ),
       body: SingleChildScrollView(
@@ -1851,7 +1864,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                     ),
                   ),
                 ),
-// ... existing code ...
                 TextButton(
                   onPressed: () => _gotoSecondStation(taskInstructContentList),
                   child: const Text(
@@ -1859,7 +1871,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
-// ... existing code ...
               ],
             ),
             // const SizedBox(height: 8),
@@ -2021,16 +2032,36 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               width: double.infinity,
               child: Column(
                 children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed:
-                            _files.isEmpty ? null : _gotoNextItem, // 当没有图片时禁用按钮
-                        child: _currentIndex < (packagePoints.length) - 1
-                            ? const Text("进入下一项")
-                            : const Text("完成"),
-                      ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _files.isEmpty
+                          ? null
+                          : () async {
+                            int i = widget.index?? 0;
+                              Global.packageList[i]['completeCount'] = _currentIndex+1;
+                              // 完成所有操作后返回成功结果
+                              await upLoadFileList();
+                              await saveContentItem();
+                              await completePackage();
+                              // 将图片清空
+                              _files.clear();
+                              if (packagePoints != null &&
+                                  _currentIndex < packagePoints!.length - 1) {
+                                // 如果还有下一项，则更新索引以显示下一项
+                                setState(() {
+                                  _currentIndex++;
+                                });
+                              } else {
+                                debugPrint("已完成所有项");
+                                Navigator.pop(context, true);
+                              }
+                            }, // 当没有图片时禁用按钮
+                      child: _currentIndex < packagePoints.length - 1
+                          ? const Text("进入下一项")
+                          : const Text("完成"),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -2047,28 +2078,28 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   }
 
 // ... existing code ...
- _gotoSecondStation(List<Map<String, dynamic>> taskInstructContentList) {
+  _gotoSecondStation(List<Map<String, dynamic>> taskInstructContentList) {
     logger.i(taskInstructContentList);
-    
+
     // 构建显示内容
     StringBuffer contentBuffer = StringBuffer();
     for (var i = 0; i < taskInstructContentList.length; i++) {
       final item = taskInstructContentList[i];
       final name = item['name'] ?? '无名称';
       final workContent = item['workContent'] ?? '无工作内容';
-      
+
       contentBuffer.writeln('名称: $name');
       contentBuffer.writeln('工作内容: $workContent');
       if (i < taskInstructContentList.length - 1) {
         contentBuffer.writeln('-------------------');
       }
     }
-    
+
     // 如果列表为空，显示提示信息
     if (taskInstructContentList.isEmpty) {
       contentBuffer.writeln('暂无作业内容');
     }
-    
+
     // 使用WidgetsBinding.instance.addPostFrameCallback延迟显示弹窗
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showDialog(
@@ -2092,8 +2123,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       );
     });
   }
-// ... existing code ...
-// ... existing code ...
 
   void _takePhoto() async {
     // 调用相机采集照片（可结合image_picker库实现）
@@ -2146,7 +2175,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     }
   }
 
-  void upLoadFileList() async {
+  Future<void> upLoadFileList() async {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
       logger.i(currentPackagePoint['code']);
@@ -2158,15 +2187,14 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     }
   }
 
-  void completePackage() async {
+  Future<void> completePackage() async {
     try {
-      List<Map<String,dynamic>> queryParameters = [];
-      Map<String,dynamic> taskCertainPackageList = {
+      List<Map<String, dynamic>> queryParameters = [];
+      Map<String, dynamic> taskCertainPackageList = {
         'code': currentPackagePoint['code'],
-        'completeTime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-      }
-        
-        ;
+        'completeTime':
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+      };
       queryParameters.add(taskCertainPackageList);
       var r = await ProductApi().finishCertainPackage(queryParameters);
       logger.i(r);
@@ -2176,7 +2204,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   }
 
   //保存作业项数据
-  void saveContentItem() async {
+  Future<void> saveContentItem() async {
     try {
       var r =
           await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);

@@ -668,8 +668,6 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
             const SizedBox(height: 20),
 
             // 6. 进入下一项按钮
-
-// ... existing code ...
             SizedBox(
               width: double.infinity,
               child: Column(
@@ -679,6 +677,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                       child: ElevatedButton(
                         onPressed:
                             _files.isEmpty ? null : () async {
+                              
                               // 完成所有操作后返回成功结果
                               await upLoadFileList();
                               await saveContentItem();
@@ -705,7 +704,6 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                 ],
               ),
             ),
-// ... existing code ...
           ],
         ),
       ),

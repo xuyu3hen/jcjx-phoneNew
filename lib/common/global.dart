@@ -28,6 +28,8 @@ class Global {
   static List<Map<String, dynamic>> repairInfo = [];
 
   static List<Map<String, dynamic>> faultPartList = [];
+
+  static List<Map<String, dynamic>> packageList = [];
   
   // 可选的主题列表
   static List<MaterialColor> get themes => _theme;

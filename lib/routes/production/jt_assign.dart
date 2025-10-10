@@ -345,19 +345,19 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                // ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']}"),
+                                                "故障现象: ${item['faultDescription'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']}"),
+                                                "施修方案: ${item['repairScheme'] ?? ''}"),
                                           ),
                                         ],
                                       ),
-// ... existing code ...
                                   Row(
                                         children: [
                                           Expanded(
@@ -378,20 +378,19 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                           ),
                                         ],
                                       ),
-// ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']}"),
+                                                "提报人: ${item['reporterName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']}"),
+                                                "提报时间: ${item['reportDate'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child:
-                                                Text("部门: ${item['teamName']}"),
+                                                Text("部门: ${item['teamName'] ?? ''}"),
                                           ),
                                         ],
                                       ),
@@ -399,11 +398,11 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "主修: ${item['repairName']}"),
+                                                "主修: ${item['repairName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "辅修: ${item['assistantName']}"),
+                                                "辅修: ${item['assistantName'] ?? ''}"),
                                           ),
                                         ],
                                       ),
@@ -411,14 +410,15 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']}"),
+                                                "专检: ${item['specialName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "互检: ${item['mutualName'] ?? ''}"),
                                           ),
                                         ],
                                       ),
+// ... existing code ...
                                     ],
                                   ),
                                 ),

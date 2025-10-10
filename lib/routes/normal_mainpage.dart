@@ -158,11 +158,15 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.people, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainManage'),
-                '开工点名',
-              ),
+          if (Global.profile.permissions?.user.roleIds != null &&
+                  (Global.profile.permissions!.user.roleIds!.contains('gongzhang') ||
+                      Global.profile.permissions!.user.roleIds!.contains('chejianzhuren')))
+                _buildFeatureItem(
+                  Icon(Icons.people, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'repairTrainManage'),
+                  '开工点名',
+                ),
+              
               _buildFeatureItem(
                 Icon(Icons.train, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'sec_enter_modify'),
@@ -179,11 +183,14 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.post_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28submitManage'),
-                '报机统28（管理）',
-              ),
+         if (Global.profile.permissions?.user.roleIds != null &&
+                  (Global.profile.permissions!.user.roleIds!.contains('gongzhang') ||
+                      Global.profile.permissions!.user.roleIds!.contains('chejianzhuren')))
+                _buildFeatureItem(
+                  Icon(Icons.post_add, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'jt28submitManage'),
+                  '报机统28（管理）',
+                ),
               // _buildFeatureItem(
               //   Icon(Icons.assignment, color: Colors.blue[200]),
               //   () => Navigator.pushNamed(context, 'jt28'),

@@ -673,7 +673,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               // "faultyComponent": componentName['configCode'],
               "machineModel": jcTypeListSelected['code'],
               // "maintenanceNotice": maintenanceNotice,
-              "trainEntryCode": trainNumSelected["code"],
+              "trainEntryCode": widget.locoInfo?["code"],
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
