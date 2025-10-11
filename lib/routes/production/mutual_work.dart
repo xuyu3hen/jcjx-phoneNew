@@ -82,11 +82,11 @@ class _JtShowPageState extends State<MutualWorkList> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
-      'pageSize': pageSize,
-      'completeStatus': 2,
+      // 'pageNum': pageNum,
+      // 'pageSize': pageSize,
+      // 'completeStatus': 2,
       'trainEntryCode': widget.trainEntryCode,
-      'mutualName': Global.profile.permissions?.user.nickName,
+      'userId': Global.profile.permissions?.user.userId,
       // 'status': 0
     };
     logger.i(widget.trainNumCode);
@@ -96,11 +96,11 @@ class _JtShowPageState extends State<MutualWorkList> {
 
     try {
       var r =
-          await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
+          await ProductApi().queryMutualInspectionJt28ByUserId(queryParametrs: queryParameters);
       setState(() {
-        info = r;
-        sys28List = info['rows'];
-        total = info['total'] ?? 0;
+        // info = r;
+        sys28List = r;
+        // total = info['total'] ?? 0;
         isLoading = false;
       });
     } catch (e) {
@@ -381,11 +381,11 @@ class _JtShowPageState extends State<MutualWorkList> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']}"),
+                                                "故障现象: ${item['faultDescription']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']}"),
+                                                "施修方案: ${item['repairScheme']??''}"),
                                           ),
                                         ],
                                       ),
@@ -395,11 +395,11 @@ class _JtShowPageState extends State<MutualWorkList> {
                                             child: ElevatedButton(
                                               onPressed: () async {
                                                 // 使用新的可复用组件展示图片
-                                                PhotoPreviewDialog.show(
-                                                    context,
-                                                    item['repairPicture'],
-                                                    ProductApi()
-                                                        .getFaultVideoAndImage);
+                                                // PhotoPreviewDialog.show(
+                                                //     context,
+                                                //     item['repairPicture'],
+                                                //     ProductApi()
+                                                //         .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -413,27 +413,15 @@ class _JtShowPageState extends State<MutualWorkList> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']}"),
+                                                "提报人: ${item['reporterName']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']}"),
+                                                "提报时间: ${item['reportDate']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "流水号: ${item['deptName']}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName']}"),
+                                                "流水号: ${item['deptName']??''}"),
                                           ),
                                         ],
                                       ),
@@ -441,11 +429,27 @@ class _JtShowPageState extends State<MutualWorkList> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']}"),
+                                                "主修: ${item['repairName']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "辅修: ${item['assistantName']??''}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']??''}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']??''}"),
+                                          ),
+                                                                                Expanded(
+                                            child: Text(
+                                                "状态: ${item['mutualName']??''}"),
                                           ),
                                         ],
                                       ),

@@ -25,7 +25,8 @@ class FaultDisposalPage extends StatefulWidget {
       required this.trainNumCode,
       required this.typeCode,
       required this.code,
-      required this.repairPicture, required this.processMainNode});
+      required this.repairPicture,
+      required this.processMainNode});
 
   @override
   State<FaultDisposalPage> createState() => _FaultDisposalPageState();
@@ -56,8 +57,6 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   Map<String, dynamic> dynamicMethodSelected = {};
 
   var logger = AppLogger.logger;
-
-
 
   // 获取加工方法
   void getProcessMethod() async {
@@ -91,49 +90,49 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   // 加载机统28数据
   void _loadJt28Data() async {
     try {
-    //   Map<String, dynamic> params = {
-    //     "trainEntryCode": widget.trainEntryCode,
-    //   };
+      //   Map<String, dynamic> params = {
+      //     "trainEntryCode": widget.trainEntryCode,
+      //   };
 
-    //   var response =
-    //       await ProductApi().selectRepairSys28(queryParametrs: params);
+      //   var response =
+      //       await ProductApi().selectRepairSys28(queryParametrs: params);
 
-    //   if (response != null && response is List && response.isNotEmpty) {
-    //     // 获取第一条记录
-    //     var data = response[0];
-    //     logger.i(data);
+      //   if (response != null && response is List && response.isNotEmpty) {
+      //     // 获取第一条记录
+      //     var data = response[0];
+      //     logger.i(data);
 
-    //     setState(() {
-    //       // 设置机型
-    //       _model = data['trainType'] ?? widget.typeName;
+      //     setState(() {
+      //       // 设置机型
+      //       _model = data['trainType'] ?? widget.typeName;
 
-    //       // 设置机车号
-    //       _trainNum = data['trainNum'] ?? widget.trainNum;
+      //       // 设置机车号
+      //       _trainNum = data['trainNum'] ?? widget.trainNum;
 
-    //       // 设置故障现象
-    //       _faultPhenomenon = data['faultPhenomenon'] ??
-    //           data['faultDesc'] ??
-    //           widget.faultDescription;
+      //       // 设置故障现象
+      //       _faultPhenomenon = data['faultPhenomenon'] ??
+      //           data['faultDesc'] ??
+      //           widget.faultDescription;
 
-    //       // 设置施修方案
-    //       _repairPlan = data['repairScheme'] ??
-    //           data['repairProgram'] ??
-    //           widget.repairScheme;
+      //       // 设置施修方案
+      //       _repairPlan = data['repairScheme'] ??
+      //           data['repairProgram'] ??
+      //           widget.repairScheme;
 
-    //       _processMainNode = data['processMainNode'] ?? '';
-    //       _isLoading = false;
-    //     });
-    //   } else {
-        // 如果没有获取到数据，使用传入的参数
-        setState(() {
-          _model = widget.typeName;
-          _trainNum = widget.trainNum;
-          _faultPhenomenon = widget.faultDescription;
-          _repairPlan = widget.repairScheme;
-          _isLoading = false;
-          _processMainNode = widget.processMainNode;
-        });
-      // 
+      //       _processMainNode = data['processMainNode'] ?? '';
+      //       _isLoading = false;
+      //     });
+      //   } else {
+      // 如果没有获取到数据，使用传入的参数
+      setState(() {
+        _model = widget.typeName;
+        _trainNum = widget.trainNum;
+        _faultPhenomenon = widget.faultDescription;
+        _repairPlan = widget.repairScheme;
+        _isLoading = false;
+        _processMainNode = widget.processMainNode;
+      });
+      //
     } catch (e) {
       print('获取机统28数据失败: $e');
       // 出错时使用传入的参数
@@ -386,7 +385,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                         if (faultPics.isNotEmpty) {
                           await JtApi().uploadMixJt(imagedata: faultPics).then(
                                 (value) async => {
-                                  if (value['data'] != null && value['data'] != "")
+                                  if (value['data'] != null &&
+                                      value['data'] != "")
                                     {
                                       queryParameters["repairEndPicture"] =
                                           value['data'],
@@ -438,19 +438,22 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                   child: Column(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: <Widget>[
                                       const Text(
                                         "机统28提报成功",
                                         style: TextStyle(fontSize: 18),
                                       ),
                                       ConstrainedBox(
-                                        constraints: const BoxConstraints.expand(
-                                            height: 30, width: 160),
+                                        constraints:
+                                            const BoxConstraints.expand(
+                                                height: 30, width: 160),
                                         child: ElevatedButton.icon(
                                           onPressed: () {
-                                            SmartDialog.dismiss().then((value) =>
-                                                Navigator.of(context).pop());
+                                            SmartDialog.dismiss().then(
+                                                (value) => Navigator.of(context)
+                                                    .pop());
                                           },
                                           label: const Text('确定'),
                                           icon: const Icon(Icons
@@ -466,7 +469,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                     },
                     child: const Text('销活申请'),
                   ),
-                      ElevatedButton(
+                  ElevatedButton(
                     onPressed: () {
                       //点击申请放行进行弹窗
                       SmartDialog.show(
@@ -495,31 +498,27 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                 SmartDialog.dismiss();
                               },
                             );
-                          }
-                      );
+                          });
                     },
                     child: const Text('申请放行'),
                   ),
                 ],
               ),
             ),
-            
           ],
-
-          
         ),
       ),
     );
   }
 
-
   void applyWorkRelease() async {
     Map<String, dynamic> queryParameters = {
       // "jt28Code": widget.applyId,
-      
     };
-    var r = await ProductApi().saveReleaseShunting(queryParametrs: queryParameters);
+    var r =
+        await ProductApi().saveReleaseShunting(queryParametrs: queryParameters);
   }
+
 // ... existing code ...
   // 封装“带标签的文本展示”
   Widget _buildLabeledText({
@@ -583,6 +582,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
     );
   }
 }
+
 class ApplyReleaseDialog extends StatefulWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
@@ -613,20 +613,19 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
       var response = await ProductApi().getUserList1(queryParametrs: params);
       if (response is List) {
         setState(() {
-                  // 将List<dynamic>转换为List<Map<String, dynamic>>
-        List<Map<String, dynamic>> userList = response
-            .map((item) => item is Map<String, dynamic>
-                ? item
-                : Map<String, dynamic>.from(item as Map))
-            .toList();
+          // 将List<dynamic>转换为List<Map<String, dynamic>>
+          List<Map<String, dynamic>> userList = response
+              .map((item) => item is Map<String, dynamic>
+                  ? item
+                  : Map<String, dynamic>.from(item as Map))
+              .toList();
 
-        // 根据获取的用户列表更新_team.members
-        if (userList.isNotEmpty) {
-          _recipients = userList;
-          // print(_recipients.toString());
-        }
+          // 根据获取的用户列表更新_team.members
+          if (userList.isNotEmpty) {
+            _recipients = userList;
+            // print(_recipients.toString());
+          }
         });
-
       }
     } catch (e) {
       // 错误处理
@@ -635,15 +634,12 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
   }
 
   // 模拟签收人列表，实际应用中应该从API获取
-  List<Map<String, dynamic>> _recipients = [
-
-  ];
+  List<Map<String, dynamic>> _recipients = [];
 
   @override
-  void initState() async {
-      await getUserList();
+  void initState() {
+    getUserList();
     super.initState();
-
   }
 
   @override
@@ -664,29 +660,36 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
     queryParameters['trainName'] = widget.extraParams?['trainNum'];
     queryParameters['jt28Name'] = widget.extraParams?['faultDescription'];
     queryParameters['reportDeptId'] = Global.profile.permissions?.user.deptId;
-    queryParameters['reportDeptName'] = Global.profile.permissions?.user.dept?.deptName;
+    queryParameters['reportDeptName'] =
+        Global.profile.permissions?.user.dept?.deptName;
     queryParameters['reportUserId'] = Global.profile.permissions?.user.userId;
-    queryParameters['reportUserName'] = Global.profile.permissions?.user.nickName;
+    queryParameters['reportUserName'] =
+        Global.profile.permissions?.user.nickName;
     queryParameters['releaseApplicationReson'] = _reasonController.text;
     queryParameters['status'] = 0;
     List<Map<String, dynamic>> shuntingNoticeList = [];
-      Map<String, dynamic> map = {};
-      map['applyUserId'] = Global.profile.permissions?.user.userId;
-      map['applyUserName'] = Global.profile.permissions?.user.nickName;
-      //需要将其与信息进行绑定。现在是默认的
-      map['auditDeptId'] = _selectedRecipient['deptId'];
-      map['auditDeptName'] = _selectedRecipient['deptName'];
-      map['auditUserId'] = _selectedRecipient['userId'];
-      map['auditUserName'] = _selectedRecipient['nickName'];
-      map['shuntingType'] = 14;
-      map['status'] = 0;
-      shuntingNoticeList.add(map);
-      queryParameters['shuntingNoticeList'] = shuntingNoticeList;
-      
-      var r = await ProductApi().saveReleaseShunting(queryParametrs: queryParameters);
+    Map<String, dynamic> map = {};
+    map['applyUserId'] = Global.profile.permissions?.user.userId;
+    map['applyUserName'] = Global.profile.permissions?.user.nickName;
+    //需要将其与信息进行绑定。现在是默认的
+    map['auditDeptId'] = _selectedRecipient['deptId'];
+    map['auditDeptName'] = _selectedRecipient['deptName'];
+    map['auditUserId'] = _selectedRecipient['userId'];
+    map['auditUserName'] = _selectedRecipient['nickName'];
+    map['shuntingType'] = 14;
+    map['status'] = 0;
+    shuntingNoticeList.add(map);
+    queryParameters['shuntingNoticeList'] = shuntingNoticeList;
+    try {
+      var r = await ProductApi()
+          .saveReleaseShunting(queryParametrs: queryParameters);
       showToast(r['msg']);
+    } catch (e) {
+      // 处理异常情况
+      print('保存放行申请时发生错误: $e');
+      showToast('操作失败，请重试');
     }
-  
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -727,34 +730,34 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
           ),
           const SizedBox(height: 16),
           // 签收人选择输入框
-           ZjcFormSelectCell(
-                title: "放行人员",
-                text: _selectedRecipient["nickName"],
-                hintText: "请选择",
-                showRedStar: true,
-                clickCallBack: () {
-                  if (_recipients.isEmpty) {
-                    showToast("无放行人员选择");
-                  } else {
-                    ZjcCascadeTreePicker.show(
-                      context,
-                      data: _recipients,
-                      labelKey: 'nickName',
-                      valueKey: 'userId',
-                      childrenKey: 'children',
-                      title: "选择放行人员",
-                      clickCallBack: (selectItem, selectArr) {
-                        setState(() {
-                          _selectedRecipient["userId"] = selectItem["userId"];
-                          _selectedRecipient["nickName"] = selectItem["nickName"];
-                          _selectedRecipient["deptId"] = selectItem["deptId"];
-                          _selectedRecipient["deptName"] = selectItem["deptName"];
-                        });
-                      },
-                    );
-                  }
-                },
-              ),
+          ZjcFormSelectCell(
+            title: "放行人员",
+            text: _selectedRecipient["nickName"],
+            hintText: "请选择",
+            showRedStar: true,
+            clickCallBack: () {
+              if (_recipients.isEmpty) {
+                showToast("无放行人员选择");
+              } else {
+                ZjcCascadeTreePicker.show(
+                  context,
+                  data: _recipients,
+                  labelKey: 'nickName',
+                  valueKey: 'userId',
+                  childrenKey: 'children',
+                  title: "选择放行人员",
+                  clickCallBack: (selectItem, selectArr) {
+                    setState(() {
+                      _selectedRecipient["userId"] = selectItem["userId"];
+                      _selectedRecipient["nickName"] = selectItem["nickName"];
+                      _selectedRecipient["deptId"] = selectItem["deptId"];
+                      _selectedRecipient["deptName"] = selectItem["deptName"];
+                    });
+                  },
+                );
+              }
+            },
+          ),
           const SizedBox(height: 24),
           // 确认和取消按钮
           Row(

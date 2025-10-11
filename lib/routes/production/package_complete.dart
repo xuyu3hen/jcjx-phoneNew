@@ -101,6 +101,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   ];
 
   List<Map<String, dynamic>> packageListUse = [];
+  var logger = AppLogger.logger;
 
   void initState() {
     packageListUse = widget.packageList;
@@ -110,6 +111,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   Future<void> getCertainPackage() async {
     Map<String, dynamic> params = {
       "packageCode": widget.packageList[0]['packageCode'],
+      'pageSize': 0,
+      'pageNum':0
     };
     var certainPackageList =
         await ProductApi().getTaskCertainPackage(queryParametrs: params);
@@ -120,7 +123,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             .where((item) => item is Map)
             .map((item) => Map<String, dynamic>.from(item as Map))
             .toList();
-  
+      logger.i(packageListUse.length);
       });
     }
   }
@@ -613,7 +616,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
             taskContentItemList.isEmpty
                 ? const Center(
-                    child: Text('暂无数据'),
+                    child: Text(''),
                   )
                 : ListView.builder(
                     shrinkWrap: true,

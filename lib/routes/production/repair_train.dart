@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:jcjx_phone/routes/production/apply_page.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
 import 'package:jcjx_phone/routes/production/package_complete.dart';
 import 'package:jcjx_phone/routes/production/package_mutual.dart';
@@ -1141,9 +1142,24 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         //   ),
         // ),
         // const SizedBox(width: 8),
+// ... existing code ...
         Expanded(
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // 跳转到ApplyList页面
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ApplyList(
+                    trainNum: widget.locoInfo?['trainNum'] ?? '',
+                    trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+                    typeName: widget.locoInfo?['typeName'] ?? '',
+                    typeCode: widget.locoInfo?['typeCode'] ?? '',
+                    trainEntryCode: widget.locoInfo?['code'] ?? '',
+                  ),
+                ),
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue,
               foregroundColor: Colors.white,
@@ -1151,6 +1167,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
             child: const Text('检修调度命令'),
           ),
         ),
+// ... existing code ...
         const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(

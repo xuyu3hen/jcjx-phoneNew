@@ -158,9 +158,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-          if (Global.profile.permissions?.user.roleIds != null &&
-                  (Global.profile.permissions!.user.roleIds!.contains('gongzhang') ||
-                      Global.profile.permissions!.user.roleIds!.contains('chejianzhuren')))
+      
                 _buildFeatureItem(
                   Icon(Icons.people, color: Colors.blue[200]),
                   () => Navigator.pushNamed(context, 'repairTrainManage'),
@@ -183,9 +181,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-         if (Global.profile.permissions?.user.roleIds != null &&
-                  (Global.profile.permissions!.user.roleIds!.contains('gongzhang') ||
-                      Global.profile.permissions!.user.roleIds!.contains('chejianzhuren')))
+  
                 _buildFeatureItem(
                   Icon(Icons.post_add, color: Colors.blue[200]),
                   () => Navigator.pushNamed(context, 'jt28submitManage'),

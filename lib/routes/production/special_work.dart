@@ -82,11 +82,11 @@ class _JtShowPageState extends State<SpecialWorkList> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
-      'pageSize': pageSize,
-      'completeStatus': 3,
+      // 'pageNum': pageNum,
+      // 'pageSize': pageSize,
+      // 'completeStatus': 3,
       'trainEntryCode': widget.trainEntryCode,
-      'specialName': Global.profile.permissions?.user.nickName,
+      'userId': Global.profile.permissions?.user.userId,
       //  'status': 0
     };
     logger.i(widget.trainNumCode);
@@ -96,11 +96,11 @@ class _JtShowPageState extends State<SpecialWorkList> {
 
     try {
       var r =
-          await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
+          await ProductApi().querySpecialInspectionJt28ByUserId(queryParametrs: queryParameters);
       setState(() {
-        info = r;
-        sys28List = info['rows'];
-        total = info['total'] ?? 0;
+        // info = r;
+        sys28List = r;
+        // total = info['total'] ?? 0;
         isLoading = false;
       });
     } catch (e) {

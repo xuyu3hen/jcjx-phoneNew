@@ -48,6 +48,22 @@ class ProductApi extends AppApi {
     }
   }  
 
+  // /dispatch/trainShunting/selectAll
+  Future<dynamic> getTrainShunting({
+    Map<String, dynamic>? queryParametrs, // 分页参数
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShunting/selectAll",
+        queryParameters: queryParametrs,
+      );
+      return (r.data["data"])["data"];
+    }catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // /tasks/taskCertainPackage/wholePackageMutualInspection
     Future<dynamic> wholePackageMutualInspection(
     Map<String, dynamic>? queryParametrs,
@@ -447,6 +463,38 @@ class ProductApi extends AppApi {
       return (r.data["data"])["data"];
     } catch (e, stackTrace) {
       logger.e(e, stackTrace);
+    }
+  }
+
+  // tasks/locomotiveMainTenanceLogDO/queryMutualInspectionJt28ByUserId
+  Future<dynamic> queryMutualInspectionJt28ByUserId({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/queryMutualInspectionJt28ByUserId",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+    // tasks/locomotiveMainTenanceLogDO/queryMutualInspectionJt28ByUserId
+  Future<dynamic> querySpecialInspectionJt28ByUserId({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/querySpecialInspectionJt28ByUserId",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
     }
   }
 
