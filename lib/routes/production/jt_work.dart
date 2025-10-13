@@ -1,5 +1,5 @@
 import '../../index.dart';
-import 'jt_startwork.dart';
+
 
 //机统28作业列表
 class JtWorkList extends StatefulWidget {
@@ -379,8 +379,6 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
-// ... existing code ...
-// ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
@@ -392,16 +390,16 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 "提报时间: ${item['reportDate'] ?? ''}"),
                                           ),
                                           Expanded(
-                                            child:
-                                                Text("部门: ${item['deptName'] ?? ''}"),
+                                            child: Text(
+                                                "部门: ${item['deptName'] ?? ''}"),
                                           ),
                                         ],
                                       ),
                                       Row(
                                         children: [
                                           Expanded(
-                                            child:
-                                                Text("班组: ${item['teamName'] ?? ''}"),
+                                            child: Text(
+                                                "班组: ${item['teamName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
@@ -436,7 +434,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                 child: ElevatedButton(
                                   onPressed: () {
                                     // 跳转到FaultDisposalPage()
-                                    Navigator.push(
+                                    var result = Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => FaultDisposalPage(
@@ -450,10 +448,19 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 item['repairScheme'] ?? "",
                                             trainNumCode: widget.trainNumCode,
                                             typeCode: widget.typeCode,
-                                            code: item['code'], repairPicture: item['repairPicture'],
-                                            processMainNode: item['processMainNode'] ?? "",),
+                                            code: item['code'],
+                                            repairPicture:
+                                                item['repairPicture'],
+                                            processMainNode:
+                                                item['processMainNode'] ?? ""),
                                       ),
                                     );
+                                    if (result == true) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        getInfo();
+                                      });
+                                    }
                                   },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,

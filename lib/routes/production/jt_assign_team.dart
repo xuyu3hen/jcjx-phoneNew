@@ -325,12 +325,6 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                   ],
                 ),
               const SizedBox(height: 10),
-              if (photo['fileName'] != null)
-                Text('文件名: ${photo['fileName']}')
-              else
-                const Text('未知文件'),
-              if (photo['fileSize'] != null)
-                Text('文件大小: ${photo['fileSize']} bytes'),
             ],
           ),
           actions: [
@@ -451,11 +445,11 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']}"),
+                                                "故障现象: ${item['faultDescription']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']}"),
+                                                "施修方案: ${item['repairScheme']??''}"),
                                           ),
                                         ],
                                       ),
@@ -513,31 +507,15 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']}"),
+                                                "提报人: ${item['reporterName']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']}"),
+                                                "提报时间: ${item['reportDate']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "部门: ${item['deptName']}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "班组: ${item['teamName']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName']}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName']}"),
+                                                "部门: ${item['deptName']??''}"),
                                           ),
                                         ],
                                       ),
@@ -545,11 +523,27 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']}"),
+                                                "班组: ${item['teamName']??''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "主修: ${item['repairName']??''}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName']??''}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName']??''}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName']??''}"),
                                           ),
                                         ],
                                       ),

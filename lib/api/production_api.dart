@@ -57,7 +57,8 @@ class ProductApi extends AppApi {
         "/dispatch/trainShunting/selectAll",
         queryParameters: queryParametrs,
       );
-      return (r.data["data"])["data"];
+      logger.i(((r.data["data"])["data"])['rows']);
+      return ((r.data["data"])["data"])['rows'];
     }catch (e) {
       _handleException(e);
       return [];

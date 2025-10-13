@@ -928,7 +928,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 //   count: '1',
                 // ),
                 TaskCard(
-                  title: '待机统28-作业',
+                  title: '待机统28作业',
                   subtitle: '机车机统28作业清单',
                   count:
                       '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',

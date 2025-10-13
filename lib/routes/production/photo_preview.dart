@@ -1,6 +1,5 @@
 import '../../index.dart';
 
-
 /// 可复用的故障图片预览对话框组件
 class PhotoPreviewDialog {
   /// 显示故障图片预览对话框
@@ -17,16 +16,16 @@ class PhotoPreviewDialog {
       Map<String, dynamic> queryParameters = {
         'groupId': groupId,
       };
-      
+
       var response = await api(queryParametrs: queryParameters);
-      
+
       // 将List<dynamic>转换为List<Map<String, dynamic>>
       List<Map<String, dynamic>> photoList = (response as List)
           .map((item) => item as Map<String, dynamic>)
           .toList();
-      
+
       SmartDialog.dismiss();
-      
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -38,11 +37,23 @@ class PhotoPreviewDialog {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: photoList.map((photo) {
-                        return ListTile(
-                          title: Text(photo['fileName'] ?? ''),
-                          onTap: () {
-                            _previewImage(context, photo, ProductApi().previewImage);
-                          },
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
+                          elevation: 2,
+                          child: ListTile(
+                            title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () {
+                              _previewImage(
+                                  context, photo, ProductApi().previewImage);
+                            },
+                            tileColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
@@ -65,21 +76,19 @@ class PhotoPreviewDialog {
     }
   }
 
-    static void show2(
-      BuildContext context,
+  static void show2(
+    BuildContext context,
     List<dynamic> repairList,
-
   ) async {
     SmartDialog.showLoading(msg: '加载中...');
     try {
-
       // 将List<dynamic>转换为List<Map<String, dynamic>>
       List<Map<String, dynamic>> photoList = (repairList as List)
           .map((item) => item as Map<String, dynamic>)
           .toList();
-      
+
       SmartDialog.dismiss();
-      
+
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -91,11 +100,23 @@ class PhotoPreviewDialog {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: photoList.map((photo) {
-                        return ListTile(
-                          title: Text(photo['fileName'] ?? ''),
-                          onTap: () {
-                            _previewImage(context, photo, ProductApi().previewImage);
-                          },
+                      return Card(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
+                          elevation: 2,
+                          child: ListTile(
+                            title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
+                            trailing:
+                                const Icon(Icons.arrow_forward_ios, size: 16),
+                            onTap: () {
+                              _previewImage(
+                                  context, photo, ProductApi().previewImage);
+                            },
+                            tileColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
@@ -117,7 +138,7 @@ class PhotoPreviewDialog {
       SmartDialog.showToast('加载失败，请检查网络连接');
     }
   }
-  
+
   /// 预览单张图片
   static void _previewImage(
     BuildContext context,
@@ -126,21 +147,18 @@ class PhotoPreviewDialog {
   ) async {
     Image? image;
     try {
-      Map<String, dynamic> queryParameters = {
-        'url': photo['downloadUrl'] 
-      };
-      
+      Map<String, dynamic> queryParameters = {'url': photo['downloadUrl']};
+
       var response = await api(queryParametrs: queryParameters);
       image = response as Image?;
     } catch (e) {
       // 忽略错误，使用网络图片作为备选方案
     }
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(photo['fileName'] ?? '图片预览'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -157,12 +175,14 @@ class PhotoPreviewDialog {
                     width: 200,
                     height: 200,
                     fit: BoxFit.contain,
-                    loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                    loadingBuilder: (BuildContext context, Widget child,
+                        ImageChunkEvent? loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Center(
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
                               : null,
                         ),
                       );
@@ -170,7 +190,8 @@ class PhotoPreviewDialog {
                     errorBuilder: (context, error, stackTrace) {
                       return const Column(
                         children: [
-                          Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                          Icon(Icons.broken_image,
+                              size: 50, color: Colors.grey),
                           SizedBox(height: 10),
                           Text('图片加载失败'),
                         ],
@@ -185,13 +206,6 @@ class PhotoPreviewDialog {
                       Text('无图片可显示'),
                     ],
                   ),
-                const SizedBox(height: 10),
-                if (photo['fileName'] != null)
-                  Text('文件名: ${photo['fileName']}')
-                else
-                  const Text('未知文件'),
-                if (photo['fileSize'] != null)
-                  Text('文件大小: ${photo['fileSize']} bytes'),
               ],
             ),
           ),
