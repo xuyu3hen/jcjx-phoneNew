@@ -305,21 +305,21 @@ class _JtShowPageState extends State<JtWorkAssign> {
                 ],
               ),
               // 添加分页信息显示和控制
-              if (total > 0)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('共 $total 条记录'),
-                      Text('第 $pageNum / ${((total - 1) ~/ pageSize) + 1} 页'),
-                    ],
-                  ),
-                ),
-              //展示列表信息
-              if (isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (sys28List.isNotEmpty)
+              // if (total > 0)
+              //   Padding(
+              //     padding: const EdgeInsets.all(8.0),
+              //     child: Row(
+              //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //       children: [
+              //         Text('共 $total 条记录'),
+              //         Text('第 $pageNum / ${((total - 1) ~/ pageSize) + 1} 页'),
+              //       ],
+              //     ),
+              //   ),
+              // //展示列表信息
+              // if (isLoading)
+              //   const Center(child: CircularProgressIndicator())
+              if (sys28List.isNotEmpty)
                 Column(
                   children: [
                     ListView.builder(

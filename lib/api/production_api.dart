@@ -467,13 +467,45 @@ class ProductApi extends AppApi {
     }
   }
 
-  // 机统28派工 tasks/locomotiveMainTenanceLogDO/getNeedToDispatchJt28
+  // 机统28派工 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchJt28
   Future<dynamic> getNeedToDispatchJt28({
     Map<String, dynamic>? queryParametrs,
   }) async {
     try {
       var r = await AppApi.dio.get(
-        "/tasks/locomotiveMainTenanceLogDO/getNeedToDispatchJt28",
+        "/tasks/locomotiveMaintenanceLogDO/getNeedToDispatchJt28",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+    // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToWorkJt28
+  Future<dynamic> getNeedToWorkJt28({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/getNeedToWorkJt28",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+      // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchInspectionJt28
+  Future<dynamic> getNeedToDispatchInspectionJt28({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/getNeedToWorkJt28",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])['data']);

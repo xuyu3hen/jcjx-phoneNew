@@ -81,26 +81,26 @@ class _JtShowPageState extends State<JtWorkList> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
-      'pageSize': pageSize,
-      'completeStatus': 0,
+      // 'pageNum': pageNum,
+      // 'pageSize': pageSize,
+      // 'completeStatus': 0,
       'trainEntryCode': widget.trainEntryCode,
-      'repairName': Global.profile.permissions?.user.nickName,
-      'status': 0,
+      // 'repairName': Global.profile.permissions?.user.nickName,
+      // 'status': 0,
     };
-    logger.i(widget.trainNumCode);
-    logger.i(widget.trainNum);
-    logger.i(widget.typeName);
-    logger.i(widget.typeCode);
+    // logger.i(widget.trainNumCode);
+    // logger.i(widget.trainNum);
+    // logger.i(widget.typeName);
+    // logger.i(widget.typeCode);
 
     try {
       var r =
-          await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
+          await ProductApi().getNeedToWorkJt28(queryParametrs: queryParameters);
       setState(() {
-        info = r;
-        sys28List = info['rows'];
-        total = info['total'] ?? 0;
-        isLoading = false;
+        // info = r;
+        sys28List = r;
+        // total = info['total'] ?? 0;
+        // isLoading = false;
       });
     } catch (e) {
       logger.e('获取机统28信息失败: $e');
@@ -307,21 +307,21 @@ class _JtShowPageState extends State<JtWorkList> {
                 ],
               ),
               // 添加分页信息显示和控制
-              if (total > 0)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('共 $total 条记录'),
-                      Text('第 $pageNum / ${((total - 1) ~/ pageSize) + 1} 页'),
-                    ],
-                  ),
-                ),
-              //展示列表信息
-              if (isLoading)
-                const Center(child: CircularProgressIndicator())
-              else if (sys28List.isNotEmpty)
+              // if (total > 0)
+              //   Padding(
+              //     padding: const EdgeInsets.all(8.0),
+              //     child: Row(
+              //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //       children: [
+              //         Text('共 $total 条记录'),
+              //         Text('第 $pageNum / ${((total - 1) ~/ pageSize) + 1} 页'),
+              //       ],
+              //     ),
+              //   ),
+              // //展示列表信息
+              // if (isLoading)
+              //   const Center(child: CircularProgressIndicator())
+              if (sys28List.isNotEmpty)
                 Column(
                   children: [
                     ListView.builder(

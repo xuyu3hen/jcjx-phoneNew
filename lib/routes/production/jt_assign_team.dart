@@ -82,12 +82,12 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
-      'pageSize': pageSize,
-      'status': 0,
+      // 'pageNum': pageNum,
+      // 'pageSize': pageSize,
+      // 'status': 0,
       'trainEntryCode': widget.trainEntryCode,
-      'completeStatus': 1,
-      'deptId': Global.profile.permissions?.user.dept?.deptId
+      // 'completeStatus': 1,
+      // 'deptId': Global.profile.permissions?.user.dept?.deptId
     };
     logger.i(widget.trainNumCode);
     logger.i(widget.trainNum);
@@ -96,7 +96,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
 
     try {
       var r =
-          await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
+          await ProductApi().getNeedToDispatchInspectionJt28(queryParametrs: queryParameters);
       setState(() {
         info = r;
         sys28List = info['rows'];
