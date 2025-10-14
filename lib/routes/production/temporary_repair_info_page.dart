@@ -1,4 +1,3 @@
-
 import 'package:intl/intl.dart';
 import '../../index.dart';
 
@@ -6,13 +5,11 @@ class TemporaryRepairInfoPage extends StatefulWidget {
   const TemporaryRepairInfoPage({super.key});
 
   @override
-  State createState() =>
-      _TemporaryRepairInfoPageState();
+  State createState() => _TemporaryRepairInfoPageState();
 }
 
 class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
- 
-    // 创建 Logger 实例
+  // 创建 Logger 实例
   var logger = AppLogger.logger;
   // 排序数字
   int _sort = 1;
@@ -700,7 +697,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                     ),
 
                     const SizedBox(height: 16.0),
-                                      
+
                     // 修次下拉框
                     DropdownButtonFormField<String>(
                       value: _selectedRepairTime,
@@ -727,7 +724,6 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                                 break; // 找到匹配项后退出循环
                               }
                             }
-                            
                           });
                         }
                       },
@@ -851,7 +847,6 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
                               setState(() {
                                 if (value != null) {
                                   if (value) {
-                                  
                                     selectedEmployees.add(employee);
                                   } else {
                                     selectedEmployees.remove(employee);

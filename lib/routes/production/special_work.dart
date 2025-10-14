@@ -368,7 +368,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                                 // 使用新的可复用组件展示图片
                                                 PhotoPreviewDialog.show(
                                                     context,
-                                                    item['repairPicture'],
+                                                    item['repairPicture']??"",
                                                     ProductApi()
                                                         .getFaultVideoAndImage);
                                               },

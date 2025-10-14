@@ -928,7 +928,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 //   count: '1',
                 // ),
                 TaskCard(
-                  title: '待机统28作业',
+                  title: '待机统28作业内容',
                   subtitle: '机车机统28作业清单',
                   count:
                       '${numberInfo['completeJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
@@ -938,14 +938,23 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => JtWorkList(
+                          builder: (context) =>  
+                          // MutualPackageList(
+                          //       trainNum: widget.locoInfo?['trainNum'] ?? '',
+                          //       trainNumCode:
+                          //           widget.locoInfo?['trainNumCode'] ?? '',
+                          //       typeName: widget.locoInfo?['typeName'] ?? '',
+                          //       typeCode: widget.locoInfo?['typeCode'] ?? '',
+                          //       trainEntryCode: widget.locoInfo?['code'] ?? '',
+                          //     )
+                          JtWorkList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode:
-                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                trainNumCode:widget.locoInfo?['trainNumCode'] ?? '',
                                 typeName: widget.locoInfo?['typeName'] ?? '',
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                trainEntryCode: widget.locoInfo?['code'] ?? '',
-                              )),
+                                trainEntryCode: widget.locoInfo?['trainEntryCode'] ?? widget.locoInfo?['code'] ?? '',          
+                              )
+                              ),
                     ).then((value) {
                       // 只有当返回值为true时才刷新数据
                       if (value == true) {
@@ -964,7 +973,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => MutualPackageList(
+                          builder: (context) => 
+                          MutualPackageList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
                                 trainNumCode:
                                     widget.locoInfo?['trainNumCode'] ?? '',

@@ -395,11 +395,11 @@ class _JtShowPageState extends State<MutualWorkList> {
                                             child: ElevatedButton(
                                               onPressed: () async {
                                                 // 使用新的可复用组件展示图片
-                                                // PhotoPreviewDialog.show(
-                                                //     context,
-                                                //     item['repairPicture'],
-                                                //     ProductApi()
-                                                //         .getFaultVideoAndImage);
+                                                PhotoPreviewDialog.show(
+                                                    context,
+                                                    item['repairPicture']??"",
+                                                    ProductApi()
+                                                        .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,

@@ -467,6 +467,22 @@ class ProductApi extends AppApi {
     }
   }
 
+  // 机统28派工 tasks/locomotiveMainTenanceLogDO/getNeedToDispatchJt28
+  Future<dynamic> getNeedToDispatchJt28({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMainTenanceLogDO/getNeedToDispatchJt28",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
   // tasks/locomotiveMainTenanceLogDO/queryMutualInspectionJt28ByUserId
   Future<dynamic> queryMutualInspectionJt28ByUserId({
     Map<String, dynamic>? queryParametrs,

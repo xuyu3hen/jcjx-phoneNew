@@ -80,25 +80,25 @@ class _JtShowPageState extends State<JtWorkAssign> {
     });
 
     Map<String, dynamic> queryParameters = {
-      'pageNum': pageNum,
-      'pageSize': pageSize,
-      'status': 0,
+      // 'pageNum': pageNum,
+      // 'pageSize': pageSize,
+      // 'status': 0,
       'trainEntryCode': widget.trainEntryCode,
-      'teamName': Global.profile.permissions?.user.dept?.deptName
+      // 'teamName': Global.profile.permissions?.user.dept?.deptName
     };
-    logger.i(widget.trainNumCode);
-    logger.i(widget.trainNum);
-    logger.i(widget.typeName);
-    logger.i(widget.typeCode);
+    // logger.i(widget.trainNumCode);
+    // logger.i(widget.trainNum);
+    // logger.i(widget.typeName);
+    // logger.i(widget.typeCode);
 
     try {
       var r =
-          await ProductApi().selectRepairSys28(queryParametrs: queryParameters);
+          await ProductApi().getNeedToDispatchJt28(queryParametrs: queryParameters);
       setState(() {
-        info = r;
-        sys28List = info['rows'];
-        total = info['total'] ?? 0;
-        isLoading = false;
+        // info = r;
+        sys28List = r;
+        // total = info['total'] ?? 0;
+        // isLoading = false;
       });
     } catch (e) {
       logger.e('获取机统28信息失败: $e');
@@ -366,7 +366,7 @@ class _JtShowPageState extends State<JtWorkAssign> {
                                                 // 修复：直接调用PhotoPreviewDialog.show方法
                                                 PhotoPreviewDialog.show(
                                                     context,
-                                                    item['repairPicture'],
+                                                    item['repairPicture']??"",
                                                     ProductApi()
                                                         .getFaultVideoAndImage);
                                               },

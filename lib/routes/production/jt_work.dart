@@ -1,5 +1,6 @@
-import '../../index.dart';
+import 'package:jcjx_phone/routes/production/jt_startwork.dart';
 
+import '../../index.dart';
 
 //机统28作业列表
 class JtWorkList extends StatefulWidget {
@@ -120,19 +121,19 @@ class _JtShowPageState extends State<JtWorkList> {
     //初始化动力类型
     getDynamicType();
 
-    // ✅ 初始化施修情况控制器
+    // // ✅ 初始化施修情况控制器
     repairDetailsController = TextEditingController();
 
-    // 初始化分页相关变量
+    // // 初始化分页相关变量
     pageNum = 1;
     pageSize = 10;
     total = 0;
     isLoading = false;
 
-    // 初始化时加载第一页数据
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      getInfo();
-    });
+    // // 初始化时加载第一页数据
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    getInfo();
+    // });
 
     super.initState();
   }
@@ -358,7 +359,6 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
-// ... existing code ...
                                       Row(
                                         children: [
                                           Expanded(
@@ -367,7 +367,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                                 // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
                                                 PhotoPreviewDialog.show(
                                                     context,
-                                                    item['repairPicture'],
+                                                    item['repairPicture']??"",
                                                     ProductApi()
                                                         .getFaultVideoAndImage);
                                               },
@@ -423,7 +423,6 @@ class _JtShowPageState extends State<JtWorkList> {
                                           ),
                                         ],
                                       ),
-// ... existing code ...
                                     ],
                                   ),
                                 ),
@@ -446,20 +445,18 @@ class _JtShowPageState extends State<JtWorkList> {
                                             trainNum: widget.trainNum,
                                             repairScheme:
                                                 item['repairScheme'] ?? "",
-                                            trainNumCode: widget.trainNumCode,
-                                            typeCode: widget.typeCode,
-                                            code: item['code'],
+                                            trainNumCode:
+                                                widget.trainNumCode ?? "",
+                                            typeCode: widget.typeCode ?? "",
+                                            code: item['code'] ?? "",
                                             repairPicture:
-                                                item['repairPicture'],
+                                                item['repairPicture'] ?? "",
                                             processMainNode:
                                                 item['processMainNode'] ?? ""),
                                       ),
                                     );
                                     if (result == true) {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback((_) {
-                                        getInfo();
-                                      });
+                                      getInfo();
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(

@@ -167,348 +167,359 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('机统28-处置'),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. 机型 + 机车号 行
-            Row(
-              children: [
-                Expanded(
-                  child: _buildLabeledText(
-                    label: '机型',
-                    text: _model,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildLabeledText(
-                    label: '机车号',
-                    text: _trainNum,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // 2. 工序节点
-            _buildLabeledTextBlock(
-              label: '工序节点',
-              text: _processMainNode,
-              height: 60,
-            ),
-            // 2. 故障现象 文本域
-            _buildLabeledTextBlock(
-              label: '故障现象',
-              text: _faultPhenomenon,
-              height: 60,
-            ),
-            const SizedBox(height: 16),
-
-            // 3. 施修方案 文本域
-            _buildLabeledTextBlock(
-              label: '施修方案',
-              text: _repairPlan,
-              height: 60,
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
-                      PhotoPreviewDialog.show(context, widget.repairPicture,
-                          ProductApi().getFaultVideoAndImage);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                    child: const Text("查看故障视频及图片"),
-                  ),
-                ),
-              ],
-            ),
-
-            // 4. 加工方法 输入框
-            ZjcFormSelectCell(
-              title: "加工方法",
-              text: dynamicMethodSelected["dictName"],
-              hintText: "请选择",
-              showRedStar: true,
-              clickCallBack: () {
-                if (_processMethodList.isEmpty) {
-                  showToast("无动力类型选择");
-                } else {
-                  ZjcCascadeTreePicker.show(
-                    context,
-                    data: _processMethodList,
-                    labelKey: 'dictName',
-                    valueKey: 'code',
-                    childrenKey: 'children',
-                    title: "选择动力类型",
-                    clickCallBack: (selectItem, selectArr) {
-                      logger.i(selectArr);
-                      setState(() {
-                        dynamicMethodSelected["code"] = selectItem["code"];
-                        dynamicMethodSelected["dictName"] =
-                            selectItem["dictName"];
-                        logger.i(dynamicMethodSelected);
-                      });
-                    },
-                  );
-                }
-              },
-            ),
-
-            const SizedBox(height: 16),
-
-            // 5. 施修情况（红色标签 + 文本域）
-            Column(
+    return WillPopScope(
+        onWillPop: () async {
+          // 保存数据并返回true允许退出
+          return true;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('机统28-处置'),
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '施修情况',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  padding: const EdgeInsets.all(8),
-                  height: 120,
-                  child: TextField(
-                    controller: _repairSituationController,
-                    maxLines: null, // 支持多行
-                    expands: true, // 填充父容器高度
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '请输入施修情况...',
+                // 1. 机型 + 机车号 行
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildLabeledText(
+                        label: '机型',
+                        text: _model,
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // 6. 修复视频及图片（占位区域）
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
-                  child: Text(
-                    '施修情况图片',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildLabeledText(
+                        label: '机车号',
+                        text: _trainNum,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  margin: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.all(Radius.circular(20)),
-                      border: Border.all(color: Colors.brown)),
-                  child: ZjcAssetPicker(
-                    assetType: APC.AssetType.imageAndVideo,
-                    maxAssets: 9,
-                    selectedAssets: assestPics,
-                    // bgColor: Colors.grey,
-                    callBack: (assetEntityList) async {
-                      logger.i('assetEntityList-------------');
-                      logger.i(assetEntityList);
-                      if (assetEntityList.isNotEmpty) {
-                        // 清空之前的文件列表
-                        List<File> files = [];
+                const SizedBox(height: 16),
+                // 2. 工序节点
+                _buildLabeledTextBlock(
+                  label: '工序节点',
+                  text: _processMainNode,
+                  height: 60,
+                ),
+                // 2. 故障现象 文本域
+                _buildLabeledTextBlock(
+                  label: '故障现象',
+                  text: _faultPhenomenon,
+                  height: 60,
+                ),
+                const SizedBox(height: 16),
 
-                        // 处理所有选定的资源（图片和视频）
-                        for (var asset in assetEntityList) {
-                          var file = await asset.file;
-                          if (file != null) {
-                            files.add(file);
+                // 3. 施修方案 文本域
+                _buildLabeledTextBlock(
+                  label: '施修方案',
+                  text: _repairPlan,
+                  height: 60,
+                ),
+                const SizedBox(height: 16),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
+                          PhotoPreviewDialog.show(context, widget.repairPicture??"",
+                              ProductApi().getFaultVideoAndImage);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
+                        child: const Text("查看故障视频及图片"),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // 4. 加工方法 输入框
+                ZjcFormSelectCell(
+                  title: "加工方法",
+                  text: dynamicMethodSelected["dictName"],
+                  hintText: "请选择",
+                  showRedStar: true,
+                  clickCallBack: () {
+                    if (_processMethodList.isEmpty) {
+                      showToast("无动力类型选择");
+                    } else {
+                      ZjcCascadeTreePicker.show(
+                        context,
+                        data: _processMethodList,
+                        labelKey: 'dictName',
+                        valueKey: 'code',
+                        childrenKey: 'children',
+                        title: "选择动力类型",
+                        clickCallBack: (selectItem, selectArr) {
+                          logger.i(selectArr);
+                          setState(() {
+                            dynamicMethodSelected["code"] = selectItem["code"];
+                            dynamicMethodSelected["dictName"] =
+                                selectItem["dictName"];
+                            logger.i(dynamicMethodSelected);
+                          });
+                        },
+                      );
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // 5. 施修情况（红色标签 + 文本域）
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '施修情况',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      height: 120,
+                      child: TextField(
+                        controller: _repairSituationController,
+                        maxLines: null, // 支持多行
+                        expands: true, // 填充父容器高度
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: '请输入施修情况...',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 6. 修复视频及图片（占位区域）
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(10, 10, 0, 5),
+                      child: Text(
+                        '施修情况图片',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(20)),
+                          border: Border.all(color: Colors.brown)),
+                      child: ZjcAssetPicker(
+                        assetType: APC.AssetType.imageAndVideo,
+                        maxAssets: 9,
+                        selectedAssets: assestPics,
+                        // bgColor: Colors.grey,
+                        callBack: (assetEntityList) async {
+                          logger.i('assetEntityList-------------');
+                          logger.i(assetEntityList);
+                          if (assetEntityList.isNotEmpty) {
+                            // 清空之前的文件列表
+                            List<File> files = [];
+
+                            // 处理所有选定的资源（图片和视频）
+                            for (var asset in assetEntityList) {
+                              var file = await asset.file;
+                              if (file != null) {
+                                files.add(file);
+                              }
+                            }
+
+                            setState(() {
+                              assestPics = assetEntityList;
+                              faultPics = files;
+                            });
+                          } else {
+                            setState(() {
+                              faultPics = [];
+                              assestPics = [];
+                            });
                           }
-                        }
-
-                        setState(() {
-                          assestPics = assetEntityList;
-                          faultPics = files;
-                        });
-                      } else {
-                        setState(() {
-                          faultPics = [];
-                          assestPics = [];
-                        });
-                      }
-                      logger.i('assetEntityList-------------');
-                    },
-                  ),
+                          logger.i('assetEntityList-------------');
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-            // 7. 申请专互检 按钮
+                // 7. 申请专互检 按钮
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
 
-            // 7. 申请专互检 按钮
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      var submit;
-                      List<Map<String, dynamic>> l = [];
-                      try {
-                        SmartDialog.showLoading();
-                        Map<String, dynamic> queryParameters = {
-                          "code": widget.code,
-                          "processMethod": dynamicMethodSelected['dictName'],
-                          "repairStatus": _repairSituationController.text,
-                          "completeStatus": 2
-                        };
-                        logger.i(queryParameters);
-                        if (faultPics.isNotEmpty) {
-                          await JtApi().uploadMixJt(imagedata: faultPics).then(
-                                (value) async => {
-                                  if (value['data'] != null &&
-                                      value['data'] != "")
-                                    {
-                                      queryParameters["repairEndPicture"] =
-                                          value['data'],
-                                      l.insert(0, queryParameters),
-                                      submit = await JtApi()
-                                          .uploadJt28(queryParametrs: l),
-                                      if (submit['data'] != null)
+                // 7. 申请专互检 按钮
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          var submit;
+                          List<Map<String, dynamic>> l = [];
+                          try {
+                            SmartDialog.showLoading();
+                            Map<String, dynamic> queryParameters = {
+                              "code": widget.code,
+                              "processMethod":
+                                  dynamicMethodSelected['dictName'],
+                              "repairStatus": _repairSituationController.text,
+                              "completeStatus": 2
+                            };
+                            logger.i(queryParameters);
+                            if (faultPics.isNotEmpty) {
+                              await JtApi()
+                                  .uploadMixJt(imagedata: faultPics)
+                                  .then(
+                                    (value) async => {
+                                      if (value['data'] != null &&
+                                          value['data'] != "")
                                         {
-                                          showToast("${submit['data']}"),
+                                          queryParameters["repairEndPicture"] =
+                                              value['data'],
+                                          l.insert(0, queryParameters),
+                                          submit = await JtApi()
+                                              .uploadJt28(queryParametrs: l),
+                                          if (submit['data'] != null)
+                                            {
+                                              showToast("${submit['data']}"),
+                                              // SmartDialog.dismiss(status: SmartStatus.loading)
+                                            }
+                                        }
+                                      else
+                                        {
+                                          showToast("图片上传失败，请检查网络连接"),
                                           // SmartDialog.dismiss(status: SmartStatus.loading)
                                         }
-                                    }
-                                  else
-                                    {
-                                      showToast("图片上传失败，请检查网络连接"),
-                                      // SmartDialog.dismiss(status: SmartStatus.loading)
-                                    }
-                                },
-                              );
-                        } else {
-                          logger.i("$queryParameters");
-                          l.insert(0, queryParameters);
-                          submit = await JtApi().uploadJt28(queryParametrs: l);
-                          if (submit["code"] == "S_T_S003") {
-                            showToast("${submit['message']}");
-                            // SmartDialog.dismiss(status: SmartStatus.loading);
-                          } else {
-                            showToast("机统28提报失败，请检查网络连接");
-                            // SmartDialog.dismiss(status: SmartStatus.loading);
+                                    },
+                                  );
+                            } else {
+                              logger.i("$queryParameters");
+                              l.insert(0, queryParameters);
+                              submit =
+                                  await JtApi().uploadJt28(queryParametrs: l);
+                              if (submit["code"] == "S_T_S003") {
+                                showToast("${submit['message']}");
+                                // SmartDialog.dismiss(status: SmartStatus.loading);
+                              } else {
+                                showToast("机统28提报失败，请检查网络连接");
+                                // SmartDialog.dismiss(status: SmartStatus.loading);
+                              }
+                            }
+                          } on DioException catch (e) {
+                            showToast("故障提报失败");
+                            logger.i(e.toString());
+                          } finally {
+                            SmartDialog.dismiss(status: SmartStatus.loading);
+                            if (submit['code'] == "S_T_S003") {
+                              SmartDialog.show(
+                                  clickMaskDismiss: false,
+                                  builder: (con) {
+                                    return Container(
+                                      height: 150,
+                                      width: 200,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: <Widget>[
+                                          const Text(
+                                            "机统28提报成功",
+                                            style: TextStyle(fontSize: 18),
+                                          ),
+                                          ConstrainedBox(
+                                            constraints:
+                                                const BoxConstraints.expand(
+                                                    height: 30, width: 160),
+                                            child: ElevatedButton.icon(
+                                              onPressed: () {
+                                                SmartDialog.dismiss().then(
+                                                    (value) =>
+                                                        Navigator.of(context)
+                                                            .pop());
+                                              },
+                                              label: const Text('确定'),
+                                              icon: const Icon(Icons
+                                                  .system_security_update_good_sharp),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  });
+                            }
                           }
-                        }
-                      } on DioException catch (e) {
-                        showToast("故障提报失败");
-                        logger.i(e.toString());
-                      } finally {
-                        SmartDialog.dismiss(status: SmartStatus.loading);
-                        if (submit['code'] == "S_T_S003") {
+                        },
+                        child: const Text('销活申请'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          //点击申请放行进行弹窗
                           SmartDialog.show(
                               clickMaskDismiss: false,
                               builder: (con) {
-                                return Container(
-                                  height: 150,
-                                  width: 200,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: <Widget>[
-                                      const Text(
-                                        "机统28提报成功",
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                      ConstrainedBox(
-                                        constraints:
-                                            const BoxConstraints.expand(
-                                                height: 30, width: 160),
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            SmartDialog.dismiss().then(
-                                                (value) => Navigator.of(context)
-                                                    .pop());
-                                          },
-                                          label: const Text('确定'),
-                                          icon: const Icon(Icons
-                                              .system_security_update_good_sharp),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                return ApplyReleaseDialog(
+                                  extraParams: {
+                                    'trainNum': widget.trainNum,
+                                    'trainNumCode': widget.trainNumCode,
+                                    'typeName': widget.typeName,
+                                    'typeCode': widget.typeCode,
+                                    'trainEntryCode': widget.trainEntryCode,
+                                    'repairScheme': widget.repairScheme,
+                                    'faultDescription': widget.faultDescription,
+                                    'code': widget.code,
+                                    'repairPicture': widget.repairPicture,
+                                    'processMainNode': widget.processMainNode,
+                                  },
+                                  onConfirm: () {
+                                    // 确认操作
+                                    SmartDialog.dismiss();
+                                    // 这里可以添加确认后的逻辑
+                                  },
+                                  onCancel: () {
+                                    // 取消操作
+                                    SmartDialog.dismiss();
+                                  },
                                 );
                               });
-                        }
-                      }
-                    },
-                    child: const Text('销活申请'),
+                        },
+                        child: const Text('申请放行'),
+                      ),
+                    ],
                   ),
-                  ElevatedButton(
-                    onPressed: () {
-                      //点击申请放行进行弹窗
-                      SmartDialog.show(
-                          clickMaskDismiss: false,
-                          builder: (con) {
-                            return ApplyReleaseDialog(
-                              extraParams: {
-                                'trainNum': widget.trainNum,
-                                'trainNumCode': widget.trainNumCode,
-                                'typeName': widget.typeName,
-                                'typeCode': widget.typeCode,
-                                'trainEntryCode': widget.trainEntryCode,
-                                'repairScheme': widget.repairScheme,
-                                'faultDescription': widget.faultDescription,
-                                'code': widget.code,
-                                'repairPicture': widget.repairPicture,
-                                'processMainNode': widget.processMainNode,
-                              },
-                              onConfirm: () {
-                                // 确认操作
-                                SmartDialog.dismiss();
-                                // 这里可以添加确认后的逻辑
-                              },
-                              onCancel: () {
-                                // 取消操作
-                                SmartDialog.dismiss();
-                              },
-                            );
-                          });
-                    },
-                    child: const Text('申请放行'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        ));
   }
 
   void applyWorkRelease() async {

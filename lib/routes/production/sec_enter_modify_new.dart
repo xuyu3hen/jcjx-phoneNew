@@ -226,8 +226,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   void getStopLocation() async {
     try {
       var r = await ProductApi().getstopLocation({
-        'pageNum': 1,
-        'pageSize': 10,
+        'pageNum': 0,
+        'pageSize': 0,
       });
       List<Map<String, dynamic>> processedStopLocations = [];
       if (r.rows != null && r.rows!.isNotEmpty) {
