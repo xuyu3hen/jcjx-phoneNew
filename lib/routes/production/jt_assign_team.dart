@@ -280,7 +280,6 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(photo['fileName'] ?? '图片预览'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -472,7 +471,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                                               mainAxisSize: MainAxisSize.min,
                                                               children: photoList.map((photo) {
                                                                 return ListTile(
-                                                                  title: Text(photo['fileName'] ?? ''),
+                                title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
                                                                   onTap: () {
                                                                     // TODO: 实现图片预览功能
                                                                     // 这里可以导航到图片预览页面或者显示图片预览对话框

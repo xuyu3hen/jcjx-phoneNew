@@ -1783,6 +1783,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   List<Map<String, dynamic>> taskContentItemList = [];
 
+      List<Map<String, dynamic>> taskInstructContentList = [];
+
   @override
   void initState() {
     if (widget.packageInfo?["taskCertainPackageList"] is List) {
@@ -1794,19 +1796,18 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     }
 
     _currentIndex = widget.count;
-    logger.i(packagePoints);
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    int number = packagePoints.length;
+
 
     if (packagePoints.isNotEmpty) {
       if (_currentIndex < packagePoints.length) {
         currentPackagePoint = packagePoints[_currentIndex];
       }
     }
-    List<Map<String, dynamic>> taskInstructContentList = [];
+    
+    // 重新构建taskContentItemList，确保它始终基于当前项点的内容
+    taskContentItemList = [];
+
     if (currentPackagePoint['taskInstructContentList'] != null &&
         currentPackagePoint['taskInstructContentList'] is List) {
       taskInstructContentList =
@@ -1825,6 +1826,12 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             .toList());
       }
     }
+    logger.i(packagePoints);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+       int number = packagePoints.length;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -1998,7 +2005,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
             ),
             const SizedBox(height: 24),
             // 展示taskContentItemList
-
             taskContentItemList.isEmpty
                 ? const Center(
                     child: Text(''),
@@ -2053,45 +2059,76 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                         ),
                       );
                     }),
+
             const SizedBox(height: 20),
-            // 6. 进入下一项按钮
+            // 6. 导航按钮区域
             SizedBox(
               width: double.infinity,
               child: Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _files.isEmpty
-                          ? null
-                          : () async {
-                            int i = widget.index?? 0;
-                              Global.packageList[i]['completeCount'] = _currentIndex+1;
-                              // 完成所有操作后返回成功结果
-                              await upLoadFileList();
-                              await saveContentItem();
-                              await completePackage();
-                              // 将图片清空
-                              _files.clear();
-                              if (packagePoints != null &&
-                                  _currentIndex < packagePoints!.length - 1) {
-                                // 如果还有下一项，则更新索引以显示下一项
-                                setState(() {
-                                  _currentIndex++;
-                                });
-                              } else {
-                                debugPrint("已完成所有项");
-                                Navigator.pop(context, true);
-                              }
-                            }, // 当没有图片时禁用按钮
-                      child: _currentIndex < packagePoints.length - 1
-                          ? const Text("进入下一项")
-                          : const Text("完成"),
-                    ),
+                  Row(
+                    children: [
+                      // 上一项按钮
+                      Expanded(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _currentIndex > 0
+                                ? () {
+                                    setState(() {
+                                      _currentIndex--;
+                                    });
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey,
+                            ),
+                            child: const Text("上一项"),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // 下一项/完成按钮
+                      Expanded(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _files.isEmpty
+                                ? null
+                                : () async {
+                                    int i = widget.index ?? 0;
+                                    Global.packageList[i]['completeCount'] =
+                                        _currentIndex + 1;
+                                    // 完成所有操作后返回成功结果
+                                    await upLoadFileList();
+                                    await saveContentItem();
+                                    await completePackage();
+                                    // 将图片清空
+                                    _files.clear();
+                                    if (packagePoints != null &&
+                                        _currentIndex <
+                                            packagePoints!.length - 1) {
+                                      // 如果还有下一项，则更新索引以显示下一项
+                                      setState(() {
+                                        _currentIndex++;
+                                      });
+                                    } else {
+                                      debugPrint("已完成所有项");
+                                      Navigator.pop(context, true);
+                                    }
+                                  }, // 当没有图片时禁用按钮
+                            child: _currentIndex < packagePoints.length - 1
+                                ? const Text("进入下一项")
+                                : const Text("完成"),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+// ... existing code ...
           ],
         ),
       ),
