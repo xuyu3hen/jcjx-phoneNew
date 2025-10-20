@@ -82,23 +82,7 @@ class InspectionPackagePage extends StatefulWidget {
 }
 
 class _InspectionPackagePageState extends State<InspectionPackagePage> {
-  // 模拟机车数据
-  final Locomotive _locomotive = Locomotive(
-    id: "HXD3C 0016",
-    inTime: DateTime(2023, 2, 24, 14, 58, 15),
-    track: "J2道机",
-    planTrain: "无",
-    planOut: "无",
-    status: "整备中",
-  );
 
-  // 模拟作业项数据
-  final List<TaskItem> _tasks = [
-    TaskItem(name: "车内2", completed: 0, total: 16, userStatus: "未申领"),
-    TaskItem(name: "车底", completed: 0, total: 8, userStatus: "未申领"),
-    TaskItem(name: "车外", completed: 0, total: 15, userStatus: "未申领"),
-    TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
-  ];
 
   List<Map<String, dynamic>> packageListUse = [];
   var logger = AppLogger.logger;
@@ -296,7 +280,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮 - 仅在任务未完成时显示
-         if (task['complete'] != '1')
+         if (task['complete'] == '0')
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();
@@ -311,8 +295,6 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                       ),
                     ),
                   );
-
-   
                   // 检查多种可能的返回值
                   if (result == true || result == null) {
                     // 刷新数据，null表示页面被直接关闭
@@ -498,7 +480,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Text(
-                      currentPackagePoint['name']?.toString() ?? '未知项点',
+                      currentPackagePoint['name']?.toString() ?? '',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -680,7 +662,6 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                       child: ElevatedButton(
                         onPressed:
                             _files.isEmpty ? null : () async {
-                              
                               // 完成所有操作后返回成功结果
                               await upLoadFileList();
                               await saveContentItem();

@@ -8,6 +8,7 @@ import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
 import 'mutual_work.dart';
+import 'package:path/path.dart' as path;
 
 /// 主页面：机车检修
 class TrainRepairPage extends StatefulWidget {
@@ -858,8 +859,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
     getNumber();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -938,23 +937,26 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>  
-                          // MutualPackageList(
-                          //       trainNum: widget.locoInfo?['trainNum'] ?? '',
-                          //       trainNumCode:
-                          //           widget.locoInfo?['trainNumCode'] ?? '',
-                          //       typeName: widget.locoInfo?['typeName'] ?? '',
-                          //       typeCode: widget.locoInfo?['typeCode'] ?? '',
-                          //       trainEntryCode: widget.locoInfo?['code'] ?? '',
-                          //     )
-                          JtWorkList(
+                          builder: (context) =>
+                              // MutualPackageList(
+                              //       trainNum: widget.locoInfo?['trainNum'] ?? '',
+                              //       trainNumCode:
+                              //           widget.locoInfo?['trainNumCode'] ?? '',
+                              //       typeName: widget.locoInfo?['typeName'] ?? '',
+                              //       typeCode: widget.locoInfo?['typeCode'] ?? '',
+                              //       trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              //     )
+                              JtWorkList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode:widget.locoInfo?['trainNumCode'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
                                 typeName: widget.locoInfo?['typeName'] ?? '',
                                 typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                trainEntryCode: widget.locoInfo?['trainEntryCode'] ?? widget.locoInfo?['code'] ?? '',          
-                              )
-                              ),
+                                trainEntryCode:
+                                    widget.locoInfo?['trainEntryCode'] ??
+                                        widget.locoInfo?['code'] ??
+                                        '',
+                              )),
                     ).then((value) {
                       // 只有当返回值为true时才刷新数据
                       if (value == true) {
@@ -973,8 +975,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => 
-                          MutualPackageList(
+                          builder: (context) => MutualPackageList(
                                 trainNum: widget.locoInfo?['trainNum'] ?? '',
                                 trainNumCode:
                                     widget.locoInfo?['trainNumCode'] ?? '',
@@ -1152,7 +1153,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         //   ),
         // ),
         // const SizedBox(width: 8),
-// ... existing code ...
         Expanded(
           child: ElevatedButton(
             onPressed: () {
@@ -1177,7 +1177,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
             child: const Text('检修调度命令'),
           ),
         ),
-// ... existing code ...
         const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(
@@ -1426,8 +1425,238 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   List<Map<String, dynamic>> packageList = [];
 
+  // 在状态类中添加变量
+  List<Map<String, dynamic>> pendingUploadData = [];
+  bool isUploading = false;
+
+// 添加方法用于加载本地待上传数据
+  Future<void> _loadPendingUploadData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? pendingDataString = prefs.getString('pending_upload_data');
+      if (pendingDataString != null) {
+        List<dynamic> pendingDataList = json.decode(pendingDataString);
+        setState(() {
+          pendingUploadData = pendingDataList
+              .map((item) => item as Map<String, dynamic>)
+              .toList();
+        });
+      }
+    } catch (e) {
+      logger.e('加载待上传数据失败: $e');
+    }
+  }
+
+// 添加方法用于清除已上传的数据
+  Future<void> _clearUploadedData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_upload_data');
+      setState(() {
+        pendingUploadData = [];
+      });
+      SmartDialog.showToast('已上传数据已清除');
+    } catch (e) {
+      logger.e('清除已上传数据失败: $e');
+    }
+  }
+
+// 添加方法用于上传所有待上传的数据
+// 修改上传方法以处理视频
+  Future<void> _uploadAllPendingData() async {
+    if (pendingUploadData.isEmpty) {
+      SmartDialog.showToast('没有需要上传的数据');
+      return;
+    }
+
+    setState(() {
+      isUploading = true;
+    });
+
+    try {
+      List<Map<String, dynamic>> failedUploads = [];
+
+      for (int i = 0; i < pendingUploadData.length; i++) {
+        var data = pendingUploadData[i];
+
+        try {
+          SmartDialog.showLoading(msg: '正在上传第${i + 1}项数据...');
+
+          // 1. 上传图片和视频
+          List<File> imageFiles = [];
+          List<File> videoFiles = [];
+
+          // 处理所有媒体文件
+          if (data['allMedia'] != null && data['allMedia'] is List) {
+            for (var media in data['allMedia']) {
+              if (media is Map<String, dynamic>) {
+                File file = File(media['path']);
+                if (media['type'] == 'video') {
+                  videoFiles.add(file);
+                } else {
+                  imageFiles.add(file);
+                }
+              }
+            }
+          }
+
+          // 上传图片
+          if (imageFiles.isNotEmpty) {
+            await ProductApi().uploadCertainPackageImg(
+              queryParametrs: {
+                'certainPackageCodeList': data['packageCode'],
+              },
+              imagedatas: imageFiles,
+            );
+          }
+
+          // 上传视频（需要后端支持）
+          if (videoFiles.isNotEmpty) {
+            await ProductApi().uploadCertainPackageImg(
+              queryParametrs: {
+                'certainPackageCodeList': data['packageCode'],
+              },
+              imagedatas: videoFiles,
+            );
+            logger.i('视频文件待上传: ${videoFiles.length}个');
+          }
+
+          // 2. 保存作业项数据
+          if (data['taskContentItems'] != null &&
+              data['taskContentItems'] is List) {
+            List<Map<String, dynamic>> taskContentItems =
+                (data['taskContentItems'] as List)
+                    .map((item) => item as Map<String, dynamic>)
+                    .toList();
+
+            if (taskContentItems.isNotEmpty) {
+              await ProductApi().saveOrUpdateTaskContentItem(taskContentItems);
+            }
+          }
+
+          // 3. 完成包装
+          List<Map<String, dynamic>> completeParams = [
+            {
+              'code': data['packageCode'],
+              'completeTime': data['completeTime'],
+            }
+          ];
+
+          await ProductApi().finishCertainPackage(completeParams);
+
+          SmartDialog.dismiss();
+          SmartDialog.showToast('第${i + 1}项数据上传成功');
+        } catch (e) {
+          SmartDialog.dismiss();
+          logger.e('上传第${i + 1}项数据失败: $e');
+          SmartDialog.showToast('第${i + 1}项数据上传失败');
+          failedUploads.add(data);
+        }
+      }
+
+      if (failedUploads.isEmpty) {
+        // 所有数据上传成功，清除本地存储
+        await _clearUploadedData();
+        SmartDialog.showToast('所有数据上传完成');
+      } else {
+        // 部分数据上传失败，保存失败的数据
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        String failedDataString = json.encode(failedUploads);
+        await prefs.setString('pending_upload_data', failedDataString);
+
+        setState(() {
+          pendingUploadData = failedUploads;
+        });
+
+        SmartDialog.showToast('部分数据上传失败，已保存失败项');
+      }
+    } catch (e) {
+      SmartDialog.dismiss();
+      logger.e('上传数据过程中发生错误: $e');
+      SmartDialog.showToast('上传失败，请重试');
+    } finally {
+      setState(() {
+        isUploading = false;
+      });
+    }
+  }
+
+// 在页面构建中添加显示待上传数据的UI组件
+  Widget _buildPendingUploadSection() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '待上传数据',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (pendingUploadData.isEmpty)
+              const Center(
+                child: Text('暂无待上传数据'),
+              )
+            else ...[
+              Text('共 ${pendingUploadData.length} 项数据待上传'),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  itemCount: pendingUploadData.length,
+                  itemBuilder: (context, index) {
+                    var data = pendingUploadData[index];
+                    return Card(
+                      child: ListTile(
+                        title: Text(data['packageName']?.toString() ?? '未知项点'),
+                        subtitle: Text(
+                            '照片或视频: ${data['photos'] != null ? (data['photos'] as List).length : 0}张'),
+                        trailing: Text(
+                          DateFormat('MM-dd HH:mm').format(
+                              DateTime.fromMillisecondsSinceEpoch(
+                                  data['timestamp'] ??
+                                      DateTime.now().millisecondsSinceEpoch)),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isUploading ? null : _uploadAllPendingData,
+                      child: isUploading
+                          ? const Text('上传中...')
+                          : const Text('上传所有数据'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: isUploading ? null : _clearUploadedData,
+                      child: const Text('清除已上传数据'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   void initState() {
     getWorkPackage();
+    _loadPendingUploadData();
   }
 
   void getWorkPackage() async {
@@ -1444,6 +1673,13 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ? item
                 : Map<String, dynamic>.from(item as Map))
             .toList();
+        for (var item in Global.packageList) {
+          int i = 0;
+          // item['taskCertainPackageList']
+          for (var v in item['taskCertainPackageList']) {
+            if (v['complete'] == 0) {}
+          }
+        }
       });
     }
   }
@@ -1451,7 +1687,6 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -1478,16 +1713,14 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             // 1. 机车基本信息
             _buildTrainInfo(),
             const SizedBox(height: 16),
+            _buildPendingUploadSection(),
 
-            // 2. 作业项列表
-// ... existing code ...
             // 2. 作业项列表
             ...Global.packageList.asMap().entries.map((entry) {
               int index = entry.key;
               Map<String, dynamic> task = entry.value;
               return _buildTaskItem(task, index);
             }).toList(),
-// ... existing code ...
           ],
         ),
       ),
@@ -1642,13 +1875,15 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => InspectionVertexPage(
-                          locoInfo: widget.locoInfo,
-                          packageInfo: task,
-                          count: 0,
-                          index: index,),
+                        locoInfo: widget.locoInfo,
+                        packageInfo: task,
+                        count: 0,
+                        index: index,
+                      ),
                     ),
                   );
                   if (result == true) {
+                    _loadPendingUploadData();
                     // getWorkPackage();
                     setState(() {});
                   }
@@ -1667,16 +1902,16 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => InspectionVertexPage(
-                          locoInfo: widget.locoInfo,
-                          packageInfo: task,
-                          count: task['completeCount'],
-                          index: index,),
+                        locoInfo: widget.locoInfo,
+                        packageInfo: task,
+                        count: task['completeCount'],
+                        index: index,
+                      ),
                     ),
                   );
                   if (result == true) {
-                    setState(() {
-                      
-                    });
+                    setState(() {});
+                    _loadPendingUploadData();
                     // getWorkPackage();
                   }
                 },
@@ -1751,7 +1986,9 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 class InspectionVertexPage extends StatefulWidget {
   Map<String, dynamic>? packageInfo = {};
   Map<String, dynamic>? locoInfo = {};
+  //index代表第几个作业包
   int? index;
+  //count代表完成的第几个
   int count;
 
   InspectionVertexPage(
@@ -1783,7 +2020,10 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   List<Map<String, dynamic>> taskContentItemList = [];
 
-      List<Map<String, dynamic>> taskInstructContentList = [];
+  List<Map<String, dynamic>> taskInstructContentList = [];
+
+// 新增的变量和方法
+  List<Map<String, dynamic>> pendingUploadData = [];
 
   @override
   void initState() {
@@ -1797,14 +2037,12 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
     _currentIndex = widget.count;
 
-
-
     if (packagePoints.isNotEmpty) {
       if (_currentIndex < packagePoints.length) {
         currentPackagePoint = packagePoints[_currentIndex];
       }
     }
-    
+
     // 重新构建taskContentItemList，确保它始终基于当前项点的内容
     taskContentItemList = [];
 
@@ -1816,7 +2054,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               .map((item) => item as Map<String, dynamic>)
               .toList();
     }
-
     for (Map<String, dynamic> item in taskInstructContentList) {
       if (item['taskContentItemList'] != null &&
           item['taskContentItemList'] is List) {
@@ -1827,11 +2064,43 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       }
     }
     logger.i(packagePoints);
+    _loadPendingUploadData();
   }
+
+  // 从本地存储加载待上传数据
+  Future<void> _loadPendingUploadData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? pendingDataString = prefs.getString('pending_upload_data');
+      if (pendingDataString != null) {
+        List<dynamic> pendingDataList = json.decode(pendingDataString);
+        setState(() {
+          pendingUploadData = pendingDataList
+              .map((item) => item as Map<String, dynamic>)
+              .toList();
+        });
+      }
+    } catch (e) {
+      logger.e('加载待上传数据失败: $e');
+    }
+  }
+
+// 保存待上传数据到本地
+  Future<void> _savePendingUploadData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String pendingDataString = json.encode(pendingUploadData);
+      await prefs.setString('pending_upload_data', pendingDataString);
+    } catch (e) {
+      logger.e('保存待上传数据失败: $e');
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
-       int number = packagePoints.length;
+    int number = packagePoints.length;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -1841,13 +2110,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
         actions: [
-          // TextButton(
-          //   onPressed: _reportJT6,
-          //   child: const Text(
-          //     "报机统28",
-          //     style: TextStyle(color: Colors.black),
-          //   ),
-          // ),
+
         ],
       ),
       body: SingleChildScrollView(
@@ -1951,7 +2214,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                       ),
                       const Spacer(),
                       IconButton(
-                        onPressed: _takePhoto, // 拍照逻辑（可扩展）
+                        onPressed: _pickMedia, // 拍照逻辑（可扩展）
                         icon: const Icon(
                           Icons.camera_alt,
                           color: Colors.blue,
@@ -1962,33 +2225,59 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                   const SizedBox(height: 8),
 
                   // 照片列表（模拟展示）
+
                   if (_files.isNotEmpty)
                     Wrap(
                       spacing: 8,
-                      children: _files.map((photo) {
+                      children: _files.map((media) {
+                        bool isVideo = _videos.contains(media);
+
                         return Stack(
                           children: [
-                            // 照片占位（实际可替换为Image）
-
                             Container(
                               width: 80,
                               height: 80,
-                              color: Colors.black,
-                              alignment: Alignment.center,
-                              child: Image.file(
-                                File(photo.path),
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: isVideo
+                                    ? Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          // 视频缩略图或默认背景
+                                          Container(
+                                            color: Colors.black12,
+                                            child: const Icon(
+                                              Icons.video_library,
+                                              size: 30,
+                                              color: Colors.blue,
+                                            ),
+                                          ),
+                                          // 播放图标
+                                          const Icon(
+                                            Icons.play_circle_fill,
+                                            size: 30,
+                                            color: Colors.white70,
+                                          ),
+                                        ],
+                                      )
+                                    : Image.file(
+                                        File(media.path),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                             ),
-
                             // 删除按钮
                             Positioned(
                               top: 4,
                               right: 4,
                               child: IconButton(
-                                onPressed: () => _deletePhoto(photo),
+                                onPressed: () => _deleteMedia(media),
                                 icon: const Icon(
                                   Icons.close,
                                   color: Colors.red,
@@ -1996,6 +2285,27 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                 ),
                               ),
                             ),
+                            // 视频标识
+                            if (isVideo)
+                              Positioned(
+                                bottom: 4,
+                                left: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                  child: const Text(
+                                    '视频',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         );
                       }).toList(),
@@ -2059,7 +2369,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                         ),
                       );
                     }),
-
             const SizedBox(height: 20),
             // 6. 导航按钮区域
             SizedBox(
@@ -2068,54 +2377,65 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 children: [
                   Row(
                     children: [
-                      // 上一项按钮
-                      Expanded(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _currentIndex > 0
-                                ? () {
-                                    setState(() {
-                                      _currentIndex--;
-                                    });
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey,
-                            ),
-                            child: const Text("上一项"),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
                       // 下一项/完成按钮
                       Expanded(
                         child: SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
+                            // 替换原有的 onPressed 方法中的代码
                             onPressed: _files.isEmpty
                                 ? null
                                 : () async {
+                                    // ... existing code ...
                                     int i = widget.index ?? 0;
                                     Global.packageList[i]['completeCount'] =
                                         _currentIndex + 1;
-                                    // 完成所有操作后返回成功结果
-                                    await upLoadFileList();
-                                    await saveContentItem();
-                                    await completePackage();
+                                    // 将数据保存到本地待上传列表而不是立即上传
+                                    await _saveDataLocally();
+
                                     // 将图片清空
                                     _files.clear();
+                                    _photos.clear();
+                                    _videos.clear();
                                     if (packagePoints != null &&
                                         _currentIndex <
                                             packagePoints!.length - 1) {
                                       // 如果还有下一项，则更新索引以显示下一项
                                       setState(() {
                                         _currentIndex++;
+                                        // 更新当前项点
+                                        if (_currentIndex < packagePoints.length) {
+                                          currentPackagePoint = packagePoints[_currentIndex];
+                                        }
+                                        
+                                        // 重新构建taskContentItemList，确保它始终基于当前项点的内容
+                                        taskContentItemList = [];
+                                        taskInstructContentList = [];
+
+                                        if (currentPackagePoint['taskInstructContentList'] != null &&
+                                            currentPackagePoint['taskInstructContentList'] is List) {
+                                          taskInstructContentList =
+                                              (currentPackagePoint['taskInstructContentList'] as List)
+                                                  .where((item) => item is Map<String, dynamic>)
+                                                  .map((item) => item as Map<String, dynamic>)
+                                                  .toList();
+                                        }
+
+                                        for (Map<String, dynamic> item in taskInstructContentList) {
+                                          if (item['taskContentItemList'] != null &&
+                                              item['taskContentItemList'] is List) {
+                                            taskContentItemList.addAll((item['taskContentItemList'] as List)
+                                                .where((item) => item is Map<String, dynamic>)
+                                                .map((item) => item as Map<String, dynamic>)
+                                                .toList());
+                                          }
+                                        }
                                       });
                                     } else {
                                       debugPrint("已完成所有项");
                                       Navigator.pop(context, true);
                                     }
+
                                   }, // 当没有图片时禁用按钮
                             child: _currentIndex < packagePoints.length - 1
                                 ? const Text("进入下一项")
@@ -2128,11 +2448,166 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 ],
               ),
             ),
-// ... existing code ...
           ],
         ),
       ),
     );
+  }
+
+  // 在状态类中添加以下代码
+
+// 添加视频相关变量
+  final List<XFile> _videos = []; // 存储视频文件
+
+// 修改_takePhoto方法，重命名为_pickMedia以支持图片和视频选择
+  void _pickMedia() async {
+    // 显示选择对话框
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('拍照'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _takePhoto();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_call),
+                title: const Text('录像'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _recordVideo();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('从相册选择'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromGallery();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('取消'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+// 拍照方法
+  void _takePhoto() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (photo != null) {
+      setState(() {
+        _photos.add(photo.path);
+        _files.add(photo);
+      });
+    }
+  }
+
+// 录像方法
+  void _recordVideo() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.camera,
+      maxDuration: const Duration(minutes: 1), // 限制录像时长为1分钟
+    );
+
+    if (video != null) {
+      setState(() {
+        _videos.add(video);
+        _files.add(video);
+      });
+    }
+  }
+
+// 从相册选择图片或视频
+  void _pickFromGallery() async {
+    final ImagePicker _picker = ImagePicker();
+
+    // 允许同时选择图片和视频
+    final List<XFile>? media = await _picker.pickMultipleMedia();
+
+    if (media != null && media.isNotEmpty) {
+      setState(() {
+        for (var file in media) {
+          _files.add(file);
+          // 根据文件扩展名判断是图片还是视频
+// 添加导入语句以使用 path.extension
+          String extension = path.extension(file.path);
+          if (['.mp4', '.mov', '.avi', '.wmv', '.flv', '.mkv']
+              .contains(extension)) {
+            _videos.add(file);
+          } else {
+            _photos.add(file.path);
+          }
+        }
+      });
+    }
+  }
+
+// 修改删除方法以处理视频
+  void _deleteMedia(XFile media) {
+    setState(() {
+      _files.remove(media);
+      _photos.remove(media.path);
+      _videos.remove(media);
+    });
+  }
+
+// 修改保存到本地的方法以处理视频
+  Future<void> _saveDataLocally() async {
+    try {
+      // 创建待上传数据项
+      Map<String, dynamic> uploadItem = {
+        'packageCode': currentPackagePoint['code'],
+        'packageName': currentPackagePoint['name'],
+        'completeTime':
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+        'photos': _photos, // 图片路径列表
+        'videos': _videos.map((video) => video.path).toList(), // 视频路径列表
+        'allMedia': _files
+            .map((file) => {
+                  'path': file.path,
+                  'type': _videos.contains(file) ? 'video' : 'image' // 标记文件类型
+                })
+            .toList(),
+        'taskContentItems': taskContentItemList,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      // 添加到待上传列表
+      setState(() {
+        pendingUploadData.add(uploadItem);
+      });
+
+      // 保存到本地存储
+      await _savePendingUploadData();
+
+      logger.i('数据已保存到本地待上传列表');
+      SmartDialog.showToast('数据已保存');
+    } catch (e) {
+      logger.e('保存数据到本地失败: $e');
+      SmartDialog.showToast('保存失败');
+    }
   }
 
   // ---------------------- 交互逻辑（可扩展） ----------------------
@@ -2188,23 +2663,23 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     });
   }
 
-  void _takePhoto() async {
-    // 调用相机采集照片（可结合image_picker库实现）
-    debugPrint("拍照功能触发");
+  // void _takePhoto() async {
+  //   // 调用相机采集照片（可结合image_picker库实现）
+  //   debugPrint("拍照功能触发");
 
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
+  //   final ImagePicker _picker = ImagePicker();
+  //   final XFile? photo = await _picker.pickImage(
+  //     source: ImageSource.camera,
+  //     imageQuality: 80,
+  //   );
 
-    if (photo != null) {
-      setState(() {
-        _photos.add(photo.path);
-        _files.add(photo);
-      });
-    }
-  }
+  //   if (photo != null) {
+  //     setState(() {
+  //       _photos.add(photo.path);
+  //       _files.add(photo);
+  //     });
+  //   }
+  // }
 
   void _deletePhoto(XFile photo) {
     // 删除照片逻辑
@@ -2221,7 +2696,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       SmartDialog.showToast('请上传"必须采集"的照片');
       return;
     }
-
     // 进入下一项的业务逻辑（如校验照片、跳转步骤）
     upLoadFileList();
     saveContentItem();
@@ -2242,7 +2716,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   Future<void> upLoadFileList() async {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
-      logger.i(currentPackagePoint['code']);
       var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
         'certainPackageCodeList': currentPackagePoint['code'],
       }, imagedatas: files);

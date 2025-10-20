@@ -45,8 +45,12 @@ class _JtShowPageState extends State<ApplyList> {
     var r =
         await ProductApi().getTrainShunting(queryParametrs: queryParameters);
     setState(() {
-      applyList =
-          (r as List).map((item) => item as Map<String, dynamic>).toList();
+       if (r != null) {
+        applyList =
+            (r as List).map((item) => item as Map<String, dynamic>).toList();
+      } else {
+        applyList = [];
+      }
     });
   }
 

@@ -92,8 +92,8 @@ class _JtShowPageState extends State<MutualAssign> {
     logger.i(widget.typeCode);
 
     try {
-      var r =
-          await ProductApi().getNeedToDispatchInspectionJt28(queryParametrs: queryParameters);
+      var r = await ProductApi()
+          .getNeedToDispatchInspectionJt28(queryParametrs: queryParameters);
       setState(() {
         // info = r;
         sys28List = r;
@@ -234,18 +234,16 @@ class _JtShowPageState extends State<MutualAssign> {
     }
   }
 
-    late Image image;
-  Future<Image?> getPreviewImage(Map<String, dynamic> photo) async{
-    Map<String, dynamic> queryParameters = {
-      'url': photo['downloadUrl'] 
-    };
+  late Image image;
+  Future<Image?> getPreviewImage(Map<String, dynamic> photo) async {
+    Map<String, dynamic> queryParameters = {'url': photo['downloadUrl']};
     logger.i(queryParameters);
     var r = await ProductApi().previewImage(queryParametrs: queryParameters);
     return r;
   }
 
-    // 添加图片预览方法
-  void _previewImage(Map<String, dynamic> photo) async{
+  // 添加图片预览方法
+  void _previewImage(Map<String, dynamic> photo) async {
     Image? i = await getPreviewImage(photo);
     // 实现图片预览逻辑
     showDialog(
@@ -268,12 +266,14 @@ class _JtShowPageState extends State<MutualAssign> {
                   width: 200,
                   height: 200,
                   fit: BoxFit.contain,
-                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  loadingBuilder: (BuildContext context, Widget child,
+                      ImageChunkEvent? loadingProgress) {
                     if (loadingProgress == null) return child;
                     return Center(
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     );
@@ -318,17 +318,16 @@ class _JtShowPageState extends State<MutualAssign> {
     );
   }
 
-
   List<Map<String, dynamic>> photoList = [];
-    void getPhotoList(String groupId) async{
+  void getPhotoList(String groupId) async {
     Map<String, dynamic> queryParameters = {
       'groupId': groupId,
     };
-    var r = await ProductApi().getFaultVideoAndImage(queryParametrs: queryParameters);
+    var r = await ProductApi()
+        .getFaultVideoAndImage(queryParametrs: queryParameters);
     //将List<dynamic>转换为List<Map<String, dynamic>>
-    photoList = (r as List)
-        .map((item) => item as Map<String, dynamic>)
-        .toList();
+    photoList =
+        (r as List).map((item) => item as Map<String, dynamic>).toList();
     logger.i(photoList);
   }
 
@@ -418,7 +417,7 @@ class _JtShowPageState extends State<MutualAssign> {
               // if (isLoading)
               //   const Center(child: CircularProgressIndicator())
               // else
-               if (sys28List.isNotEmpty)  
+              if (sys28List.isNotEmpty)
                 Column(
                   children: [
                     ListView.builder(
@@ -448,11 +447,11 @@ class _JtShowPageState extends State<MutualAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']??""}"),
+                                                "故障现象: ${item['faultDescription'] ?? ""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']??""}"),
+                                                "施修方案: ${item['repairScheme'] ?? ""}"),
                                           ),
                                         ],
                                       ),
@@ -461,43 +460,48 @@ class _JtShowPageState extends State<MutualAssign> {
                                           Expanded(
                                             child: ElevatedButton(
                                               onPressed: () {
-                                                                                               // TODO: 实现查看报修图片的逻辑
-                                                // 可以打开新页面或弹窗展示图片
-                                                if(item['repairPicture'] != null){
-                                                  getPhotoList(item['repairPicture']);
-                                                }
-                                                
-                                                //展示photoList
-                                                showDialog(
-                                                  context: context,
-                                                  builder: (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: const Text("故障视频及图片"),
-                                                      content: photoList.isNotEmpty
-                                                          ? Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              children: photoList.map((photo) {
-                                                                return ListTile(
-                                                                  title: Text(photo['fileName'] ?? ''),
-                                                                  onTap: () {
-                                                                    
-                                                                    _previewImage(photo);
-                                                                  },
-                                                                );
-                                                              }).toList(),
-                                                            )
-                                                          : const Text('暂无图片'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(context).pop();
-                                                          },
-                                                          child: const Text('关闭'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
+                                                //                                                // TODO: 实现查看报修图片的逻辑
+                                                // // 可以打开新页面或弹窗展示图片
+                                                // if(item['repairPicture'] != null){
+                                                //   getPhotoList(item['repairPicture']);
+                                                // }
+
+                                                // //展示photoList
+                                                // showDialog(
+                                                //   context: context,
+                                                //   builder: (BuildContext context) {
+                                                //     return AlertDialog(
+                                                //       title: const Text("故障视频及图片"),
+                                                //       content: photoList.isNotEmpty
+                                                //           ? Column(
+                                                //               mainAxisSize: MainAxisSize.min,
+                                                //               children: photoList.map((photo) {
+                                                //                 return ListTile(
+                                                //                   title: Text(photo['fileName'] ?? ''),
+                                                //                   onTap: () {
+
+                                                //                     _previewImage(photo);
+                                                //                   },
+                                                //                 );
+                                                //               }).toList(),
+                                                //             )
+                                                //           : const Text('暂无图片'),
+                                                //       actions: [
+                                                //         TextButton(
+                                                //           onPressed: () {
+                                                //             Navigator.of(context).pop();
+                                                //           },
+                                                //           child: const Text('关闭'),
+                                                //         ),
+                                                //       ],
+                                                //     );
+                                                //   },
+                                                // );
+                                                PhotoPreviewDialog.show(
+                                                    context,
+                                                    item['repairPicture'] ?? "",
+                                                    ProductApi()
+                                                        .getFaultVideoAndImage);
                                               },
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
@@ -507,19 +511,19 @@ class _JtShowPageState extends State<MutualAssign> {
                                           ),
                                         ],
                                       ),
-                                    Row(
+                                      Row(
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']??""}"),
+                                                "提报人: ${item['reporterName'] ?? ""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']??""}"),
+                                                "提报时间: ${item['reportDate'] ?? ""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "部门: ${item['deptName']??""}"),
+                                                "部门: ${item['deptName'] ?? ""}"),
                                           ),
                                         ],
                                       ),
@@ -527,15 +531,15 @@ class _JtShowPageState extends State<MutualAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "班组: ${item['teamName']??""}"),
+                                                "班组: ${item['teamName'] ?? ""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "主修: ${item['repairName']??""}"),
+                                                "主修: ${item['repairName'] ?? ""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "辅修: ${item['assistantName']??""}"),
+                                                "辅修: ${item['assistantName'] ?? ""}"),
                                           ),
                                         ],
                                       ),
@@ -559,17 +563,18 @@ class _JtShowPageState extends State<MutualAssign> {
                                 width: 80,
                                 height: 120,
                                 child: ElevatedButton(
-                                  onPressed: () async{
+                                  onPressed: () async {
                                     // TODO: 实现派工逻辑
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => MutualAssignPeople(
+                                        builder: (context) =>
+                                            MutualAssignPeople(
                                           jtCode: item['code'],
                                         ),
                                       ),
                                     );
-                                    if(result == true){
+                                    if (result == true) {
                                       getInfo();
                                       showToast('分配成功');
                                     }
@@ -787,7 +792,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
   }
 
   void setRepairInfo() async {
-    try{
+    try {
       // 构建参数
       Map<String, dynamic> params = {
         "code": widget.jtCode,
@@ -802,7 +807,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
       var response = await ProductApi().updateUserId(params);
       if (response['code'] == "S_T_S003") {
         showToast("分配成功");
-      } 
+      }
     } catch (e) {
       print('分配人员失败: $e');
       showToast("分配失败，请重试");
@@ -853,7 +858,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
                     ),
                   ),
                 ),
-                
+
                 // 成员列表（可滚动部分）
                 Expanded(
                   child: ListView(

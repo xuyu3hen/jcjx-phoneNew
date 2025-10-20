@@ -31,34 +31,39 @@ class PhotoPreviewDialog {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text("故障视频及图片"),
-            content: photoList.isNotEmpty
-                ? SizedBox(
-                    width: double.maxFinite,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: photoList.map((photo) {
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 4, horizontal: 8),
-                          elevation: 2,
-                          child: ListTile(
-                            title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
-                            trailing:
-                                const Icon(Icons.arrow_forward_ios, size: 16),
-                            onTap: () {
-                              _previewImage(
-                                  context, photo, ProductApi().previewImage);
-                            },
-                            tileColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  )
-                : const Text('暂无图片'),
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: photoList.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final photo = entry.value;
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
+                      elevation: 2,
+                      child: ListTile(
+                        title: Text('图片${index + 1}点击查看'),
+                        trailing:
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {
+                          // 检查context是否仍然有效
+                          if (Navigator.of(context).mounted) {
+                            _previewImage(
+                                context, photo, ProductApi().previewImage);
+                          }
+                        },
+                        tileColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
@@ -148,7 +153,6 @@ class PhotoPreviewDialog {
     Image? image;
     try {
       Map<String, dynamic> queryParameters = {'url': photo['downloadUrl']};
-
       var response = await api(queryParametrs: queryParameters);
       image = response as Image?;
     } catch (e) {

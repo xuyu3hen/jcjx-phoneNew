@@ -70,7 +70,7 @@ class F {
       case Flavor.env_dev:
         return '1.1.5';
       case Flavor.env_release:
-        return '1.0.6';
+        return '1.1.4';
       case Flavor.env_test:
         return '1.1.5';
       default:

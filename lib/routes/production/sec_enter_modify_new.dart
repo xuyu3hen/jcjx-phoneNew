@@ -280,7 +280,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   void getRepairPlanByTrainNum() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'trainNum': trainNumSelected["trainNum"]
+        'trainNum': trainNumSelected["trainNum"],
+        'typeCode': jcTypeListSelected["code"]
       };
       var r = await ProductApi()
           .getTrainInfoByPlan(queryParametrs: queryParameters);

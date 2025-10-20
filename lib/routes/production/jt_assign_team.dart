@@ -96,11 +96,10 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
 
     try {
       var r =
-          await ProductApi().getNeedToDispatchInspectionJt28(queryParametrs: queryParameters);
+          await ProductApi().getNeedToDispatchJt28(queryParametrs: queryParameters);
       setState(() {
-        info = r;
-        sys28List = info['rows'];
-        total = info['total'] ?? 0;
+        sys28List = r;
+        
         isLoading = false;
       });
     } catch (e) {

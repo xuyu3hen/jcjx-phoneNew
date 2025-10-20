@@ -505,7 +505,7 @@ class ProductApi extends AppApi {
   }) async {
     try {
       var r = await AppApi.dio.get(
-        "/tasks/locomotiveMaintenanceLogDO/getNeedToWorkJt28",
+        "/tasks/locomotiveMaintenanceLogDO/getNeedToDispatchInspectionJt28",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])['data']);
@@ -770,6 +770,7 @@ class ProductApi extends AppApi {
 
   //上传作业项图片
   //传输多个图片
+
   Future<int> uploadCertainPackageImg(
       {Map<String, dynamic>? queryParametrs,
       required List<File> imagedatas}) async {
@@ -779,13 +780,11 @@ class ProductApi extends AppApi {
           queryParametrs?["certainPackageCodeList"];
       formMap['secondPackageCode'] = queryParametrs?['secondPackageCode'];
       if (imagedatas.isNotEmpty) {
+        List<MultipartFile> fileList = [];
         for (var i = 0; i < imagedatas.length; i++) {
-          List<MultipartFile> fileList = [];
-          for (var i = 0; i < imagedatas.length; i++) {
-            fileList.add(await MultipartFile.fromFile(imagedatas[i].path));
-          }
-          formMap['uploadFileList'] = fileList;
+          fileList.add(await MultipartFile.fromFile(imagedatas[i].path));
         }
+        formMap['uploadFileList'] = fileList;
       }
       FormData formData = FormData.fromMap(formMap);
       var r = await AppApi.dio.post(
@@ -799,6 +798,7 @@ class ProductApi extends AppApi {
       return -1;
     }
   }
+// ... existing code ...
 
   // 完成作业项
   Future<int> finishCertainPackage(
@@ -932,6 +932,23 @@ class ProductApi extends AppApi {
       _handleException(e);
     }
   }
+
+  // /subparts/riskLevelPost/getUserListByPostAndDeptId
+  Future<dynamic> getUserListByPostAndDeptId(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/subparts/riskLevelPost/getUserListByPostAndDeptId",
+        queryParameters: queryParametrs,
+      );
+      // logger.i(((r.data["data"])["data"])['rows']);
+      logger.i(((r.data["data"])["data"]));
+      return ((r.data["data"])["data"]);
+
+    } catch (e) {
+      _handleException(e);
+    }
+      }
 
     // jcjxsystem/sysUser/selectAll
   Future<dynamic> getUserList1({Map<String, dynamic>? queryParametrs}) async {

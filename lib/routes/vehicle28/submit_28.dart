@@ -676,6 +676,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               "trainEntryCode": widget.locoInfo?["code"],
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
+              'deptId':Global.profile.permissions?.user.dept?.parentId,
+              'deptName':Global.profile.permissions?.user.dept?.parentName,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus,
               "status": 0
