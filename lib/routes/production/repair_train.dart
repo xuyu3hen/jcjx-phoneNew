@@ -2202,7 +2202,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 标题行：必须采集 + 拍照按钮
                   Row(
                     children: [
                       const Text(
@@ -2485,14 +2484,14 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                   _recordVideo();
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('从相册选择'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickFromGallery();
-                },
-              ),
+              // ListTile(
+              //   leading: const Icon(Icons.photo_library),
+              //   title: const Text('从相册选择'),
+              //   onTap: () {
+              //     Navigator.pop(context);
+              //     _pickFromGallery();
+              //   },
+              // ),
               const Divider(),
               ListTile(
                 title: const Text('取消'),

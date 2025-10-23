@@ -4,6 +4,7 @@ import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 import '../../index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
+import 'package:path/path.dart' as path;
 
 class MutualDisposalPackagePage extends StatefulWidget {
   final String trainNum;
@@ -70,6 +71,10 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
   var logger = AppLogger.logger;
 
   List<Map<String, dynamic>> pictureList = [];
+
+   final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+  //展示照片文件
+  final List<XFile> _files = [];
 
   // 获取加工方法
   void getProcessMethod() async {
@@ -317,6 +322,181 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
             ),
             //故障零部件构型确认在faultPartListInfo1中进行筛选
             const SizedBox(height: 16),
+             // 5. 照片采集区（必须采集 + 拍照/删除功能）
+            Container(
+              padding: const EdgeInsets.all(12.0),
+              color: Colors.grey[300],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 标题行：必须采集 + 拍照按钮
+                  Row(
+                    children: [
+                      const Text(
+                        "必须采集",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _pickMedia, // 拍照逻辑（可扩展）
+                        icon: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 照片列表（模拟展示）
+
+                  if (_files.isNotEmpty)
+                    Wrap(
+                      spacing: 8,
+                      children: _files.map((media) {
+                        bool isVideo = _videos.contains(media);
+
+                        return Stack(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: isVideo
+                                    ? Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          // 视频缩略图或默认背景
+                                          Container(
+                                            color: Colors.black12,
+                                            child: const Icon(
+                                              Icons.video_library,
+                                              size: 30,
+                                              color: Colors.blue,
+                                            ),
+                                          ),
+                                          // 播放图标
+                                          const Icon(
+                                            Icons.play_circle_fill,
+                                            size: 30,
+                                            color: Colors.white70,
+                                          ),
+                                        ],
+                                      )
+                                    : Image.file(
+                                        File(media.path),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                            ),
+                            // 删除按钮
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: IconButton(
+                                onPressed: () => _deleteMedia(media),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            // 视频标识
+                            if (isVideo)
+                              Positioned(
+                                bottom: 4,
+                                left: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                  child: const Text(
+                                    '视频',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            // 展示taskContentItemList
+            // taskContentItemList.isEmpty
+            //     ? const Center(
+            //         child: Text(''),
+            //       )
+            //     : ListView.builder(
+            //         shrinkWrap: true,
+            //         physics: const NeverScrollableScrollPhysics(),
+            //         itemCount: taskContentItemList.length,
+            //         itemBuilder: (context, index) {
+            //           return ListTile(
+            //             title: Text.rich(
+            //               TextSpan(
+            //                 children: [
+            //                   TextSpan(text: '数据名称:'),
+            //                   TextSpan(
+            //                     text:
+            //                         '${taskContentItemList[index]['name'] ?? ''}',
+            //                     style: const TextStyle(color: Colors.blue),
+            //                   ),
+            //                   TextSpan(text: '最小值可等于:'),
+            //                   TextSpan(
+            //                     text:
+            //                         '${taskContentItemList[index]['limitMin'] ?? ''}',
+            //                     style: const TextStyle(color: Colors.blue),
+            //                   ),
+            //                   TextSpan(text: '最大值可等于:'),
+            //                   TextSpan(
+            //                     text:
+            //                         '${taskContentItemList[index]['limitMax'] ?? ''}',
+            //                     style: const TextStyle(color: Colors.blue),
+            //                   ),
+            //                   TextSpan(text: '单位'),
+            //                   TextSpan(
+            //                     text:
+            //                         '${taskContentItemList[index]['limitUnit'] ?? ''}',
+            //                     style: const TextStyle(color: Colors.blue),
+            //                   ),
+            //                 ],
+            //               ),
+            //             ),
+            //             subtitle: TextField(
+            //               decoration: const InputDecoration(
+            //                 hintText: '请输入实际数值',
+            //                 border: OutlineInputBorder(),
+            //               ),
+            //               keyboardType: TextInputType.number,
+            //               onChanged: (value) {
+            //                 // 在这里处理输入值的变化
+            //                 // 你可以将值保存到 taskContentItemList[index] 的某个字段中
+            //                 taskContentItemList[index]['realValue'] = value;
+            //               },
+            //             ),
+            //           );
+            //         }),
+            const SizedBox(height: 20),
             // 7. 合格按钮
             Center(
               child: ElevatedButton(
@@ -333,6 +513,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                     };
                     var result = await ProductApi()
                         .wholePackageMutualInspection(queryParameters);
+                    await upLoadFileList();
                     SmartDialog.dismiss();
                     SmartDialog.show(
                         clickMaskDismiss: false,
@@ -387,6 +568,130 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
         ),
       ),
     );
+  }
+  Future<void> upLoadFileList() async {
+    try {
+      List<File> files = _files.map((xFile) => File(xFile.path)).toList();
+      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+        'certainPackageCodeList': widget.code,
+        'inspectionType': 2
+      }, imagedatas: files);
+    } catch (e) {
+      logger.e(e);
+    }
+  }
+  // 修改删除方法以处理视频
+  void _deleteMedia(XFile media) {
+    setState(() {
+      _files.remove(media);
+      _photos.remove(media.path);
+      _videos.remove(media);
+    });
+  }
+
+   void _pickMedia() async {
+    // 显示选择对话框
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('拍照'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _takePhoto();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.video_call),
+                title: const Text('录像'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _recordVideo();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('从相册选择'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromGallery();
+                },
+              ),
+              const Divider(),
+              ListTile(
+                title: const Text('取消'),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+    final List<XFile> _videos = []; // 存储视频文件
+  // 拍照方法
+  void _takePhoto() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+
+    if (photo != null) {
+      setState(() {
+        _photos.add(photo.path);
+        _files.add(photo);
+      });
+    }
+  }
+
+// 录像方法
+  void _recordVideo() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? video = await _picker.pickVideo(
+      source: ImageSource.camera,
+      maxDuration: const Duration(minutes: 1), // 限制录像时长为1分钟
+    );
+
+    if (video != null) {
+      setState(() {
+        _videos.add(video);
+        _files.add(video);
+      });
+    }
+  }
+
+// 从相册选择图片或视频
+  void _pickFromGallery() async {
+    final ImagePicker _picker = ImagePicker();
+
+    // 允许同时选择图片和视频
+    final List<XFile>? media = await _picker.pickMultipleMedia();
+
+    if (media != null && media.isNotEmpty) {
+      setState(() {
+        for (var file in media) {
+          _files.add(file);
+          // 根据文件扩展名判断是图片还是视频
+// 添加导入语句以使用 path.extension
+          String extension = path.extension(file.path);
+          if (['.mp4', '.mov', '.avi', '.wmv', '.flv', '.mkv']
+              .contains(extension)) {
+            _videos.add(file);
+          } else {
+            _photos.add(file.path);
+          }
+        }
+      });
+    }
   }
 
   Widget _buildLabeledText({

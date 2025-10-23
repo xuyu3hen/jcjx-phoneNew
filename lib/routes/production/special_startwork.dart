@@ -283,13 +283,29 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
             ),
 
             const SizedBox(height: 16),
-
-            // 展示施修情况trainInfo['repairStatus']
-            _buildLabeledTextBlock(
-              label: '施修情况',
-              text: widget.trainInfo['repairStatus'] ?? '',
-              height: 60,
+            Row(
+              children: [
+                Expanded(
+                  child:
+                      _buildLabeledTextBlock(
+                    label: '施修情况',
+                    text: widget.trainInfo['repairStatus'] ?? '',
+                    height: 60,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildLabeledTextBlock(
+                    label: '故障零部件',
+                    text: widget.trainInfo['jcNodeName'] ?? '',
+                    height: 60,
+                  ),
+                ),
+                const SizedBox(width: 16),
+             
+              ],
             ),
+
             // 展示修复视频及图片（占位区域）
             const SizedBox(height: 16),
 

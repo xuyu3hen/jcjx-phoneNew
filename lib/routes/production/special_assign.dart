@@ -350,11 +350,11 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']}"),
+                                                "故障现象: ${item['faultDescription']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']}"),
+                                                "施修方案: ${item['repairScheme']??""}"),
                                           ),
                                         ],
                                       ),
@@ -377,15 +377,15 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']}"),
+                                                "提报人: ${item['reporterName']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']}"),
+                                                "提报时间: ${item['reportDate']??""}"),
                                           ),
                                           Expanded(
                                             child:
-                                                Text("部门: ${item['deptName']}"),
+                                                Text("部门: ${item['deptName']??""}"),
                                           ),
                                         ],
                                       ),
@@ -393,15 +393,15 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         children: [
                                           Expanded(
                                             child:
-                                                Text("班组: ${item['teamName']}"),
+                                                Text("班组: ${item['teamName']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "主修: ${item['repairName']}"),
+                                                "主修: ${item['repairName']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "辅修: ${item['assistantName']}"),
+                                                "辅修: ${item['assistantName']??""}"),
                                           ),
                                         ],
                                       ),
@@ -409,11 +409,11 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']}"),
+                                                "专检: ${item['specialName']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "互检: ${item['mutualName']??""}"),
                                           ),
                                         ],
                                       ),
@@ -432,6 +432,7 @@ class _JtShowPageState extends State<SpecialAssign> {
                                         builder: (context) =>
                                             SpecialAssignPeople(
                                           jtCode: item['code'],
+                                          jtInfo: item
                                         ),
                                       ),
                                     );
@@ -547,7 +548,8 @@ class InspectionItem {
 
 class SpecialAssignPeople extends StatefulWidget {
   final String jtCode;
-  const SpecialAssignPeople({super.key, required this.jtCode});
+  final Map<String, dynamic>? jtInfo;
+  const SpecialAssignPeople({super.key, required this.jtCode, this.jtInfo});
 
   @override
   State<SpecialAssignPeople> createState() => _SpecialAssignPeopleState();
@@ -580,13 +582,12 @@ class _SpecialAssignPeopleState extends State<SpecialAssignPeople> {
 
   void getUserList() async {
     Map<String, dynamic> params = {
-      "deptId": Global.profile.permissions?.user.dept?.deptId,
-      "pageNum": 0,
-      "pageSize": 0,
+      "deptId": widget.jtInfo?['deptId'],
+      "riskLevel": widget.jtInfo?['riskLevel'],
+      "isSpecialCheck": true,
     };
     try {
-      var response = await ProductApi().getTeamUser(queryParametrs: params);
-
+      var response = await ProductApi().getUserListByPostAndDeptId(queryParametrs: params);
       if (response is List) {
         // 将List<dynamic>转换为List<Map<String, dynamic>>
         List<Map<String, dynamic>> userList = response

@@ -547,11 +547,11 @@ class _JtShowPageState extends State<MutualAssign> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']}"),
+                                                "专检: ${item['specialName']??""}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']}"),
+                                                "互检: ${item['mutualName']??""}"),
                                           ),
                                         ],
                                       ),
@@ -571,6 +571,7 @@ class _JtShowPageState extends State<MutualAssign> {
                                         builder: (context) =>
                                             MutualAssignPeople(
                                           jtCode: item['code'],
+                                          jtInfo: item
                                         ),
                                       ),
                                     );
@@ -687,7 +688,8 @@ class InspectionItem {
 
 class MutualAssignPeople extends StatefulWidget {
   final String jtCode;
-  const MutualAssignPeople({super.key, required this.jtCode});
+  final Map<String, dynamic> jtInfo;
+  const MutualAssignPeople({super.key, required this.jtCode, required this.jtInfo});
 
   @override
   State<MutualAssignPeople> createState() => _MutualAssignPeopleState();
@@ -720,12 +722,12 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
 
   void getUserList() async {
     Map<String, dynamic> params = {
-      "deptId": Global.profile.permissions?.user.dept?.deptId,
-      "pageNum": 0,
-      "pageSize": 0,
+      "deptId": widget.jtInfo['deptId'],
+      "riskLevel": widget.jtInfo['riskLevel'],
+      "isSpecialCheck": false,
     };
     try {
-      var response = await ProductApi().getTeamUser(queryParametrs: params);
+      var response = await ProductApi().getUserListByPostAndDeptId(queryParametrs: params);
 
       if (response is List) {
         // 将List<dynamic>转换为List<Map<String, dynamic>>

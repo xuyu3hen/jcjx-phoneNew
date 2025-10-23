@@ -288,6 +288,11 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
               text: widget.trainInfo['repairStatus'] ?? '',
               height: 60,
             ),
+           _buildLabeledTextBlock(
+              label: '故障零部件',
+              text: widget.trainInfo['jcNodeName'] ?? '',
+              height: 60,
+            ),
             // 展示修复视频及图片（占位区域）
             const SizedBox(height: 16),
 
