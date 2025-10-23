@@ -1153,30 +1153,30 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         //   ),
         // ),
         // const SizedBox(width: 8),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              // 跳转到ApplyList页面
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ApplyList(
-                    trainNum: widget.locoInfo?['trainNum'] ?? '',
-                    trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
-                    typeName: widget.locoInfo?['typeName'] ?? '',
-                    typeCode: widget.locoInfo?['typeCode'] ?? '',
-                    trainEntryCode: widget.locoInfo?['code'] ?? '',
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('检修调度命令'),
-          ),
-        ),
+        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {
+        //       // 跳转到ApplyList页面
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) => ApplyList(
+        //             trainNum: widget.locoInfo?['trainNum'] ?? '',
+        //             trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+        //             typeName: widget.locoInfo?['typeName'] ?? '',
+        //             typeCode: widget.locoInfo?['typeCode'] ?? '',
+        //             trainEntryCode: widget.locoInfo?['code'] ?? '',
+        //           ),
+        //         ),
+        //       );
+        //     },
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.blue,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('检修调度命令'),
+        //   ),
+        // ),
         const SizedBox(width: 8),
         Expanded(
           child: ElevatedButton(

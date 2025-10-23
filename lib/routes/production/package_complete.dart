@@ -280,7 +280,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             const SizedBox(width: 12),
 
             // 开工按钮 - 仅在任务未完成时显示
-         if (task['complete'] == '0')
+         if (task['complete'] == '0' )
               ElevatedButton(
                 onPressed: () async {
                   task['startTime'] = DateTime.now().toString();

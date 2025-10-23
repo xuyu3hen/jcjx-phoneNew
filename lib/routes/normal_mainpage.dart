@@ -187,6 +187,35 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   () => Navigator.pushNamed(context, 'jt28submitManage'),
                   '报机统28（管理）',
                 ),
+                _buildFeatureItem(
+                  Icon(Icons.next_plan, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'jt28submitManage'),
+                  '检修调令',
+                ),
+                        // Expanded(
+        //   child: ElevatedButton(
+        //     onPressed: () {
+        //       // 跳转到ApplyList页面
+        //       Navigator.push(
+        //         context,
+        //         MaterialPageRoute(
+        //           builder: (context) => ApplyList(
+        //             trainNum: widget.locoInfo?['trainNum'] ?? '',
+        //             trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+        //             typeName: widget.locoInfo?['typeName'] ?? '',
+        //             typeCode: widget.locoInfo?['typeCode'] ?? '',
+        //             trainEntryCode: widget.locoInfo?['code'] ?? '',
+        //           ),
+        //         ),
+        //       );
+        //     },
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: Colors.blue,
+        //       foregroundColor: Colors.white,
+        //     ),
+        //     child: const Text('检修调度命令'),
+        //   ),
+        // ),
               // _buildFeatureItem(
               //   Icon(Icons.assignment, color: Colors.blue[200]),
               //   () => Navigator.pushNamed(context, 'jt28'),
