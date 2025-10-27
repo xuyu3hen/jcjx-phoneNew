@@ -36,7 +36,7 @@ IndividualTaskPackage _$IndividualTaskPackageFromJson(
       updatedBy: json['updatedBy'] as String?,
       updatedTime: json['updatedTime'] as String?,
       station: json['station'] as String?,
-      deptId: json['deptId'] as int?,
+      deptId: (json['deptId'] as num?)?.toInt(),
       repairProcCode: json['repairProcCode'] as String?,
       ends: json['ends'] as String?,
       typeCode: json['typeCode'] as String?,
@@ -45,10 +45,10 @@ IndividualTaskPackage _$IndividualTaskPackageFromJson(
       packageVersionEncode: json['packageVersionEncode'] as String?,
       packageVersionCode: json['packageVersionCode'] as String?,
       complete: json['complete'] as String?,
-      executorId: json['executorId'] as int?,
+      executorId: (json['executorId'] as num?)?.toInt(),
       executorName: json['executorName'] as String?,
       techMeasure: json['techMeasure'] as bool?,
-      itemType: json['itemType'] as int?,
+      itemType: (json['itemType'] as num?)?.toInt(),
       packageEternalCode: json['packageEternalCode'] as String?,
       taskCertainPackageList: (json['taskCertainPackageList'] as List<dynamic>?)
           ?.map(
@@ -56,8 +56,8 @@ IndividualTaskPackage _$IndividualTaskPackageFromJson(
           .toList(),
       progress: (json['progress'] as num?)?.toDouble(),
       wholePackage: json['wholePackage'] as bool?,
-      total: json['total'] as int?,
-      completeCount: json['completeCount'] as int?,
+      total: (json['total'] as num?)?.toInt(),
+      completeCount: (json['completeCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$IndividualTaskPackageToJson(
@@ -97,11 +97,11 @@ TaskCertainPackageList _$TaskCertainPackageListFromJson(
     TaskCertainPackageList(
       code: json['code'] as String?,
       station: json['station'] as String?,
-      deptId: json['deptId'] as int?,
+      deptId: (json['deptId'] as num?)?.toInt(),
       configCode: json['configCode'] as String?,
       name: json['name'] as String?,
       repairProcCode: json['repairProcCode'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       ends: json['ends'] as String?,
       endsCode: json['endsCode'] as String?,
       typeCode: json['typeCode'] as String?,
@@ -111,11 +111,11 @@ TaskCertainPackageList _$TaskCertainPackageListFromJson(
       createdTime: json['createdTime'] as String?,
       updatedBy: json['updatedBy'] as String?,
       updatedTime: json['updatedTime'] as String?,
-      itemType: json['itemType'] as int?,
+      itemType: (json['itemType'] as num?)?.toInt(),
       riskLevel: json['riskLevel'] as String?,
       packageCode: json['packageCode'] as String?,
-      packageSort: json['packageSort'] as int?,
-      configNodeLevel: json['configNodeLevel'] as int?,
+      packageSort: (json['packageSort'] as num?)?.toInt(),
+      configNodeLevel: (json['configNodeLevel'] as num?)?.toInt(),
       taskInstructContentList:
           (json['taskInstructContentList'] as List<dynamic>?)
               ?.map((e) =>
@@ -123,18 +123,21 @@ TaskCertainPackageList _$TaskCertainPackageListFromJson(
               .toList(),
       complete: json['complete'] as String?,
       progress: (json['progress'] as num?)?.toDouble(),
-      executorId: json['executorId'] as int?,
+      executorId: (json['executorId'] as num?)?.toInt(),
       executorName: json['executorName'] as String?,
       secondPackageCode: json['secondPackageCode'] as String?,
       mutualInspectionPersonnel: json['mutualInspectionPersonnel'] as String?,
       specialInspectionPersonnel: json['specialInspectionPersonnel'] as String?,
-      mutualInspectionId: json['mutualInspectionId'] as int?,
-      specialInspectionId: json['specialInspectionId'] as int?,
+      mutualInspectionId: (json['mutualInspectionId'] as num?)?.toInt(),
+      specialInspectionId: (json['specialInspectionId'] as num?)?.toInt(),
       mutualInspectionName: json['mutualInspectionName'] as String?,
       specialInspectionName: json['specialInspectionName'] as String?,
-    )
-      ..selected = json['selected'] as bool?
-      ..expanded = json['expanded'] as bool?;
+      selected: json['selected'] as bool?,
+      expanded: json['expanded'] as bool?,
+      completeTime: json['completeTime'] == null
+          ? null
+          : DateTime.parse(json['completeTime'] as String),
+    );
 
 Map<String, dynamic> _$TaskCertainPackageListToJson(
         TaskCertainPackageList instance) =>
@@ -174,23 +177,23 @@ Map<String, dynamic> _$TaskCertainPackageListToJson(
       'specialInspectionName': instance.specialInspectionName,
       'selected': instance.selected,
       'expanded': instance.expanded,
-      
+      'completeTime': instance.completeTime?.toIso8601String(),
     };
 
 TaskInstructContentList _$TaskInstructContentListFromJson(
         Map<String, dynamic> json) =>
     TaskInstructContentList(
       code: json['code'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       configCode: json['configCode'] as String?,
       name: json['name'] as String?,
       repairTimes: json['repairTimes'] as String?,
       repairMainNodeCode: json['repairMainNodeCode'] as String?,
       createdBy: json['createdBy'] as String?,
-      createdTime: json['createdTime'] as int?,
+      createdTime: (json['createdTime'] as num?)?.toInt(),
       updatedBy: json['updatedBy'] as String?,
-      updatedTime: json['updatedTime'] as int?,
-      itemType: json['itemType'] as int?,
+      updatedTime: (json['updatedTime'] as num?)?.toInt(),
+      itemType: (json['itemType'] as num?)?.toInt(),
       riskLevel: json['riskLevel'] as String?,
       workContent: json['workContent'] as String?,
       configNum: json['configNum'],
@@ -242,19 +245,19 @@ TaskContentItem _$TaskContentItemFromJson(Map<String, dynamic> json) =>
       code: json['code'] as String?,
       name: json['name'] as String?,
       createdBy: json['createdBy'] as String?,
-      createdTime: json['createdTime'] as int?,
+      createdTime: (json['createdTime'] as num?)?.toInt(),
       updatedBy: json['updatedBy'] as String?,
-      updatedTime: json['updatedTime'] as int?,
+      updatedTime: (json['updatedTime'] as num?)?.toInt(),
       instructContentCode: json['instructContentCode'] as String?,
       itemCode: json['itemCode'] as String?,
       dataName: json['dataName'] as String?,
       limitMin: (json['limitMin'] as num?)?.toDouble(),
       workContent: json['workContent'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       limitMax: (json['limitMax'] as num?)?.toDouble(),
       limitUnit: json['limitUnit'] as String?,
-      boundaryCaseMin: json['boundaryCaseMin'] as int?,
-      boundaryCaseMax: json['boundaryCaseMax'] as int?,
+      boundaryCaseMin: (json['boundaryCaseMin'] as num?)?.toInt(),
+      boundaryCaseMax: (json['boundaryCaseMax'] as num?)?.toInt(),
       originalLimit: (json['originalLimit'] as num?)?.toDouble(),
       rangeMin: (json['rangeMin'] as num?)?.toDouble(),
       rangeMax: (json['rangeMax'] as num?)?.toDouble(),

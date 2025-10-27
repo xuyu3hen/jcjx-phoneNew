@@ -8,9 +8,9 @@ part of 'train_entry_list.dart';
 
 TrainEntryList _$TrainEntryListFromJson(Map<String, dynamic> json) =>
     TrainEntryList(
-      code: json['code'] as int?,
+      code: (json['code'] as num?)?.toInt(),
       msg: json['msg'] as String?,
-      total: json['total'] as int?,
+      total: (json['total'] as num?)?.toInt(),
       rows: (json['rows'] as List<dynamic>?)
           ?.map((e) => TrainEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -29,17 +29,17 @@ TrainEntry _$TrainEntryFromJson(Map<String, dynamic> json) => TrainEntry(
       createdTime: json['createdTime'] as String?,
       updatedBy: json['updatedBy'] as String?,
       updatedTime: json['updatedTime'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       typeCode: json['typeCode'] as String?,
       trainNumCode: json['trainNumCode'] as String?,
-      assignmentStatus: json['assignmentStatus'] as int?,
+      assignmentStatus: (json['assignmentStatus'] as num?)?.toInt(),
       repairLocation: json['repairLocation'] as String?,
       trackNum: json['trackNum'] as String?,
       stoppingPlace: json['stoppingPlace'] as String?,
       repairProcCode: json['repairProcCode'] as String?,
       repairTimes: json['repairTimes'] as String?,
-      status: json['status'] as int?,
-      operateUserId: json['operateUserId'] as int?,
+      status: (json['status'] as num?)?.toInt(),
+      operateUserId: (json['operateUserId'] as num?)?.toInt(),
       operateTime: json['operateTime'] as String?,
       code: json['code'] as String?,
       typeName: json['typeName'] as String?,

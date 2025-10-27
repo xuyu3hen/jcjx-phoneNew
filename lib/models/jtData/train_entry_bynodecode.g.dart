@@ -10,20 +10,20 @@ TrainEntryByNodeCode _$TrainEntryByNodeCodeFromJson(
         Map<String, dynamic> json) =>
     TrainEntryByNodeCode(
       createdBy: json['createdBy'] as String?,
-      createdTime: json['createdTime'] as int?,
+      createdTime: (json['createdTime'] as num?)?.toInt(),
       updatedBy: json['updatedBy'] as String?,
-      updatedTime: json['updatedTime'] as int?,
-      sort: json['sort'] as int?,
+      updatedTime: (json['updatedTime'] as num?)?.toInt(),
+      sort: (json['sort'] as num?)?.toInt(),
       typeCode: json['typeCode'] as String?,
       trainNum: json['trainNum'] as String?,
-      assignmentStatus: json['assignmentStatus'] as int?,
+      assignmentStatus: (json['assignmentStatus'] as num?)?.toInt(),
       repairLocation: json['repairLocation'] as String?,
       trackNum: json['trackNum'] as String?,
       stoppingPlace: json['stoppingPlace'] as String?,
       repairProcCode: json['repairProcCode'] as String?,
       repairTimes: json['repairTimes'] as String?,
-      status: json['status'] as int?,
-      operateUserId: json['operateUserId'] as int?,
+      status: (json['status'] as num?)?.toInt(),
+      operateUserId: (json['operateUserId'] as num?)?.toInt(),
       operateTime: json['operateTime'] == null
           ? null
           : DateTime.parse(json['operateTime'] as String),

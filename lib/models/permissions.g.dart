@@ -8,7 +8,7 @@ part of 'permissions.dart';
 
 Permissions _$PermissionsFromJson(Map<String, dynamic> json) => Permissions(
       msg: json['msg'] as String,
-      code: json['code'] as int,
+      code: (json['code'] as num).toInt(),
       permissions: (json['permissions'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
@@ -35,8 +35,8 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
           ? null
           : DateTime.parse(json['updateTime'] as String),
       remark: json['remark'] as String?,
-      userId: json['userId'] as int?,
-      deptId: json['deptId'] as int?,
+      userId: (json['userId'] as num?)?.toInt(),
+      deptId: (json['deptId'] as num?)?.toInt(),
       userName: json['userName'] as String?,
       nickName: json['nickName'] as String?,
       email: json['email'] as String?,
@@ -58,11 +58,11 @@ User _$UserFromJson(Map<String, dynamic> json) => User(
           .toList(),
       roleIds: json['roleIds'] as String?,
       postIds: json['postIds'] as String?,
-      roleId: json['roleId'] as int?,
+      roleId: (json['roleId'] as num?)?.toInt(),
       tysfId: json['tysfId'] as String?,
       localUserFlag: json['localUserFlag'] as bool?,
       workNumber: json['workNumber'] as String?,
-      workerTypeCode: json['workerTypeCode'] as int?,
+      workerTypeCode: (json['workerTypeCode'] as num?)?.toInt(),
       admin: json['admin'] as bool,
     );
 
@@ -107,11 +107,11 @@ Dept _$DeptFromJson(Map<String, dynamic> json) => Dept(
           ? null
           : DateTime.parse(json['updateTime'] as String),
       remark: json['remark'] as String?,
-      deptId: json['deptId'] as int?,
-      parentId: json['parentId'] as int?,
+      deptId: (json['deptId'] as num?)?.toInt(),
+      parentId: (json['parentId'] as num?)?.toInt(),
       ancestors: json['ancestors'] as String?,
       deptName: json['deptName'] as String?,
-      orderNum: json['orderNum'] as int?,
+      orderNum: (json['orderNum'] as num?)?.toInt(),
       leader: json['leader'] as String?,
       phone: json['phone'] as String?,
       email: json['email'] as String?,
@@ -151,10 +151,10 @@ Role _$RoleFromJson(Map<String, dynamic> json) => Role(
           ? null
           : DateTime.parse(json['updateTime'] as String),
       remark: json['remark'] as String?,
-      roleId: json['roleId'] as int?,
+      roleId: (json['roleId'] as num?)?.toInt(),
       roleName: json['roleName'] as String?,
       roleKey: json['roleKey'] as String?,
-      roleSort: json['roleSort'] as int?,
+      roleSort: (json['roleSort'] as num?)?.toInt(),
       dataScope: json['dataScope'] as String?,
       menuCheckStrictly: json['menuCheckStrictly'] as bool,
       deptCheckStrictly: json['deptCheckStrictly'] as bool,

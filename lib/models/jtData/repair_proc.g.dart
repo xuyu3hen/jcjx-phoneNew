@@ -10,7 +10,7 @@ RepairProcAndNode _$RepairProcAndNodeFromJson(Map<String, dynamic> json) =>
     RepairProcAndNode(
       code: json['code'] as String?,
       name: json['name'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       repairSysCode: json['repairSysCode'] as String?,
       remark: json['remark'] as String?,
       repairMainNodeList: (json['repairMainNodeList'] as List<dynamic>?)
@@ -32,7 +32,7 @@ RepairMainNodeList _$RepairMainNodeListFromJson(Map<String, dynamic> json) =>
     RepairMainNodeList(
       code: json['code'] as String,
       name: json['name'] as String?,
-      sort: json['sort'] as int?,
+      sort: (json['sort'] as num?)?.toInt(),
       repairProcCode: json['repairProcCode'] as String?,
       remark: json['remark'] as String?,
       deptIds: json['deptIds'] as String?,

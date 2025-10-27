@@ -29,9 +29,9 @@ PhotoData _$PhotoDataFromJson(Map<String, dynamic> json) => PhotoData(
       fileName: json['fileName'] as String?,
       remark: json['remark'] as String?,
       createdBy: json['createdBy'] as String?,
-      createdTime: json['createdTime'] as int?,
+      createdTime: (json['createdTime'] as num?)?.toInt(),
       updatedBy: json['updatedBy'] as String?,
-      updatedTime: json['updatedTime'] as int?,
+      updatedTime: (json['updatedTime'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$PhotoDataToJson(PhotoData instance) => <String, dynamic>{

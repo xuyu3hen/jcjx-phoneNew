@@ -29,7 +29,7 @@ SysMessageVO _$SysMessageVOFromJson(Map<String, dynamic> json) => SysMessageVO(
       sysMessageVO: (json['sysMessageVO'] as List<dynamic>?)
           ?.map((e) => MessageInfo.fromJson(e as Map<String, dynamic>))
           .toList(),
-      count: json['count'] as int?,
+      count: (json['count'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$SysMessageVOToJson(SysMessageVO instance) =>
@@ -39,9 +39,9 @@ Map<String, dynamic> _$SysMessageVOToJson(SysMessageVO instance) =>
     };
 
 MessageInfo _$MessageInfoFromJson(Map<String, dynamic> json) => MessageInfo(
-      number1: json['number1'] as int?,
+      number1: (json['number1'] as num?)?.toInt(),
       model: json['model'] as String?,
-      number2: json['number2'] as int?,
+      number2: (json['number2'] as num?)?.toInt(),
       status: json['status'] as String?,
       url: json['url'] as String?,
     );

@@ -7,6 +7,7 @@ import 'package:jcjx_phone/models/prework/repair_main_node.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/main_node.dart';
 import '../index.dart';
 import '../models/prework/package_user.dart';
+import '../models/progress.dart';
 
 class ProductApi extends AppApi {
   // 创建 Logger 实例
@@ -828,7 +829,8 @@ class ProductApi extends AppApi {
   }
 
   // /dispatch/trainEntry/getTrainEntryAndDynamics
-  Future<dynamic> getTrainEntryAndDynamics(
+  // 查询检修调令
+  Future<RepairGroup> getTrainEntryAndDynamics(
       Map<String, dynamic>? queryParametrs) async {
     try {
       var r = await AppApi.dio.get(
@@ -839,6 +841,7 @@ class ProductApi extends AppApi {
       return (r.data["data"])["data"];
     } catch (e) {
       _handleException(e);
+      return RepairGroup(children: [], repairProcCode: '', repairProcName: '', sort: 0);
     }
   }
 

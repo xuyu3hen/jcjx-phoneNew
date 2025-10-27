@@ -32,6 +32,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       setState(() {
         _isLoading = true;
       });
+      Map<String, dynamic> queryParametrs = {};
+      var r = await ProductApi().getTrainEntryAndDynamics(queryParametrs);
       
       // 模拟从API获取数据
       // 实际开发中应该调用真实的API接口

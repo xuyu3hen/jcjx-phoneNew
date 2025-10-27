@@ -8,9 +8,9 @@ part of 'patch_list.dart';
 
 JtMessageList _$JtMessageListFromJson(Map<String, dynamic> json) =>
     JtMessageList(
-      code: json['code'] as int?,
+      code: (json['code'] as num?)?.toInt(),
       msg: json['msg'] as String?,
-      total: json['total'] as int?,
+      total: (json['total'] as num?)?.toInt(),
       rows: (json['rows'] as List<dynamic>?)
           ?.map((e) => JtMessage.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -30,24 +30,26 @@ JtMessage _$JtMessageFromJson(Map<String, dynamic> json) => JtMessage(
       faultDescription: json['faultDescription'] as String?,
       jcNodeName: json['jcNodeName'] as String?,
       faultyComponent: json['faultyComponent'] as String?,
-      reporter: json['reporter'] as int?,
+      reporter: (json['reporter'] as num?)?.toInt(),
       reportDate: json['reportDate'] as String?,
       repairPicture: json['repairPicture'] as String?,
       maintenanceNotice: json['maintenanceNotice'] as String?,
       faultAssumption: json['faultAssumption'] as String?,
-      team: json['team'] as int?,
+      team: (json['team'] as num?)?.toInt(),
       professionalSystem: json['professionalSystem'] as String?,
       requiredProcessingMethod: json['requiredProcessingMethod'] as String?,
       repairStatus: json['repairStatus'] as String?,
       actualRepairStartDate: json['actualRepairStartDate'] as String?,
-      repairPersonnel: json['repairPersonnel'] as int?,
+      repairPersonnel: (json['repairPersonnel'] as num?)?.toInt(),
       repairCompletionDate: json['repairCompletionDate'] as String?,
-      assistant: json['assistant'] as int?,
+      assistant: (json['assistant'] as num?)?.toInt(),
       riskLevel: json['riskLevel'] as String?,
-      mutualInspectionPersonnel: json['mutualInspectionPersonnel'] as int?,
+      mutualInspectionPersonnel:
+          (json['mutualInspectionPersonnel'] as num?)?.toInt(),
       mutualInspectionPicture: json['mutualInspectionPicture'] as String?,
       mutualInspectionDate: json['mutualInspectionDate'] as String?,
-      specialInspectionPersonnel: json['specialInspectionPersonnel'] as int?,
+      specialInspectionPersonnel:
+          (json['specialInspectionPersonnel'] as num?)?.toInt(),
       specialInspectionDate: json['specialInspectionDate'] as String?,
       workpieceCoefficient: json['workpieceCoefficient'] as String?,
       specialInspectionPicture: json['specialInspectionPicture'] as String?,
@@ -56,8 +58,8 @@ JtMessage _$JtMessageFromJson(Map<String, dynamic> json) => JtMessage(
       createdTime: json['createdTime'] as String?,
       updatedBy: json['updatedBy'] as String?,
       updatedTime: json['updatedTime'] as String?,
-      status: json['status'] as int?,
-      completeStatus: json['completeStatus'] as int?,
+      status: (json['status'] as num?)?.toInt(),
+      completeStatus: (json['completeStatus'] as num?)?.toInt(),
       deptName: json['deptName'] as String?,
       reporterName: json['reporterName'] as String?,
       assistantName: json['assistantName'] as String?,
@@ -68,15 +70,17 @@ JtMessage _$JtMessageFromJson(Map<String, dynamic> json) => JtMessage(
       trainNum: json['trainNum'] as String?,
       trainModelName: json['trainModelName'] as String?,
       trainEntryCode: json['trainEntryCode'] as String?,
-      repairDate:
-          (json['repairDate'] as List<dynamic>?)?.map((e) => e as int).toList(),
-      mutualDate:
-          (json['mutualDate'] as List<dynamic>?)?.map((e) => e as int).toList(),
+      repairDate: (json['repairDate'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+      mutualDate: (json['mutualDate'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
       specialDate: (json['specialDate'] as List<dynamic>?)
-          ?.map((e) => e as int)
+          ?.map((e) => (e as num).toInt())
           .toList(),
       reportShowDate: (json['reportShowDate'] as List<dynamic>?)
-          ?.map((e) => e as int)
+          ?.map((e) => (e as num).toInt())
           .toList(),
       repairResourceName: json['repairResourceName'] as String?,
       processMethodName: json['processMethodName'] as String?,

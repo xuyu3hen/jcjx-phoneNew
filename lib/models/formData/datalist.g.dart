@@ -7,8 +7,8 @@ part of 'datalist.dart';
 // **************************************************************************
 
 DataList _$DataListFromJson(Map<String, dynamic> json) => DataList(
-      total: json['total'] as int?,
-      code: json['code'] as int?,
+      total: (json['total'] as num?)?.toInt(),
+      code: (json['code'] as num?)?.toInt(),
       msg: json['msg'] as String?,
     );
 
