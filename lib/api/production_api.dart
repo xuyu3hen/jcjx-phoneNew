@@ -31,7 +31,7 @@ class ProductApi extends AppApi {
   }
 
   //  /task/taskCertainPackage/getNeedToMutualInspectionCertainPackageList
-    Future<dynamic> getNeedToMutualInspectionCertainPackageList(
+  Future<dynamic> getNeedToMutualInspectionCertainPackageList(
     Map<String, dynamic>? queryParametrs,
   ) async {
     try {
@@ -41,12 +41,11 @@ class ProductApi extends AppApi {
       );
       logger.i(((r.data)['data'])['data']);
       return ((r.data)['data'])['data'];
-    }
-    catch (e) {
+    } catch (e) {
       _handleException(e);
       return [];
     }
-  }  
+  }
 
   // /dispatch/trainShunting/selectAll
   Future<dynamic> getTrainShunting({
@@ -59,14 +58,14 @@ class ProductApi extends AppApi {
       );
       logger.i(((r.data["data"])["data"])['rows']);
       return ((r.data["data"])["data"])['rows'];
-    }catch (e) {
+    } catch (e) {
       _handleException(e);
       return [];
     }
   }
 
   // /tasks/taskCertainPackage/wholePackageMutualInspection
-    Future<dynamic> wholePackageMutualInspection(
+  Future<dynamic> wholePackageMutualInspection(
     Map<String, dynamic>? queryParametrs,
   ) async {
     try {
@@ -76,14 +75,14 @@ class ProductApi extends AppApi {
       );
       logger.i((r.data)['data']);
       return (r.data)['data'];
-    }catch (e) {
+    } catch (e) {
       _handleException(e);
       return [];
     }
   }
 
-    // /tasks/taskCertainPackage/wholePackageSpecialInspection
-    Future<dynamic> wholePackageSpecialInspection(
+  // /tasks/taskCertainPackage/wholePackageSpecialInspection
+  Future<dynamic> wholePackageSpecialInspection(
     Map<String, dynamic>? queryParametrs,
   ) async {
     try {
@@ -93,14 +92,14 @@ class ProductApi extends AppApi {
       );
       logger.i((r.data)['data']);
       return (r.data)['data'];
-    }catch (e) {
+    } catch (e) {
       _handleException(e);
       return [];
     }
   }
 
-    //  /task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList
-    Future<dynamic> getNeedToSpecialInspectionCertainPackageList(
+  //  /task/taskCertainPackage/getNeedToSpecialInspectionCertainPackageList
+  Future<dynamic> getNeedToSpecialInspectionCertainPackageList(
     Map<String, dynamic>? queryParametrs,
   ) async {
     try {
@@ -110,8 +109,7 @@ class ProductApi extends AppApi {
       );
       logger.i(((r.data)['data'])['data']);
       return ((r.data)['data'])['data'];
-    }
-    catch (e) {
+    } catch (e) {
       _handleException(e);
       return [];
     }
@@ -483,7 +481,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToWorkJt28
+  // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToWorkJt28
   Future<dynamic> getNeedToWorkJt28({
     Map<String, dynamic>? queryParametrs,
   }) async {
@@ -499,7 +497,7 @@ class ProductApi extends AppApi {
     }
   }
 
-      // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchInspectionJt28
+  // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchInspectionJt28
   Future<dynamic> getNeedToDispatchInspectionJt28({
     Map<String, dynamic>? queryParametrs,
   }) async {
@@ -531,7 +529,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    // tasks/locomotiveMainTenanceLogDO/queryMutualInspectionJt28ByUserId
+  // tasks/locomotiveMainTenanceLogDO/queryMutualInspectionJt28ByUserId
   Future<dynamic> querySpecialInspectionJt28ByUserId({
     Map<String, dynamic>? queryParametrs,
   }) async {
@@ -546,7 +544,7 @@ class ProductApi extends AppApi {
       _handleException(e);
     }
   }
- 
+
   //获取 subparts/jcRoleConfigNode/getUerListByDeptId
   Future<dynamic> getUserListByDeptId({
     Map<String, dynamic>? queryParametrs,
@@ -804,11 +802,11 @@ class ProductApi extends AppApi {
   Future<int> finishCertainPackage(
       List<Map<String, dynamic>> queryParameters) async {
     try {
-    var r = await AppApi.dio2.post(
-        "/tasks/taskCertainPackage/completeTaskCertainPackage",
-        data: queryParameters);
-    logger.i(queryParameters);
-    return (r.data["code"]);
+      var r = await AppApi.dio2.post(
+          "/tasks/taskCertainPackage/completeTaskCertainPackage",
+          data: queryParameters);
+      logger.i(queryParameters);
+      return (r.data["code"]);
     } catch (e) {
       _handleException(e);
       return -1;
@@ -820,6 +818,21 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskInstructPackage/getTaskPackageByTrainEntryCode",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  // /dispatch/trainEntry/getTrainEntryAndDynamics
+  Future<dynamic> getTrainEntryAndDynamics(
+      Map<String, dynamic>? queryParametrs) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getTrainEntryAndDynamics",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])["data"]);
@@ -859,24 +872,25 @@ class ProductApi extends AppApi {
   }) async {
     try {
       // 直接获取字节响应，指定responseType为bytes
-      var response = await AppApi.dio.get("/fileserver/FileOperation/previewImage",
+      var response = await AppApi.dio.get(
+          "/fileserver/FileOperation/previewImage",
           queryParameters: queryParametrs,
           options: Options(responseType: ResponseType.bytes));
-      
+
       logger.i("previewImage bytes length: ${response.data?.length}");
-      
+
       // 处理字节流数据
       if (response.data != null) {
         // response.data 应该是 Uint8List 类型的字节数据
         if (response.data is Uint8List) {
           return Image.memory(response.data as Uint8List);
-        } 
+        }
         // 如果是 List<int>，转换为 Uint8List
         else if (response.data is List<int>) {
           return Image.memory(Uint8List.fromList(response.data as List<int>));
         }
       }
-      
+
       // 如果没有有效的数据，返回null
       return null;
     } catch (e) {
@@ -886,8 +900,6 @@ class ProductApi extends AppApi {
       return null;
     }
   }
-      
-
 
   // 文件下载
   Future<dynamic> downloadFile({
@@ -944,13 +956,12 @@ class ProductApi extends AppApi {
       // logger.i(((r.data["data"])["data"])['rows']);
       logger.i(((r.data["data"])["data"]));
       return ((r.data["data"])["data"]);
-
     } catch (e) {
       _handleException(e);
     }
-      }
+  }
 
-    // jcjxsystem/sysUser/selectAll
+  // jcjxsystem/sysUser/selectAll
   Future<dynamic> getUserList1({Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(
@@ -993,7 +1004,7 @@ class ProductApi extends AppApi {
     } catch (e) {
       _handleException(e);
     }
-      }
+  }
 
   //获取班组作业包
   Future<PackageUserData> getTeamWorkPackage(
@@ -1115,7 +1126,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    Future<void> startCertainPackageWork(
+  Future<void> startCertainPackageWork(
     Map<String, dynamic>? queryParametrs,
   ) async {
     try {
@@ -1128,8 +1139,6 @@ class ProductApi extends AppApi {
       _handleException(e);
     }
   }
-
-
 
   // 查看故障视频及图片 /fileserver/jt28File/getByGroupId
   Future<dynamic> getFaultVideoAndImage(

@@ -189,7 +189,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 ),
                 _buildFeatureItem(
                   Icon(Icons.next_plan, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28submitManage'),
+                  () => Navigator.pushNamed(context, 'repairTrainProgress'),
                   '检修调令',
                 ),
                         // Expanded(

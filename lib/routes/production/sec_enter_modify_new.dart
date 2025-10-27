@@ -73,6 +73,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
 
   late String trainNum = '';
 
+  late List<Map<String, dynamic>> directionList = [
+    {'name': '南'},
+    {'name': '北'}
+  ];
+
   // 图片传输相关变量定义
   List<AssetEntity> assestPics = [];
   List<File> faultPics = [];
@@ -415,7 +420,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'stoppingPlace': stopLocationSelected['areaName'],
         'attachSegmentCode': assignSegmentSelected['code'],
         'attachDept': assignSegmentSelected['assignSegment'],
-
       };
       print(queryParameter);
       try {
@@ -583,7 +587,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   data: assignSegmentList,
                   labelKey: 'assignSegment',
                   valueKey: 'code',
-                  childrenKey: 'children1',
+                  childrenKey: 'children',
                   title: "选择配属段",
                   clickCallBack: (selectItem, selectArr) {
                     logger.i(selectArr);
@@ -698,6 +702,37 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               }
             },
           ),
+          //增加朝向
+          ZjcFormSelectCell(
+              title: "朝向",
+              text: stopLocationSelected["direction"],
+              hintText: "请选择",
+              clickCallBack: () {
+                if (directionList.isEmpty) {
+                  showToast("无朝向可选择");
+                } else {
+                  // ZjcCascadeTreePicker.show(
+                  //   context,
+                  //   data: directionList,
+                  //   labelKey: 'realLocation',
+                  //   valueKey: 'code',
+                  //   childrenKey: 'children',
+                  //   title: "选择检修地点",
+                  //   clickCallBack: (selectItem, selectArr) {
+                  //     setState(() {
+                  //       logger.i(selectArr);
+                  //       stopLocationSelected["code"] = selectItem["code"];
+                  //       stopLocationSelected["realLocation"] =
+                  //           selectItem["realLocation"];
+                  //       stopLocationSelected["areaName"] =
+                  //           selectItem["areaName"];
+                  //       stopLocationSelected["trackNum"] =
+                  //           selectItem["trackNum"];
+                  //     });
+                    // },
+                  // );
+                }
+              }),
           Container(
             padding: const EdgeInsets.all(10),
             margin: const EdgeInsets.all(10),

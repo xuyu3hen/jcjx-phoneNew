@@ -87,6 +87,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'trainRepairInfo':(context) => const TrainRepairPage(),
         'jt28submitManage':(context) => const Vehicle28FormManage(),
         'repairTrainManage':(context) => const TrainRepairPageManage(),
+        'repairTrainProgress':(context) => const TrainRepairProgressPage(),
       },
       builder: FlutterSmartDialog.init(),
     );
