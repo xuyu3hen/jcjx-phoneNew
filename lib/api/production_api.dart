@@ -830,18 +830,25 @@ class ProductApi extends AppApi {
 
   // /dispatch/trainEntry/getTrainEntryAndDynamics
   // 查询检修调令
-  Future<RepairGroup> getTrainEntryAndDynamics(
+  Future<List<RepairGroup>> getTrainEntryAndDynamics(
       Map<String, dynamic>? queryParametrs) async {
     try {
       var r = await AppApi.dio.get(
         "/dispatch/trainEntry/getTrainEntryAndDynamics",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])["data"]);
-      return (r.data["data"])["data"];
+      // logger.i((r.data["data"])["data"]);
+      List<RepairGroup> repairGroups = [];
+      
+      for(var item in (r.data["data"])["data"]){
+        logger.i(item.toString());
+        repairGroups.add(RepairGroup.fromJson(item));
+      }
+      logger.i(repairGroups.toString());
+      return repairGroups;
     } catch (e) {
       _handleException(e);
-      return RepairGroup(children: [], repairProcCode: '', repairProcName: '', sort: 0);
+      return [RepairGroup(children: [], repairProcCode: '', repairProcName: '', sort: 0)];
     }
   }
 

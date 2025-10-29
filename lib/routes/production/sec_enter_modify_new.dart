@@ -292,56 +292,56 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           .getTrainInfoByPlan(queryParametrs: queryParameters);
       if (r == null) {
         //展示信息该车号无检修计划
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('提示'),
-                content: const Text('该车无检修计划'),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('确定'),
-                  ),
-                ],
-              );
-            });
+        // showDialog(
+        //     context: context,
+        //     builder: (BuildContext context) {
+        //       return AlertDialog(
+        //         title: const Text('提示'),
+        //         content: const Text('该车无检修计划'),
+        //         actions: [
+        //           TextButton(
+        //             onPressed: () {
+        //               Navigator.of(context).pop();
+        //             },
+        //             child: const Text('确定'),
+        //           ),
+        //         ],
+        //       );
+        //     });
       } else if (r['isEntry'] == false) {
         // 提示该车号已有检修计划已自动补全相关信息
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                  title: const Text('提示'),
-                  content: const Text('该车有检修计划已自动补全相关信息'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('确定'),
-                    ),
-                  ]);
-            });
+        // showDialog(
+        //     context: context,
+        //     builder: (BuildContext context) {
+        //       return AlertDialog(
+        //           title: const Text('提示'),
+        //           content: const Text('该车有检修计划已自动补全相关信息'),
+        //           actions: [
+        //             TextButton(
+        //               onPressed: () {
+        //                 Navigator.of(context).pop();
+        //               },
+        //               child: const Text('确定'),
+        //             ),
+        //           ]);
+            // });
       } else if (r['isEntry'] == true) {
         // 提示该车号已经入段请不要重复入段
-        showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                  title: const Text('提示'),
-                  content: const Text('该车已经入段请不要重复入段'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('确定'),
-                    ),
-                  ]);
-            });
+        // showDialog(
+        //     context: context,
+        //     builder: (BuildContext context) {
+        //       return AlertDialog(
+        //           title: const Text('提示'),
+        //           content: const Text('该车已经入段请不要重复入段'),
+        //           actions: [
+        //             TextButton(
+        //               onPressed: () {
+        //                 Navigator.of(context).pop();
+        //               },
+        //               child: const Text('确定'),
+        //             ),
+        //           ]);
+        //     });
       }
       setState(() {
         jcTypeListSelected["name"] = r['trainType'];
@@ -379,13 +379,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         var r = await ProductApi().upSlipImg(
             queryParametrs: {"trainEntryCode": val}, imagedataList: faultPics);
         if (r == 200) {
-          // showToast("上传成功");
           SmartDialog.dismiss();
           // 上传成功后才清除图片
           faultPics.clear();
           assestPics.clear();
-          // _image = null;
-          // widget.updateList.call();
         } else {
           // 如果上传失败，抛出异常供上层捕获
           throw Exception('图片上传失败，服务器返回状态码: $r');
@@ -445,7 +442,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             return r["code"];
           } catch (e, stackTrace) {
             logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
-            // showToast("图片上传失败，但基础信息已保存");
+
             return "";
           } finally {
             SmartDialog.dismiss();
