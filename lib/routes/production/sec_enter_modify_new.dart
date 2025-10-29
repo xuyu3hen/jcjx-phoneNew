@@ -78,6 +78,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     {'name': '北'}
   ];
 
+  Map<String, dynamic> directionSelected = {'name': '南'};
+
   // 图片传输相关变量定义
   List<AssetEntity> assestPics = [];
   List<File> faultPics = [];
@@ -290,59 +292,59 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       };
       var r = await ProductApi()
           .getTrainInfoByPlan(queryParametrs: queryParameters);
-      if (r == null) {
-        //展示信息该车号无检修计划
-        // showDialog(
-        //     context: context,
-        //     builder: (BuildContext context) {
-        //       return AlertDialog(
-        //         title: const Text('提示'),
-        //         content: const Text('该车无检修计划'),
-        //         actions: [
-        //           TextButton(
-        //             onPressed: () {
-        //               Navigator.of(context).pop();
-        //             },
-        //             child: const Text('确定'),
-        //           ),
-        //         ],
-        //       );
-        //     });
-      } else if (r['isEntry'] == false) {
-        // 提示该车号已有检修计划已自动补全相关信息
-        // showDialog(
-        //     context: context,
-        //     builder: (BuildContext context) {
-        //       return AlertDialog(
-        //           title: const Text('提示'),
-        //           content: const Text('该车有检修计划已自动补全相关信息'),
-        //           actions: [
-        //             TextButton(
-        //               onPressed: () {
-        //                 Navigator.of(context).pop();
-        //               },
-        //               child: const Text('确定'),
-        //             ),
-        //           ]);
-            // });
-      } else if (r['isEntry'] == true) {
-        // 提示该车号已经入段请不要重复入段
-        // showDialog(
-        //     context: context,
-        //     builder: (BuildContext context) {
-        //       return AlertDialog(
-        //           title: const Text('提示'),
-        //           content: const Text('该车已经入段请不要重复入段'),
-        //           actions: [
-        //             TextButton(
-        //               onPressed: () {
-        //                 Navigator.of(context).pop();
-        //               },
-        //               child: const Text('确定'),
-        //             ),
-        //           ]);
-        //     });
-      }
+      // if (r == null) {
+      //展示信息该车号无检修计划
+      // showDialog(
+      //     context: context,
+      //     builder: (BuildContext context) {
+      //       return AlertDialog(
+      //         title: const Text('提示'),
+      //         content: const Text('该车无检修计划'),
+      //         actions: [
+      //           TextButton(
+      //             onPressed: () {
+      //               Navigator.of(context).pop();
+      //             },
+      //             child: const Text('确定'),
+      //           ),
+      //         ],
+      //       );
+      //     });
+      // } else if (r['isEntry'] == false) {
+      // 提示该车号已有检修计划已自动补全相关信息
+      // showDialog(
+      //     context: context,
+      //     builder: (BuildContext context) {
+      //       return AlertDialog(
+      //           title: const Text('提示'),
+      //           content: const Text('该车有检修计划已自动补全相关信息'),
+      //           actions: [
+      //             TextButton(
+      //               onPressed: () {
+      //                 Navigator.of(context).pop();
+      //               },
+      //               child: const Text('确定'),
+      //             ),
+      //           ]);
+      // });
+      // } else if (r['isEntry'] == true) {
+      // 提示该车号已经入段请不要重复入段
+      // showDialog(
+      //     context: context,
+      //     builder: (BuildContext context) {
+      //       return AlertDialog(
+      //           title: const Text('提示'),
+      //           content: const Text('该车已经入段请不要重复入段'),
+      //           actions: [
+      //             TextButton(
+      //               onPressed: () {
+      //                 Navigator.of(context).pop();
+      //               },
+      //               child: const Text('确定'),
+      //             ),
+      //           ]);
+      //     });
+      // }
       setState(() {
         jcTypeListSelected["name"] = r['trainType'];
         jcTypeListSelected["code"] = r['trainTypeCode'];
@@ -534,6 +536,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   ),
                 ),
               ),
+// ... existing code ...
               Expanded(
                 flex: 2,
                 child: SizedBox(
@@ -541,34 +544,23 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   child: ZjcFormInputCell(
                     title: "车号",
                     hintText: "车号",
-                    rightWidget: Container(
-                      margin: const EdgeInsets.only(top: 8, bottom: 8),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          getRepairPlanByTrainNum();
-                        },
-                        icon: const Icon(Icons.search), // 可选：保留小图标
-                        label: const Text("查询计划"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.lightBlue[100],
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
-                          minimumSize: const Size(60, 30),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
                     inputCallBack: (value) {
                       setState(() {
                         trainNumSelected["trainNum"] = value;
                       });
+
+                      // 车号输入完成后自动搜索
+                      if (value != null && value.isNotEmpty) {
+                        // 添加一个短暂的延迟，确保状态更新后再执行搜索
+                        Future.microtask(() {
+                          getRepairPlanByTrainNum();
+                        });
+                      }
                     },
                   ),
                 ),
               ),
+// ... existing code ...
             ],
           ),
           ZjcFormSelectCell(
@@ -702,32 +694,26 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           //增加朝向
           ZjcFormSelectCell(
               title: "朝向",
-              text: stopLocationSelected["direction"],
+              text: directionSelected["name"] ?? '',
               hintText: "请选择",
               clickCallBack: () {
                 if (directionList.isEmpty) {
                   showToast("无朝向可选择");
                 } else {
-                  // ZjcCascadeTreePicker.show(
-                  //   context,
-                  //   data: directionList,
-                  //   labelKey: 'realLocation',
-                  //   valueKey: 'code',
-                  //   childrenKey: 'children',
-                  //   title: "选择检修地点",
-                  //   clickCallBack: (selectItem, selectArr) {
-                  //     setState(() {
-                  //       logger.i(selectArr);
-                  //       stopLocationSelected["code"] = selectItem["code"];
-                  //       stopLocationSelected["realLocation"] =
-                  //           selectItem["realLocation"];
-                  //       stopLocationSelected["areaName"] =
-                  //           selectItem["areaName"];
-                  //       stopLocationSelected["trackNum"] =
-                  //           selectItem["trackNum"];
-                  //     });
-                    // },
-                  // );
+                  ZjcCascadeTreePicker.show(
+                    context,
+                    data: directionList,
+                    labelKey: 'name',
+               
+                    childrenKey: 'children',
+                    title: "选择朝向",
+                    clickCallBack: (selectItem, selectArr) {
+                      setState(() {
+                        logger.i(selectArr);
+                        directionSelected['name'] = selectItem['name'];
+                      });
+                    },
+                  );
                 }
               }),
           Container(
