@@ -550,7 +550,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                       });
 
                       // 车号输入完成后自动搜索
-                      if (value != null && value.isNotEmpty) {
+                      if (value.isNotEmpty) {
                         // 添加一个短暂的延迟，确保状态更新后再执行搜索
                         Future.microtask(() {
                           getRepairPlanByTrainNum();
@@ -560,7 +560,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   ),
                 ),
               ),
-// ... existing code ...
             ],
           ),
           ZjcFormSelectCell(
