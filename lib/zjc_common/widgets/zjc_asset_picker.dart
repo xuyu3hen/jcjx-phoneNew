@@ -183,15 +183,95 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
   }
 
   // 点击添加按钮
+
   void _showBottomSheet() {
-    ZjcBottomSheet.showText(context, dataArr: ['拍摄', '相册'], title: '请选择', clickCallback: (index, str) async {
+    ZjcBottomSheet.showText(context, dataArr: ['拍照', '录像'], title: '请选择', clickCallback: (index, str) async {
       if (index == 1) {
-        _openCamera(context);
+        _openCameraForPhoto(context);
       }
       if (index == 2) {
-        _openAlbum(context);
+        _openCameraForVideo(context);
       }
     });
+  }
+
+  // 拍照
+  Future<void> _openCameraForPhoto(context) async {
+    if (!ZjcDeviceUtils.isMobile) {
+      ZjcProgressHUD.showText('当前平台暂不支持');
+      return;
+    }
+    // 相机权限
+    bool isGrantedCamera = await ZjcPermissionUtils.camera();
+    if (!isGrantedCamera) {
+      return;
+    }
+
+    // 相册权限
+    bool isGrantedPhotos = await ZjcPermissionUtils.photos();
+    if (!isGrantedPhotos) {
+      return;
+    }
+
+    final AssetEntity? result = await CameraPicker.pickFromCamera(
+      context,
+      pickerConfig: CameraPickerConfig(
+        // 只拍照，不录像
+        enableRecording: false,
+        // textDelegate: const EnglishCameraPickerTextDelegate(),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        widget.selectedAssets.add(result);
+        // 相机回调
+        widget.callBack?.call(widget.selectedAssets);
+      });
+    }
+  }
+
+  // 录像
+  Future<void> _openCameraForVideo(context) async {
+    if (!ZjcDeviceUtils.isMobile) {
+      ZjcProgressHUD.showText('当前平台暂不支持');
+      return;
+    }
+    // 相机权限
+    bool isGrantedCamera = await ZjcPermissionUtils.camera();
+    if (!isGrantedCamera) {
+      return;
+    }
+
+    // 麦克风权限
+    bool isGrantedMicrophone = await ZjcPermissionUtils.microphone();
+    if (!isGrantedMicrophone) {
+      return;
+    }
+
+    // 相册权限
+    bool isGrantedPhotos = await ZjcPermissionUtils.photos();
+    if (!isGrantedPhotos) {
+      return;
+    }
+
+    final AssetEntity? result = await CameraPicker.pickFromCamera(
+      context,
+      pickerConfig: CameraPickerConfig(
+        // 只录像，不拍照
+        enableRecording: true,
+        onlyEnableRecording: true,
+        // 录制视频最长时长
+        maximumRecordingDuration: widget.maximumRecordingDuration,
+        // textDelegate: const EnglishCameraPickerTextDelegate(),
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        widget.selectedAssets.add(result);
+        // 相机回调
+        widget.callBack?.call(widget.selectedAssets);
+      });
+    }
   }
 
   // 相册选择

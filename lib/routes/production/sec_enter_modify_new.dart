@@ -703,7 +703,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                     context,
                     data: directionList,
                     labelKey: 'name',
-               
+                    valueKey: 'name',
                     childrenKey: 'children',
                     title: "选择朝向",
                     clickCallBack: (selectItem, selectArr) {
