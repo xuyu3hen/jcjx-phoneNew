@@ -32,11 +32,33 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 搜索文本
   String _searchText = '';
 
+  Map<int, dynamic> noticeMap = {
+    0: '调车调令',
+    1: '检修计划',
+    2: '临修调令',
+    3: '机车配置签收',
+    4: '售后服务-调车清单',
+    5: '机车入段调令',
+    6: '机务段下发调令',
+    7: '作业人员修改调令',
+    8: '转序调令',
+    9: '轮径修改调令',
+    10: '轮径尺寸调令',
+    11: '轮径镟削调令',
+    12: '修改派工单',
+    13: '售后修程通知单',
+    14: '放行调令',
+    15: '放行申请',
+    16: '计划排产调令'
+  }; 
+
   @override
   void initState() {
     super.initState();
     _loadRepairProgressData();
   }
+
+
 
   // 加载检修进度数据
   Future<void> _loadRepairProgressData() async {
@@ -68,7 +90,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     await _loadRepairProgressData();
   }
 
- // ... existing code ...
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -419,7 +440,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    SmartDialog.showToast('检修详情查询功能待实现');
+                    _showRepairProgressList(context, item);
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 36),
@@ -456,8 +477,52 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     );
   }
 
-  // 获取状态文本
-// ... existing code ...
+  // 显示检修进度列表
+  void _showRepairProgressList(BuildContext context, RepairItem item) {
+     getTrainRepairDynamics(item);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('检修进度列表'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('车型：${item.typeName ?? ''}'),
+                Text('车号：${item.trackNum ?? ''}'),
+                const SizedBox(height: 10),
+                const Text(
+                  '工序列表：',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 5),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void getTrainRepairDynamics(RepairItem item){
+    Map<String, dynamic> queryParametrs = {
+      'trainEntryCode': item.code
+    };
+    // 获取检修进度信息内容
+    var r = ProductApi().getTrainRepairDynamics(queryParametrs: queryParametrs);
+
+  }
   // 获取状态文本
   String _getStatusText(int status) {
     switch (status) {

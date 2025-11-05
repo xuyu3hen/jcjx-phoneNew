@@ -73,7 +73,6 @@ class _SetSpecialCheckState extends State<SetSpecialCheck> {
       if (mounted) {
         // 调用接口
         ProductApi().saveAssociated(queryParameters);
-
         showToast('专互检保存成功');
         //回退到上一页面
         Navigator.pop(context);

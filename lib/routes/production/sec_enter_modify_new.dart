@@ -729,7 +729,6 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                     style:
                         TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-// ... existing code ...
                 ZjcAssetPicker(
                   assetType: APC.AssetType.image,
                   maxAssets: 4,
@@ -761,7 +760,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     return SafeArea(
       child: InkWell(
         onTap: () async {
-          if (isSubmitting) return; // 如果正在提报，不处理点击事件
+          if (isSubmitting) return;
+          if (!_validateForm()) {
+
+            return;
+          } // 如果正在提报，不处理点击事件
           newEntry().then((code) {
             if (code != "") {
               exitDialog();
@@ -779,6 +782,52 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         ),
       ),
     );
+  }
+
+  bool _validateForm() {
+    if (trainNumSelected["trainNum"] == null ||
+        trainNumSelected["trainNum"].toString().isEmpty) {
+      SmartDialog.showToast('请填写车号');
+      return false;
+    }
+
+    if (assignSegmentSelected["assignSegment"] == null ||
+        assignSegmentSelected["assignSegment"].toString().isEmpty) {
+      SmartDialog.showToast('请填写配属段');
+      return false;
+    }
+
+    if (repairSelected["name"] == null ||
+        repairSelected["name"].toString().isEmpty) {
+      SmartDialog.showToast('请填写修程');
+      return false;
+    }
+
+    if (repairTimesSelected["name"] == null ||
+        repairTimesSelected["name"].toString().isEmpty) {
+      SmartDialog.showToast('请填写修次');
+      return false;
+    }
+
+    if (stopLocationSelected["realLocation"] == null ||
+        stopLocationSelected["realLocation"].toString().isEmpty) {
+      SmartDialog.showToast('请填写检修地点');
+      return false;
+    }
+
+    if (directionSelected["name"] == null ||
+        directionSelected["name"].toString().isEmpty) {
+      SmartDialog.showToast('请填写朝向');
+      return false;
+    }
+
+    // // 验证是否有选择图片
+    if (faultPics.isEmpty) {
+      SmartDialog.showToast('请填写检修图片');
+      return false;
+    }
+
+    return true;
   }
 
   void exitDialog() {

@@ -1064,6 +1064,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
       ],
     );
   }
+
 // ... existing code ...
   Widget _buildActionButtons() {
     return Row(
@@ -1110,7 +1111,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
       ],
     );
   }
-
 }
 
 class _InfoItem extends StatelessWidget {
@@ -1442,7 +1442,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
-                _InfoItem(
+        _InfoItem(
             label: '工序节点',
             value: widget.locoInfo?['repairMainNodeName'] != ''
                 ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
@@ -1549,6 +1549,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
               const SizedBox(width: 12),
 
               // 主修人和辅修人信息
+              // ... existing code ...
+              // 主修人和辅修人信息
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1558,6 +1560,14 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     style: const TextStyle(
                       fontSize: 14,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    "主修人列表：${task['repairPersonnelNameList'] ?? '未指定'}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   // 辅修
@@ -1566,9 +1576,18 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     style: const TextStyle(
                       fontSize: 14,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    "辅修人列表：${task['assistantNameList'] ?? '未指定'}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
+// ... existing code ...
               const SizedBox(width: 12),
 
               // 作业人员查询按钮
@@ -1586,7 +1605,6 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   // 如果从派工页面返回了true，则刷新当前页面
                   if (result == true) {
                     getPackageManage(); // 重新获取数据
-                    
                   }
                 },
                 style: ElevatedButton.styleFrom(

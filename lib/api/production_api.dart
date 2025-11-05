@@ -839,8 +839,8 @@ class ProductApi extends AppApi {
       );
       // logger.i((r.data["data"])["data"]);
       List<RepairGroup> repairGroups = [];
-      
-      for(var item in (r.data["data"])["data"]){
+
+      for (var item in (r.data["data"])["data"]) {
         logger.i(item.toString());
         repairGroups.add(RepairGroup.fromJson(item));
       }
@@ -848,7 +848,10 @@ class ProductApi extends AppApi {
       return repairGroups;
     } catch (e) {
       _handleException(e);
-      return [RepairGroup(children: [], repairProcCode: '', repairProcName: '', sort: 0)];
+      return [
+        RepairGroup(
+            children: [], repairProcCode: '', repairProcName: '', sort: 0)
+      ];
     }
   }
 
@@ -1289,6 +1292,22 @@ class ProductApi extends AppApi {
       Map<String, dynamic> queryParametrs = {'pageNum': 0, 'pageSize': 0};
       var r = await AppApi.dio.get(
         "/dispatch/jcAssignSegment/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  // 查询检修调令 /dispatch/trainRepairDynamics/selectAll 检修详情查询内容
+  Future<dynamic> getTrainRepairDynamics(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainRepairDynamics/selectAll",
         queryParameters: queryParametrs,
       );
       logger.i((r.data["data"])["data"]);
