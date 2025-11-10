@@ -172,11 +172,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       },
     );
   }
-// ... existing code ...
 
-  // 构建维修组卡片
-
-  // ... existing code ...
   // 构建维修组卡片
 
   Widget _buildRepairGroupCard(RepairGroup group, int index) {
@@ -478,51 +474,87 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 显示检修进度列表
-  void _showRepairProgressList(BuildContext context, RepairItem item) {
-     getTrainRepairDynamics(item);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('检修进度列表'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('车型：${item.typeName ?? ''}'),
-                Text('车号：${item.trackNum ?? ''}'),
-                const SizedBox(height: 10),
-                const Text(
-                  '工序列表：',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+ void _showRepairProgressList(BuildContext context, RepairItem item) async{
+  await getTrainRepairDynamics(item);
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('检修进度列表'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: shuntingList.length,
+                  itemBuilder: (context, index) {
+                    final shuntingItem = shuntingList[index];
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('流水号: ${shuntingItem['shuntingEncode'] ?? ''}'),
+                             Text(
+                                '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            Text('修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}'),
+                            Text('检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}'),
+                            Text('发送人员: ${shuntingItem['sendUserName'] ?? ''}'),
+                            Text('接受人员: ${shuntingItem['receiveUserName'] ?? ''}'),
+                            Text('开始时间: ${shuntingItem['startTime'] ?? ''}'),
+                            Text('结束时间: ${shuntingItem['endTime'] ?? ''}'),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 5),
-              ],
-            ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('关闭'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('关闭'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void getTrainRepairDynamics(RepairItem item){
-    Map<String, dynamic> queryParametrs = {
+  List<Map<String, dynamic>> shuntingList = [];
+
+  Future<void> getTrainRepairDynamics(RepairItem item) async{
+    try{
+          Map<String, dynamic> queryParametrs = {
       'trainEntryCode': item.code
     };
     // 获取检修进度信息内容
-    var r = ProductApi().getTrainRepairDynamics(queryParametrs: queryParametrs);
-
+    var r = await ProductApi().getTrainRepairDynamics(queryParametrs: queryParametrs);
+    List<Map<String, dynamic>> rows = 
+        (r as List).map((item) => item as Map<String, dynamic>).toList();
+    setState(() {
+      shuntingList = rows;
+    });
+    }catch(e){
+      // 错误处理
+    
+    }
   }
+
   // 获取状态文本
   String _getStatusText(int status) {
     switch (status) {
@@ -565,8 +597,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 显示检修调令对话框
-  // ... existing code ...
-  // 显示检修调令对话框
   void _showMaintenanceOrderDialog(BuildContext context, RepairItem item) {
     showDialog(
       context: context,
@@ -590,12 +620,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ),
                 const Divider(),
                 ListTile(
-                  title: const Text('轮径修改通知申请单'),
+                  title: const Text('调车通知单'),
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
                     Navigator.pop(context);
-                    SmartDialog.showToast('轮径修改通知申请单功能待实现');
-                  },
+                    SmartDialog.showToast('调车通知单内容完成');
+                  }, 
+                ),
+                const Divider(),
+                ListTile(
+                  title: const Text('转序调令'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    Navigator.pop(context);
+                    SmartDialog.showToast('调车通知单内容完成');
+                  }, 
                 ),
               ],
             ),
@@ -692,22 +731,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: CheckboxListTile(
-                              title: const Text('安全生产指挥中心'),
-                              value: _pushToCommandCenter,
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  _pushToCommandCenter = value ?? false;
-                                });
-                              },
-                              controlAffinity: ListTileControlAffinity.leading,
-                            ),
-                          ),
-                        ],
-                      ),
+             
                   ]
                 ),
               ),

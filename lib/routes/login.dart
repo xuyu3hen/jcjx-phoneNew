@@ -1,4 +1,7 @@
+import 'package:dart_sm/dart_sm.dart';
+
 import '../index.dart';
+
 
 class LoginRoute extends StatefulWidget {
   const LoginRoute({super.key});
@@ -18,6 +21,7 @@ class _LoginRouteState extends State<LoginRoute> {
   bool rememberPassword = false; // 记住密码选项
   final String _credentialsKey = 'credentials';
   bool _isManualInput = false;
+  String publicKey = '049d14df9951e1d14dd0e411419f111cb6f42da259ab9af5beea52276ed651e74c70eabe623f56e7f2716c3211e5bae9ec041dcda194840bca87290593e0b06640';
   @override
   void initState() {
     super.initState();
@@ -261,7 +265,6 @@ class _LoginRouteState extends State<LoginRoute> {
                     },
                   ),
                   const SizedBox(height: 16),
-// 密码输入框保持不变
                   TextFormField(
                     controller: _pwdController,
                     autofocus: !_nameAutoFouce,
@@ -275,6 +278,7 @@ class _LoginRouteState extends State<LoginRoute> {
                         onPressed: () {
                           setState(() {
                             pwdShow = !pwdShow;
+                            
                           });
                         },
                       ),
@@ -314,11 +318,19 @@ class _LoginRouteState extends State<LoginRoute> {
     // if(F.id == "com.jcjx_phone_dev"){
     if (true) {
       try {
+       
+        
+        
+        // 正确调用SM2加密：encrypt(明文, 公钥)
+        String passwd = SM2.encrypt(_pwdController.text, publicKey, cipherMode: 1);
+        logger.i("加密后的密码：$passwd");
+        logger.i(_unameController.text);
         // 调用api接口函数
         var r = await LoginApi().getProfile(
           // 账号密码
+
           queryParametrs: {
-            'password': _pwdController.text,
+            'password': passwd,
             'username': _unameController.text,
           },
         );

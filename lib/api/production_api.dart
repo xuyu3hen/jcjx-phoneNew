@@ -1310,8 +1310,8 @@ class ProductApi extends AppApi {
         "/dispatch/trainRepairDynamics/selectAll",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])["data"]);
-      return (r.data["data"])["data"];
+      logger.i(((r.data["data"])["data"])["rows"]);
+      return ((r.data["data"])["data"])["rows"];
     } catch (e) {
       _handleException(e);
       return null;
