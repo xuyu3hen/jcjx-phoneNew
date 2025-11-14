@@ -67,11 +67,28 @@ class ProductApi extends AppApi {
 
     // /dispatch/trainShunting/selectAll
   Future<dynamic> saveTrainShunting({
-    Map<String, dynamic>? queryParametrs, // 分页参数
+    Map<String, dynamic>? queryParametrs, 
   }) async {
     try {
       var r = await AppApi.dio.post(
         "/dispatch/trainShunting/save",
+        data: queryParametrs,
+      );
+      logger.i((r.data["data"]));
+      return ((r.data["data"]));
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // /dispatch/trainShuntingPlan/addToPlan
+  Future<dynamic> addTrainShuntingPlan({
+    List<Map<String, dynamic>>? queryParametrs, 
+  }) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/trainShuntingPlan/addToPlan",
         data: queryParametrs,
       );
       logger.i((r.data["data"]));

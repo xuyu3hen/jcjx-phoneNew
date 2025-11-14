@@ -710,7 +710,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
     void savetrainShunting() async {
-      Map<String, dynamic> queryParametrs = {
+      try{
+        Map<String, dynamic> queryParametrs = {
         'applyDeptId': Global.profile.permissions?.user.deptId,
         'applyUserId': Global.profile.permissions?.user.userId,
         'applyUserName': Global.profile.permissions?.user.userName,
@@ -726,6 +727,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       };
       var r =
           await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
+      }catch(e){
+        logger.e('savetrainShunting 方法中发生异常: $e');
+      }
+      
     }
 
     showDialog(
@@ -888,28 +893,37 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     );
   }
 
-  // 显示
+  // 显示调车通知单
   void _showShuntingAnswerDialog(BuildContext context, RepairItem item) {
     final TextEditingController _reasonController = TextEditingController();
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
-    void savetrainShunting() async {
-      Map<String, dynamic> queryParametrs = {
-        'applyDeptId': Global.profile.permissions?.user.deptId,
-        'applyUserId': Global.profile.permissions?.user.userId,
-        'applyUserName': Global.profile.permissions?.user.userName,
-        'dynamicCode': item.dynamicCode,
+    DateTime? _estimatedStartDate;
+    DateTime? _planDateSelected;
+    DateTime? _planDateSelectedEnd;
+    void saveShuntingAnswer() async {
+      try{
+        logger.i('_planDateSelected.toString(): ${_planDateSelected.toString()}');
+        logger.i('_planDateSelectedEnd.toString(): ${_planDateSelectedEnd.toString()}');
+        List<Map<String, dynamic>> queryParametrs = [{
         'endStopPositionCode': stopLocationSelectedEnd['code'],
         'ends': directionSelected['name'],
+        'planDate': _estimatedStartDate!.millisecondsSinceEpoch,
+        'planStartTime': _planDateSelected.toString(),
+        'planEndTime': _planDateSelectedEnd.toString(),
         'remark': _reasonController.text,
         'sort': 0,
         'startStopPositionCode': stopLocationSelected['code'],
         'status': 0,
         'trainEntryCode': item.code,
+        'trainNum':item.trainNum,
         'typeCode': item.typeCode,
-      };
+      }];
       var r =
-          await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
+          await ProductApi().addTrainShuntingPlan(queryParametrs: queryParametrs);
+      }catch(e){
+        logger.e('saveShuntingAnswer 方法中发生异常: $e');
+      }
     }
 
     Future<void> _selectDate(
@@ -925,9 +939,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
 
-    DateTime? _estimatedStartDate;
-    DateTime? _planDateSelected;
-    DateTime? _planDateSelectedEnd;
+
 
     showDialog(
       context: context,
@@ -1092,57 +1104,71 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           decoration: InputDecoration(
                             labelText: '计划开始时间',
                             border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () async {
-                                final DateTime? pickedDate =
-                                    await showDatePicker(
-                                  context: context,
-                                  initialDate:
-                                      _planDateSelected ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                  locale: const Locale('zh', 'CN'),
-                                  helpText: '选择日期',
-                                  cancelText: '取消',
-                                  confirmText: '确定',
-                                );
-
-                                if (pickedDate != null) {
-                                  final TimeOfDay? pickedTime =
-                                      await showTimePicker(
-                                    context: context,
-                                    initialTime: _planDateSelected != null
-                                        ? TimeOfDay.fromDateTime(
-                                            _planDateSelected!)
-                                        : TimeOfDay.now(),
-                                    helpText: '选择时间',
-                                    cancelText: '取消',
-                                    confirmText: '确定',
-                                  );
-                                  if (pickedTime != null) {
-                                    final DateTime dateTimeWithTime = DateTime(
-                                      pickedDate.year,
-                                      pickedDate.month,
-                                      pickedDate.day,
-                                      pickedTime.hour,
-                                      pickedTime.minute,
-                                      0,
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton(
+                                  child: const Text('此刻'),
+                                  onPressed: () {
+                                    setState(() {
+                                      _planDateSelected = DateTime.now();
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () async {
+                                    final DateTime? pickedDate =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate:
+                                          _planDateSelected ?? DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                      locale: const Locale('zh', 'CN'),
+                                      helpText: '选择日期',
+                                      cancelText: '取消',
+                                      confirmText: '确定',
                                     );
 
-                                    setState(() {
-                                      _planDateSelected = dateTimeWithTime;
-                                    });
-                                  }
-                                }
-                              },
+                                    if (pickedDate != null) {
+                                      final TimeOfDay? pickedTime =
+                                          await showTimePicker(
+                                        context: context,
+                                        initialTime: _planDateSelected != null
+                                            ? TimeOfDay.fromDateTime(
+                                                _planDateSelected!)
+                                            : TimeOfDay.now(),
+                                        helpText: '选择时间',
+                                        cancelText: '取消',
+                                        confirmText: '确定',
+                                      );
+                                      if (pickedTime != null) {
+                                        final DateTime dateTimeWithTime =
+                                            DateTime(
+                                          pickedDate.year,
+                                          pickedDate.month,
+                                          pickedDate.day,
+                                          pickedTime.hour,
+                                          pickedTime.minute,
+                                          0,
+                                        );
+
+                                        setState(() {
+                                          _planDateSelected = dateTimeWithTime;
+                                        });
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ),   
+                      ),
                     ],
                   ),
-                                    const SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -1157,54 +1183,70 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           decoration: InputDecoration(
                             labelText: '计划结束时间',
                             border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () async {
-                                final DateTime? pickedDate =
-                                    await showDatePicker(
-                                  context: context,
-                                  initialDate:
-                                      _planDateSelected ?? DateTime.now(),
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                  locale: const Locale('zh', 'CN'),
-                                  helpText: '选择日期',
-                                  cancelText: '取消',
-                                  confirmText: '确定',
-                                );
-
-                                if (pickedDate != null) {
-                                  final TimeOfDay? pickedTime =
-                                      await showTimePicker(
-                                    context: context,
-                                    initialTime: _planDateSelected != null
-                                        ? TimeOfDay.fromDateTime(
-                                            _planDateSelected!)
-                                        : TimeOfDay.now(),
-                                    helpText: '选择时间',
-                                    cancelText: '取消',
-                                    confirmText: '确定',
-                                  );
-                                  if (pickedTime != null) {
-                                    final DateTime dateTimeWithTime = DateTime(
-                                      pickedDate.year,
-                                      pickedDate.month,
-                                      pickedDate.day,
-                                      pickedTime.hour,
-                                      pickedTime.minute,
-                                      0,
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton(
+                                  child: const Text('此刻'),
+                                  onPressed: () {
+                                    setState(() {
+                                      _planDateSelectedEnd = DateTime.now();
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () async {
+                                    final DateTime? pickedDate =
+                                        await showDatePicker(
+                                      context: context,
+                                      initialDate: _planDateSelectedEnd ??
+                                          DateTime.now(),
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                      locale: const Locale('zh', 'CN'),
+                                      helpText: '选择日期',
+                                      cancelText: '取消',
+                                      confirmText: '确定',
                                     );
 
-                                    setState(() {
-                                      _planDateSelected = dateTimeWithTime;
-                                    });
-                                  }
-                                }
-                              },
+                                    if (pickedDate != null) {
+                                      final TimeOfDay? pickedTime =
+                                          await showTimePicker(
+                                        context: context,
+                                        initialTime:
+                                            _planDateSelectedEnd != null
+                                                ? TimeOfDay.fromDateTime(
+                                                    _planDateSelectedEnd!)
+                                                : TimeOfDay.now(),
+                                        helpText: '选择时间',
+                                        cancelText: '取消',
+                                        confirmText: '确定',
+                                      );
+                                      if (pickedTime != null) {
+                                        final DateTime dateTimeWithTime =
+                                            DateTime(
+                                          pickedDate.year,
+                                          pickedDate.month,
+                                          pickedDate.day,
+                                          pickedTime.hour,
+                                          pickedTime.minute,
+                                          0,
+                                        );
+
+                                        setState(() {
+                                          _planDateSelectedEnd =
+                                              dateTimeWithTime;
+                                        });
+                                      }
+                                    }
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ),   
+                      ),
                     ],
                   ),
                   TextFormField(
@@ -1229,7 +1271,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   onPressed: () {
                     // 处理提交逻辑
                     Navigator.pop(context);
-                    savetrainShunting();
+                    saveShuntingAnswer();
                     SmartDialog.showToast('调车申请已提交');
                   },
                   child: const Text('确认'),
