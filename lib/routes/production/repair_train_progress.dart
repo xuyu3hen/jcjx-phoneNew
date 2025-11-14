@@ -28,7 +28,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 用于追踪每个组的展开状态
   Map<int, bool> _groupExpansionStates = {};
 
-
   // 搜索文本
   String _searchText = '';
 
@@ -50,15 +49,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     14: '放行调令',
     15: '放行申请',
     16: '计划排产调令'
-  }; 
+  };
 
   @override
   void initState() {
     super.initState();
     _loadRepairProgressData();
   }
-
-
 
   // 加载检修进度数据
   Future<void> _loadRepairProgressData() async {
@@ -148,10 +145,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     } else {
       for (var group in repairGroups) {
         final filteredChildren = group.children
-            ?.where((item) => 
-                (item.trainNum ?? '').contains(_searchText))
+            ?.where((item) => (item.trainNum ?? '').contains(_searchText))
             .toList();
-        
+
         if (filteredChildren != null && filteredChildren.isNotEmpty) {
           filteredGroups.add(RepairGroup(
             children: filteredChildren,
@@ -389,10 +385,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               ],
             ),
           ),
-
           // 时间信息
           const SizedBox(height: 8),
-
           // 包数量信息
           Container(
             padding: const EdgeInsets.all(8),
@@ -474,84 +468,87 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 显示检修进度列表
- void _showRepairProgressList(BuildContext context, RepairItem item) async{
-  await getTrainRepairDynamics(item);
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('检修进度列表'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: shuntingList.length,
-                  itemBuilder: (context, index) {
-                    final shuntingItem = shuntingList[index];
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('流水号: ${shuntingItem['shuntingEncode'] ?? ''}'),
-                             Text(
+  void _showRepairProgressList(BuildContext context, RepairItem item) async {
+    await getTrainRepairDynamics(item);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('检修进度列表'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: shuntingList.length,
+                    itemBuilder: (context, index) {
+                      final shuntingItem = shuntingList[index];
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  '流水号: ${shuntingItem['shuntingEncode'] ?? ''}'),
+                              Text(
                                 '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',
                                 style: const TextStyle(
                                   color: Colors.green,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            Text('修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}'),
-                            Text('检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}'),
-                            Text('发送人员: ${shuntingItem['sendUserName'] ?? ''}'),
-                            Text('接受人员: ${shuntingItem['receiveUserName'] ?? ''}'),
-                            Text('开始时间: ${shuntingItem['startTime'] ?? ''}'),
-                            Text('结束时间: ${shuntingItem['endTime'] ?? ''}'),
-                          ],
+                              Text(
+                                  '修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}'),
+                              Text(
+                                  '检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}'),
+                              Text(
+                                  '发送人员: ${shuntingItem['sendUserName'] ?? ''}'),
+                              Text(
+                                  '接受人员: ${shuntingItem['receiveUserName'] ?? ''}'),
+                              Text('开始时间: ${shuntingItem['startTime'] ?? ''}'),
+                              Text('结束时间: ${shuntingItem['endTime'] ?? ''}'),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('关闭'),
-          ),
-        ],
-      );
-    },
-  );
-}
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   List<Map<String, dynamic>> shuntingList = [];
 
-  Future<void> getTrainRepairDynamics(RepairItem item) async{
-    try{
-          Map<String, dynamic> queryParametrs = {
-      'trainEntryCode': item.code
-    };
-    // 获取检修进度信息内容
-    var r = await ProductApi().getTrainRepairDynamics(queryParametrs: queryParametrs);
-    List<Map<String, dynamic>> rows = 
-        (r as List).map((item) => item as Map<String, dynamic>).toList();
-    setState(() {
-      shuntingList = rows;
-    });
-    }catch(e){
+  Future<void> getTrainRepairDynamics(RepairItem item) async {
+    try {
+      Map<String, dynamic> queryParametrs = {'trainEntryCode': item.code};
+      // 获取检修进度信息内容
+      var r = await ProductApi()
+          .getTrainRepairDynamics(queryParametrs: queryParametrs);
+      List<Map<String, dynamic>> rows =
+          (r as List).map((item) => item as Map<String, dynamic>).toList();
+      setState(() {
+        shuntingList = rows;
+      });
+    } catch (e) {
       // 错误处理
-    
     }
   }
 
@@ -613,8 +610,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ListTile(
                   title: const Text('调车申请单'),
                   trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
+                    getStopLocation();
                     _showShuntingApplicationDialog(context, item);
                   },
                 ),
@@ -624,8 +622,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   trailing: const Icon(Icons.arrow_forward_ios),
                   onTap: () {
                     Navigator.pop(context);
-                    SmartDialog.showToast('调车通知单内容完成');
-                  }, 
+                    getStopLocation();
+                    _showShuntingAnswerDialog(context, item);
+                  },
                 ),
                 const Divider(),
                 ListTile(
@@ -634,7 +633,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   onTap: () {
                     Navigator.pop(context);
                     SmartDialog.showToast('调车通知单内容完成');
-                  }, 
+                  },
                 ),
               ],
             ),
@@ -652,15 +651,82 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     );
   }
 
-  
-    // 推送选项的状态 - 只保留安全生产指挥中心
-    bool _pushToCommandCenter = true;
+  // 推送选项的状态 - 只保留安全生产指挥中心
+  bool _pushToCommandCenter = true;
+  // 产生停留地点
+  // 起始位置
+  List<Map<String, dynamic>> stopLocationList = [];
+
+  // 开始位置
+  Map<String, dynamic> stopLocationSelected = {};
+  // 结束位置
+  Map<String, dynamic> stopLocationSelectedEnd = {};
+  // 获取检修地点
+  void getStopLocation() async {
+    try {
+      var r = await ProductApi().getstopLocation({
+        'pageNum': 0,
+        'pageSize': 0,
+      });
+      List<Map<String, dynamic>> processedStopLocations = [];
+      if (r.rows != null && r.rows!.isNotEmpty) {
+        for (var item in r.rows!) {
+          if (item.areaName != null &&
+              item.deptName != null &&
+              item.trackNum != null) {
+            processedStopLocations.add({
+              'code': item.code,
+              'deptName': item.deptName,
+              'realLocation':
+                  '${item.deptName}-${item.trackNum}-${item.areaName}',
+              'areaName': item.areaName,
+              'trackNum': item.trackNum,
+            });
+          }
+        }
+      }
+      setState(() {
+        stopLocationList = processedStopLocations;
+        logger.i(stopLocationList);
+      });
+    } catch (e, stackTrace) {
+      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
+    }
+  }
+
+  Map<String, dynamic> directionSelected = {};
+  List<Map<String, dynamic>> directionList = [
+    {
+      'name': 'A',
+    },
+    {
+      'name': 'B',
+    }
+  ];
 
   // 显示调车申请单输入对话框
   void _showShuntingApplicationDialog(BuildContext context, RepairItem item) {
     final TextEditingController _reasonController = TextEditingController();
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
+    void savetrainShunting() async {
+      Map<String, dynamic> queryParametrs = {
+        'applyDeptId': Global.profile.permissions?.user.deptId,
+        'applyUserId': Global.profile.permissions?.user.userId,
+        'applyUserName': Global.profile.permissions?.user.userName,
+        'dynamicCode': item.dynamicCode,
+        'endStopPositionCode': stopLocationSelectedEnd['code'],
+        'ends': directionSelected['name'],
+        'remark': _reasonController.text,
+        'sort': 0,
+        'startStopPositionCode': stopLocationSelected['code'],
+        'status': 0,
+        'trainEntryCode': item.code,
+        'typeCode': item.typeCode,
+      };
+      var r =
+          await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
+    }
 
     showDialog(
       context: context,
@@ -671,69 +737,132 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               title: const Text('调车申请单'),
               content: SizedBox(
                 width: double.maxFinite,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 展示车号和停留地点信息
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '车号: ${item.trainNum ?? "未知"}',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  // 展示车号和停留地点信息
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '车号: ${item.trainNum ?? "未知"}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            '停留地点: ${item.stoppingPlace ?? "未知"}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                            ),
+                        ),
+                        Text(
+                          '停留地点: ${item.stoppingPlace ?? "未知"}',
+                          style: const TextStyle(
+                            fontSize: 14,
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _reasonController,
-                      decoration: const InputDecoration(
-                        labelText: '调车原因',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: '计划停留地点',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    
-                      const SizedBox(height: 10),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          labelText: '计划完成时间要求',
-                          border: OutlineInputBorder(),
                         ),
-                      ),
-                                  const Text(
-                        '推送给:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-             
-                  ]
-                ),
+                      ],
+                    ),
+                  ),
+                  //增加朝向
+                  ZjcFormSelectCell(
+                      title: "端",
+                      text: directionSelected["name"] ?? '',
+                      hintText: "请选择",
+                      clickCallBack: () {
+                        if (directionList.isEmpty) {
+                          showToast("无朝向可选择");
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            context,
+                            data: directionList,
+                            labelKey: 'name',
+                            valueKey: 'name',
+                            childrenKey: 'children',
+                            title: "选择朝向",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                logger.i(selectArr);
+                                directionSelected['name'] = selectItem['name'];
+                              });
+                            },
+                          );
+                        }
+                      }),
+                  const SizedBox(height: 10),
+                  ZjcFormSelectCell(
+                    title: "起始位置",
+                    text: stopLocationSelected["realLocation"],
+                    hintText: "请选择",
+                    clickCallBack: () {
+                      if (stopLocationList.isEmpty) {
+                        showToast("无检修地点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: stopLocationList,
+                          labelKey: 'realLocation',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择检修地点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              logger.i(selectArr);
+                              stopLocationSelected["code"] = selectItem["code"];
+                              stopLocationSelected["realLocation"] =
+                                  selectItem["realLocation"];
+                              stopLocationSelected["areaName"] =
+                                  selectItem["areaName"];
+                              stopLocationSelected["trackNum"] =
+                                  selectItem["trackNum"];
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  ZjcFormSelectCell(
+                    title: "终点位置",
+                    text: stopLocationSelectedEnd["realLocation"],
+                    hintText: "请选择",
+                    clickCallBack: () {
+                      if (stopLocationList.isEmpty) {
+                        showToast("无检修地点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: stopLocationList,
+                          labelKey: 'realLocation',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择检修地点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              logger.i(selectArr);
+                              stopLocationSelectedEnd["code"] =
+                                  selectItem["code"];
+                              stopLocationSelectedEnd["realLocation"] =
+                                  selectItem["realLocation"];
+                              stopLocationSelectedEnd["areaName"] =
+                                  selectItem["areaName"];
+                              stopLocationSelectedEnd["trackNum"] =
+                                  selectItem["trackNum"];
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  TextFormField(
+                    controller: _reasonController,
+                    decoration: const InputDecoration(
+                      labelText: '备注',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 10),
+                ]),
               ),
               actions: [
                 TextButton(
@@ -746,6 +875,361 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   onPressed: () {
                     // 处理提交逻辑
                     Navigator.pop(context);
+                    savetrainShunting();
+                    SmartDialog.showToast('调车申请已提交');
+                  },
+                  child: const Text('确认'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // 显示
+  void _showShuntingAnswerDialog(BuildContext context, RepairItem item) {
+    final TextEditingController _reasonController = TextEditingController();
+    final TextEditingController _locationController = TextEditingController();
+    String? _selectedType;
+    void savetrainShunting() async {
+      Map<String, dynamic> queryParametrs = {
+        'applyDeptId': Global.profile.permissions?.user.deptId,
+        'applyUserId': Global.profile.permissions?.user.userId,
+        'applyUserName': Global.profile.permissions?.user.userName,
+        'dynamicCode': item.dynamicCode,
+        'endStopPositionCode': stopLocationSelectedEnd['code'],
+        'ends': directionSelected['name'],
+        'remark': _reasonController.text,
+        'sort': 0,
+        'startStopPositionCode': stopLocationSelected['code'],
+        'status': 0,
+        'trainEntryCode': item.code,
+        'typeCode': item.typeCode,
+      };
+      var r =
+          await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
+    }
+
+    Future<void> _selectDate(
+        BuildContext context, Function(DateTime) onDateSelected) async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        onDateSelected(picked);
+      }
+    }
+
+    DateTime? _estimatedStartDate;
+    DateTime? _planDateSelected;
+    DateTime? _planDateSelectedEnd;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('调车通知单'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  // 展示车号和停留地点信息
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '车号: ${item.trainNum ?? "未知"}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '停留地点: ${item.stoppingPlace ?? "未知"}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  //增加朝向
+                  ZjcFormSelectCell(
+                      title: "端",
+                      text: directionSelected["name"] ?? '',
+                      hintText: "请选择",
+                      clickCallBack: () {
+                        if (directionList.isEmpty) {
+                          showToast("无朝向可选择");
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            context,
+                            data: directionList,
+                            labelKey: 'name',
+                            valueKey: 'name',
+                            childrenKey: 'children',
+                            title: "选择朝向",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                logger.i(selectArr);
+                                directionSelected['name'] = selectItem['name'];
+                              });
+                            },
+                          );
+                        }
+                      }),
+                  const SizedBox(height: 10),
+                  ZjcFormSelectCell(
+                    title: "起始位置",
+                    text: stopLocationSelected["realLocation"],
+                    hintText: "请选择",
+                    clickCallBack: () {
+                      if (stopLocationList.isEmpty) {
+                        showToast("无检修地点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: stopLocationList,
+                          labelKey: 'realLocation',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择检修地点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              logger.i(selectArr);
+                              stopLocationSelected["code"] = selectItem["code"];
+                              stopLocationSelected["realLocation"] =
+                                  selectItem["realLocation"];
+                              stopLocationSelected["areaName"] =
+                                  selectItem["areaName"];
+                              stopLocationSelected["trackNum"] =
+                                  selectItem["trackNum"];
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  ZjcFormSelectCell(
+                    title: "终点位置",
+                    text: stopLocationSelectedEnd["realLocation"],
+                    hintText: "请选择",
+                    clickCallBack: () {
+                      if (stopLocationList.isEmpty) {
+                        showToast("无检修地点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: stopLocationList,
+                          labelKey: 'realLocation',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择检修地点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              logger.i(selectArr);
+                              stopLocationSelectedEnd["code"] =
+                                  selectItem["code"];
+                              stopLocationSelectedEnd["realLocation"] =
+                                  selectItem["realLocation"];
+                              stopLocationSelectedEnd["areaName"] =
+                                  selectItem["areaName"];
+                              stopLocationSelectedEnd["trackNum"] =
+                                  selectItem["trackNum"];
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  //计划日期 进行日期筛选
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text: _estimatedStartDate != null
+                          ? DateFormat('yyyy-MM-dd')
+                              .format(_estimatedStartDate!)
+                          : '未选择',
+                    ),
+                    decoration: InputDecoration(
+                      labelText: '预计上台日期',
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.calendar_today),
+                        onPressed: () => _selectDate(context, (date) {
+                          setState(() {
+                            _estimatedStartDate = date;
+                          });
+                        }),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          readOnly: true,
+                          controller: TextEditingController(
+                            text: _planDateSelected != null
+                                ? DateFormat('yyyy-MM-dd HH:mm:ss')
+                                    .format(_planDateSelected!)
+                                : '请选择计划开始时间',
+                          ),
+                          decoration: InputDecoration(
+                            labelText: '计划开始时间',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.calendar_today),
+                              onPressed: () async {
+                                final DateTime? pickedDate =
+                                    await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      _planDateSelected ?? DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  locale: const Locale('zh', 'CN'),
+                                  helpText: '选择日期',
+                                  cancelText: '取消',
+                                  confirmText: '确定',
+                                );
+
+                                if (pickedDate != null) {
+                                  final TimeOfDay? pickedTime =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: _planDateSelected != null
+                                        ? TimeOfDay.fromDateTime(
+                                            _planDateSelected!)
+                                        : TimeOfDay.now(),
+                                    helpText: '选择时间',
+                                    cancelText: '取消',
+                                    confirmText: '确定',
+                                  );
+                                  if (pickedTime != null) {
+                                    final DateTime dateTimeWithTime = DateTime(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      pickedTime.hour,
+                                      pickedTime.minute,
+                                      0,
+                                    );
+
+                                    setState(() {
+                                      _planDateSelected = dateTimeWithTime;
+                                    });
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),   
+                    ],
+                  ),
+                                    const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          readOnly: true,
+                          controller: TextEditingController(
+                            text: _planDateSelectedEnd != null
+                                ? DateFormat('yyyy-MM-dd HH:mm:ss')
+                                    .format(_planDateSelectedEnd!)
+                                : '请选择计划结束时间',
+                          ),
+                          decoration: InputDecoration(
+                            labelText: '计划结束时间',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.calendar_today),
+                              onPressed: () async {
+                                final DateTime? pickedDate =
+                                    await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      _planDateSelected ?? DateTime.now(),
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  locale: const Locale('zh', 'CN'),
+                                  helpText: '选择日期',
+                                  cancelText: '取消',
+                                  confirmText: '确定',
+                                );
+
+                                if (pickedDate != null) {
+                                  final TimeOfDay? pickedTime =
+                                      await showTimePicker(
+                                    context: context,
+                                    initialTime: _planDateSelected != null
+                                        ? TimeOfDay.fromDateTime(
+                                            _planDateSelected!)
+                                        : TimeOfDay.now(),
+                                    helpText: '选择时间',
+                                    cancelText: '取消',
+                                    confirmText: '确定',
+                                  );
+                                  if (pickedTime != null) {
+                                    final DateTime dateTimeWithTime = DateTime(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      pickedTime.hour,
+                                      pickedTime.minute,
+                                      0,
+                                    );
+
+                                    setState(() {
+                                      _planDateSelected = dateTimeWithTime;
+                                    });
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ),   
+                    ],
+                  ),
+                  TextFormField(
+                    controller: _reasonController,
+                    decoration: const InputDecoration(
+                      labelText: '备注',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 10),
+                ])),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // 处理提交逻辑
+                    Navigator.pop(context);
+                    savetrainShunting();
                     SmartDialog.showToast('调车申请已提交');
                   },
                   child: const Text('确认'),

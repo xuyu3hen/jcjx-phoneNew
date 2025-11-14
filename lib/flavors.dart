@@ -66,7 +66,7 @@ class F {
   }
 
   static String get version {
-    switch (appFlavor) {g
+    switch (appFlavor) {
       case Flavor.env_dev:
         return '1.1.5';
       case Flavor.env_release:

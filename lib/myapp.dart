@@ -1,5 +1,6 @@
 
 import 'index.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 // void main() {
 //   TextInputBinding();
@@ -30,6 +31,16 @@ class MyApp extends StatelessWidget {
               primarySwatch: themeModel.theme,
               // useMaterial3: true
             ),
+            // 添加本地化配置
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('zh', 'CN'), // 中文
+              Locale('en', 'US'), // English
+            ],
             home: firstPage(context),
               
             // 注册路由表
