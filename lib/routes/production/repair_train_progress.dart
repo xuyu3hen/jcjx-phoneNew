@@ -1,3 +1,4 @@
+import 'package:http/http.dart';
 import 'package:jcjx_phone/models/progress.dart';
 
 import '../../index.dart';
@@ -223,7 +224,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       ),
     );
   }
-// ... existing code ...
 
   // 构建维修项
   Widget _buildRepairItem(RepairItem item) {
@@ -481,7 +481,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
                   child: ListView.builder(
                     itemCount: shuntingList.length,
                     itemBuilder: (context, index) {
@@ -593,59 +594,191 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     }
   }
 
+  List<Map<String, dynamic>> investigateList = [];
+
+  Future<void> getMasInvestigate(RepairItem item) async {
+    try {
+      Map<String, dynamic> queryParametrs = {
+        'trainEntryCode': item.code,
+      };
+      var r =
+          await ProductApi().getMasInestigate(queryParametrs: queryParametrs);
+
+      // 修复类型转换错误，确保返回的是List类型
+      List<Map<String, dynamic>> rows = [];
+      if (r != null && r is List) {
+        rows = r.map((item) => item as Map<String, dynamic>).toList();
+      }
+
+      setState(() {
+        investigateList = rows;
+        logger.i(investigateList);
+      });
+    } catch (e) {
+      logger.e('获取调查清单失败: $e');
+      showToast('获取数据失败');
+    }
+  }
+
+  List<Map<String, dynamic>> masSaleList = [];
+
+  Future<void> getMasSale(RepairItem item) async {
+    try {
+      Map<String, dynamic> queryParametrs = {
+        'trainEntryCode': item.code,
+      };
+      var r = await ProductApi()
+          .getMasAfterSaleShunting(queryParametrs: queryParametrs);
+
+      // 修复类型转换错误，确保返回的是List类型
+      List<Map<String, dynamic>> rows = [];
+      if (r != null && r is List) {
+        rows = r.map((item) => item as Map<String, dynamic>).toList();
+      }
+
+      setState(() {
+        masSaleList = rows;
+        logger.i(masSaleList);
+      });
+    } catch (e) {
+      logger.e('获取调查清单失败: $e');
+      showToast('获取数据失败');
+    }
+  }
+
+  // 显示检修调令对话框
+
+  // ... existing code ...
   // 显示检修调令对话框
   void _showMaintenanceOrderDialog(BuildContext context, RepairItem item) {
+    int selectedOption = -1; // -1表示未选择，0表示调车申请单，1表示调车通知单，2表示调查清单
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('选择通知单类型'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                ListTile(
-                  title: const Text('调车申请单'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    getStopLocation();
-                    _showShuntingApplicationDialog(context, item);
-                  },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('选择通知单类型'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 0,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('调车申请单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 0;
+                        });
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 1,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('调车通知单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 1;
+                        });
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 2,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('调查清单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 2;
+                        });
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 3,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('售后服务通知单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 3;
+                        });
+                      },
+                    ),
+                  ],
                 ),
-                const Divider(),
-                ListTile(
-                  title: const Text('调车通知单'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
                     Navigator.pop(context);
-                    getStopLocation();
-                    _showShuntingAnswerDialog(context, item);
                   },
+                  child: const Text('取消'),
                 ),
-                const Divider(),
-                ListTile(
-                  title: const Text('转序调令'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: () {
-                    Navigator.pop(context);
-                    SmartDialog.showToast('调车通知单内容完成');
-                  },
+                ElevatedButton(
+                  onPressed: selectedOption == -1
+                      ? null
+                      : () async {
+                          Navigator.pop(context);
+                          switch (selectedOption) {
+                            case 0: // 调车申请单
+                              getStopLocation();
+                              _showShuntingApplicationDialog(context, item);
+                              break;
+                            case 1: // 调车通知单
+                              getStopLocation();
+                              _showShuntingAnswerDialog(context, item);
+                              break;
+                            case 2: // 调查清单
+
+                              getMasInvestigate(item);
+                              // 显示调查清单对话框
+                              _showInvestigateListDialog(context, item);
+                              break;
+                            case 3: // 售后服务通知单
+                              getMasSale(item);
+                              _showServiceAnswerDialog(context, item);
+                              break;
+                          }
+                        },
+                  child: const Text('下一步'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('取消'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -704,33 +837,388 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     }
   ];
 
+  // ... existing code ...
+  void _showInvestigateListDialog(BuildContext context, RepairItem item) {
+    // 展示investigateList
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('调查清单'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                if (investigateList.isEmpty)
+                  const Text('暂无调查清单')
+                else
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: investigateList.length,
+                      itemBuilder: (context, index) {
+                        final investigateItem = investigateList[index];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    '故障现象: ${investigateItem['faultInformation'] ?? ''}'),
+                                Text(
+                                    '故障类别: ${investigateItem['failureCategory'] ?? ''}'),
+                                Text(
+                                    '故障时间: ${investigateItem['faultDate'] ?? ''}'),
+                                Text(
+                                    '停留地点: ${investigateItem['trainLocation'] ?? ''}'),
+                                Text(
+                                    '填报时间: ${investigateItem['createdTime'] ?? ''}'),
+                                // 新增一个按钮填写调查内容与签收情况
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    _showInvestigateInputDialog(
+                                        context, item, investigateItem);
+                                  },
+                                  child: const Text('填写调查内容与签收情况'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 显示调查清单
+  void _showServiceAnswerDialog(BuildContext context, RepairItem item) {
+    // 展示investigateList
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('调查清单'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                if (masSaleList.isEmpty)
+                  const Text('暂无调查清单')
+                else
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: masSaleList.length,
+                      itemBuilder: (context, index) {
+                        final masSaleItem = masSaleList[index];
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    '客户联系人: ${masSaleItem['customerContact'] ?? ''}'),
+                                Text(
+                                    '外包厂家信息: ${masSaleItem['outSourcingFactory'] ?? ''}'),
+                                Text(
+                                    '故障信息: ${masSaleItem['faultInformation'] ?? ''}'),
+                                Text(
+                                    '处置方案: ${masSaleItem['disposalPlan'] ?? ''}'),
+                                Text(
+                                    '审批意见: ${masSaleItem['planAuditOpinion'] ?? ''}'),
+                                Text(
+                                    '队长所属车间: ${masSaleItem['leaderDeptName'] ?? ''}'),
+                                Text(
+                                    '处置车间: ${masSaleItem['disposalDeptName'] ?? ''}'),
+                                Text(
+                                    '发货时间: ${masSaleItem['materialDeliveryTime'] ?? ''}'),    
+                                //填报人
+                                Text(
+                                    '填报人: ${masSaleItem['reportUserName'] ?? ''}'),
+                                
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('关闭'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 显示调查内容输入对话框
+  void _showInvestigateInputDialog(BuildContext context, RepairItem item,
+      Map<String, dynamic> investigateItem) {
+    final TextEditingController _contentController = TextEditingController();
+    final TextEditingController _resultController = TextEditingController();
+    final masInvestigateList = investigateItem['masInvestigateListList'] ?? [];
+    final shuntingNoticeList = investigateItem['shuntingNoticeList'] ?? [];
+    List<Map<String, dynamic>> mappedList = [];
+    List<Map<String, dynamic>> shuntingMappedList = [];
+
+    // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
+    if (masInvestigateList is List) {
+      mappedList = masInvestigateList
+          .where((item) => item is Map)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    }
+    if (shuntingNoticeList is List) {
+      shuntingMappedList = shuntingNoticeList
+          .where((item) => item is Map)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('填写调查内容与签收情况'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                //展示mappedList内容
+                //标题是调查内容
+                const Text(
+                  '调查内容',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: mappedList.length,
+                    itemBuilder: (context, index) {
+                      final masItem = mappedList[index];
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('调查内容发布人: ${masItem['createdBy'] ?? ''}'),
+                              Text('发布时间: ${masItem['createdTime'] ?? ''}'),
+                              Text(
+                                  '调查内容: ${masItem['investigateContent'] ?? ''}'),
+                              Text(
+                                  '调查结果: ${masItem['investigateResult'] ?? ''}'),
+                              Text('调查部门: ${masItem['deptName'] ?? ''}'),
+                              Text('调查班组: ${masItem['teamName'] ?? ''}'),
+                              Text('调查人: ${masItem['reportUserName'] ?? ''}'),
+                              // 自己的部门或者父部门
+                              if (Global.profile.permissions?.user.deptId ==
+                                      masItem['deptId'] ||
+                                  Global.profile.permissions?.user.dept
+                                          ?.parentId ==
+                                      masItem['deptId'])
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _showEditInvestigateDialog(
+                                          context, item, masItem);
+                                    },
+                                    child: const Text('编辑'),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '调令内容',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: shuntingMappedList.length,
+                    itemBuilder: (context, index) {
+                      final shuntingItem = shuntingMappedList[index];
+                      return Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  '调令发布人: ${shuntingItem['applyUserName'] ?? ''}'),
+                              Text('发布时间: ${shuntingItem['applyTime'] ?? ''}'),
+                              Text(
+                                  '签收部门: ${shuntingItem['auditDeptName'] ?? ''}'),
+                              Text(
+                                  '签收人: ${shuntingItem['auditUserName'] ?? ''}'),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('取消'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 显示编辑调查内容对话框
+  void _showEditInvestigateDialog(BuildContext context, RepairItem item,
+      Map<String, dynamic> investigateItem) {
+    final TextEditingController _contentController = TextEditingController(
+        text: investigateItem['investigateContent'] as String? ?? '');
+    final TextEditingController _resultController = TextEditingController(
+        text: investigateItem['investigateResult'] as String? ?? '');
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('填写调查结果'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('调查内容'),
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      investigateItem['investigateContent'] as String? ?? '',
+                      style: const TextStyle(height: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _resultController,
+                  decoration: const InputDecoration(
+                    labelText: '调查结果',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // 更新调查内容
+                await ProductApi().updateMasInvestigateList({
+                  'code': investigateItem['code'],
+                  'deptId': Global.profile.permissions?.user.deptId,
+                  'deptName': Global.profile.permissions?.user.dept?.deptName,
+                  'investigateResult': _resultController.text,
+                  'reportUserId': Global.profile.permissions?.user.userId,
+                  'reportUserName': Global.profile.permissions?.user.nickName,
+                  'teamId': Global.profile.permissions?.user.deptId,
+                  'teamName': Global.profile.permissions?.user.dept?.deptName,
+                });
+
+                // 关闭对话框
+                Navigator.of(context).pop();
+
+                // 刷新界面
+                await _loadRepairProgressData();
+              },
+              child: const Text('保存'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // 显示调车申请单输入对话框
   void _showShuntingApplicationDialog(BuildContext context, RepairItem item) {
     final TextEditingController _reasonController = TextEditingController();
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
     void savetrainShunting() async {
-      try{
+      try {
         Map<String, dynamic> queryParametrs = {
-        'applyDeptId': Global.profile.permissions?.user.deptId,
-        'applyUserId': Global.profile.permissions?.user.userId,
-        'applyUserName': Global.profile.permissions?.user.userName,
-        'dynamicCode': item.dynamicCode,
-        'endStopPositionCode': stopLocationSelectedEnd['code'],
-        'ends': directionSelected['name'],
-        'remark': _reasonController.text,
-        'sort': 0,
-        'startStopPositionCode': stopLocationSelected['code'],
-        'status': 0,
-        'trainEntryCode': item.code,
-        'typeCode': item.typeCode,
-      };
-      var r =
-          await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
-      }catch(e){
+          'applyDeptId': Global.profile.permissions?.user.deptId,
+          'applyUserId': Global.profile.permissions?.user.userId,
+          'applyUserName': Global.profile.permissions?.user.userName,
+          'dynamicCode': item.dynamicCode,
+          'endStopPositionCode': stopLocationSelectedEnd['code'],
+          'ends': directionSelected['name'],
+          'remark': _reasonController.text,
+          'sort': 0,
+          'startStopPositionCode': stopLocationSelected['code'],
+          'status': 0,
+          'trainEntryCode': item.code,
+          'typeCode': item.typeCode,
+        };
+        var r = await ProductApi()
+            .saveTrainShunting(queryParametrs: queryParametrs);
+      } catch (e) {
         logger.e('savetrainShunting 方法中发生异常: $e');
       }
-      
     }
 
     showDialog(
@@ -873,6 +1361,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    FocusScope.of(context).unfocus(); // 确保收起键盘
                   },
                   child: const Text('取消'),
                 ),
@@ -902,26 +1391,30 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     DateTime? _planDateSelected;
     DateTime? _planDateSelectedEnd;
     void saveShuntingAnswer() async {
-      try{
-        logger.i('_planDateSelected.toString(): ${_planDateSelected.toString()}');
-        logger.i('_planDateSelectedEnd.toString(): ${_planDateSelectedEnd.toString()}');
-        List<Map<String, dynamic>> queryParametrs = [{
-        'endStopPositionCode': stopLocationSelectedEnd['code'],
-        'ends': directionSelected['name'],
-        'planDate': _estimatedStartDate!.millisecondsSinceEpoch,
-        'planStartTime': _planDateSelected.toString(),
-        'planEndTime': _planDateSelectedEnd.toString(),
-        'remark': _reasonController.text,
-        'sort': 0,
-        'startStopPositionCode': stopLocationSelected['code'],
-        'status': 0,
-        'trainEntryCode': item.code,
-        'trainNum':item.trainNum,
-        'typeCode': item.typeCode,
-      }];
-      var r =
-          await ProductApi().addTrainShuntingPlan(queryParametrs: queryParametrs);
-      }catch(e){
+      try {
+        logger
+            .i('_planDateSelected.toString(): ${_planDateSelected.toString()}');
+        logger.i(
+            '_planDateSelectedEnd.toString(): ${_planDateSelectedEnd.toString()}');
+        List<Map<String, dynamic>> queryParametrs = [
+          {
+            'endStopPositionCode': stopLocationSelectedEnd['code'],
+            'ends': directionSelected['name'],
+            'planDate': _estimatedStartDate!.millisecondsSinceEpoch,
+            'planStartTime': _planDateSelected.toString(),
+            'planEndTime': _planDateSelectedEnd.toString(),
+            'remark': _reasonController.text,
+            'sort': 0,
+            'startStopPositionCode': stopLocationSelected['code'],
+            'status': 0,
+            'trainEntryCode': item.code,
+            'trainNum': item.trainNum,
+            'typeCode': item.typeCode,
+          }
+        ];
+        var r = await ProductApi()
+            .addTrainShuntingPlan(queryParametrs: queryParametrs);
+      } catch (e) {
         logger.e('saveShuntingAnswer 方法中发生异常: $e');
       }
     }
@@ -938,8 +1431,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         onDateSelected(picked);
       }
     }
-
-
 
     showDialog(
       context: context,
@@ -1264,6 +1755,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
+                    FocusScope.of(context).unfocus();
                   },
                   child: const Text('取消'),
                 ),

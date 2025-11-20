@@ -99,6 +99,58 @@ class ProductApi extends AppApi {
     }
   }
 
+  //  /dispatch/masInestigate/selectAll
+  Future<dynamic> getMasInestigate({
+    Map<String, dynamic>? queryParametrs, // 分页参数
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/masInvestigate/selectAll",
+        queryParameters: queryParametrs,
+      );
+      // logger.i(r.data["data"]['data']['rows']);
+      return r.data["data"]['data']['rows'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // 更新调查内容。
+  // /dispatch/masInvestigateList/update
+  Future<dynamic> updateMasInvestigateList(
+    Map<String, dynamic> queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/masInvestigateList/update",
+        data: queryParametrs,
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // /dispatch/masAfterSaleShunting/selectAll
+  Future<dynamic> getMasAfterSaleShunting({
+    Map<String, dynamic>? queryParametrs, // 分页参数
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/masAfterSaleShunting/selectAll",
+        queryParameters: queryParametrs,
+      );
+      // logger.i(r.data["data"]['data']['rows']);
+      return r.data["data"]['data']['rows'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // /tasks/taskCertainPackage/wholePackageMutualInspection
   Future<dynamic> wholePackageMutualInspection(
     Map<String, dynamic>? queryParametrs,
