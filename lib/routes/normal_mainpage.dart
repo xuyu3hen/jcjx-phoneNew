@@ -31,10 +31,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
     initPermissions();
     initRepairProc();
     getDynamicType();
-    
   }
-
-  
 
   // 获取动态类型
   void getDynamicType() async {
@@ -68,7 +65,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
       logger.i(r.toJson());
       if (mounted) {
         setState(() {
-          Global.typeInfo = r.toMapList();     
+          Global.typeInfo = r.toMapList();
         });
       }
     } catch (e, stackTrace) {
@@ -158,13 +155,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-      
-                _buildFeatureItem(
-                  Icon(Icons.people, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'repairTrainManage'),
-                  '开工点名',
-                ),
-              
+              _buildFeatureItem(
+                Icon(Icons.people, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainManage'),
+                '开工点名',
+              ),
               _buildFeatureItem(
                 Icon(Icons.train, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'sec_enter_modify'),
@@ -181,41 +176,40 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-  
-                _buildFeatureItem(
-                  Icon(Icons.post_add, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28submitManage'),
-                  '报机统28（管理）',
-                ),
-                _buildFeatureItem(
-                  Icon(Icons.next_plan, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'repairTrainProgress'),
-                  '检修调令',
-                ),
-                        // Expanded(
-        //   child: ElevatedButton(
-        //     onPressed: () {
-        //       // 跳转到ApplyList页面
-        //       Navigator.push(
-        //         context,
-        //         MaterialPageRoute(
-        //           builder: (context) => ApplyList(
-        //             trainNum: widget.locoInfo?['trainNum'] ?? '',
-        //             trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
-        //             typeName: widget.locoInfo?['typeName'] ?? '',
-        //             typeCode: widget.locoInfo?['typeCode'] ?? '',
-        //             trainEntryCode: widget.locoInfo?['code'] ?? '',
-        //           ),
-        //         ),
-        //       );
-        //     },
-        //     style: ElevatedButton.styleFrom(
-        //       backgroundColor: Colors.blue,
-        //       foregroundColor: Colors.white,
-        //     ),
-        //     child: const Text('检修调度命令'),
-        //   ),
-        // ),
+              _buildFeatureItem(
+                Icon(Icons.post_add, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'jt28submitManage'),
+                '报机统28（管理）',
+              ),
+              _buildFeatureItem(
+                Icon(Icons.next_plan, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainProgress'),
+                '检修调令',
+              ),
+              // Expanded(
+              //   child: ElevatedButton(
+              //     onPressed: () {
+              //       // 跳转到ApplyList页面
+              //       Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //           builder: (context) => ApplyList(
+              //             trainNum: widget.locoInfo?['trainNum'] ?? '',
+              //             trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
+              //             typeName: widget.locoInfo?['typeName'] ?? '',
+              //             typeCode: widget.locoInfo?['typeCode'] ?? '',
+              //             trainEntryCode: widget.locoInfo?['code'] ?? '',
+              //           ),
+              //         ),
+              //       );
+              //     },
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: Colors.blue,
+              //       foregroundColor: Colors.white,
+              //     ),
+              //     child: const Text('检修调度命令'),
+              //   ),
+              // ),
               // _buildFeatureItem(
               //   Icon(Icons.assignment, color: Colors.blue[200]),
               //   () => Navigator.pushNamed(context, 'jt28'),
