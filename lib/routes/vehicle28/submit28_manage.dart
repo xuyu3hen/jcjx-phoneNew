@@ -694,7 +694,6 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                             if (assetEntityList.isNotEmpty) {
                               // 清空之前的文件列表
                               List<File> files = [];
-
                               // 处理所有选定的资源（图片和视频）
                               for (var asset in assetEntityList) {
                                 var file = await asset.file;
@@ -702,7 +701,6 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                                   files.add(file);
                                 }
                               }
-
                               setState(() {
                                 assestPics = assetEntityList;
                                 faultPics = files;

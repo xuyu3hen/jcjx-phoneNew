@@ -38,6 +38,7 @@ export 'production/sec_enter_modify_new.dart';
 export 'production/jt_show.dart';
 export 'production/photo_preview.dart';
 export 'production/repair_train_progress.dart';
+export 'production/investigateInfo.dart';
 
 
 

@@ -69,6 +69,16 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   //
   late Map<String, dynamic> faultInfo;
 
+  late Map<int, String> status = {
+    0: '待施修',
+    1: '待派工',
+    2: '待互检',
+    3: '待专检',
+    4: '已完成',
+    5: '已放行',
+    6: '已开工',
+  };
+
   // 添加分页相关变量
   int pageNum = 1;
   int pageSize = 10;
@@ -95,11 +105,11 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
     logger.i(widget.typeCode);
 
     try {
-      var r =
-          await ProductApi().getNeedToDispatchJt28(queryParametrs: queryParameters);
+      var r = await ProductApi()
+          .getNeedToDispatchJt28(queryParametrs: queryParameters);
       setState(() {
         sys28List = r;
-        
+
         isLoading = false;
       });
     } catch (e) {
@@ -247,32 +257,29 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   }
 
   List<Map<String, dynamic>> photoList = [];
-  
-  Future<void> getPhotoList(String groupId) async{
+
+  Future<void> getPhotoList(String groupId) async {
     Map<String, dynamic> queryParameters = {
       'groupId': groupId,
     };
-    var r = await ProductApi().getFaultVideoAndImage(queryParametrs: queryParameters);
+    var r = await ProductApi()
+        .getFaultVideoAndImage(queryParametrs: queryParameters);
     //将List<dynamic>转换为List<Map<String, dynamic>>
-    photoList = (r as List)
-        .map((item) => item as Map<String, dynamic>)
-        .toList();
+    photoList =
+        (r as List).map((item) => item as Map<String, dynamic>).toList();
     logger.i(photoList);
   }
 
-
   late Image image;
-  Future<Image?> getPreviewImage(Map<String, dynamic> photo) async{
-    Map<String, dynamic> queryParameters = {
-      'url': photo['downloadUrl'] 
-    };
+  Future<Image?> getPreviewImage(Map<String, dynamic> photo) async {
+    Map<String, dynamic> queryParameters = {'url': photo['downloadUrl']};
     logger.i(queryParameters);
     var r = await ProductApi().previewImage(queryParametrs: queryParameters);
     return r;
   }
 
-    // 添加图片预览方法
-  void _previewImage(Map<String, dynamic> photo) async{
+  // 添加图片预览方法
+  void _previewImage(Map<String, dynamic> photo) async {
     Image? i = await getPreviewImage(photo);
     // 实现图片预览逻辑
     showDialog(
@@ -294,12 +301,14 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                   width: 200,
                   height: 200,
                   fit: BoxFit.contain,
-                  loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
+                  loadingBuilder: (BuildContext context, Widget child,
+                      ImageChunkEvent? loadingProgress) {
                     if (loadingProgress == null) return child;
                     return Center(
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     );
@@ -335,6 +344,70 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
           ],
         );
       },
+    );
+  }
+
+  /// 构建美化状态卡片
+  Widget _buildStatusBadge(int? statusCode) {
+    String statusText = '';
+    Color bgColor = Colors.grey;
+    Color textColor = Colors.white;
+
+    if (statusCode != null && status[statusCode] != null) {
+      statusText = status[statusCode]!;
+
+      // 根据状态设置不同颜色
+      switch (statusCode) {
+        case 0: // 待施修
+          bgColor = Colors.orangeAccent;
+          break;
+        case 1: // 待派工
+          bgColor = Colors.blueAccent;
+          break;
+        case 2: // 待互检
+          bgColor = Colors.purpleAccent;
+          break;
+        case 3: // 待专检
+          bgColor = Colors.indigoAccent;
+          break;
+        case 4: // 已完成
+          bgColor = Colors.green;
+          break;
+        case 5: // 已放行
+          bgColor = Colors.teal;
+          break;
+        case 6: // 已开工
+          bgColor = Colors.lightBlue;
+          break;
+        default:
+          bgColor = Colors.grey;
+      }
+    } else {
+      statusText = '未知状态';
+      bgColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -443,11 +516,11 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "故障现象: ${item['faultDescription']??''}"),
+                                                "故障现象: ${item['faultDescription'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme']??''}"),
+                                                "施修方案: ${item['repairScheme'] ?? ''}"),
                                           ),
                                         ],
                                       ),
@@ -456,25 +529,35 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
 // ... existing code ...
                                           Expanded(
                                             child: ElevatedButton(
-                                              onPressed: () async{
+                                              onPressed: () async {
                                                 // 可以打开新页面或弹窗展示图片
-                                                await getPhotoList(item['repairPicture']);
+                                                await getPhotoList(
+                                                    item['repairPicture']);
                                                 //展示photoList
                                                 showDialog(
                                                   context: context,
-                                                  builder: (BuildContext context) {
+                                                  builder:
+                                                      (BuildContext context) {
                                                     return AlertDialog(
-                                                      title: const Text("故障视频及图片"),
-                                                      content: photoList.isNotEmpty
+                                                      title:
+                                                          const Text("故障视频及图片"),
+                                                      content: photoList
+                                                              .isNotEmpty
                                                           ? Column(
-                                                              mainAxisSize: MainAxisSize.min,
-                                                              children: photoList.map((photo) {
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children:
+                                                                  photoList.map(
+                                                                      (photo) {
                                                                 return ListTile(
-                                title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
+                                                                  title: Text(
+                                                                      '图片${photoList.indexOf(photo) + 1}点击查看'),
                                                                   onTap: () {
                                                                     // TODO: 实现图片预览功能
                                                                     // 这里可以导航到图片预览页面或者显示图片预览对话框
-                                                                    _previewImage(photo);
+                                                                    _previewImage(
+                                                                        photo);
                                                                   },
                                                                 );
                                                               }).toList(),
@@ -483,9 +566,12 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                                       actions: [
                                                         TextButton(
                                                           onPressed: () {
-                                                            Navigator.of(context).pop();
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
                                                           },
-                                                          child: const Text('关闭'),
+                                                          child:
+                                                              const Text('关闭'),
                                                         ),
                                                       ],
                                                     );
@@ -498,38 +584,21 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                               child: const Text("查看故障视频及图片"),
                                             ),
                                           ),
-// ... existing code ...
                                         ],
                                       ),
                                       Row(
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "提报人: ${item['reporterName']??''}"),
+                                                "提报人: ${item['reporterName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "提报时间: ${item['reportDate']??''}"),
+                                                "提报时间: ${item['reportDate'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "部门: ${item['deptName']??''}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "班组: ${item['teamName']??''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName']??''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName']??''}"),
+                                                "部门: ${item['deptName'] ?? ''}"),
                                           ),
                                         ],
                                       ),
@@ -537,11 +606,34 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                         children: [
                                           Expanded(
                                             child: Text(
-                                                "专检: ${item['specialName']??''}"),
+                                                "班组: ${item['teamName'] ?? ''}"),
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "互检: ${item['mutualName']??''}"),
+                                                "主修: ${item['repairName'] ?? ''}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "辅修: ${item['assistantName'] ?? ''}"),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                                "专检: ${item['specialName'] ?? ''}"),
+                                          ),
+                                          Expanded(
+                                            child: Text(
+                                                "互检: ${item['mutualName'] ?? ''}"),
+                                          ),
+                                          Expanded(
+                                            child: Align(
+                                              alignment: Alignment.centerRight,
+                                              child: _buildStatusBadge(
+                                                  item['status'] as int?),
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -555,17 +647,16 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                 child: ElevatedButton(
                                   onPressed: () async {
                                     // TODO: 实现派工逻辑
-                                    final result =  await Navigator.push(
+                                    final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => JtAssignTeam(jtCode: item['code'],
-                                          
+                                        builder: (context) => JtAssignTeam(
+                                          jtCode: item['code'],
                                         ),
                                       ),
                                     );
-                                    if(result == true){
-                                        getInfo();
-                                      
+                                    if (result == true) {
+                                      getInfo();
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -653,9 +744,6 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   }
 }
 
-
-
-
 /// 车间模型
 class Chejian {
   String name; // 班组名（如“北折一组”）
@@ -715,7 +803,8 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
       "parentIdList": Global.profile.permissions?.user.dept?.deptId,
     };
     try {
-      var response = await ProductApi().getDeptByParentIdList(queryParametrs: params);
+      var response =
+          await ProductApi().getDeptByParentIdList(queryParametrs: params);
       if (response is List) {
         // 将List<dynamic>转换为List<Map<String, dynamic>>
         List<Map<String, dynamic>> teamList = response
@@ -781,7 +870,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
   }
 
   void setRepairInfo() async {
-    try{
+    try {
       // 构建参数
       Map<String, dynamic> params = {
         "code": widget.jtCode,
@@ -796,7 +885,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
       var response = await ProductApi().updateUserId(params);
       if (response['code'] == "S_T_S003") {
         showToast("分配成功");
-      } 
+      }
     } catch (e) {
       print('分配人员失败: $e');
       showToast("分配失败，请重试");

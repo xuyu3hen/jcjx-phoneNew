@@ -763,10 +763,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               _showShuntingAnswerDialog(context, item);
                               break;
                             case 2: // 调查清单
-
-                              getMasInvestigate(item);
-                              // 显示调查清单对话框
-                              _showInvestigateListDialog(context, item);
+                              //跳转到PlanListPage
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => PlanListPage(repairItem: item)),
+                              );
                               break;
                             case 3: // 售后服务通知单
                               getMasSale(item);

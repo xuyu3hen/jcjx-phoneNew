@@ -653,7 +653,7 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
     super.initState();
   }
 
-  @override
+  @override 
   void dispose() {
     _reasonController.dispose();
     _recipientController.dispose();
@@ -662,7 +662,6 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
 
   void releaseShunting() async {
     Map<String, dynamic> queryParameters = {};
-
     // 添加来自父页面的参数
     queryParameters['jt28Code'] = widget.extraParams?['code'];
     queryParameters['typeCode'] = widget.extraParams?['typeCode'];
