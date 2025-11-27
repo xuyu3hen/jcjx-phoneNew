@@ -2222,9 +2222,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // 照片列表（模拟展示）
-
                   if (_files.isNotEmpty)
                     Wrap(
                       spacing: 8,
