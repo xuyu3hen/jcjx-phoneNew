@@ -469,69 +469,80 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   // 显示检修进度列表
   void _showRepairProgressList(BuildContext context, RepairItem item) async {
-    await getTrainRepairDynamics(item);
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('检修进度列表'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  child: ListView.builder(
-                    itemCount: shuntingList.length,
-                    itemBuilder: (context, index) {
-                      final shuntingItem = shuntingList[index];
-                      return Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  '流水号: ${shuntingItem['shuntingEncode'] ?? ''}'),
-                              Text(
-                                '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',
-                                style: const TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                  '修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}'),
-                              Text(
-                                  '检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}'),
-                              Text(
-                                  '发送人员: ${shuntingItem['sendUserName'] ?? ''}'),
-                              Text(
-                                  '接受人员: ${shuntingItem['receiveUserName'] ?? ''}'),
-                              Text('开始时间: ${shuntingItem['startTime'] ?? ''}'),
-                              Text('结束时间: ${shuntingItem['endTime'] ?? ''}'),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('关闭'),
-            ),
-          ],
-        );
-      },
+    // await getTrainRepairDynamics(item);
+    // showDialog(
+    //   context: context,
+    //   builder: (BuildContext context) {
+    //     return AlertDialog(
+    //       title: const Text('检修进度列表'),
+    //       content: SizedBox(
+    //         width: double.maxFinite,
+    //         child: Column(
+    //           mainAxisSize: MainAxisSize.min,
+    //           crossAxisAlignment: CrossAxisAlignment.start,
+    //           children: [
+    //             SizedBox(
+    //               height: MediaQuery.of(context).size.height * 0.6,
+    //               child: ListView.builder(
+    //                 itemCount: shuntingList.length,
+    //                 itemBuilder: (context, index) {
+    //                   final shuntingItem = shuntingList[index];
+    //                   return Card(
+    //                     child: Padding(
+    //                       padding: const EdgeInsets.all(8.0),
+    //                       child: Column(
+    //                         crossAxisAlignment: CrossAxisAlignment.start,
+    //                         children: [
+    //                           Text(
+    //                               '流水号: ${shuntingItem['shuntingEncode'] ?? ''}'),
+    //                           Text(
+    //                             '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',
+    //                             style: const TextStyle(
+    //                               color: Colors.green,
+    //                               fontWeight: FontWeight.bold,
+    //                             ),
+    //                           ),
+    //                           Text(
+    //                               '修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}'),
+    //                           Text(
+    //                               '检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}'),
+    //                           Text(
+    //                               '发送人员: ${shuntingItem['sendUserName'] ?? ''}'),
+    //                           Text(
+    //                               '接受人员: ${shuntingItem['receiveUserName'] ?? ''}'),
+    //                           Text('开始时间: ${shuntingItem['startTime'] ?? ''}'),
+    //                           Text('结束时间: ${shuntingItem['endTime'] ?? ''}'),
+    //                         ],
+    //                       ),
+    //                     ),
+    //                   );
+    //                 },
+    //               ),
+    //             ),
+    //           ],
+    //         ),
+    //       ),
+    //       actions: [
+    //         TextButton(
+    //           onPressed: () {
+    //             Navigator.of(context).pop();
+    //           },
+    //           child: const Text('关闭'),
+    //         ),
+    //       ],
+    //     );
+    //   },
+    // );
+        await getTrainRepairDynamics(item);
+    // 导航到新的页面而不是显示对话框
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RepairProgressDetailPage(
+          shuntingList: shuntingList,
+          noticeMap: noticeMap,
+        ),
+      ),
     );
   }
 
@@ -1774,6 +1785,97 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           },
         );
       },
+    );
+  }
+}
+
+// 检修进度详情页面
+class RepairProgressDetailPage extends StatelessWidget {
+  final List<Map<String, dynamic>> shuntingList;
+  final Map<int, dynamic> noticeMap;
+
+  const RepairProgressDetailPage({
+    Key? key,
+    required this.shuntingList,
+    required this.noticeMap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('检修进度列表'),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: shuntingList.length,
+        itemBuilder: (context, index) {
+          final shuntingItem = shuntingList[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '流水号: ${shuntingItem['shuntingEncode'] ?? ''}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',
+                    style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '修程（故障）内容: ${shuntingItem['faultContent'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '检修进度内容及调令: ${shuntingItem['repairProgressContent'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '发送人员: ${shuntingItem['sendUserName'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '接受人员: ${shuntingItem['receiveUserName'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '开始时间: ${shuntingItem['startTime'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '结束时间: ${shuntingItem['endTime'] ?? ''}',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

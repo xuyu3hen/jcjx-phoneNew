@@ -5,14 +5,14 @@ import 'package:jcjx_phone/routes/production/mutual_assign.dart';
 import 'package:jcjx_phone/routes/production/special_assign.dart';
 import '../../../index.dart';
 
-class TrainRepairPageManage extends StatefulWidget {
-  const TrainRepairPageManage({super.key});
+class TrainRepairTempManage extends StatefulWidget {
+  const TrainRepairTempManage({super.key});
 
   @override
-  State<TrainRepairPageManage> createState() => _TrainRepairPageManageState();
+  State<TrainRepairTempManage> createState() => _TrainRepairTempManageState();
 }
 
-class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
+class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
   int _currentTab = 0; // 0: 在整机车，1: 已整机车
 
   // 创建 Logger 实例
@@ -474,7 +474,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                     ),
                     textAlign: TextAlign.left,
                   ),
-                ),
+                ), 
                 if (count != 0) ...[
                   const SizedBox(width: 8),
                   Container(
@@ -886,19 +886,19 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Column(
+            Column( 
               children: [
                 TaskCard(
                   title: '范围作业派工',
                   subtitle: '工序节点范围作业包清单',
                   count:
                       '${numberInfo['hasDispatchedPackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
-                  locoInfo: widget.locoInfo,
+                  locoInfo: widget.locoInfo, 
                   // 将locoInfo传递给TaskCard
                   onTap: () async {
                     if (Global.profile.permissions!.roles
                         .contains('gongzhang')) {
-                      // 在这里处理待作业的点击事件
+                      // 在这里处理待作业的点击事件 
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -943,32 +943,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => JtWorkAssign(
-                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                  trainNumCode:
-                                      widget.locoInfo?['trainNumCode'] ?? '',
-                                  typeName: widget.locoInfo?['typeName'] ?? '',
-                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                  trainEntryCode:
-                                      widget.locoInfo?['code'] ?? '',
-                                )),
-                      );
-                    }
-                  },
-                ),
-                TaskCard(
-                  title: '机统28作业查询',
-                  subtitle: '机车机统28作业清单',
-                  count:
-                      '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
-                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () {
-                    List<String>? roles = Global.profile.permissions?.roles;
-                    if (roles!.contains("chejianzhuren")) {
-                      // 在这里处理待作业的点击事件
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => JtWorkAssignTeam(
                                   trainNum: widget.locoInfo?['trainNum'] ?? '',
                                   trainNumCode:
                                       widget.locoInfo?['trainNumCode'] ?? '',
