@@ -1,9 +1,13 @@
 import '../../index.dart';
 import 'package:jcjx_phone/models/progress.dart';
+import 'dart:typed_data';
+
+import 'investigateInfo_edit.dart';
 
 class PlanListPage extends StatefulWidget {
   final RepairItem repairItem;
-  PlanListPage({required this.repairItem});
+  final Map<String, dynamic>? shuntingItem;
+  PlanListPage({required this.repairItem, this.shuntingItem});
   @override
   _PlanListPageState createState() => _PlanListPageState();
 }
@@ -20,9 +24,23 @@ class _PlanListPageState extends State<PlanListPage> {
 
   Future<void> getMasInvestigate(RepairItem item) async {
     try {
-      Map<String, dynamic> queryParametrs = {
-        'trainEntryCode': item.code,
-      };
+      Map<String, dynamic> queryParametrs = {};
+      if (widget.shuntingItem == null) {
+        queryParametrs = {
+          'trainEntryCode': item.code,
+          // 'code': widget.shuntingItem != null
+          //     ? widget.shuntingItem!['shuntingCode'] ?? ''
+          //     : null,
+        };
+      } else {
+        queryParametrs = {
+          'trainEntryCode': item.code,
+          'code': widget.shuntingItem != null
+              ? widget.shuntingItem!['shuntingCode'] ?? ''
+              : null,
+        };
+      }
+      logger.i(queryParametrs);
       var r =
           await ProductApi().getMasInestigate(queryParametrs: queryParametrs);
 
@@ -374,73 +392,212 @@ class _InvestigateDetailPageState extends State<InvestigateDetailPage> {
           },
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 展示调查基本信息
+            // 横向展示修程 修次 走行公里 修程日期
             Text(
-              '通知单编号' + (widget.investigateItem['encode'] ?? ''),
+              '修程公里数',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-  
-            Text(widget.investigateItem['failureCategory'] ?? ''),
+      
+            // 创建表单样式展示
+            Table(
+              border: TableBorder.all(),
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(1),
+                2: FlexColumnWidth(1),
+                3: FlexColumnWidth(1),
+              },
+              children: [
+                TableRow(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                  ),
+                  children: const [
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text('修程', textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text('修次', textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text('走行公里', textAlign: TextAlign.center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text('修程日期', textAlign: TextAlign.center),
+                    ),
+                  ],
+                ),
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['newRepairProcName']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['newRepairProcTimes']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['newRepairKilometer']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['newRepairDate']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['normalRepairProcName']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['normalRepairProcTimes']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['normalRepairKilometer']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['normalRepairDate']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+                TableRow(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['advanceRepairProcName']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['advanceRepairProcTimes']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['advanceRepairKilometer']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        widget.investigateItem['advanceRepairDate']?.toString() ?? '',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
 
             // 标题
             const Text(
-              '测试内容及步骤-车间填写',
+              '其他作业项点',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
             // 展示mappedList内容
             if (mappedList.isNotEmpty) ...[
-          
-              const SizedBox(height: 8),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: mappedList.length,
-                  itemBuilder: (context, index) {
-                    final masItem = mappedList[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('调查内容发布人: ${masItem['createdBy'] ?? ''}'),
-                            Text('发布时间: ${masItem['createdTime'] ?? ''}'),
-                            Text(
-                                '调查内容: ${masItem['investigateContent'] ?? ''}'),
-                            Text('调查结果: ${masItem['investigateResult'] ?? ''}'),
-                            Text('调查部门: ${masItem['deptName'] ?? ''}'),
-                            Text('调查班组: ${masItem['teamName'] ?? ''}'),
-                            Text('调查人: ${masItem['reportUserName'] ?? ''}'),
-                            // 自己的部门或者父部门
-                            // if (Global.profile.permissions?.user.deptId ==
-                            //         masItem['deptId'] ||
-                            //     Global.profile.permissions?.user.dept
-                            //             ?.parentId ==
-                            //         masItem['deptId'])
-                            Align(
+              ...mappedList.asMap().entries.map((entry) {
+                final index = entry.key;
+                final masItem = entry.value;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('排序: ${masItem['sort'] ?? ''}'),
+                        Text('作业项点: ${masItem['investigateTitle'] ?? ''}'),
+                        Text(
+                            '二级作业项点: ${masItem['investigateContent'] ?? ''}'),
+                        Text('调查部门: ${masItem['deptName'] ?? ''}'),
+                        Text('指派调查班组: ${masItem['teamName'] ?? ''}'),
+                        Text('调查人: ${masItem['reportUserName'] ?? ''}'),
+                        Text('调查结果: ${masItem['investigateResult'] ?? ''}'),
+                        // 自己的部门或者父部门
+                        // if (Global.profile.permissions?.user.deptId ==
+                        //         masItem['deptId'] ||
+                        //     Global.profile.permissions?.user.dept
+                        //             ?.parentId ==
+                        //         masItem['deptId'])
+                                                   Align(
                               alignment: Alignment.centerRight,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  _showEditInvestigateDialog(
-                                      context, widget.repairItem, masItem);
+                                onPressed: () async {
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => EditInvestigatePage(
+                                        repairItem: widget.repairItem,
+                                        investigateItem: masItem,
+                                      ),
+                                    ),
+                                  );
+                                  
+                                  // 如果保存成功，刷新数据
+                                  if (result == true) {
+                                    // 这里可以添加刷新数据的逻辑
+                                    // 例如重新加载调查数据
+                                    // _loadInvestigateData();
+                                  }
                                 },
-                                child: const Text('编辑'),
+                                child: const Text('填写调查结果'),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                      
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ],
 
             // 如果没有数据则显示提示
@@ -452,88 +609,14 @@ class _InvestigateDetailPageState extends State<InvestigateDetailPage> {
                 ),
               ),
             ],
+            const SizedBox(height: 16),
           ],
         ),
       ),
     );
   }
 
-  void _showEditInvestigateDialog(BuildContext context, RepairItem item,
-      Map<String, dynamic> investigateItem) {
-    final TextEditingController _contentController = TextEditingController(
-        text: investigateItem['investigateContent'] as String? ?? '');
-    final TextEditingController _resultController = TextEditingController(
-        text: investigateItem['investigateResult'] as String? ?? '');
+  
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('填写调查结果'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('调查内容'),
-                Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(4.0),
-                  ),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      investigateItem['investigateContent'] as String? ?? '',
-                      style: const TextStyle(height: 1.5),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _resultController,
-                  decoration: const InputDecoration(
-                    labelText: '调查结果',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('取消'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // 更新调查内容
-                await ProductApi().updateMasInvestigateList({
-                  'code': investigateItem['code'],
-                  'deptId': Global.profile.permissions?.user.deptId,
-                  'deptName': Global.profile.permissions?.user.dept?.deptName,
-                  'investigateResult': _resultController.text,
-                  'reportUserId': Global.profile.permissions?.user.userId,
-                  'reportUserName': Global.profile.permissions?.user.nickName,
-                  'teamId': Global.profile.permissions?.user.deptId,
-                  'teamName': Global.profile.permissions?.user.dept?.deptName,
-                });
 
-                // 关闭对话框
-                Navigator.of(context).pop();
-
-                // 刷新界面
-                // await _loadRepairProgressData();
-              },
-              child: const Text('保存'),
-            ),
-          ],
-        );
-      },
-    );
-  }
 }

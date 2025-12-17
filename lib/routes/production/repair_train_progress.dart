@@ -5,7 +5,8 @@ import '../../index.dart';
 import 'package:intl/intl.dart';
 
 class TrainRepairProgressPage extends StatefulWidget {
-  const TrainRepairProgressPage({super.key});
+  final String? initialSearchText;
+  const TrainRepairProgressPage({super.key, this.initialSearchText});
 
   @override
   State<TrainRepairProgressPage> createState() =>
@@ -37,7 +38,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     1: '检修计划',
     2: '临修调令',
     3: '机车配置签收',
-    4: '售后服务-调车清单',
+    4: '售后服务-调查清单',
     5: '机车入段调令',
     6: '机务段下发调令',
     7: '作业人员修改调令',
@@ -49,12 +50,19 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     13: '售后修程通知单',
     14: '放行调令',
     15: '放行申请',
-    16: '计划排产调令'
+    16: '计划排产调令',
+    17: '售后通知单',
+    18: '工人工装变更通知单',
+    19: '材料工艺变更通知单',
+    20: 'jt28提报单'
   };
 
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearchText != null) {
+      _searchText = widget.initialSearchText!;
+    }
     _loadRepairProgressData();
   }
 
@@ -533,7 +541,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     //     );
     //   },
     // );
-        await getTrainRepairDynamics(item);
+    await getTrainRepairDynamics(item);
     // 导航到新的页面而不是显示对话框
     Navigator.push(
       context,
@@ -541,6 +549,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         builder: (context) => RepairProgressDetailPage(
           shuntingList: shuntingList,
           noticeMap: noticeMap,
+          item: item,
         ),
       ),
     );
@@ -777,7 +786,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               //跳转到PlanListPage
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => PlanListPage(repairItem: item)),
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        PlanListPage(repairItem: item)),
                               );
                               break;
                             case 3: // 售后服务通知单
@@ -968,11 +979,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                 Text(
                                     '处置车间: ${masSaleItem['disposalDeptName'] ?? ''}'),
                                 Text(
-                                    '发货时间: ${masSaleItem['materialDeliveryTime'] ?? ''}'),    
+                                    '发货时间: ${masSaleItem['materialDeliveryTime'] ?? ''}'),
                                 //填报人
                                 Text(
                                     '填报人: ${masSaleItem['reportUserName'] ?? ''}'),
-                                
                               ],
                             ),
                           ),
@@ -1791,6 +1801,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
 // 检修进度详情页面
 class RepairProgressDetailPage extends StatelessWidget {
+  final RepairItem item;
   final List<Map<String, dynamic>> shuntingList;
   final Map<int, dynamic> noticeMap;
 
@@ -1798,6 +1809,7 @@ class RepairProgressDetailPage extends StatelessWidget {
     Key? key,
     required this.shuntingList,
     required this.noticeMap,
+    required this.item,
   }) : super(key: key);
 
   @override
@@ -1824,13 +1836,50 @@ class RepairProgressDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '流水号: ${shuntingItem['shuntingEncode'] ?? ''}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  GestureDetector(
+                    onTap: () {
+                      // 跳转到流水号详情页面
+                      if (shuntingItem['shuntingType'] == 4) {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PlanListPage(
+                                repairItem: item,
+                                shuntingItem: shuntingItem,
+                              ),
+                            ));
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue, width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '流水号: ${shuntingItem['shuntingEncode'] ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.blue,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+// ... existing code ...,
+// ... existing code ...),
                   const SizedBox(height: 8),
                   Text(
                     '调令类型: ${noticeMap[shuntingItem['shuntingType']] ?? ''}',

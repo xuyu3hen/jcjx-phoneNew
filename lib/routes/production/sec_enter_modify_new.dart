@@ -740,10 +740,20 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                     // 不要清空 faultPics，而是重新赋值
                     faultPics = [];
                     for (var asset in assetEntityList) {
-                      var pic = await asset.file;
-                      logger.i(await asset.file);
-                      logger.i(await asset.originFile);
-                      faultPics.add(pic!);
+                      try {
+                        var pic = await asset.file;
+                        logger.i('File path: ${pic?.path}');
+                        if (pic != null) {
+                          faultPics.add(pic);
+                        } else {
+                          logger.e('Failed to get file for asset: $asset');
+                          // 可以在这里显示一个提示给用户
+                          SmartDialog.showToast('部分图片获取失败，请重新选择');
+                        }
+                      } catch (e) {
+                        logger.e('Error getting asset file: $e');
+                        SmartDialog.showToast('图片获取出错，请重新选择');
+                      }
                     }
                     logger.i('assetEntityList-------------');
                   },

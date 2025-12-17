@@ -876,7 +876,27 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
             // 操作按钮区
             _buildActionButtons(),
             const SizedBox(height: 24),
-
+            // 展示点击跳转到检修调令界面
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // 跳转到检修调令界面
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TrainRepairProgressPage(initialSearchText: widget.locoInfo?['trainNum'],),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text('检修调令'),
+              ),
+            ),
             // 任务统计区
             const Text(
               '作业清单',
@@ -963,12 +983,11 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
-                    if (roles!.contains("chejianzhuren")) {
                       // 在这里处理待作业的点击事件
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => JtWorkAssignTeam(
+                            builder: (context) => JtSearch(
                                   trainNum: widget.locoInfo?['trainNum'] ?? '',
                                   trainNumCode:
                                       widget.locoInfo?['trainNumCode'] ?? '',
@@ -978,7 +997,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                       widget.locoInfo?['code'] ?? '',
                                 )),
                       );
-                    }
+                    
                   },
                 ),
                 TaskCard(

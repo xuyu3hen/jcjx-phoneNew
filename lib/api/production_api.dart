@@ -65,9 +65,9 @@ class ProductApi extends AppApi {
     }
   }
 
-    // /dispatch/trainShunting/selectAll
+  // /dispatch/trainShunting/selectAll
   Future<dynamic> saveTrainShunting({
-    Map<String, dynamic>? queryParametrs, 
+    Map<String, dynamic>? queryParametrs,
   }) async {
     try {
       var r = await AppApi.dio.post(
@@ -84,7 +84,7 @@ class ProductApi extends AppApi {
 
   // /dispatch/trainShuntingPlan/addToPlan
   Future<dynamic> addTrainShuntingPlan({
-    List<Map<String, dynamic>>? queryParametrs, 
+    List<Map<String, dynamic>>? queryParametrs,
   }) async {
     try {
       var r = await AppApi.dio.post(
@@ -843,7 +843,7 @@ class ProductApi extends AppApi {
     try {
       FormData formData = FormData.fromMap(
           {"uploadFileList": await MultipartFile.fromFile(imagedata!.path)});
-      var r = await AppApi.dio.post("/fileserver/jt28File/uploadFile",
+      var r = await AppApi.dio.post("/fileserver/shuntingFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
       logger.i(r.data["data"]);
       return (r.data["data"]);
@@ -853,9 +853,49 @@ class ProductApi extends AppApi {
     }
   }
 
+  //上传调查清单图片
+  Future<dynamic> uploadShuntingJt28({File? imagedata}) async {
+    try {
+      FormData formData = FormData.fromMap(
+          {"uploadFileList": await MultipartFile.fromFile(imagedata!.path)});
+      var r = await AppApi.dio.post("/fileserver/shuntingFile/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      logger.i(r.data["data"]);
+      return (r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return ''; // 根据具体情况返回合适的表示错误的值，这里返回 -1 示意上传失败
+    }
+  }
+
+  Future<int> uploadShuntingFile(
+      {Map<String, dynamic>? queryParametrs,
+      required List<File> imagedatas}) async {
+    try {
+      Map<String, dynamic> formMap = {};
+      formMap["shuntingCode"] =
+          queryParametrs?["code"];
+    
+      if (imagedatas.isNotEmpty) {
+        List<MultipartFile> fileList = [];
+        for (var i = 0; i < imagedatas.length; i++) {
+          fileList.add(await MultipartFile.fromFile(imagedatas[i].path));
+        }
+        formMap['uploadFileList'] = fileList;
+      }
+      FormData formData = FormData.fromMap(formMap);
+      var r = await AppApi.dio.post("/fileserver/shuntingFile/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      logger.i(r.data["data"]);
+      return (r.data["data"]);
+    } catch (e, stackTrace) {
+      logger.e(e, stackTrace);
+      return -1;
+    }
+  }
+
   //上传作业项图片
   //传输多个图片
-
   Future<int> uploadCertainPackageImg(
       {Map<String, dynamic>? queryParametrs,
       required List<File> imagedatas}) async {
@@ -883,7 +923,6 @@ class ProductApi extends AppApi {
       return -1;
     }
   }
-// ... existing code ...
 
   // 完成作业项
   Future<int> finishCertainPackage(
