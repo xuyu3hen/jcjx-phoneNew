@@ -152,7 +152,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
-        "检修作业-机车（派工）",
+        '检修进度',
         style: TextStyle(color: Colors.black),
       ),
       backgroundColor: Colors.white,

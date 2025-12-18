@@ -186,6 +186,11 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 () => Navigator.pushNamed(context, 'repairTrainProgress'),
                 '检修调令',
               ),
+              _buildFeatureItem(
+                Icon(Icons.people, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairProgress'),
+                '检修进度',
+              ),
               // Expanded(
               //   child: ElevatedButton(
               //     onPressed: () {

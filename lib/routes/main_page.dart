@@ -1,11 +1,13 @@
 
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
+
 import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
+import 'production/repair_train_temp.dart';
 import 'vehicle28/submit28_manage.dart';
 
 class MainPage extends StatefulWidget {
@@ -88,6 +90,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'jt28submitManage':(context) => const Vehicle28FormManage(),
         'repairTrainManage':(context) => const TrainRepairPageManage(),
         'repairTrainProgress':(context) => const TrainRepairProgressPage(),
+        'repairProgress':(context) => const TrainRepairTempManage(),
       },
       builder: FlutterSmartDialog.init(),
     );
@@ -132,7 +135,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     });
   }
 
-  //修改bottomNavigationBar的点击事件,可以在此处更换被选中表现形式
+  //修改bottomNavigationBar的点击事件,可以在此处更换被选中表现形式s
   void onTap(int index) {
     // if (index != 1) {
     //   setState(() {
