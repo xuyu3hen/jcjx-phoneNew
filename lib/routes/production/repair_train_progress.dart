@@ -758,6 +758,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         });
                       },
                     ),
+                    const Divider(),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 4,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('转序通知单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 4;
+                        });
+                      },
+                    ),
+// ... existing code ...
                   ],
                 ),
               ),
@@ -794,6 +813,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             case 3: // 售后服务通知单
                               getMasSale(item);
                               _showServiceAnswerDialog(context, item);
+                              break;
+                            case 4: // 转序通知单
                               break;
                           }
                         },

@@ -474,7 +474,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
                     ),
                     textAlign: TextAlign.left,
                   ),
-                ), 
+                ),
                 if (count != 0) ...[
                   const SizedBox(width: 8),
                   Container(
@@ -860,7 +860,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('检修作业-明细（派工）'),
+        title: const Text('检修进度'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -886,19 +886,17 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
               ),
             ),
             const SizedBox(height: 8),
-            Column( 
+            Column(
               children: [
                 TaskCard(
-                  title: '范围作业派工',
-                  subtitle: '工序节点范围作业包清单',
-                  count:
-                      '${numberInfo['hasDispatchedPackageCount'] ?? 0}/${numberInfo['totalPackageCount'] ?? 0}',
-                  locoInfo: widget.locoInfo, 
+                  title: '作业进度',
+            
+                  locoInfo: widget.locoInfo,
                   // 将locoInfo传递给TaskCard
                   onTap: () async {
                     if (Global.profile.permissions!.roles
                         .contains('gongzhang')) {
-                      // 在这里处理待作业的点击事件 
+                      // 在这里处理待作业的点击事件
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -915,90 +913,60 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   },
                 ),
                 TaskCard(
-                  title: '机统28作业派工',
-                  subtitle: '机车机统28作业清单',
-                  count:
-                      '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
+                  title: '异常',
+             
+                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
+                  onTap: () {
+                             List<String>? roles = Global.profile.permissions?.roles;
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => JtSearch(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
+                    );
+                  },
+                ),
+                TaskCard(
+                  title: '机统28作业查询',
+               
+                  onTap: () {
+                    List<String>? roles = Global.profile.permissions?.roles;
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => JtSearch(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
+                    );
+                  },
+                ),
+                    TaskCard(
+                  title: '检修调令',
+               
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
-                    if (roles!.contains("chejianzhuren")) {
-                      // 在这里处理待作业的点击事件
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => JtWorkAssignTeam(
-                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                  trainNumCode:
-                                      widget.locoInfo?['trainNumCode'] ?? '',
-                                  typeName: widget.locoInfo?['typeName'] ?? '',
-                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                  trainEntryCode:
-                                      widget.locoInfo?['code'] ?? '',
-                                )),
-                      );
-                    } else if (roles.contains("gongzhang")) {
-                      // 在这里处理待作业的点击事件
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => JtWorkAssign(
-                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                  trainNumCode:
-                                      widget.locoInfo?['trainNumCode'] ?? '',
-                                  typeName: widget.locoInfo?['typeName'] ?? '',
-                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                  trainEntryCode:
-                                      widget.locoInfo?['code'] ?? '',
-                                )),
-                      );
-                    }
-                  },
-                ),
-                TaskCard(
-                  title: '互检作业派工',
-                  subtitle: '工序互检作业清单',
-                  count:
-                      '${numberInfo['hasDispatchedMutualInspectionCount'] ?? 0}/${numberInfo['totalMutualInspectionCount'] ?? 0}',
-                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () {
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => MutualAssign(
-                                trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode:
-                                    widget.locoInfo?['trainNumCode'] ?? '',
-                                typeName: widget.locoInfo?['typeName'] ?? '',
-                                typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                trainEntryCode: widget.locoInfo?['code'] ?? '',
-                              )),
+                          builder: (context) => TrainRepairProgressPage(initialSearchText: widget.locoInfo?['trainNum'],)),
                     );
                   },
-                ),
-                TaskCard(
-                  title: '专检作业派工',
-                  subtitle: '工序专检作业清单',
-                  count:
-                      '${numberInfo['hasDispatchedSpecialInspectionCount'] ?? 0}/${numberInfo['totalMutualInspectionCount'] ?? 0}',
-                  locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
-                  onTap: () {
-                    // 在这里处理待作业的点击事件
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => SpecialAssign(
-                                trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                trainNumCode:
-                                    widget.locoInfo?['trainNumCode'] ?? '',
-                                typeName: widget.locoInfo?['typeName'] ?? '',
-                                typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                trainEntryCode: widget.locoInfo?['code'] ?? '',
-                              )),
-                    );
-                  },
-                ),
+                ),     
               ],
             ),
           ],
@@ -1147,19 +1115,17 @@ class _InfoItem extends StatelessWidget {
   }
 }
 
-// ... existing code ...
 class TaskCard extends StatelessWidget {
   final String title;
-  final String subtitle;
-  final String count;
+
+
   final Map<String, dynamic>? locoInfo;
   final VoidCallback? onTap;
 
   const TaskCard({
     Key? key,
     required this.title,
-    required this.subtitle,
-    required this.count,
+   
     this.locoInfo,
     this.onTap,
   }) : super(key: key);
@@ -1189,26 +1155,11 @@ class TaskCard extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
               ],
             ),
             Row(
               children: [
-                Text(
-                  count,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: onTap,
@@ -1221,7 +1172,7 @@ class TaskCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                   ),
-                  child: const Text('派工'),
+                  child: const Text('查看'),
                 ),
               ],
             ),

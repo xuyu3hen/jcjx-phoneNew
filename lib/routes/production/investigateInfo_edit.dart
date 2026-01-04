@@ -406,19 +406,17 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
   // 保存调查结果
   Future<void> _saveInvestigateResult() async {
     SmartDialog.showLoading();
-    print('保存调查结果: ${_resultController.text}');
+    // print('保存调查结果: ${_resultController.text}');
     try {
       
-      // if (_selectedMedia.isNotEmpty) {
-      //   List<File> files = _selectedMedia.map((xFile) => File(xFile.path)).toList();
-      //   Map<String,dynamic> queryParametrs = {
-      //     "code": widget.investigateItem['code'],
-      //   };
-      //   logger.d('上传媒体参数：$queryParametrs');
-      //   // 上传媒体到服务器
-      //   var uploadResponse = await ProductApi().uploadShuntingFile(imagedatas: files, queryParametrs: queryParametrs);
-        
-        
+    
+        List<File> files = _selectedMedia.map((xFile) => File(xFile.path)).toList();
+        Map<String,dynamic> queryParametrs = {
+          "code": widget.investigateItem['code'],
+        };
+        logger.i('上传媒体参数：$queryParametrs');
+        // 上传媒体到服务器
+        // var uploadResponse = await ProductApi().uploadShuntingFile(imagedatas: files, queryParametrs: queryParametrs);
       // }
       
     

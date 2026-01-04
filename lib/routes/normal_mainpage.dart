@@ -187,7 +187,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 '检修调令',
               ),
               _buildFeatureItem(
-                Icon(Icons.people, color: Colors.blue[200]),
+                Icon(Icons.manage_search, color: Colors.blue[200]),
                 () => Navigator.pushNamed(context, 'repairProgress'),
                 '检修进度',
               ),
