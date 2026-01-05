@@ -489,8 +489,9 @@ class _PlanListPageState extends State<PlanListPage> {
         logger.i('上传媒体参数：$queryParametrs');
 
         // 上传媒体到服务器
-        var uploadResponse = await ProductApi().uploadShuntingJt28(
-            imagedata: selectedMedia.map((xFile) => File(xFile.path)).toList()[0],
+        var uploadResponse = await ProductApi().uploadShuntingInfo(
+            data: selectedMedia.map((xFile) => File(xFile.path)).toList(),
+            code: masItem['code'],
         );
 
         logger.i('文件上传成功: $uploadResponse');

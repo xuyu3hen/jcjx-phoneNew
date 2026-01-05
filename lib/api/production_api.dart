@@ -854,10 +854,18 @@ class ProductApi extends AppApi {
   }
 
   //上传调查清单图片
-  Future<dynamic> uploadShuntingJt28({File? imagedata, String? code}) async {
+  Future<dynamic> uploadShuntingInfo({required List<File>? data, String? code}) async {
     try {
-      FormData formData = FormData.fromMap(
-          {"uploadFileList": await MultipartFile.fromFile(imagedata!.path)});
+      Map<String, dynamic> formMap = {};
+      formMap["shuntingCode"] = code;
+      if (data!.isNotEmpty) {
+        List<MultipartFile> fileList = [];
+        for (var i = 0; i < data.length; i++) {
+          fileList.add(await MultipartFile.fromFile(data[i].path));
+        }
+        formMap['multipartFileList'] = fileList;
+      }
+      FormData formData = FormData.fromMap(formMap);
       var r = await AppApi.dio.post("/fileserver/shuntingFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
       logger.i(r.data["data"]);
