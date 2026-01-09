@@ -890,34 +890,24 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
               children: [
                 TaskCard(
                   title: '作业进度',
-            
                   locoInfo: widget.locoInfo,
                   // 将locoInfo传递给TaskCard
                   onTap: () async {
-                    if (Global.profile.permissions!.roles
-                        .contains('gongzhang')) {
-                      // 在这里处理待作业的点击事件
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                PackageArrangeInfo(locoInfo: widget.locoInfo)),
-                      );
-                      // 如果从派工页面返回了true，则刷新当前页面
-                      if (result == true) {
-                        getNumber(); // 重新获取数据
-                      }
-                    } else {
-                      showToast('只有工长有范围派工权限');
-                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => WorkProgressPage(
+                            trainInfo: widget.locoInfo,
+                          )),
+                    );
                   },
                 ),
                 TaskCard(
                   title: '异常',
-             
+
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
-                             List<String>? roles = Global.profile.permissions?.roles;
+                    List<String>? roles = Global.profile.permissions?.roles;
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
@@ -935,7 +925,6 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 ),
                 TaskCard(
                   title: '机统28作业查询',
-               
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
                     // 在这里处理待作业的点击事件
@@ -953,9 +942,9 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     );
                   },
                 ),
-                    TaskCard(
+                TaskCard(
                   title: '检修调令',
-               
+
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
@@ -963,10 +952,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => TrainRepairProgressPage(initialSearchText: widget.locoInfo?['trainNum'],)),
+                          builder: (context) => TrainRepairProgressPage(
+                                initialSearchText: widget.locoInfo?['trainNum'],
+                              )),
                     );
                   },
-                ),     
+                ),
               ],
             ),
           ],
@@ -1118,14 +1109,12 @@ class _InfoItem extends StatelessWidget {
 class TaskCard extends StatelessWidget {
   final String title;
 
-
   final Map<String, dynamic>? locoInfo;
   final VoidCallback? onTap;
 
   const TaskCard({
     Key? key,
     required this.title,
-   
     this.locoInfo,
     this.onTap,
   }) : super(key: key);
@@ -1159,7 +1148,6 @@ class TaskCard extends StatelessWidget {
             ),
             Row(
               children: [
-          
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: onTap,

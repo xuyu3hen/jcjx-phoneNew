@@ -182,43 +182,82 @@ class _PlanListPageState extends State<PlanListPage> {
 
   // 查看详情方法
   void _showDetailView(BuildContext context, Map<String, dynamic> item) {
+      final masInvestigateList = item['masInvestigateListList'] ?? [];
+    List<Map<String, dynamic>> mappedList = [];
+
+    // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
+    if (masInvestigateList is List) {
+      mappedList = masInvestigateList
+          .where((item) => item is Map)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    }
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
         return Container(
           padding: EdgeInsets.all(16.0),
-          height: MediaQuery.of(context).size.height * 0.6,
+          height: MediaQuery.of(context).size.height * 0.9,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '调查详情',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '编辑调查内容',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
               ),
               Divider(),
-              SizedBox(height: 10),
-              Text('编号: ${item['encode'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('故障现象: ${item['faultInformation'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('故障类别: ${item['failureCategory'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('故障时间: ${item['faultDate'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('停留地点: ${item['trainLocation'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('填报时间: ${item['createdTime'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('调查内容: ${item['investigateContent'] ?? ''}'),
-              SizedBox(height: 8),
-              Text('签收情况: ${item['signStatus'] ?? ''}'),
-              Spacer(),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text('关闭'),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 10),
+                      // 基本信息展示
+                      Text('编号: ${item['encode'] ?? ''}'),
+                      SizedBox(height: 8),
+                      Text('故障现象: ${item['faultInformation'] ?? ''}'),
+                      SizedBox(height: 16),
+                      // 修程公里数表格
+                      _buildRepairKilometerTable(item),
+                      SizedBox(height: 16),
+                      // 调查内容列表
+                      Text(
+                        '其他作业项点',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 10),
+                      if (mappedList.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text(
+                              '暂无调查内容',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          ),
+                        )
+                      else
+                        ...mappedList
+                            .map((masItem) =>
+                                _buildInvestigateItemCard(context, masItem))
+                            .toList(),
+                    ],
+                  ),
                 ),
               ),
             ],

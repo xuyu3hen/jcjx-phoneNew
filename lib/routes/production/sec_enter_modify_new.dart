@@ -90,6 +90,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   @override
   void initState() {
     super.initState();
+    // 页面加载时取消所有焦点，防止键盘自动弹出
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FocusScope.of(context).unfocus();
+    });
     getDynamicType();
     getStopLocation();
     getAssignSegment();
@@ -292,74 +296,66 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       };
       var r = await ProductApi()
           .getTrainInfoByPlan(queryParametrs: queryParameters);
-      // if (r == null) {
-      //展示信息该车号无检修计划
-      // showDialog(
-      //     context: context,
-      //     builder: (BuildContext context) {
-      //       return AlertDialog(
-      //         title: const Text('提示'),
-      //         content: const Text('该车无检修计划'),
-      //         actions: [
-      //           TextButton(
-      //             onPressed: () {
-      //               Navigator.of(context).pop();
-      //             },
-      //             child: const Text('确定'),
-      //           ),
-      //         ],
-      //       );
-      //     });
-      // } else if (r['isEntry'] == false) {
-      // 提示该车号已有检修计划已自动补全相关信息
-      // showDialog(
-      //     context: context,
-      //     builder: (BuildContext context) {
-      //       return AlertDialog(
-      //           title: const Text('提示'),
-      //           content: const Text('该车有检修计划已自动补全相关信息'),
-      //           actions: [
-      //             TextButton(
-      //               onPressed: () {
-      //                 Navigator.of(context).pop();
-      //               },
-      //               child: const Text('确定'),
-      //             ),
-      //           ]);
-      // });
-      // } else if (r['isEntry'] == true) {
-      // 提示该车号已经入段请不要重复入段
-      // showDialog(
-      //     context: context,
-      //     builder: (BuildContext context) {
-      //       return AlertDialog(
-      //           title: const Text('提示'),
-      //           content: const Text('该车已经入段请不要重复入段'),
-      //           actions: [
-      //             TextButton(
-      //               onPressed: () {
-      //                 Navigator.of(context).pop();
-      //               },
-      //               child: const Text('确定'),
-      //             ),
-      //           ]);
-      //     });
-      // }
-      setState(() {
-        jcTypeListSelected["name"] = r['trainType'];
-        jcTypeListSelected["code"] = r['trainTypeCode'];
-        //修程信息
-        repairSelected["name"] = r["repairProc"];
-        //将主键进行选取
-        repairSelected["code"] = r["repairProcCode"];
-        repairTimesSelected['name'] = r["repairTimes"];
-        repairTimesSelected['code'] = r["repairTimesCode"];
-        //配属段信息
-        assignSegmentSelected['assignSegment'] = r['attachDept'];
-        assignSegmentSelected['code'] = r['attachSegmentCode'];
-      });
+      
+      // 检查返回数据是否为null
+      if (r == null) {
+        if (mounted) {
+          SmartDialog.showToast('该车号无检修计划，请手动填写相关信息');
+        }
+        return;
+      }
+      
+      // 检查是否已入段
+      if (r['isEntry'] == true) {
+        if (mounted) {
+          SmartDialog.showToast('该车已经入段，请不要重复入段');
+        }
+        return;
+      }
+      
+      // 如果数据存在但缺少必要字段，给出提示但继续填充可用数据
+      if (mounted) {
+        setState(() {
+          // 安全地设置机型信息
+          if (r['trainType'] != null) {
+            jcTypeListSelected["name"] = r['trainType'];
+          }
+          if (r['trainTypeCode'] != null) {
+            jcTypeListSelected["code"] = r['trainTypeCode'];
+          }
+          //修程信息
+          if (r["repairProc"] != null) {
+            repairSelected["name"] = r["repairProc"];
+          }
+          if (r["repairProcCode"] != null) {
+            repairSelected["code"] = r["repairProcCode"];
+          }
+          //修次信息
+          if (r["repairTimes"] != null) {
+            repairTimesSelected['name'] = r["repairTimes"];
+          }
+          if (r["repairTimesCode"] != null) {
+            repairTimesSelected['code'] = r["repairTimesCode"];
+          }
+          //配属段信息
+          if (r['attachDept'] != null) {
+            assignSegmentSelected['assignSegment'] = r['attachDept'];
+          }
+          if (r['attachSegmentCode'] != null) {
+            assignSegmentSelected['code'] = r['attachSegmentCode'];
+          }
+        });
+        
+        // 如果成功填充了信息，给出提示
+        if (r['isEntry'] == false) {
+          SmartDialog.showToast('已自动补全相关信息');
+        }
+      }
     } catch (e, stackTrace) {
       logger.e('getRepairPlanByTrainNum 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      if (mounted) {
+        SmartDialog.showToast('查询车号信息失败，请检查网络连接或手动填写');
+      }
     }
   }
 
@@ -467,8 +463,14 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   }
 
   Widget _buildBody() {
-    return Stack(children: [
-      ListView(children: [
+    return GestureDetector(
+      // 点击空白区域时收起键盘
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Stack(children: [
+        ListView(children: [
         Column(mainAxisAlignment: MainAxisAlignment.start, children: [
           ZjcFormSelectCell(
             title: "动力类型",
@@ -763,7 +765,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           ),
         ])
       ])
-    ]);
+    ]),
+    );
   }
 
   Widget _footer() {

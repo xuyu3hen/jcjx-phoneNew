@@ -205,3 +205,54 @@ class StateDetail {
   factory StateDetail.fromJson(Map<String, dynamic> json) =>
       _$StateDetailFromJson(json);
 }
+
+// 部门进度数据模型
+@JsonSerializable()
+class DeptProgress {
+  final int? deptId;
+  final String? deptName;
+  final List<RepairMainNodeProgress>? repairMainNodeProgressList;
+
+  DeptProgress({
+    this.deptId,
+    this.deptName,
+    this.repairMainNodeProgressList,
+  });
+
+  factory DeptProgress.fromJson(Map<String, dynamic> json) =>
+      _$DeptProgressFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DeptProgressToJson(this);
+}
+
+// 维修主节点进度数据模型
+@JsonSerializable()
+class RepairMainNodeProgress {
+  final String? repairMainNodeCode;
+  final String? repairMainNodeName;
+  final String? repairProcCode;
+  final int? totalSelfInspectionCount;
+  final int? completeSelfInspectionCount;
+  final int? totalMutualInspectionCount;
+  final int? completeMutualInspectionCount;
+  final int? totalJt28Count;
+  final int? completeJt28Count;
+
+
+  RepairMainNodeProgress({
+    this.repairMainNodeCode,
+    this.repairMainNodeName,
+    this.repairProcCode,
+    this.totalSelfInspectionCount,
+    this.completeSelfInspectionCount,
+    this.totalMutualInspectionCount,
+    this.completeMutualInspectionCount,
+    this.totalJt28Count,
+    this.completeJt28Count,
+  });
+
+  factory RepairMainNodeProgress.fromJson(Map<String, dynamic> json) =>
+      _$RepairMainNodeProgressFromJson(json);
+
+  Map<String, dynamic> toJson() => _$RepairMainNodeProgressToJson(this);
+}

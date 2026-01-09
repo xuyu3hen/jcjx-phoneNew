@@ -853,6 +853,8 @@ class ProductApi extends AppApi {
     }
   }
 
+  //增加信息
+
   //上传调查清单图片
   Future<dynamic> uploadShuntingInfo({required List<File>? data, String? code}) async {
     try {
@@ -873,6 +875,23 @@ class ProductApi extends AppApi {
     } catch (e) {
       _handleException(e);
       return ''; // 根据具体情况返回合适的表示错误的值，这里返回 -1 示意上传失败
+    }
+  }
+
+  // 获取作业进度
+  Future<dynamic> getWorkProgress(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      log(queryParametrs.toString());
+      var r = await AppApi.dio.post(
+        "/tasks/taskInstructPackage/getRepairMainNodeProgress",
+        data: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
     }
   }
 

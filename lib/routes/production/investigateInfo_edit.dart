@@ -98,8 +98,8 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
             
             // 显示已上传的媒体
             if (_uploadedMedia.isNotEmpty) ...[
-              const Text('已上传附件:'),
-              const SizedBox(height: 8),
+              Text('已上传附件:', style: TextStyle(fontSize: 14)),
+              SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -122,34 +122,16 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: _isVideoUrl(_uploadedMedia[index])
-                                  ? Icon(Icons.video_library, size: 60, color: Colors.blue)
+                                  ? Icon(Icons.video_library,
+                                      size: 60, color: Colors.blue)
                                   : Image.network(
                                       _uploadedMedia[index],
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return const Icon(Icons.error);
                                       },
                                     ),
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _uploadedMedia.removeAt(index);
-                                });
-                              },
-                              child: Container(
-                                width: 30,
-                                height: 30,
-                                color: Colors.red.withOpacity(0.8),
-                                child: const Icon(
-                                  Icons.close,
-                                  size: 22,
-                                  color: Colors.white,
-                                ),
-                              ),
                             ),
                           ),
                         ],
@@ -163,8 +145,8 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
             
             // 显示新选择的媒体
             if (_selectedMedia.isNotEmpty) ...[
-              const Text('待上传附件:'),
-              const SizedBox(height: 8),
+              Text('待上传附件:', style: TextStyle(fontSize: 14)),
+              SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -235,59 +217,45 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                   },
                 ),
               ),
-              const SizedBox(height: 15),
+              SizedBox(height: 15),
             ],
-            
             // 添加媒体按钮
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 SizedBox(
-                  height: 50,
+                  height: 40,
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await _pickMedia(ImageSource.camera, false);
                     },
-                    icon: const Icon(Icons.photo_camera),
-                    label: const Text('拍照'),
+                    icon: const Icon(Icons.photo_camera, size: 18),
+                    label: const Text('拍照', style: TextStyle(fontSize: 12)),
                   ),
                 ),
                 SizedBox(
-                  height: 50,
+                  height: 40,
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await _pickMedia(ImageSource.camera, true);
                     },
-                    icon: const Icon(Icons.videocam),
-                    label: const Text('录像'),
+                    icon: const Icon(Icons.videocam, size: 18),
+                    label: const Text('录像', style: TextStyle(fontSize: 12)),
                   ),
                 ),
                 SizedBox(
-                  height: 50,
+                  height: 40,
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       await _pickMedia(ImageSource.gallery, false);
                     },
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('图库'),
+                    icon: const Icon(Icons.photo_library, size: 18),
+                    label: const Text('图库', style: TextStyle(fontSize: 12)),
                   ),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 30),
-            
-            // 预览区域说明
-            const Text(
-              '说明:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            const Text('• 点击拍照/录像按钮可以直接拍摄照片或录制视频', style: TextStyle(fontSize: 14)),
-            const Text('• 点击图库可以从相册中选择图片或视频', style: TextStyle(fontSize: 14)),
-            const Text('• 点击右上角删除按钮可以移除已选择的附件', style: TextStyle(fontSize: 14)),
-            const Text('• 点击媒体预览可以查看大图或播放视频', style: TextStyle(fontSize: 14)),
-            const Text('• 保存时将同时上传文本和附件', style: TextStyle(fontSize: 14)),
+            SizedBox(height: 16),
           ],
         ),
       ),
@@ -406,20 +374,22 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
   // 保存调查结果
   Future<void> _saveInvestigateResult() async {
     SmartDialog.showLoading();
-    // print('保存调查结果: ${_resultController.text}');
     try {
-      
-    
-        List<File> files = _selectedMedia.map((xFile) => File(xFile.path)).toList();
-        Map<String,dynamic> queryParametrs = {
+      // 如果有新选择的媒体文件，先上传
+      if (_selectedMedia.isNotEmpty) {
+        Map<String, dynamic> queryParametrs = {
           "code": widget.investigateItem['code'],
         };
         logger.i('上传媒体参数：$queryParametrs');
+
         // 上传媒体到服务器
-        // var uploadResponse = await ProductApi().uploadShuntingFile(imagedatas: files, queryParametrs: queryParametrs);
-      // }
-      
-    
+        var uploadResponse = await ProductApi().uploadShuntingInfo(
+            data: _selectedMedia.map((xFile) => File(xFile.path)).toList(),
+            code: widget.investigateItem['code'],
+        );
+
+        logger.i('文件上传成功: $uploadResponse');
+      }
 
       // 更新调查内容
       await ProductApi().updateMasInvestigateList({
