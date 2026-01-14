@@ -1,7 +1,3 @@
-import 'dart:math';
-
-import 'package:jcjx_phone/routes/production/team_people.dart';
-
 import '../../index.dart';
 
 class JtSearch extends StatefulWidget {
@@ -263,18 +259,29 @@ class _JtShowPageState extends State<JtSearch> {
     );
   }
 
-  List<Map<String, dynamic>> photoList = [];
-
-  Future<void> getPhotoList(String groupId) async {
-    Map<String, dynamic> queryParameters = {
-      'groupId': groupId,
-    };
-    var r = await ProductApi()
-        .getFaultVideoAndImage(queryParametrs: queryParameters);
-    //将List<dynamic>转换为List<Map<String, dynamic>>
-    photoList =
-        (r as List).map((item) => item as Map<String, dynamic>).toList();
-    logger.i(photoList);
+  /// 获取图片/视频列表
+  /// 返回Future以便在组件中处理加载状态和错误
+  Future<List<Map<String, dynamic>>> getPhotoList(String groupId) async {
+    try {
+      if (groupId.isEmpty) {
+        return [];
+      }
+      
+      Map<String, dynamic> queryParameters = {
+        'groupId': groupId,
+      };
+      var r = await ProductApi()
+          .getFaultVideoAndImage(queryParametrs: queryParameters);
+      
+      //将List<dynamic>转换为List<Map<String, dynamic>>
+      final photoList =
+          (r as List).map((item) => item as Map<String, dynamic>).toList();
+      logger.i(photoList);
+      return photoList;
+    } catch (e) {
+      logger.e('获取图片列表失败: $e');
+      rethrow;
+    }
   }
 
   late Image image;
@@ -285,72 +292,13 @@ class _JtShowPageState extends State<JtSearch> {
     return r;
   }
 
-  // 添加图片预览方法
-  void _previewImage(Map<String, dynamic> photo) async {
-    Image? i = await getPreviewImage(photo);
-    // 实现图片预览逻辑
+  /// 显示图片预览对话框
+  /// 使用新的ImagePreviewDialog组件
+  void _previewImage(Map<String, dynamic> photo) {
+    if (!mounted) return;
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 修正内容显示部分，添加错误处理和占位符
-              if (i != null)
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 300),
-                  child: i,
-                )
-              else if (photo['dowanloadUrl'] != null)
-                Image.network(
-                  photo['dowanloadUrl'],
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (BuildContext context, Widget child,
-                      ImageChunkEvent? loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Column(
-                      children: const [
-                        Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                        SizedBox(height: 10),
-                        Text('图片加载失败'),
-                      ],
-                    );
-                  },
-                )
-              else
-                const Column(
-                  children: [
-                    Icon(Icons.image, size: 50, color: Colors.grey),
-                    SizedBox(height: 10),
-                    Text('无图片可显示'),
-                  ],
-                ),
-              const SizedBox(height: 10),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('关闭'),
-            ),
-          ],
-        );
-      },
+      builder: (BuildContext context) => ImagePreviewDialog(media: photo),
     );
   }
 
@@ -503,178 +451,25 @@ class _JtShowPageState extends State<JtSearch> {
                       itemCount: sys28List.length,
                       itemBuilder: (context, index) {
                         Map<String, dynamic> item = sys28List[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.blue), // 添加蓝色边框
-                            borderRadius: BorderRadius.circular(8.0), // 可选：添加圆角
-                          ),
-                          margin: const EdgeInsets.all(8.0), // 可选：为每个列表项添加外边距
-                          padding: const EdgeInsets.all(8.0), // 可选：为内容添加内边距
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "故障现象: ${item['faultDescription'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "施修方案: ${item['repairScheme'] ?? ''}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-// ... existing code ...
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () async {
-                                                // 可以打开新页面或弹窗展示图片
-                                                await getPhotoList(
-                                                    item['repairPicture']);
-                                                //展示photoList
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title:
-                                                          const Text("故障视频及图片"),
-                                                      content: photoList
-                                                              .isNotEmpty
-                                                          ? Column(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children:
-                                                                  photoList.map(
-                                                                      (photo) {
-                                                                return ListTile(
-                                                                  title: Text(
-                                                                      '图片${photoList.indexOf(photo) + 1}点击查看'),
-                                                                  onTap: () {
-                                                                    // TODO: 实现图片预览功能
-                                                                    // 这里可以导航到图片预览页面或者显示图片预览对话框
-                                                                    _previewImage(
-                                                                        photo);
-                                                                  },
-                                                                );
-                                                              }).toList(),
-                                                            )
-                                                          : const Text('暂无图片'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                          child:
-                                                              const Text('关闭'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.green,
-                                              ),
-                                              child: const Text("查看故障视频及图片"),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "提报人: ${item['reporterName'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "提报时间: ${item['reportDate'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "部门: ${item['deptName'] ?? ''}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "班组: ${item['teamName'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName'] ?? ''}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "专检: ${item['specialName'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "互检: ${item['mutualName'] ?? ''}"),
-                                          ),
-                                          Expanded(
-                                            child: Align(
-                                              alignment: Alignment.centerRight,
-                                              child: _buildStatusBadge(
-                                                  item['status'] as int?),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // SizedBox(
-                              //   width: 80,
-                              //   height: 120,
-                              //   child: ElevatedButton(
-                              //     onPressed: () async {
-                              //       // TODO: 实现派工逻辑
-                              //       final result = await Navigator.push(
-                              //         context,
-                              //         MaterialPageRoute(
-                              //           builder: (context) => JtAssignTeam(
-                              //             jtCode: item['code'],
-                              //           ),
-                              //         ),
-                              //       );
-                              //       if (result == true) {
-                              //         getInfo();
-                              //       }
-                              //     },
-                              //     style: ElevatedButton.styleFrom(
-                              //       backgroundColor: Colors.red,
-                              //     ),
-                              //     child: const Text("班组派工"),
-                              //   ),
-                              // ),
-                            ],
-                          ),
+                        return Jt28ListItem(
+                          item: item,
+                          statusMap: status,
+                          buildStatusBadge: _buildStatusBadge,
+                          onViewMedia: item['repairPicture'] != null &&
+                                  item['repairPicture'].toString().isNotEmpty
+                              ? () {
+                                  // 使用新的对话框组件
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return FaultMediaListDialog(
+                                        groupId: item['repairPicture'].toString(),
+                                        onLoadMedia: getPhotoList,
+                                      );
+                                    },
+                                  );
+                                }
+                              : null,
                         );
                       },
                     ),
@@ -746,6 +541,181 @@ class _JtShowPageState extends State<JtSearch> {
                   ),
                 )
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 机统28开工列表项组件
+/// 基于Jt28ListItem，添加开工按钮
+class Jt28StartWorkListItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final Map<int, String> statusMap;
+  final Widget Function(int?) buildStatusBadge;
+  final VoidCallback? onViewMedia;
+  final VoidCallback? onStartWork;
+  final String startWorkButtonText;
+
+  const Jt28StartWorkListItem({
+    Key? key,
+    required this.item,
+    required this.statusMap,
+    required this.buildStatusBadge,
+    this.onViewMedia,
+    this.onStartWork,
+    this.startWorkButtonText = '开工',
+  }) : super(key: key);
+
+  String _getSafeText(String key, {String defaultValue = ''}) {
+    final value = item[key];
+    if (value == null) return defaultValue;
+    return value.toString().isEmpty ? defaultValue : value.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue.shade300),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      padding: const EdgeInsets.all(12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 故障现象和施修方案
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('故障现象', _getSafeText('faultDescription')),
+                    _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 查看媒体按钮
+                if (onViewMedia != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: onViewMedia,
+                        icon: const Icon(Icons.photo_library, size: 18),
+                        label: const Text("查看故障视频及图片"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                // 提报信息
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('提报人', _getSafeText('reporterName')),
+                    _buildInfoItem('提报时间', _getSafeText('reportDate')),
+                    _buildInfoItem('部门', _getSafeText('deptName')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 班组信息
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('班组', _getSafeText('teamName')),
+                    _buildInfoItem('主修', _getSafeText('repairName')),
+                    _buildInfoItem('辅修', _getSafeText('assistantName')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 专检、互检和状态
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoItem('专检', _getSafeText('specialName')),
+                    ),
+                    Expanded(
+                      child: _buildInfoItem('互检', _getSafeText('mutualName')),
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: buildStatusBadge(item['status'] as int?),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // 开工按钮
+          if (onStartWork != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                width: 80,
+                height: 120,
+                child: ElevatedButton(
+                  onPressed: onStartWork,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  child: Text(
+                    startWorkButtonText,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(List<Widget> children) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children
+          .map((child) => Expanded(child: child))
+          .toList(),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value.isEmpty ? '暂无' : value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -885,10 +855,8 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
         "code": widget.jtCode,
       };
       // 设置主修人员
-      if (_selectedMember != null) {
-        params['team'] = _selectedMember.id;
-        params['teamName'] = _selectedMember.name;
-      }
+      params['team'] = _selectedMember.id;
+      params['teamName'] = _selectedMember.name;
       logger.i(params);
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
@@ -1051,6 +1019,688 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 故障图片/视频列表对话框组件
+/// 处理各种极端情况：空数据、加载中、错误、大量数据等
+class FaultMediaListDialog extends StatefulWidget {
+  final String groupId;
+  final Future<List<Map<String, dynamic>>> Function(String) onLoadMedia;
+
+  const FaultMediaListDialog({
+    Key? key,
+    required this.groupId,
+    required this.onLoadMedia,
+  }) : super(key: key);
+
+  @override
+  State<FaultMediaListDialog> createState() => _FaultMediaListDialogState();
+}
+
+class _FaultMediaListDialogState extends State<FaultMediaListDialog> {
+  List<Map<String, dynamic>> _mediaList = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMediaList();
+  }
+
+  Future<void> _loadMediaList() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+      _errorMessage = null;
+    });
+
+    try {
+      final mediaList = await widget.onLoadMedia(widget.groupId);
+      if (!mounted) return;
+      
+      setState(() {
+        _mediaList = mediaList;
+        _isLoading = false;
+        _hasError = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
+  void _handlePreviewMedia(Map<String, dynamic> media, int index) {
+    Navigator.of(context).pop(); // 先关闭列表对话框
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => ImagePreviewDialog(media: media),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("故障视频及图片"),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: _buildContent(),
+      ),
+      actions: [
+        if (_hasError)
+          TextButton(
+            onPressed: _loadMediaList,
+            child: const Text('重试'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('关闭'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_hasError) {
+      return SizedBox(
+        height: 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                '加载失败',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    _errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_mediaList.isEmpty) {
+      return const SizedBox(
+        height: 200,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('暂无图片或视频'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 使用ListView.builder优化大量数据的情况
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 400),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: _mediaList.length,
+        itemBuilder: (context, index) {
+          final media = _mediaList[index];
+          final isVideo = media['type']?.toString().toLowerCase() == 'video' ||
+              media['downloadUrl']?.toString().toLowerCase().contains('.mp4') == true;
+          
+          return ListTile(
+            leading: Icon(
+              isVideo ? Icons.videocam : Icons.image,
+              color: isVideo ? Colors.red : Colors.blue,
+            ),
+            title: Text(
+              '${isVideo ? "视频" : "图片"} ${index + 1}',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            subtitle: Text(
+              media['fileName']?.toString() ?? '点击查看',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _handlePreviewMedia(media, index),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 图片预览对话框组件
+/// 优化加载状态、错误处理和展示方式
+class ImagePreviewDialog extends StatefulWidget {
+  final Map<String, dynamic> media;
+
+  const ImagePreviewDialog({
+    Key? key,
+    required this.media,
+  }) : super(key: key);
+
+  @override
+  State<ImagePreviewDialog> createState() => _ImagePreviewDialogState();
+}
+
+class _ImagePreviewDialogState extends State<ImagePreviewDialog> {
+  Image? _previewImage;
+  bool _isLoading = true;
+  bool _hasError = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreviewImage();
+  }
+
+  Future<void> _loadPreviewImage() async {
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
+
+    try {
+      final downloadUrl = widget.media['downloadUrl']?.toString() ?? 
+                         widget.media['dowanloadUrl']?.toString();
+      
+      if (downloadUrl == null || downloadUrl.isEmpty) {
+        throw Exception('图片URL为空');
+      }
+
+      // 尝试通过API获取图片
+      Map<String, dynamic> queryParameters = {'url': downloadUrl};
+      final image = await ProductApi().previewImage(queryParametrs: queryParameters);
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _previewImage = image;
+        _isLoading = false;
+        _hasError = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.media['fileName']?.toString() ?? '图片预览'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: _buildImageContent(),
+      ),
+      actions: [
+        if (_hasError)
+          TextButton(
+            onPressed: _loadPreviewImage,
+            child: const Text('重试'),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('关闭'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageContent() {
+    if (_isLoading) {
+      return const SizedBox(
+        height: 300,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_hasError) {
+      final downloadUrl = widget.media['downloadUrl']?.toString() ?? 
+                         widget.media['dowanloadUrl']?.toString();
+      
+      // 如果API失败，尝试直接使用URL加载
+      if (downloadUrl != null && downloadUrl.isNotEmpty) {
+        return _buildNetworkImage(downloadUrl);
+      }
+
+      return SizedBox(
+        height: 300,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.broken_image, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('图片加载失败'),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    _errorMessage!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_previewImage != null) {
+      return SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 500),
+          child: _previewImage!,
+        ),
+      );
+    }
+
+    final downloadUrl = widget.media['downloadUrl']?.toString() ?? 
+                       widget.media['dowanloadUrl']?.toString();
+    
+    if (downloadUrl != null && downloadUrl.isNotEmpty) {
+      return _buildNetworkImage(downloadUrl);
+    }
+
+    return const SizedBox(
+      height: 300,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('无图片可显示'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkImage(String url) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 500),
+      child: Image.network(
+        url,
+        fit: BoxFit.contain,
+        loadingBuilder: (BuildContext context, Widget child,
+            ImageChunkEvent? loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text('图片加载失败'),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 机统28列表项组件
+/// 优化展示方式，处理空值、长文本等情况
+class Jt28ListItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final Map<int, String> statusMap;
+  final Widget Function(int?) buildStatusBadge;
+  final VoidCallback? onViewMedia;
+
+  const Jt28ListItem({
+    Key? key,
+    required this.item,
+    required this.statusMap,
+    required this.buildStatusBadge,
+    this.onViewMedia,
+  }) : super(key: key);
+
+  String _getSafeText(String key, {String defaultValue = ''}) {
+    final value = item[key];
+    if (value == null) return defaultValue;
+    return value.toString().isEmpty ? defaultValue : value.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue.shade300),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 故障现象和施修方案
+          _buildInfoRow(
+            [
+              _buildInfoItem('故障现象', _getSafeText('faultDescription')),
+              _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 查看媒体按钮
+          if (onViewMedia != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onViewMedia,
+                  icon: const Icon(Icons.photo_library, size: 18),
+                  label: const Text("查看故障视频及图片"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ),
+          // 提报信息
+          _buildInfoRow(
+            [
+              _buildInfoItem('提报人', _getSafeText('reporterName')),
+              _buildInfoItem('提报时间', _getSafeText('reportDate')),
+              _buildInfoItem('部门', _getSafeText('deptName')),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 班组信息
+          _buildInfoRow(
+            [
+              _buildInfoItem('班组', _getSafeText('teamName')),
+              _buildInfoItem('主修', _getSafeText('repairName')),
+              _buildInfoItem('辅修', _getSafeText('assistantName')),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // 专检、互检和状态
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoItem('专检', _getSafeText('specialName')),
+              ),
+              Expanded(
+                child: _buildInfoItem('互检', _getSafeText('mutualName')),
+              ),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: buildStatusBadge(item['status'] as int?),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(List<Widget> children) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children
+          .map((child) => Expanded(child: child))
+          .toList(),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value.isEmpty ? '暂无' : value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 机统28派工列表项组件
+/// 基于Jt28ListItem，添加派工按钮
+class Jt28AssignListItem extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final Map<int, String> statusMap;
+  final Widget Function(int?) buildStatusBadge;
+  final VoidCallback? onViewMedia;
+  final VoidCallback? onAssign;
+  final String assignButtonText;
+
+  const Jt28AssignListItem({
+    Key? key,
+    required this.item,
+    required this.statusMap,
+    required this.buildStatusBadge,
+    this.onViewMedia,
+    this.onAssign,
+    this.assignButtonText = '派工',
+  }) : super(key: key);
+
+  String _getSafeText(String key, {String defaultValue = ''}) {
+    final value = item[key];
+    if (value == null) return defaultValue;
+    return value.toString().isEmpty ? defaultValue : value.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.blue.shade300),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+      padding: const EdgeInsets.all(12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 故障现象和施修方案
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('故障现象', _getSafeText('faultDescription')),
+                    _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 查看媒体按钮
+                if (onViewMedia != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: onViewMedia,
+                        icon: const Icon(Icons.photo_library, size: 18),
+                        label: const Text("查看故障视频及图片"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                // 提报信息
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('提报人', _getSafeText('reporterName')),
+                    _buildInfoItem('提报时间', _getSafeText('reportDate')),
+                    _buildInfoItem('部门', _getSafeText('deptName')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 班组信息
+                _buildInfoRow(
+                  [
+                    _buildInfoItem('班组', _getSafeText('teamName')),
+                    _buildInfoItem('主修', _getSafeText('repairName')),
+                    _buildInfoItem('辅修', _getSafeText('assistantName')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // 专检、互检和状态
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildInfoItem('专检', _getSafeText('specialName')),
+                    ),
+                    Expanded(
+                      child: _buildInfoItem('互检', _getSafeText('mutualName')),
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: buildStatusBadge(item['status'] as int?),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // 派工按钮
+          if (onAssign != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: SizedBox(
+                width: 80,
+                height: 120,
+                child: ElevatedButton(
+                  onPressed: onAssign,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(assignButtonText),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(List<Widget> children) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children
+          .map((child) => Expanded(child: child))
+          .toList(),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label:',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value.isEmpty ? '暂无' : value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

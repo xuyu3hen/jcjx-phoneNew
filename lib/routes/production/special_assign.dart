@@ -1,4 +1,5 @@
 import 'package:jcjx_phone/routes/production/team_people.dart';
+import 'package:jcjx_phone/routes/production/jt28_search.dart';
 
 import '../../index.dart';
 
@@ -66,6 +67,16 @@ class _JtShowPageState extends State<SpecialAssign> {
 
   //
   late Map<String, dynamic> faultInfo;
+
+  late Map<int, String> status = {
+    0: '待施修',
+    1: '待派工',
+    2: '待互检',
+    3: '待专检',
+    4: '已完成',
+    5: '已放行',
+    6: '已开工',
+  };
 
   // 添加分页相关变量
   int pageNum = 1;
@@ -244,6 +255,70 @@ class _JtShowPageState extends State<SpecialAssign> {
     );
   }
 
+  /// 构建美化状态卡片
+  Widget _buildStatusBadge(int? statusCode) {
+    String statusText = '';
+    Color bgColor = Colors.grey;
+    Color textColor = Colors.white;
+
+    if (statusCode != null && status[statusCode] != null) {
+      statusText = status[statusCode]!;
+
+      // 根据状态设置不同颜色
+      switch (statusCode) {
+        case 0: // 待施修
+          bgColor = Colors.orangeAccent;
+          break;
+        case 1: // 待派工
+          bgColor = Colors.blueAccent;
+          break;
+        case 2: // 待互检
+          bgColor = Colors.purpleAccent;
+          break;
+        case 3: // 待专检
+          bgColor = Colors.indigoAccent;
+          break;
+        case 4: // 已完成
+          bgColor = Colors.green;
+          break;
+        case 5: // 已放行
+          bgColor = Colors.teal;
+          break;
+        case 6: // 已开工
+          bgColor = Colors.lightBlue;
+          break;
+        default:
+          bgColor = Colors.grey;
+      }
+    } else {
+      statusText = '未知状态';
+      bgColor = Colors.grey;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor.withOpacity(0.3),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        statusText,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildBody() {
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -329,125 +404,33 @@ class _JtShowPageState extends State<SpecialAssign> {
                       itemCount: sys28List.length,
                       itemBuilder: (context, index) {
                         Map<String, dynamic> item = sys28List[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.blue), // 添加蓝色边框
-                            borderRadius: BorderRadius.circular(8.0), // 可选：添加圆角
-                          ),
-                          margin: const EdgeInsets.all(8.0), // 可选：为每个列表项添加外边距
-                          padding: const EdgeInsets.all(8.0), // 可选：为内容添加内边距
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "故障现象: ${item['faultDescription']??""}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "施修方案: ${item['repairScheme']??""}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              onPressed: () {
-                                                // 可以打开新页面或弹窗展示图片
-                                              },
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.green,
-                                              ),
-                                              child: const Text("查看故障视频及图片"),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "提报人: ${item['reporterName']??""}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "提报时间: ${item['reportDate']??""}"),
-                                          ),
-                                          Expanded(
-                                            child:
-                                                Text("部门: ${item['deptName']??""}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child:
-                                                Text("班组: ${item['teamName']??""}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "主修: ${item['repairName']??""}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "辅修: ${item['assistantName']??""}"),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                                "专检: ${item['specialName']??""}"),
-                                          ),
-                                          Expanded(
-                                            child: Text(
-                                                "互检: ${item['mutualName']??""}"),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 80,
-                                height: 120,
-                                child: ElevatedButton(
-                                  onPressed: () async{
-                                    var result = await Navigator.push(
+                        return Jt28AssignListItem(
+                          item: item,
+                          statusMap: status,
+                          buildStatusBadge: _buildStatusBadge,
+                          onViewMedia: item['repairPicture'] != null &&
+                                  item['repairPicture'].toString().isNotEmpty
+                              ? () {
+                                  PhotoPreviewDialog.show(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SpecialAssignPeople(
-                                          jtCode: item['code'],
-                                          jtInfo: item
-                                        ),
-                                      ),
-                                    );
-                                    if(result == true){
-                                      getInfo();
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  child: const Text("派工"),
+                                      item['repairPicture'] ?? "",
+                                      ProductApi().getFaultVideoAndImage);
+                                }
+                              : null,
+                          onAssign: () async {
+                            var result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SpecialAssignPeople(
+                                  jtCode: item['code'],
+                                  jtInfo: item,
                                 ),
                               ),
-                            ],
-                          ),
+                            );
+                            if (result == true) {
+                              getInfo();
+                            }
+                          },
                         );
                       },
                     ),

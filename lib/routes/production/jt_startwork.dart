@@ -349,7 +349,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                             }
 
                             setState(() {
-                              assestPics = assetEntityList;
+                              assestPics = List.from(assetEntityList); // 创建新列表以确保状态更新
                               faultPics = files;
                             });
                           } else {
@@ -402,10 +402,16 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                           l.insert(0, queryParameters),
                                           submit = await JtApi()
                                               .uploadJt28(queryParametrs: l),
-                                          if (submit['data'] != null)
+                                          if (submit['code'] == "S_T_S003")
                                             {
-                                              showToast("${submit['data']}"),
+                                              // 上传成功后，保持图片显示状态（不清空）
+                                              // assestPics 和 faultPics 保持不变，继续显示
+                                              showToast("${submit['data'] ?? submit['message']}"),
                                               // SmartDialog.dismiss(status: SmartStatus.loading)
+                                            }
+                                          else
+                                            {
+                                              showToast("提交失败：${submit['message'] ?? '未知错误'}"),
                                             }
                                         }
                                       else

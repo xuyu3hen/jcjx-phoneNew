@@ -346,7 +346,12 @@ class _LoginRouteState extends State<LoginRoute> {
                 _unameController.text, _pwdController.text, rememberPassword);
 
 
-            AppApi.init();
+            await AppApi.init();
+            
+            // 登录成功后，后台预加载数据（不阻塞UI）
+            Global.preloadRepairData().catchError((e) {
+              logger.e('预加载数据失败: $e');
+            });
           } else {
             // 登录失败，显示错误信息
             showToast("登录失败：${r.msg}");

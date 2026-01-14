@@ -1,4 +1,3 @@
-import 'package:http/http.dart';
 import 'package:jcjx_phone/models/progress.dart';
 
 import '../../index.dart';
@@ -72,12 +71,39 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       setState(() {
         _isLoading = true;
       });
+      
+      // 优先使用缓存数据
+      if (Global.isRepairProgressDataLoaded && 
+          Global.repairProgressDataLoadTime != null &&
+          DateTime.now().difference(Global.repairProgressDataLoadTime!).inMinutes < 5) {
+        // 使用缓存数据（5分钟内有效）
+        if (Global.cachedRepairProgressData.isNotEmpty) {
+          setState(() {
+            repairGroups = Global.cachedRepairProgressData;
+            _isLoading = false;
+          });
+          
+          // 后台刷新数据
+          _refreshDataInBackground();
+          return;
+        }
+      }
+      
+      // 如果没有缓存或缓存过期，则重新加载
       Map<String, dynamic> queryParametrs = {};
       List<RepairGroup> r =
           await ProductApi().getTrainEntryAndDynamics(queryParametrs);
+      
+      // 更新缓存
+      Global.cachedRepairProgressData = r;
+      Global.isRepairProgressDataLoaded = true;
+      Global.repairProgressDataLoadTime = DateTime.now();
+      
       setState(() {
         repairGroups = r;
-        logger.i(r[0].repairProcCode);
+        if (r.isNotEmpty) {
+          logger.i(r[0].repairProcCode);
+        }
         _isLoading = false;
       });
     } catch (e) {
@@ -88,6 +114,28 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         });
         SmartDialog.showToast('数据加载失败');
       }
+    }
+  }
+  
+  // 后台刷新数据（不阻塞UI）
+  void _refreshDataInBackground() async {
+    try {
+      Map<String, dynamic> queryParametrs = {};
+      List<RepairGroup> r =
+          await ProductApi().getTrainEntryAndDynamics(queryParametrs);
+      
+      // 更新缓存
+      Global.cachedRepairProgressData = r;
+      Global.isRepairProgressDataLoaded = true;
+      Global.repairProgressDataLoadTime = DateTime.now();
+      
+      if (mounted) {
+        setState(() {
+          repairGroups = r;
+        });
+      }
+    } catch (e) {
+      logger.e('后台刷新检修进度数据失败: $e');
     }
   }
 

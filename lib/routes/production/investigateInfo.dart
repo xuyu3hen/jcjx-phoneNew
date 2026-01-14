@@ -14,11 +14,41 @@ class PlanListPage extends StatefulWidget {
 class _PlanListPageState extends State<PlanListPage> {
   var logger = AppLogger.logger;
   List<Map<String, dynamic>> investigateList = [];
+  List<Map<String, dynamic>> repairProcList = []; // 修程列表
 
   @override
   void initState() {
     super.initState();
     getMasInvestigate(widget.repairItem);
+    getRepairProc();
+  }
+
+  // /subparts/repairProc/selectAll
+  Future<void> getRepairProc() async {
+    try {
+      Map<String, dynamic> queryParametrs = {
+        'pageNum': 0,
+        'pageSize': 0
+      };
+      var r = await ProductApi().getRepairProcMap(queryParametrs: queryParametrs);
+      logger.i(r);
+      
+      // 处理返回的数据
+      List<Map<String, dynamic>> rows = [];
+      if (r != null) {
+        if (r is Map && r.containsKey('rows')) {
+          rows = List<Map<String, dynamic>>.from(r['rows'] ?? []);
+        } else if (r is List) {
+          rows = r.map((item) => item as Map<String, dynamic>).toList();
+        }
+      }
+      
+      setState(() {
+        repairProcList = rows;
+      });
+    } catch (e) {
+      logger.e('获取修程列表失败: $e');
+    }
   }
 
   Future<void> getMasInvestigate(RepairItem item) async {
@@ -321,6 +351,20 @@ class _PlanListPageState extends State<PlanListPage> {
                       // 修程公里数表格
                       _buildRepairKilometerTable(item),
                       SizedBox(height: 16),
+                      // 保存修程公里数按钮
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await _saveRepairKilometer(context, item);
+                          },
+                          icon: Icon(Icons.save),
+                          label: Text('保存修程公里数'),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
                       // 调查内容列表
                       Text(
                         '其他作业项点',
@@ -357,146 +401,95 @@ class _PlanListPageState extends State<PlanListPage> {
 
   // 构建修程公里数表格
   Widget _buildRepairKilometerTable(Map<String, dynamic> item) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '修程公里数',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 10),
-        Table(
-          border: TableBorder.all(),
-          columnWidths: const {
-            0: FlexColumnWidth(1),
-            1: FlexColumnWidth(1),
-            2: FlexColumnWidth(1),
-            3: FlexColumnWidth(1),
-          },
-          children: [
-            TableRow(
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-              ),
-              children: const [
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('修程', textAlign: TextAlign.center),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('修次', textAlign: TextAlign.center),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('走行公里', textAlign: TextAlign.center),
-                ),
-                Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text('修程日期', textAlign: TextAlign.center),
-                ),
-              ],
-            ),
-            TableRow(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['newRepairProcName']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['newRepairProcTimes']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['newRepairKilometer']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['newRepairDate']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-            TableRow(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['normalRepairProcName']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['normalRepairProcTimes']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['normalRepairKilometer']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['normalRepairDate']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-            TableRow(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['advanceRepairProcName']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['advanceRepairProcTimes']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['advanceRepairKilometer']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    item['advanceRepairDate']?.toString() ?? '',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
+    return _RepairKilometerTableWidget(
+      item: item,
+      repairProcList: repairProcList,
+      onDataChanged: () {
+        // 数据变化时的回调，可以在这里处理
+      },
     );
+  }
+
+  // 保存修程公里数
+  Future<void> _saveRepairKilometer(
+      BuildContext context, Map<String, dynamic> item) async {
+
+    logger.i('保存修程公里数: ${item['masInvestigateProcList']}');
+    try {
+      SmartDialog.showLoading();
+
+      // 获取masInvestigateProcList数组
+      final masInvestigateProcList = item['masInvestigateProcList'] as List?;
+      if (masInvestigateProcList == null || masInvestigateProcList.isEmpty) {
+        SmartDialog.dismiss();
+        SmartDialog.showToast('修程公里数数据为空');
+        return;
+      }
+
+      // 准备保存的数据，包含masInvestigateProcList数组
+      // 确保数据格式正确，移除null值，保留必要的字段
+      List<Map<String, dynamic>> procListToSave = [];
+      for (var proc in masInvestigateProcList) {
+        if (proc is Map) {
+          Map<String, dynamic> procMap = Map<String, dynamic>.from(proc);
+          
+          // 确保必要字段存在
+          Map<String, dynamic> cleanProc = {
+            'masInvestigateCode': procMap['masInvestigateCode'] ?? item['code'] ?? item['encode'] ?? '',
+          };
+          
+          // 如果有code（已存在的记录），保留它
+          if (procMap['code'] != null) {
+            cleanProc['code'] = procMap['code'];
+          }
+          
+          // 添加修程相关字段
+          if (procMap['repairProcCode'] != null && procMap['repairProcCode'].toString().isNotEmpty) {
+            cleanProc['repairProcCode'] = procMap['repairProcCode'];
+          }
+          if (procMap['repairProcName'] != null && procMap['repairProcName'].toString().isNotEmpty) {
+            cleanProc['repairProcName'] = procMap['repairProcName'];
+          }
+          if (procMap['repairTimes'] != null && procMap['repairTimes'].toString().isNotEmpty) {
+            cleanProc['repairTimes'] = procMap['repairTimes'];
+          }
+          if (procMap['repairKilometer'] != null) {
+            cleanProc['repairKilometer'] = procMap['repairKilometer'];
+          }
+          if (procMap['repairDate'] != null && procMap['repairDate'].toString().isNotEmpty) {
+            cleanProc['repairDate'] = procMap['repairDate'];
+          }
+          
+          procListToSave.add(cleanProc);
+        }
+      }
+
+      Map<String, dynamic> saveData = {
+        'code': item['code'] ?? item['encode'], // 使用code或encode作为主键
+        'masInvestigateProcList': procListToSave,
+        'encode': item['encode'],
+        'trainEntryCode': item['trainEntryCode'],
+        'masInvestigateListList': item['masInvestigateListList'],
+      };
+
+      logger.i('保存修程公里数数据: $saveData');
+
+      // 调用API保存数据
+      await ProductApi().updateMasInvestigateList(saveData);
+
+      SmartDialog.dismiss();
+      SmartDialog.showToast('保存成功');
+
+      // 刷新数据
+      await getMasInvestigate(widget.repairItem);
+
+      // 关闭弹窗
+      Navigator.pop(context);
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('保存失败: $e');
+      logger.e('保存修程公里数失败: $e');
+    }
   }
 
   // 构建调查项卡片
@@ -510,7 +503,7 @@ class _PlanListPageState extends State<PlanListPage> {
     );
   }
 
-// 保存调查结果
+  // 保存调查结果
   Future<void> _saveInvestigateResult(
     BuildContext context,
     Map<String, dynamic> masItem,
@@ -539,13 +532,7 @@ class _PlanListPageState extends State<PlanListPage> {
       // 更新调查内容
       await ProductApi().updateMasInvestigateList({
         'code': masItem['code'],
-        'deptId': Global.profile.permissions?.user.deptId,
-        'deptName': Global.profile.permissions?.user.dept?.deptName,
         'investigateResult': result,
-        'reportUserId': Global.profile.permissions?.user.userId,
-        'reportUserName': Global.profile.permissions?.user.nickName,
-        'teamId': Global.profile.permissions?.user.deptId,
-        'teamName': Global.profile.permissions?.user.dept?.deptName,
       });
 
       SmartDialog.dismiss();
@@ -561,6 +548,421 @@ class _PlanListPageState extends State<PlanListPage> {
       SmartDialog.showToast('保存失败: $e');
       logger.e('保存调查结果失败: $e');
     }
+  }
+}
+
+// 修程公里数表格组件
+class _RepairKilometerTableWidget extends StatefulWidget {
+  final Map<String, dynamic> item;
+  final List<Map<String, dynamic>> repairProcList;
+  final VoidCallback? onDataChanged;
+
+  const _RepairKilometerTableWidget({
+    required this.item,
+    required this.repairProcList,
+    this.onDataChanged,
+  });
+
+  @override
+  _RepairKilometerTableWidgetState createState() => _RepairKilometerTableWidgetState();
+}
+
+class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget> {
+  // 存储修程公里数列表
+  List<Map<String, dynamic>> repairProcList = [];
+  
+  // TextField controllers - 使用Map来存储每个记录的controller
+  Map<String, TextEditingController> kilometerControllers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRepairProcList();
+  }
+
+  // 从item中加载masInvestigateProcList数据
+  void _loadRepairProcList() {
+    final masInvestigateProcList = widget.item['masInvestigateProcList'];
+    if (masInvestigateProcList != null && masInvestigateProcList is List) {
+      repairProcList = masInvestigateProcList
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      
+      // 为每个记录创建controller
+      for (var proc in repairProcList) {
+        final code = proc['code']?.toString() ?? '';
+        final key = code.isNotEmpty ? code : 'new_${repairProcList.indexOf(proc)}';
+        kilometerControllers[key] = TextEditingController(
+          text: proc['repairKilometer']?.toString() ?? '',
+        );
+      }
+    } else {
+      // 如果没有数据，初始化为空列表
+      repairProcList = [];
+      // 确保masInvestigateProcList存在
+      if (widget.item['masInvestigateProcList'] == null) {
+        widget.item['masInvestigateProcList'] = [];
+      }
+    }
+  }
+
+  // 新增修程公里数行
+  void _addRepairProcRow() {
+    setState(() {
+      // 创建新行数据
+      final newRow = {
+        'code': null, // 新增行没有code
+        'masInvestigateCode': widget.item['code'] ?? widget.item['encode'] ?? '',
+        'repairProcCode': '',
+        'repairProcName': '',
+        'repairTimes': '',
+        'repairKilometer': null,
+        'repairDate': null,
+      };
+      
+      repairProcList.add(newRow);
+      
+      // 同步添加到原始数据
+      final masInvestigateProcList = widget.item['masInvestigateProcList'] as List;
+      masInvestigateProcList.add(newRow);
+      
+      // 为新行创建controller
+      final key = 'new_${repairProcList.length - 1}';
+      kilometerControllers[key] = TextEditingController();
+    });
+  }
+
+  // 删除修程公里数行
+  void _deleteRepairProcRow(int index) {
+    if (index < 0 || index >= repairProcList.length) return;
+    
+    setState(() {
+      // 释放controller
+      final proc = repairProcList[index];
+      final code = proc['code']?.toString() ?? '';
+      final key = code.isNotEmpty ? code : 'new_$index';
+      kilometerControllers[key]?.dispose();
+      kilometerControllers.remove(key);
+      
+      // 从列表中删除
+      repairProcList.removeAt(index);
+      
+      // 同步从原始数据中删除
+      final masInvestigateProcList = widget.item['masInvestigateProcList'] as List;
+      if (index < masInvestigateProcList.length) {
+        masInvestigateProcList.removeAt(index);
+      }
+      
+      // 重新创建controllers（因为索引改变了）
+      kilometerControllers.clear();
+      for (var i = 0; i < repairProcList.length; i++) {
+        final proc = repairProcList[i];
+        final code = proc['code']?.toString() ?? '';
+        final key = code.isNotEmpty ? code : 'new_$i';
+        kilometerControllers[key] = TextEditingController(
+          text: proc['repairKilometer']?.toString() ?? '',
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // 释放所有controllers
+    for (var controller in kilometerControllers.values) {
+      controller.dispose();
+    }
+    kilometerControllers.clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 格式化日期显示
+    String formatDate(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return '';
+      try {
+        DateTime date = DateTime.parse(dateStr);
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    // 解析日期
+    DateTime? parseDate(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return null;
+      try {
+        return DateTime.parse(dateStr);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // 选择修程
+    Future<void> selectRepairProc(int index) async {
+      if (widget.repairProcList.isEmpty) {
+        showToast('修程列表为空，请稍后再试');
+        return;
+      }
+      
+      final selected = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('选择修程'),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.repairProcList.length,
+              itemBuilder: (context, idx) {
+                final proc = widget.repairProcList[idx];
+                return ListTile(
+                  title: Text(proc['name']?.toString() ?? proc['repairProcName']?.toString() ?? ''),
+                  onTap: () {
+                    Navigator.pop(context, proc);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      if (selected != null && index < repairProcList.length) {
+        setState(() {
+          repairProcList[index]['repairProcCode'] = selected['code']?.toString() ?? '';
+          repairProcList[index]['repairProcName'] = selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
+        });
+        // 同步更新原始数据
+        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
+        if (masInvestigateProcList != null) {
+          // 确保列表长度一致
+          while (masInvestigateProcList.length < repairProcList.length) {
+            masInvestigateProcList.add({});
+          }
+          if (index < masInvestigateProcList.length) {
+            masInvestigateProcList[index]['repairProcCode'] = selected['code']?.toString() ?? '';
+            masInvestigateProcList[index]['repairProcName'] = selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
+          }
+        }
+      }
+    }
+
+    // 选择日期
+    Future<void> selectDate(int index) async {
+      if (index >= repairProcList.length) return;
+      
+      final proc = repairProcList[index];
+      final currentDate = parseDate(proc['repairDate']) ?? DateTime.now();
+      final pickedDate = await showDatePicker(
+        context: context,
+        initialDate: currentDate,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+        locale: const Locale('zh', 'CN'),
+        helpText: '选择修程日期',
+        cancelText: '取消',
+        confirmText: '确定',
+      );
+
+      if (pickedDate != null) {
+        final dateStr = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
+        setState(() {
+          repairProcList[index]['repairDate'] = dateStr;
+        });
+        // 同步更新原始数据
+        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
+        if (masInvestigateProcList != null) {
+          // 确保列表长度一致
+          while (masInvestigateProcList.length < repairProcList.length) {
+            masInvestigateProcList.add({});
+          }
+          if (index < masInvestigateProcList.length) {
+            masInvestigateProcList[index]['repairDate'] = dateStr;
+          }
+        }
+      }
+    }
+
+    // 获取或创建controller
+    TextEditingController getKilometerController(int index) {
+      if (index >= repairProcList.length) {
+        // 如果索引超出范围，创建一个临时controller
+        final key = 'temp_$index';
+        if (!kilometerControllers.containsKey(key)) {
+          kilometerControllers[key] = TextEditingController();
+        }
+        return kilometerControllers[key]!;
+      }
+      
+      final proc = repairProcList[index];
+      final code = proc['code']?.toString() ?? '';
+      final key = code.isNotEmpty ? code : 'new_$index';
+      
+      if (!kilometerControllers.containsKey(key)) {
+        kilometerControllers[key] = TextEditingController(
+          text: proc['repairKilometer']?.toString() ?? '',
+        );
+      }
+      return kilometerControllers[key]!;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '修程公里数',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 10),
+        Table(
+          border: TableBorder.all(),
+          columnWidths: const {
+            0: FlexColumnWidth(1),
+            1: FlexColumnWidth(1),
+            2: FlexColumnWidth(1),
+            3: FlexColumnWidth(1),
+            4: FlexColumnWidth(0.5),
+          },
+          children: [
+            // 表头
+            TableRow(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+              ),
+              children: const [
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('修程', textAlign: TextAlign.center),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('修次', textAlign: TextAlign.center),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('走行公里', textAlign: TextAlign.center),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('修程日期', textAlign: TextAlign.center),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('操作', textAlign: TextAlign.center),
+                ),
+              ],
+            ),
+            // 动态生成数据行
+            ...repairProcList.asMap().entries.map((entry) {
+              final index = entry.key;
+              final proc = entry.value;
+              
+              return TableRow(
+                children: [
+                  // 修程
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: InkWell(
+                      onTap: () => selectRepairProc(index),
+                      child: Container(
+                        padding: EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          proc['repairProcName']?.toString() ?? '点击选择',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 修次
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      proc['repairTimes']?.toString() ?? '',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // 走行公里
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: TextField(
+                      controller: getKilometerController(index),
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      onChanged: (value) {
+                        final numValue = value.isEmpty ? null : double.tryParse(value);
+                        repairProcList[index]['repairKilometer'] = numValue;
+                        // 同步更新原始数据
+                        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
+                        if (masInvestigateProcList != null) {
+                          // 确保列表长度一致
+                          while (masInvestigateProcList.length < repairProcList.length) {
+                            masInvestigateProcList.add({});
+                          }
+                          if (index < masInvestigateProcList.length) {
+                            masInvestigateProcList[index]['repairKilometer'] = numValue;
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                  // 修程日期
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: InkWell(
+                      onTap: () => selectDate(index),
+                      child: Container(
+                        padding: EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          formatDate(proc['repairDate']) != '' 
+                              ? formatDate(proc['repairDate']) 
+                              : '点击选择',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.blue),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 删除按钮
+                  Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteRepairProcRow(index),
+                      tooltip: '删除',
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+        SizedBox(height: 10),
+        // 新增按钮
+        ElevatedButton.icon(
+          onPressed: _addRepairProcRow,
+          icon: Icon(Icons.add),
+          label: Text('新增修程公里数'),
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
   }
 }
 

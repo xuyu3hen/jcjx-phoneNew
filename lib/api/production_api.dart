@@ -126,7 +126,7 @@ class ProductApi extends AppApi {
         "/dispatch/masInvestigateList/update",
         data: queryParametrs,
       );
-      logger.i((r.data)['data']);
+      logger.i('updateMasInvestigateList: ${(r.data)['data']}');
       return (r.data)['data'];
     } catch (e) {
       _handleException(e);
@@ -779,6 +779,8 @@ class ProductApi extends AppApi {
       _handleException(e);
     }
   }
+
+  // /subparts/repairProc/selectAll
 
   //dispatch/trainEntry/selectAll
   Future<dynamic> getTrainEntryDynamic(

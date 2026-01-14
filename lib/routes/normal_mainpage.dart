@@ -86,6 +86,13 @@ class _NormalMainPageState extends State<NormalMainPage> {
     Permissions p = await LoginApi().getpermissions();
     if (p.code == 200) {
       Global.profile.permissions = p;
+      
+      // 权限信息加载完成后，预加载用户个人机车作业数据
+      if (!Global.isUserRepairTrainDataLoaded) {
+        Global.preloadUserRepairTrainData().catchError((e) {
+          logger.e('预加载用户个人机车作业数据失败: $e');
+        });
+      }
     } else {
       showToast("获取用户账号信息失败");
     }

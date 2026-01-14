@@ -41,7 +41,46 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
   // 初始化数据加载，使用异步并行加载提高速度
   Future<void> _loadInitialData() async {
     try {
-      // 并行加载所有数据以提高速度
+      // 优先使用缓存数据
+      if (Global.isRepairTrainDataLoaded && 
+          Global.repairTrainDataLoadTime != null &&
+          DateTime.now().difference(Global.repairTrainDataLoadTime!).inMinutes < 5) {
+        // 使用缓存数据（5分钟内有效）
+        setState(() {
+          repairMainNodeInfo = Global.cachedRepairMainNodeInfoC4;
+          repairMainNodeInfo1 = Global.cachedRepairMainNodeInfoC5;
+          repairMainNodeInfo2 = Global.cachedRepairMainNodeInfoLinXiu;
+          
+          // 重新计算计数
+          count1 = 0;
+          count2 = 0;
+          count3 = 0;
+          for (Map<String, dynamic> element in repairMainNodeInfo) {
+            count1 = count1 + (element['count'] as int? ?? 0);
+          }
+          for (Map<String, dynamic> element in repairMainNodeInfo1) {
+            count2 = count2 + (element['count'] as int? ?? 0);
+          }
+          for (Map<String, dynamic> element in repairMainNodeInfo2) {
+            count3 = count3 + (element['count'] as int? ?? 0);
+          }
+          
+          _isLoading = false;
+        });
+        
+        // 数据加载完成后，自动加载第一个标签的第一个工序节点
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
+          }
+        });
+        
+        // 后台刷新数据
+        _refreshDataInBackground();
+        return;
+      }
+      
+      // 如果没有缓存或缓存过期，则重新加载
       await Future.wait([
         getRepairingTrainInfo('C4'),
         getRepairingTrainInfo('C5'),
@@ -60,6 +99,19 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
           _isLoading = false;
         });
       }
+    }
+  }
+  
+  // 后台刷新数据（不阻塞UI）
+  void _refreshDataInBackground() async {
+    try {
+      await Future.wait([
+        getRepairingTrainInfo('C4'),
+        getRepairingTrainInfo('C5'),
+        getRepairingTrainInfo('临修'),
+      ]);
+    } catch (e) {
+      logger.e('后台刷新数据失败: $e');
     }
   }
 
@@ -91,37 +143,41 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       if (mounted) {
         setState(() {
           if (response is List) {
+            List<Map<String, dynamic>> data = response
+                .map((e) => e is Map<String, dynamic>
+                    ? e
+                    : Map<String, dynamic>.from(e as Map))
+                .toList();
+            
             if (repairMainNode == 'C4') {
-              repairMainNodeInfo = response
-                  .map((e) => e is Map<String, dynamic>
-                      ? e
-                      : Map<String, dynamic>.from(e as Map))
-                  .toList();
+              repairMainNodeInfo = data;
+              Global.cachedRepairMainNodeInfoC4 = data;
+              count1 = 0;
               for (Map<String, dynamic> element in repairMainNodeInfo) {
                 count1 = count1 + (element['count'] as int? ?? 0);
               }
             }
             if (repairMainNode == 'C5') {
-              repairMainNodeInfo1 = response
-                  .map((e) => e is Map<String, dynamic>
-                      ? e
-                      : Map<String, dynamic>.from(e as Map))
-                  .toList();
+              repairMainNodeInfo1 = data;
+              Global.cachedRepairMainNodeInfoC5 = data;
+              count2 = 0;
               for (Map<String, dynamic> element in repairMainNodeInfo1) {
                 logger.i(element);
                 count2 = count2 + (element['count'] as int? ?? 0);
               }
             }
             if (repairMainNode == '临修') {
-              repairMainNodeInfo2 = response
-                  .map((e) => e is Map<String, dynamic>
-                      ? e
-                      : Map<String, dynamic>.from(e as Map))
-                  .toList();
+              repairMainNodeInfo2 = data;
+              Global.cachedRepairMainNodeInfoLinXiu = data;
+              count3 = 0;
               for (Map<String, dynamic> element in repairMainNodeInfo2) {
                 count3 = count3 + (element['count'] as int? ?? 0);
               }
             }
+            
+            // 更新缓存状态
+            Global.isRepairTrainDataLoaded = true;
+            Global.repairTrainDataLoadTime = DateTime.now();
           } else {
             repairMainNodeInfo = [];
           }
