@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM 自动化发布流程脚本 (Windows)
 REM 使用方法: scripts\release.bat [version_type]
 REM version_type: patch, minor, major (默认: patch)

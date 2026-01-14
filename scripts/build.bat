@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM Flutter 多环境构建脚本 (Windows)
 REM 使用方法: scripts\build.bat [env] [platform] [type]
 REM 示例: scripts\build.bat release android apk

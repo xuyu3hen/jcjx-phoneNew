@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 REM 从 Gitee 迁移到 GitHub 的辅助脚本 (Windows)
 REM 使用方法: scripts\migrate_to_github.bat [github_repo_url]
 
