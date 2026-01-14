@@ -1,0 +1,182 @@
+name: 构建和发布
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # 当推送版本标签时触发，如 v1.1.8
+  workflow_dispatch:  # 允许手动触发
+    inputs:
+      environment:
+        description: '构建环境'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - dev
+          - test
+          - release
+      platform:
+        description: '构建平台'
+        required: true
+        default: 'android'
+        type: choice
+        options:
+          - android
+          - ios
+      build_type:
+        description: '构建类型'
+        required: true
+        default: 'apk'
+        type: choice
+        options:
+          - apk
+          - appbundle
+          - ipa
+
+env:
+  FLUTTER_VERSION: '3.24.0'  # 根据项目需要调整
+
+jobs:
+  build:
+    name: 构建 ${{ inputs.environment || 'release' }} 环境
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Flutter 环境
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: 配置 Flutter
+        run: |
+          flutter doctor -v
+          flutter pub get
+
+      - name: 解析版本号
+        id: version
+        run: |
+          VERSION=$(grep -E '^version:' pubspec.yaml | sed 's/version: //')
+          VERSION_NAME=$(echo $VERSION | cut -d'+' -f1)
+          BUILD_NUMBER=$(echo $VERSION | cut -d'+' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version_name=$VERSION_NAME" >> $GITHUB_OUTPUT
+          echo "build_number=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "版本号: $VERSION_NAME (构建号: $BUILD_NUMBER)"
+
+      - name: 设置构建参数
+        id: build
+        run: |
+          ENV=${INPUT_ENVIRONMENT:-release}
+          PLATFORM=${INPUT_PLATFORM:-android}
+          BUILD_TYPE=${INPUT_BUILD_TYPE:-apk}
+          
+          case $ENV in
+            dev) FLAVOR="env_dev"; MAIN_FILE="lib/main_env_dev.dart" ;;
+            test) FLAVOR="env_test"; MAIN_FILE="lib/main_env_test.dart" ;;
+            release) FLAVOR="env_release"; MAIN_FILE="lib/main_env_release.dart" ;;
+          esac
+          
+          echo "flavor=$FLAVOR" >> $GITHUB_OUTPUT
+          echo "main_file=$MAIN_FILE" >> $GITHUB_OUTPUT
+          echo "platform=$PLATFORM" >> $GITHUB_OUTPUT
+          echo "build_type=$BUILD_TYPE" >> $GITHUB_OUTPUT
+
+      - name: 构建 Android APK
+        if: steps.build.outputs.platform == 'android' && steps.build.outputs.build_type == 'apk'
+        run: |
+          flutter build apk \
+            --flavor ${{ steps.build.outputs.flavor }} \
+            -t ${{ steps.build.outputs.main_file }} \
+            --target-platform android-arm,android-arm64 \
+            --no-tree-shake-icons \
+            --release \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      - name: 构建 Android App Bundle
+        if: steps.build.outputs.platform == 'android' && steps.build.outputs.build_type == 'appbundle'
+        run: |
+          flutter build appbundle \
+            --flavor ${{ steps.build.outputs.flavor }} \
+            -t ${{ steps.build.outputs.main_file }} \
+            --no-tree-shake-icons \
+            --release \
+            --build-name=${{ steps.version.outputs.version_name }} \
+            --build-number=${{ steps.version.outputs.build_number }}
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ steps.build.outputs.flavor }}-${{ steps.version.outputs.version_name }}-${{ steps.version.outputs.build_number }}
+          path: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/**/*.aab
+          retention-days: 30
+
+      - name: 创建 Release (仅当推送标签时)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/app/outputs/flutter-apk/*.apk
+            build/app/outputs/bundle/**/*.aab
+          name: 版本 ${{ steps.version.outputs.version_name }}
+          body: |
+            ## 版本 ${{ steps.version.outputs.version_name }}
+            
+            ### 构建信息
+            - **环境**: ${{ steps.build.outputs.flavor }}
+            - **平台**: ${{ steps.build.outputs.platform }}
+            - **构建号**: ${{ steps.version.outputs.build_number }}
+            - **提交**: ${{ github.sha }}
+            
+            ### 下载
+            请从附件中下载对应的安装包
+            
+            ### 变更日志
+            <!-- 在这里添加版本变更说明 -->
+          draft: false
+          prerelease: ${{ steps.build.outputs.flavor != 'env_release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # iOS 构建 (需要 macOS runner)
+  build-ios:
+    name: 构建 iOS
+    runs-on: macos-latest
+    if: inputs.platform == 'ios' || (github.event_name == 'push' && contains(github.ref, 'refs/tags/v'))
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Flutter 环境
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+
+      - name: 配置 Flutter
+        run: |
+          flutter doctor -v
+          flutter pub get
+
+      - name: 构建 iOS IPA
+        run: |
+          flutter build ipa \
+            --flavor env_release \
+            -t lib/main_env_release.dart \
+            --release
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-ios-release
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
