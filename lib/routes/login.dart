@@ -1,4 +1,5 @@
 import 'package:dart_sm/dart_sm.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../index.dart';
 
@@ -368,27 +369,80 @@ class _LoginRouteState extends State<LoginRoute> {
   }
 
   void getLastUpdate() async {
-    logger.i("id${F.id}");
-    var r = await UpdateApi().checkUpdate(queryParametrs: {
-      'id': F.id,
-    });
-    if (F.version != r.version) {
-      checkUpdateByUpdateEntity(r);
-    } else {
-      // showToast("已是最新版本");
+    try {
+      logger.i("检查更新，应用ID: ${F.id}");
+      
+      // 获取当前应用版本信息
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      String currentVersion = packageInfo.version;
+      int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+      
+      logger.i("当前版本: $currentVersion+$currentBuildNumber");
+      
+      var r = await UpdateApi().checkUpdate(queryParametrs: {
+        'id': F.id,
+      });
+      
+      if (r.version == null) {
+        logger.w("服务器返回的版本信息为空");
+        return;
+      }
+      
+      // 比较版本号（支持语义化版本号比较）
+      bool hasUpdate = _compareVersion(currentVersion, r.version!) > 0 || 
+                       (r.buildNumber != null && r.buildNumber! > currentBuildNumber);
+      
+      if (hasUpdate) {
+        logger.i("发现新版本: ${r.version}+${r.buildNumber ?? 'N/A'}");
+        checkUpdateByUpdateEntity(r);
+      } else {
+        logger.i("已是最新版本");
+        // showToast("已是最新版本");
+      }
+    } catch (e) {
+      logger.e("检查更新失败: $e");
+      // 不显示错误提示，避免影响用户体验
     }
+  }
+  
+  // 比较版本号（语义化版本号比较）
+  // 返回值: >0 表示 version1 > version2, <0 表示 version1 < version2, 0 表示相等
+  int _compareVersion(String version1, String version2) {
+    List<int> v1Parts = version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> v2Parts = version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    
+    // 补齐长度
+    while (v1Parts.length < v2Parts.length) v1Parts.add(0);
+    while (v2Parts.length < v1Parts.length) v2Parts.add(0);
+    
+    for (int i = 0; i < v1Parts.length; i++) {
+      if (v1Parts[i] > v2Parts[i]) return -1; // version1 更新
+      if (v1Parts[i] < v2Parts[i]) return 1;  // version2 更新
+    }
+    return 0; // 相等
   }
 
   // 转义成UpdateEntity
   UpdateEntity customJsonParse(myapk) {
+    // 构建完整的下载URL（如果是相对路径，需要添加服务器地址）
+    String downloadUrl = myapk.url ?? '';
+    if (downloadUrl.isNotEmpty && !downloadUrl.startsWith('http')) {
+      // 相对路径，添加服务器地址
+      String baseUrl = UpdateApi.distributionServerUrl;
+      if (!downloadUrl.startsWith('/')) {
+        downloadUrl = '/$downloadUrl';
+      }
+      downloadUrl = '$baseUrl$downloadUrl';
+    }
+    
     return UpdateEntity(
-      isForce: true,
+      isForce: myapk.isForceUpdate ?? false, // 使用服务器返回的强制更新标志
       hasUpdate: true,
-      isIgnorable: false,
-      versionCode: 1,
-      versionName: myapk.version,
-      updateContent: myapk.dec,
-      downloadUrl: myapk.url,
+      isIgnorable: !(myapk.isForceUpdate ?? false), // 强制更新时不可忽略
+      versionCode: myapk.buildNumber ?? 1,
+      versionName: myapk.version ?? '未知版本',
+      updateContent: myapk.dec ?? '新版本更新',
+      downloadUrl: downloadUrl,
     );
   }
 

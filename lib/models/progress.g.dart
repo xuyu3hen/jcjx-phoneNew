@@ -205,8 +205,10 @@ Map<String, dynamic> _$StateDetailToJson(StateDetail instance) =>
 DeptProgress _$DeptProgressFromJson(Map<String, dynamic> json) => DeptProgress(
       deptId: (json['deptId'] as num?)?.toInt(),
       deptName: json['deptName'] as String?,
-      repairMainNodeProgressList: (json['repairMainNodeProgressList'] as List<dynamic>?)
-          ?.map((e) => RepairMainNodeProgress.fromJson(e as Map<String, dynamic>))
+      repairMainNodeProgressList: (json['repairMainNodeProgressList']
+              as List<dynamic>?)
+          ?.map(
+              (e) => RepairMainNodeProgress.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
@@ -217,19 +219,26 @@ Map<String, dynamic> _$DeptProgressToJson(DeptProgress instance) =>
       'repairMainNodeProgressList': instance.repairMainNodeProgressList,
     };
 
-RepairMainNodeProgress _$RepairMainNodeProgressFromJson(Map<String, dynamic> json) => RepairMainNodeProgress(
+RepairMainNodeProgress _$RepairMainNodeProgressFromJson(
+        Map<String, dynamic> json) =>
+    RepairMainNodeProgress(
       repairMainNodeCode: json['repairMainNodeCode'] as String?,
       repairMainNodeName: json['repairMainNodeName'] as String?,
       repairProcCode: json['repairProcCode'] as String?,
-      totalSelfInspectionCount: (json['totalSelfInspectionCount'] as num?)?.toInt(),
-      completeSelfInspectionCount: (json['completeSelfInspectionCount'] as num?)?.toInt(),
-      totalMutualInspectionCount: (json['totalMutualInspectionCount'] as num?)?.toInt(),
-      completeMutualInspectionCount: (json['completeMutualInspectionCount'] as num?)?.toInt(),
+      totalSelfInspectionCount:
+          (json['totalSelfInspectionCount'] as num?)?.toInt(),
+      completeSelfInspectionCount:
+          (json['completeSelfInspectionCount'] as num?)?.toInt(),
+      totalMutualInspectionCount:
+          (json['totalMutualInspectionCount'] as num?)?.toInt(),
+      completeMutualInspectionCount:
+          (json['completeMutualInspectionCount'] as num?)?.toInt(),
       totalJt28Count: (json['totalJt28Count'] as num?)?.toInt(),
       completeJt28Count: (json['completeJt28Count'] as num?)?.toInt(),
     );
 
-Map<String, dynamic> _$RepairMainNodeProgressToJson(RepairMainNodeProgress instance) =>
+Map<String, dynamic> _$RepairMainNodeProgressToJson(
+        RepairMainNodeProgress instance) =>
     <String, dynamic>{
       'repairMainNodeCode': instance.repairMainNodeCode,
       'repairMainNodeName': instance.repairMainNodeName,

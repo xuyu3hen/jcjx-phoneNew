@@ -1,3 +1,5 @@
+import 'package:package_info_plus/package_info_plus.dart';
+
 enum Flavor {
   env_dev,
   env_release,
@@ -67,7 +69,11 @@ class F {
     }
   }
 
+  // 注意：version 现在应该从 package_info_plus 动态获取
+  // 保留此方法以兼容旧代码，但建议使用 PackageInfo.fromPlatform() 获取
   static String get version {
+    // 这个方法已废弃，应该使用 package_info_plus 动态获取
+    // 保留此方法仅用于向后兼容
     switch (appFlavor) {
       case Flavor.env_dev:
         return '1.1.5';
@@ -77,6 +83,27 @@ class F {
         return '1.1.5';
       default:
         return '1.0.0';
+    }
+  }
+  
+  // 获取动态版本号（推荐使用）
+  static Future<String> getVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      return packageInfo.version;
+    } catch (e) {
+      // 如果获取失败，返回默认值
+      return version;
+    }
+  }
+  
+  // 获取构建号
+  static Future<int> getBuildNumber() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      return int.tryParse(packageInfo.buildNumber) ?? 0;
+    } catch (e) {
+      return 0;
     }
   }
 }
