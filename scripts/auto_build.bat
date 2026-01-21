@@ -51,7 +51,15 @@ if errorlevel 1 (
 )
 
 REM 读取新版本号
-for /f "tokens=2" %%a in ('findstr /r "^version:" pubspec.yaml') do set NEW_VERSION=%%a
+for /f "tokens=2" %%a in ('findstr /r "^version:" pubspec.yaml') do (
+    set NEW_VERSION=%%a
+)
+if not defined NEW_VERSION (
+    echo 错误: 无法读取版本号
+    echo 尝试从 pubspec.yaml 读取版本号...
+    type pubspec.yaml | findstr /r "^version:"
+    exit /b 1
+)
 for /f "tokens=1 delims=+" %%a in ("!NEW_VERSION!") do set VERSION_NAME=%%a
 for /f "tokens=2 delims=+" %%a in ("!NEW_VERSION!") do set BUILD_NUMBER=%%a
 echo ✓ 版本号已更新为: !NEW_VERSION! (版本名: !VERSION_NAME!, 构建号: !BUILD_NUMBER!)
