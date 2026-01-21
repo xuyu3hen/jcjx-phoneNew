@@ -68,7 +68,7 @@ public class ApkVersion {
     private String description;
     
     /**
-     * 是否强制更新
+     * 是否强制更新x
      */
     @Column(nullable = false)
     private Boolean isForceUpdate = false;

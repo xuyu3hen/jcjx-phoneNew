@@ -1,8 +1,10 @@
 @echo off
-chcp 65001 >nul
+REM 设置代码页为 UTF-8，避免中文乱码
+chcp 65001 >nul 2>&1
 REM 本地自动打包（自动更新版本号 + 打包）
 REM 使用方法: scripts\auto_build.bat [env] [version_type]
 REM 示例: scripts\auto_build.bat release patch
+REM 注意: 在 PowerShell 中执行时，请使用: cmd /c scripts\auto_build.bat release patch
 
 setlocal enabledelayedexpansion
 
@@ -99,16 +101,8 @@ copy "!APK_FILE!" "!APK_NEW_PATH!" >nul
 echo ✓ APK 构建完成: !APK_NEW_PATH!
 echo.
 
-REM 4. 提交版本号变更（可选）
-echo [4/4] 提交版本号变更到 Git...
-set /p COMMIT="是否提交版本号变更到 Git? (y/n) "
-if /i "!COMMIT!"=="y" (
-    git add pubspec.yaml
-    git commit -m "chore: 自动构建版本 !NEW_VERSION! (%ENV%环境)"
-    echo ✓ 版本号已提交到 Git
-) else (
-    echo ⚠ 已跳过 Git 提交
-)
+REM 4. 完成（不提交到Git，仅本地构建）
+echo [4/4] 构建完成！
 echo.
 
 echo ========================================
@@ -116,5 +110,9 @@ echo 自动打包完成！
 echo ========================================
 echo APK 文件: !APK_NEW_PATH!
 echo 版本号: !NEW_VERSION!
+echo 环境: %ENV%
 echo.
-echo 提示: APK 文件已生成，可以进行测试或上传到分发服务器
+echo 提示: 
+echo   - APK 文件已生成，可以进行测试或上传到分发服务器
+echo   - 版本号已更新但未提交到 Git（本地构建）
+echo   - 如需提交版本号，请手动执行: git add pubspec.yaml ^&^& git commit -m "chore: 构建版本 !NEW_VERSION!"

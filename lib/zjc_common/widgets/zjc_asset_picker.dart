@@ -207,26 +207,32 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       return;
     }
 
-    // 相册权限
+    // Android 13+ 拍照时不需要相册权限，只有在保存到相册时才需要
+    // 但 wechat_camera_picker 可能会保存到相册，所以还是需要检查
+    // 如果只是拍照不保存到相册，可以注释掉下面的相册权限检查
     bool isGrantedPhotos = await ZjcPermissionUtils.photos();
     if (!isGrantedPhotos) {
       return;
     }
 
-    final AssetEntity? result = await CameraPicker.pickFromCamera(
-      context,
-      pickerConfig: CameraPickerConfig(
-        // 只拍照，不录像
-        enableRecording: false,
-        // textDelegate: const EnglishCameraPickerTextDelegate(),
-      ),
-    );
-    if (result != null) {
-      setState(() {
-        widget.selectedAssets.add(result);
-        // 相机回调
-        widget.callBack?.call(widget.selectedAssets);
-      });
+    try {
+      final AssetEntity? result = await CameraPicker.pickFromCamera(
+        context,
+        pickerConfig: CameraPickerConfig(
+          // 只拍照，不录像
+          enableRecording: false,
+          // textDelegate: const EnglishCameraPickerTextDelegate(),
+        ),
+      );
+      if (result != null) {
+        setState(() {
+          widget.selectedAssets.add(result);
+          // 相机回调
+          widget.callBack?.call(widget.selectedAssets);
+        });
+      }
+    } catch (e) {
+      ZjcProgressHUD.showText('无法打开相机，请检查权限设置');
     }
   }
 
