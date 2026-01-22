@@ -121,15 +121,16 @@ if errorlevel 1 (
 )
 echo.
 
-REM 5. 提交版本号变更（可选）
-echo [5/5] 提交版本号变更到 Git...
-set /p COMMIT="是否提交版本号变更到 Git? (y/n) "
+REM 5. 提交版本号变更（可选，默认不提交）
+echo [5/5] 提交版本号变更到 Git（可选）...
+echo 提示: 本地构建默认不提交到 Git，如需提交请手动操作
+set /p COMMIT="是否提交版本号变更到 Git? (y/n，默认n): "
 if /i "!COMMIT!"=="y" (
     git add pubspec.yaml
     git commit -m "chore: 自动构建版本 !NEW_VERSION! (%ENV%环境)"
     echo ✓ 版本号已提交到 Git
 ) else (
-    echo ⚠ 已跳过 Git 提交
+    echo ⚠ 已跳过 Git 提交（本地构建，不自动提交）
 )
 echo.
 

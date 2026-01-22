@@ -141,6 +141,31 @@ public class ApkController {
     }
     
     /**
+     * 删除APK版本
+     * DELETE /api/apk/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ApiResponse<String> deleteApk(@PathVariable Long id) {
+        try {
+            boolean deleted = apkVersionService.deleteApkVersion(id);
+            
+            if (!deleted) {
+                return ApiResponse.error(404, "未找到指定的APK版本");
+            }
+            
+            log.info("APK删除成功: ID={}", id);
+            return ApiResponse.success("APK删除成功");
+            
+        } catch (IOException e) {
+            log.error("删除APK文件失败", e);
+            return ApiResponse.error(500, "删除文件失败: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("删除APK失败", e);
+            return ApiResponse.error(500, "删除失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 健康检查
      * GET /api/apk/health
      */

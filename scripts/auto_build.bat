@@ -4,7 +4,9 @@ chcp 65001 >nul 2>&1
 REM 本地自动打包（自动更新版本号 + 打包）
 REM 使用方法: scripts\auto_build.bat [env] [version_type]
 REM 示例: scripts\auto_build.bat release patch
-REM 注意: 在 PowerShell 中执行时，请使用: cmd /c scripts\auto_build.bat release patch
+REM 注意: 在 PowerShell 中执行时，请使用以下方法之一：
+REM   方法1: cmd /c scripts\auto_build.bat release patch
+REM   方法2: .\scripts\auto_build.bat release patch (如果仍有问题，使用方法1)
 
 setlocal enabledelayedexpansion
 
@@ -45,31 +47,37 @@ if "%ENV%"=="dev" (
 )
 
 REM 1. 更新版本号
-echo [1/4] 更新版本号...
-dart scripts\bump_version.dart %VERSION_TYPE%
+echo [1/4] 正在更新版本号...
+dart scripts\bump_version.dart %VERSION_TYPE% 2>nul
 if errorlevel 1 (
     echo 错误: 版本号更新失败
     exit /b 1
 )
 
-REM 读取新版本号
-for /f "tokens=2" %%a in ('findstr /r "^version:" pubspec.yaml') do (
+REM 读取新版本号 - 使用更可靠的方法
+set NEW_VERSION=
+for /f "usebackq tokens=2 delims=: " %%a in (`type pubspec.yaml ^| findstr /b /c:"version:"`) do (
     set NEW_VERSION=%%a
+    goto :version_found
 )
+:version_found
 if not defined NEW_VERSION (
     echo 错误: 无法读取版本号
     echo 尝试从 pubspec.yaml 读取版本号...
-    type pubspec.yaml | findstr /r "^version:"
+    type pubspec.yaml | findstr /b /c:"version:"
     exit /b 1
 )
 for /f "tokens=1 delims=+" %%a in ("!NEW_VERSION!") do set VERSION_NAME=%%a
 for /f "tokens=2 delims=+" %%a in ("!NEW_VERSION!") do set BUILD_NUMBER=%%a
-echo ✓ 版本号已更新为: !NEW_VERSION! (版本名: !VERSION_NAME!, 构建号: !BUILD_NUMBER!)
+echo 版本号已更新为: !NEW_VERSION! (版本名: !VERSION_NAME!, 构建号: !BUILD_NUMBER!)
 echo.
 
 REM 2. 清理并获取依赖
 echo [2/4] 清理并获取依赖...
 call flutter clean >nul 2>&1
+if errorlevel 1 (
+    echo 警告: flutter clean 执行失败，继续执行...
+)
 call flutter pub get
 if errorlevel 1 (
     echo 错误: 依赖获取失败
@@ -80,11 +88,13 @@ echo.
 
 REM 3. 构建 APK
 echo [3/4] 构建 APK...
+echo 正在构建，请稍候...
 call flutter build apk --flavor !FLAVOR! -t !MAIN_FILE! --target-platform android-arm,android-arm64 --no-tree-shake-icons --release
 if errorlevel 1 (
     echo 错误: APK 构建失败
     exit /b 1
 )
+echo ✓ APK 构建成功
 
 REM 确定输出文件路径
 set APK_FILE=build\app\outputs\flutter-apk\app-!FLAVOR!-release.apk
@@ -114,5 +124,5 @@ echo 环境: %ENV%
 echo.
 echo 提示: 
 echo   - APK 文件已生成，可以进行测试或上传到分发服务器
-echo   - 版本号已更新但未提交到 Git（本地构建）
+echo   - 版本号已更新但未提交到 Git（本地构建，不自动提交）
 echo   - 如需提交版本号，请手动执行: git add pubspec.yaml ^&^& git commit -m "chore: 构建版本 !NEW_VERSION!"

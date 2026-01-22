@@ -159,4 +159,33 @@ public class ApkVersionService {
     public Path getApkFilePath(String env, String fileName) {
         return Paths.get(storagePath, env, fileName);
     }
+    
+    /**
+     * 删除APK版本（包括文件和数据库记录）
+     */
+    @Transactional
+    public boolean deleteApkVersion(Long id) throws IOException {
+        Optional<ApkVersion> apkVersionOpt = apkVersionRepository.findById(id);
+        
+        if (apkVersionOpt.isEmpty()) {
+            return false;
+        }
+        
+        ApkVersion apkVersion = apkVersionOpt.get();
+        
+        // 删除文件系统中的APK文件
+        Path filePath = getApkFilePath(apkVersion.getEnv(), apkVersion.getFileName());
+        if (Files.exists(filePath)) {
+            Files.delete(filePath);
+            log.info("已删除APK文件: {}", filePath);
+        } else {
+            log.warn("APK文件不存在: {}", filePath);
+        }
+        
+        // 删除数据库记录
+        apkVersionRepository.deleteById(id);
+        log.info("已删除APK版本记录: ID={}, 文件名={}", id, apkVersion.getFileName());
+        
+        return true;
+    }
 }

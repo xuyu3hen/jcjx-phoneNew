@@ -61,6 +61,4 @@ void main(List<String> args) {
   print('  类型: $versionType');
   print('  旧版本: ${versionMatch.group(0)}');
   print('  新版本: version: $newVersion');
-  print('');
-  print('提示: 请提交版本号变更到 Git');
 }
