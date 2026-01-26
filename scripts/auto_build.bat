@@ -54,17 +54,16 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM 读取新版本号 - 使用更可靠的方法
+REM 读取新版本号 - 使用临时文件避免管道问题
 set NEW_VERSION=
-for /f "usebackq tokens=2 delims=: " %%a in (`type pubspec.yaml ^| findstr /b /c:"version:"`) do (
-    set NEW_VERSION=%%a
-    goto :version_found
-)
-:version_found
+set TEMP_FILE=%TEMP%\version_line_%RANDOM%.txt
+findstr /b /c:"version:" pubspec.yaml > "%TEMP_FILE%" 2>nul
+for /f "usebackq tokens=2 delims=: " %%a in ("%TEMP_FILE%") do set NEW_VERSION=%%a
+if exist "%TEMP_FILE%" del "%TEMP_FILE%" >nul 2>&1
 if not defined NEW_VERSION (
     echo 错误: 无法读取版本号
     echo 尝试从 pubspec.yaml 读取版本号...
-    type pubspec.yaml | findstr /b /c:"version:"
+    findstr /b /c:"version:" pubspec.yaml
     exit /b 1
 )
 for /f "tokens=1 delims=+" %%a in ("!NEW_VERSION!") do set VERSION_NAME=%%a

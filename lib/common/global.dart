@@ -91,6 +91,8 @@ class Global {
     ..maxAge = 3600
     ..maxCount = 100;
 
+    // 初始化版本号（从 pubspec.yaml 统一读取）
+    await F.initVersion();
 
     AppApi.init();
   }

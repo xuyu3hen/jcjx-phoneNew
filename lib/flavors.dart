@@ -8,6 +8,10 @@ enum Flavor {
 
 class F {
   static Flavor? appFlavor;
+  
+  // 缓存的版本号（从 pubspec.yaml 动态获取）
+  static String? _cachedVersion;
+  static int? _cachedBuildNumber;
 
   static String get name => appFlavor?.name ?? '';
 
@@ -69,41 +73,50 @@ class F {
     }
   }
 
-  // 注意：version 现在应该从 package_info_plus 动态获取
-  // 保留此方法以兼容旧代码，但建议使用 PackageInfo.fromPlatform() 获取
-  static String get version {
-    // 这个方法已废弃，应该使用 package_info_plus 动态获取
-    // 保留此方法仅用于向后兼容
-    switch (appFlavor) {
-      case Flavor.env_dev:
-        return '1.1.5';
-      case Flavor.env_release:
-        return '1.1.8';
-      case Flavor.env_test:
-        return '1.1.5';
-      default:
-        return '1.0.0';
+  // 初始化版本号（在应用启动时调用）
+  static Future<void> initVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      _cachedVersion = packageInfo.version;
+      _cachedBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+    } catch (e) {
+      // 如果获取失败，使用默认值
+      _cachedVersion = '1.0.0';
+      _cachedBuildNumber = 0;
     }
   }
+
+  // 获取版本号（同步方法，返回缓存的值）
+  // 注意：在应用启动后调用 initVersion() 来初始化版本号
+  static String get version {
+    return _cachedVersion ?? '加载中...';
+  }
   
-  // 获取动态版本号（推荐使用）
+  // 获取构建号（同步方法，返回缓存的值）
+  static int get buildNumber {
+    return _cachedBuildNumber ?? 0;
+  }
+  
+  // 获取动态版本号（异步方法，推荐使用）
   static Future<String> getVersion() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
+      _cachedVersion = packageInfo.version; // 更新缓存
       return packageInfo.version;
     } catch (e) {
-      // 如果获取失败，返回默认值
-      return version;
+      // 如果获取失败，返回缓存的值或默认值
+      return _cachedVersion ?? '1.0.0';
     }
   }
   
-  // 获取构建号
+  // 获取构建号（异步方法）
   static Future<int> getBuildNumber() async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
-      return int.tryParse(packageInfo.buildNumber) ?? 0;
+      _cachedBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0; // 更新缓存
+      return _cachedBuildNumber!;
     } catch (e) {
-      return 0;
+      return _cachedBuildNumber ?? 0;
     }
   }
 }

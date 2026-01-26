@@ -1492,10 +1492,19 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
       String? pendingDataString = prefs.getString('pending_upload_data');
       if (pendingDataString != null) {
         List<dynamic> pendingDataList = json.decode(pendingDataString);
+        List<Map<String, dynamic>> loadedData = pendingDataList
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        
+        // 按时间戳排序，保证流程顺序
+        loadedData.sort((a, b) {
+          int timestampA = a['timestamp'] ?? 0;
+          int timestampB = b['timestamp'] ?? 0;
+          return timestampA.compareTo(timestampB);
+        });
+        
         setState(() {
-          pendingUploadData = pendingDataList
-              .map((item) => item as Map<String, dynamic>)
-              .toList();
+          pendingUploadData = loadedData;
         });
       }
     } catch (e) {
@@ -1518,7 +1527,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
 // 添加方法用于上传所有待上传的数据
-// 修改上传方法以处理视频
+// 修改上传方法以处理视频，并按时间戳顺序上传（保证流程顺序）
   Future<void> _uploadAllPendingData() async {
     if (pendingUploadData.isEmpty) {
       SmartDialog.showToast('没有需要上传的数据');
@@ -1530,13 +1539,21 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     });
 
     try {
+      // 按时间戳排序，保证流程顺序
+      List<Map<String, dynamic>> sortedData = List.from(pendingUploadData);
+      sortedData.sort((a, b) {
+        int timestampA = a['timestamp'] ?? 0;
+        int timestampB = b['timestamp'] ?? 0;
+        return timestampA.compareTo(timestampB);
+      });
+
       List<Map<String, dynamic>> failedUploads = [];
 
-      for (int i = 0; i < pendingUploadData.length; i++) {
-        var data = pendingUploadData[i];
+      for (int i = 0; i < sortedData.length; i++) {
+        var data = sortedData[i];
 
         try {
-          SmartDialog.showLoading(msg: '正在上传第${i + 1}项数据...');
+          SmartDialog.showLoading(msg: '正在上传第${i + 1}/${sortedData.length}项数据...');
 
           // 1. 上传图片和视频
           List<File> imageFiles = [];
@@ -1558,23 +1575,35 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
           // 上传图片
           if (imageFiles.isNotEmpty) {
-            await ProductApi().uploadCertainPackageImg(
+            int uploadResult = await ProductApi().uploadCertainPackageImg(
               queryParametrs: {
                 'certainPackageCodeList': data['packageCode'],
               },
               imagedatas: imageFiles,
             );
+            if (uploadResult != 200 && uploadResult != -1) {
+              throw Exception('图片上传失败，返回码: $uploadResult');
+            }
+            if (uploadResult == -1) {
+              throw Exception('图片上传失败');
+            }
           }
 
-          // 上传视频（需要后端支持）
+          // 上传视频
           if (videoFiles.isNotEmpty) {
-            await ProductApi().uploadCertainPackageImg(
+            int uploadResult = await ProductApi().uploadCertainPackageImg(
               queryParametrs: {
                 'certainPackageCodeList': data['packageCode'],
               },
               imagedatas: videoFiles,
             );
-            logger.i('视频文件待上传: ${videoFiles.length}个');
+            if (uploadResult != 200 && uploadResult != -1) {
+              throw Exception('视频上传失败，返回码: $uploadResult');
+            }
+            if (uploadResult == -1) {
+              throw Exception('视频上传失败');
+            }
+            logger.i('视频文件上传成功: ${videoFiles.length}个');
           }
 
           // 2. 保存作业项数据
@@ -1586,7 +1615,10 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     .toList();
 
             if (taskContentItems.isNotEmpty) {
-              await ProductApi().saveOrUpdateTaskContentItem(taskContentItems);
+              var saveResult = await ProductApi().saveOrUpdateTaskContentItem(taskContentItems);
+              if (saveResult == null || (saveResult is List && saveResult.isEmpty)) {
+                throw Exception('作业项数据保存失败');
+              }
             }
           }
 
@@ -1598,10 +1630,17 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             }
           ];
 
-          await ProductApi().finishCertainPackage(completeParams);
+          int finishResult = await ProductApi().finishCertainPackage(completeParams);
+          if (finishResult != 200 && finishResult != -1) {
+            throw Exception('完成包装失败，返回码: $finishResult');
+          }
+          if (finishResult == -1) {
+            throw Exception('完成包装失败');
+          }
 
           SmartDialog.dismiss();
           SmartDialog.showToast('第${i + 1}项数据上传成功');
+          logger.i('第${i + 1}项数据上传成功: ${data['packageName']}');
         } catch (e) {
           SmartDialog.dismiss();
           logger.e('上传第${i + 1}项数据失败: $e');
@@ -1615,7 +1654,13 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         await _clearUploadedData();
         SmartDialog.showToast('所有数据上传完成');
       } else {
-        // 部分数据上传失败，保存失败的数据
+        // 部分数据上传失败，保存失败的数据（按时间戳排序）
+        failedUploads.sort((a, b) {
+          int timestampA = a['timestamp'] ?? 0;
+          int timestampB = b['timestamp'] ?? 0;
+          return timestampA.compareTo(timestampB);
+        });
+        
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String failedDataString = json.encode(failedUploads);
         await prefs.setString('pending_upload_data', failedDataString);
@@ -1667,11 +1712,45 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                   itemCount: pendingUploadData.length,
                   itemBuilder: (context, index) {
                     var data = pendingUploadData[index];
+                    // 计算照片和视频数量
+                    int photoCount = 0;
+                    int videoCount = 0;
+                    
+                    if (data['allMedia'] != null && data['allMedia'] is List) {
+                      for (var media in data['allMedia']) {
+                        if (media is Map<String, dynamic>) {
+                          if (media['type'] == 'video') {
+                            videoCount++;
+                          } else {
+                            photoCount++;
+                          }
+                        }
+                      }
+                    } else {
+                      // 兼容旧数据格式
+                      if (data['photos'] != null && data['photos'] is List) {
+                        photoCount = (data['photos'] as List).length;
+                      }
+                      if (data['videos'] != null && data['videos'] is List) {
+                        videoCount = (data['videos'] as List).length;
+                      }
+                    }
+                    
+                    String mediaText = '';
+                    if (photoCount > 0 && videoCount > 0) {
+                      mediaText = '照片: $photoCount张, 视频: $videoCount个';
+                    } else if (photoCount > 0) {
+                      mediaText = '照片: $photoCount张';
+                    } else if (videoCount > 0) {
+                      mediaText = '视频: $videoCount个';
+                    } else {
+                      mediaText = '无媒体文件';
+                    }
+                    
                     return Card(
                       child: ListTile(
                         title: Text(data['packageName']?.toString() ?? '未知项点'),
-                        subtitle: Text(
-                            '照片或视频: ${data['photos'] != null ? (data['photos'] as List).length : 0}张'),
+                        subtitle: Text(mediaText),
                         trailing: Text(
                           DateFormat('MM-dd HH:mm').format(
                               DateTime.fromMillisecondsSinceEpoch(
@@ -2130,10 +2209,19 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       String? pendingDataString = prefs.getString('pending_upload_data');
       if (pendingDataString != null) {
         List<dynamic> pendingDataList = json.decode(pendingDataString);
+        List<Map<String, dynamic>> loadedData = pendingDataList
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        
+        // 按时间戳排序，保证流程顺序
+        loadedData.sort((a, b) {
+          int timestampA = a['timestamp'] ?? 0;
+          int timestampB = b['timestamp'] ?? 0;
+          return timestampA.compareTo(timestampB);
+        });
+        
         setState(() {
-          pendingUploadData = pendingDataList
-              .map((item) => item as Map<String, dynamic>)
-              .toList();
+          pendingUploadData = loadedData;
         });
       }
     } catch (e) {
@@ -2442,8 +2530,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                     int i = widget.index ?? 0;
                                     Global.packageList[i]['completeCount'] =
                                         _currentIndex + 1;
-                                    // 将数据保存到本地待上传列表而不是立即上传
-                                    await _saveDataLocally();
+                                    // 尝试直接上传，如果网络不好则保存到本地待上传
+                                    await _tryUploadOrSaveLocally();
 
                                     // 将图片清空
                                     _files.clear();
@@ -2625,40 +2713,134 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     });
   }
 
-// 修改保存到本地的方法以处理视频
-  Future<void> _saveDataLocally() async {
+// 尝试上传数据，如果失败则保存到本地待上传
+  Future<void> _tryUploadOrSaveLocally() async {
+    String completeTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+    
+    // 创建待上传数据项（无论上传成功与否，都先创建数据结构）
+    Map<String, dynamic> uploadItem = {
+      'packageCode': currentPackagePoint['code'],
+      'packageName': currentPackagePoint['name'],
+      'completeTime': completeTime,
+      'photos': _photos, // 图片路径列表
+      'videos': _videos.map((video) => video.path).toList(), // 视频路径列表
+      'allMedia': _files
+          .map((file) => {
+                'path': file.path,
+                'type': _videos.contains(file) ? 'video' : 'image' // 标记文件类型
+              })
+          .toList(),
+      'taskContentItems': taskContentItemList,
+      'timestamp': timestamp,
+    };
+    
     try {
-      // 创建待上传数据项
-      Map<String, dynamic> uploadItem = {
-        'packageCode': currentPackagePoint['code'],
-        'packageName': currentPackagePoint['name'],
-        'completeTime':
-            DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-        'photos': _photos, // 图片路径列表
-        'videos': _videos.map((video) => video.path).toList(), // 视频路径列表
-        'allMedia': _files
-            .map((file) => {
-                  'path': file.path,
-                  'type': _videos.contains(file) ? 'video' : 'image' // 标记文件类型
-                })
-            .toList(),
-        'taskContentItems': taskContentItemList,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      };
-
-      // 添加到待上传列表
-      setState(() {
-        pendingUploadData.add(uploadItem);
-      });
-
-      // 保存到本地存储
-      await _savePendingUploadData();
-
-      logger.i('数据已保存到本地待上传列表');
-      SmartDialog.showToast('数据已保存');
+      SmartDialog.showLoading(msg: '正在上传数据...');
+      
+      // 1. 上传图片和视频
+      List<File> imageFiles = [];
+      List<File> videoFiles = [];
+      
+      // 处理所有媒体文件
+      for (var file in _files) {
+        File fileObj = File(file.path);
+        if (_videos.contains(file)) {
+          videoFiles.add(fileObj);
+        } else {
+          imageFiles.add(fileObj);
+        }
+      }
+      
+      // 上传图片
+      if (imageFiles.isNotEmpty) {
+        int uploadResult = await ProductApi().uploadCertainPackageImg(
+          queryParametrs: {
+            'certainPackageCodeList': currentPackagePoint['code'],
+          },
+          imagedatas: imageFiles,
+        );
+        if (uploadResult != 200 && uploadResult != -1) {
+          // 如果返回的不是成功码，认为上传失败
+          throw Exception('图片上传失败，返回码: $uploadResult');
+        }
+        if (uploadResult == -1) {
+          throw Exception('图片上传失败');
+        }
+      }
+      
+      // 上传视频
+      if (videoFiles.isNotEmpty) {
+        int uploadResult = await ProductApi().uploadCertainPackageImg(
+          queryParametrs: {
+            'certainPackageCodeList': currentPackagePoint['code'],
+          },
+          imagedatas: videoFiles,
+        );
+        if (uploadResult != 200 && uploadResult != -1) {
+          throw Exception('视频上传失败，返回码: $uploadResult');
+        }
+        if (uploadResult == -1) {
+          throw Exception('视频上传失败');
+        }
+      }
+      
+      // 2. 保存作业项数据
+      if (taskContentItemList.isNotEmpty) {
+        var saveResult = await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);
+        if (saveResult == null || (saveResult is List && saveResult.isEmpty)) {
+          throw Exception('作业项数据保存失败');
+        }
+      }
+      
+      // 3. 完成包装
+      List<Map<String, dynamic>> completeParams = [
+        {
+          'code': currentPackagePoint['code'],
+          'completeTime': completeTime,
+        }
+      ];
+      
+      int finishResult = await ProductApi().finishCertainPackage(completeParams);
+      if (finishResult != 200 && finishResult != -1) {
+        throw Exception('完成包装失败，返回码: $finishResult');
+      }
+      if (finishResult == -1) {
+        throw Exception('完成包装失败');
+      }
+      
+      // 所有步骤都成功
+      SmartDialog.dismiss();
+      SmartDialog.showToast('数据上传成功');
+      logger.i('数据上传成功: ${currentPackagePoint['name']}');
+      
     } catch (e) {
-      logger.e('保存数据到本地失败: $e');
-      SmartDialog.showToast('保存失败');
+      // 上传失败，保存到本地待上传
+      SmartDialog.dismiss();
+      logger.w('数据上传失败，保存到本地待上传: $e');
+      
+      try {
+        // 添加到待上传列表
+        setState(() {
+          pendingUploadData.add(uploadItem);
+        });
+        
+        // 按时间戳排序，保证流程顺序
+        pendingUploadData.sort((a, b) {
+          int timestampA = a['timestamp'] ?? 0;
+          int timestampB = b['timestamp'] ?? 0;
+          return timestampA.compareTo(timestampB);
+        });
+        
+        // 保存到本地存储
+        await _savePendingUploadData();
+        
+        SmartDialog.showToast('网络异常，数据已保存到待上传');
+        logger.i('数据已保存到本地待上传列表: ${currentPackagePoint['name']}');
+      } catch (saveError) {
+        logger.e('保存数据到本地失败: $saveError');
+        SmartDialog.showToast('上传失败且保存本地失败，请重试');
+      }
     }
   }
 

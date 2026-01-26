@@ -21,12 +21,18 @@ class _MyPageItems extends State<MyPageItems> {
             ),
             Stack(
               children: [
-                ListTile(
-                  leading:
-                      Icon(Icons.update, color: Theme.of(context).primaryColor),
-                  title: const Text("版本号：", style: TextStyle(fontSize: 18)),
-                  trailing:
-                      Text(F.version, style: const TextStyle(fontSize: 18)),
+                FutureBuilder<String>(
+                  future: F.getVersion(),
+                  builder: (context, snapshot) {
+                    String version = snapshot.data ?? F.version;
+                    return ListTile(
+                      leading:
+                          Icon(Icons.update, color: Theme.of(context).primaryColor),
+                      title: const Text("版本号：", style: TextStyle(fontSize: 18)),
+                      trailing:
+                          Text(version, style: const TextStyle(fontSize: 18)),
+                    );
+                  },
                 ),
               ],
             ),

@@ -96,9 +96,15 @@ class SideDrawer extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.view_kanban_rounded),
-              title: Text("版本号${F.version}"),
+            FutureBuilder<String>(
+              future: F.getVersion(),
+              builder: (context, snapshot) {
+                String version = snapshot.data ?? F.version;
+                return ListTile(
+                  leading: const Icon(Icons.view_kanban_rounded),
+                  title: Text("版本号$version"),
+                );
+              },
             )
           ],
         );
