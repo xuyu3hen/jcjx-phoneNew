@@ -235,6 +235,25 @@ class _JtShowPageState extends State<ApplyList> {
                   },
                 ),
               ),
+              // 消息中心
+              Container(
+                margin: const EdgeInsets.fromLTRB(10, 8, 10, 16),
+                child: Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.notifications_outlined, color: Colors.blue),
+                    title: const Text(
+                      '消息中心',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text('查看系统消息与通知'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      // TODO: 跳转到消息中心页面
+                      showToast('消息中心');
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
         ],

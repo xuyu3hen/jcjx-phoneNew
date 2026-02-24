@@ -16,6 +16,7 @@ class MyApkVersion {
     this.fileSize,
     this.md5,
     this.updateType,
+    this.downloadUrl,
   });
 
   String? name;
@@ -24,22 +25,25 @@ class MyApkVersion {
   String? dec;
   String? id;
   String? createTime;
-  
+
   // 扩展字段
   @JsonKey(name: 'buildNumber')
   int? buildNumber; // 构建号
-  
+
   @JsonKey(name: 'isForceUpdate')
   bool? isForceUpdate; // 是否强制更新
-  
+
   @JsonKey(name: 'fileSize')
   int? fileSize; // 文件大小（字节）
-  
+
   @JsonKey(name: 'md5')
   String? md5; // 文件 MD5 值
-  
+
   @JsonKey(name: 'updateType')
   String? updateType; // 更新类型：full(全量) / incremental(增量)
+
+  @JsonKey(name: 'downloadUrl')
+  String? downloadUrl; // 下载URL
 
   factory MyApkVersion.fromJson(Map<String,dynamic> json) => _$MyApkVersionFromJson(json);
   Map<String, dynamic> toJson() => _$MyApkVersionToJson(this);

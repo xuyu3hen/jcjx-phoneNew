@@ -14,6 +14,70 @@ class ProductApi extends AppApi {
   var logger = Logger(
     printer: PrettyPrinter(), // 漂亮的日志格式化
   );
+
+  // 统一异常处理方法
+  void _handleException(dynamic e) {
+    String errorMessage = "";
+    if (e is DioException) {
+      // 根据DioException的不同类型进行更细致的处理，比如网络连接错误、超时等
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+          errorMessage = "网络连接超时，请检查网络设置";
+          break;
+        case DioExceptionType.sendTimeout:
+          errorMessage = "发送请求超时，请稍后重试";
+          break;
+        case DioExceptionType.receiveTimeout:
+          errorMessage = "接收响应超时，请稍后重试";
+          break;
+        case DioExceptionType.badResponse:
+          // 服务器返回了错误状态码，可以根据具体的状态码进行不同提示等
+          if (e.response?.statusCode == 401) {
+            errorMessage = "未授权，请重新登录";
+          } else if (e.response?.statusCode == 403) {
+            errorMessage = "权限不足，无法访问该资源";
+          } else if (e.response?.statusCode == 404) {
+            errorMessage = "请求的资源不存在，请检查请求地址";
+          } else if (e.response!.statusCode! >= 500) {
+            errorMessage = "服务器内部错误，请稍后重试";
+          } else {
+            errorMessage = "服务器返回错误，状态码: ${e.response?.statusCode}";
+          }
+          break;
+        case DioExceptionType.cancel:
+          errorMessage = "请求已被取消";
+          break;
+        case DioExceptionType.badCertificate:
+          errorMessage = "证书验证出现问题，请检查服务器证书配置";
+          break;
+        case DioExceptionType.unknown:
+          errorMessage = "网络出现未知错误，请稍后重试";
+          break;
+        default:
+          errorMessage = "出现未知网络异常，请稍后重试";
+      }
+    } else {
+      // 其他非DioException类型的异常处理，比如文件读取错误等（如果相关方法涉及文件操作等）
+      errorMessage = "出现未知错误，请稍后重试";
+    }
+
+    // 在开发环境下，打印更详细的错误信息，方便排查问题
+    if (kDebugMode) {
+      if (e is DioException && e.response != null) {
+        // 打印请求的URL、请求方法、请求头、请求参数以及响应数据等详细信息
+        log("请求URL: ${e.requestOptions.path}");
+        log("请求方法: ${e.requestOptions.method}");
+        log("请求头: ${e.requestOptions.headers}");
+        log("请求参数: ${e.requestOptions.data}");
+        log("响应Data: ${e.response?.data}");
+      }
+      log("出现异常: $e");
+    }
+
+    // 显示错误提示给用户
+    Fluttertoast.showToast(msg: errorMessage);
+  }
+
   // 入段列车查询
   Future<TrainEntryList> getTrainEntry({
     Map<String, dynamic>? queryParametrs, // 分页参数
@@ -150,6 +214,116 @@ class ProductApi extends AppApi {
       return [];
     }
   }
+
+  //jcjxsystem/message/getMessageInfo  响应格式: { code, message, data: { sysMessageVO: [...], count } }
+  Future<dynamic> getMessageInfo({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      final body = queryParametrs ?? {};
+      logger.i('getMessageInfo 请求开始: ${AppApi.dio.options.baseUrl}/jcjxsystem/message/getMessageInfo');
+      var r = await AppApi.dio.post(
+        "/jcjxsystem/message/getMessageInfo",
+        data: body,
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+      logger.i(r.data['data']);
+      return ((r.data['data'])['data']);
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // /dispatch/shuntingNotice/selectAll
+  Future<dynamic> getShuntingNotice({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/shuntingNotice/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(((r.data)['data'])['data']);
+      return ((r.data)['data'])['data'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // 获取最新数据
+  // /fileserver/TApkVersion/getLatestOne
+  Future<MyApkVersion?> getLatestOne({
+    String? env, // 环境参数：dev, test, release
+  }) async {
+    try {
+      Map<String, dynamic> queryParams = {};
+      if (env != null) {
+        queryParams['env'] = env;
+      }
+      var r = await AppApi.dio.get(
+        "/fileserver/TApkVersion/getLatestOne",
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      // 解析返回的数据为 MyApkVersion 对象
+      if (r.data["data"] != null) {
+        return MyApkVersion.fromJson(r.data["data"]);
+      }
+      return null;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  // 通过通用下载接口下载文件
+  // url: 下载地址（通常是 getLatestOne 返回的 downloadUrl）
+  Future<dynamic> downloadFileByGeneralDownload({
+    required String url,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "https://10.105.84.122:8080/fileserver/FileOperation/generalDownloadFile",
+        queryParameters: {'url': url},
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (status) => status != null && status < 500,
+        ),
+      );
+      // 返回响应数据
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  // /dispatch/shuntingNotice/update  参数为 list
+  Future<dynamic> updateShuntingNotice(List<dynamic>? queryParametrs) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/shuntingNotice/update",
+        data: queryParametrs,
+        options: Options(
+          contentType: Headers.jsonContentType,
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 30),
+        ),
+      );
+      logger.i((r.data)['data']);
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+
 
   // /tasks/taskCertainPackage/wholePackageMutualInspection
   Future<dynamic> wholePackageMutualInspection(
@@ -1758,69 +1932,5 @@ class ProductApi extends AppApi {
       logger.e(e);
       return null;
     }
-  }
-
-//subparts/repairMainNode/selectAll
-// 统一异常处理方法
-  void _handleException(dynamic e) {
-    String errorMessage = "";
-    if (e is DioException) {
-      // 根据DioException的不同类型进行更细致的处理，比如网络连接错误、超时等
-      switch (e.type) {
-        case DioExceptionType.connectionTimeout:
-          errorMessage = "网络连接超时，请检查网络设置";
-          break;
-        case DioExceptionType.sendTimeout:
-          errorMessage = "发送请求超时，请稍后重试";
-          break;
-        case DioExceptionType.receiveTimeout:
-          errorMessage = "接收响应超时，请稍后重试";
-          break;
-        case DioExceptionType.badResponse:
-          // 服务器返回了错误状态码，可以根据具体的状态码进行不同提示等
-          if (e.response?.statusCode == 401) {
-            errorMessage = "未授权，请重新登录";
-          } else if (e.response?.statusCode == 403) {
-            errorMessage = "权限不足，无法访问该资源";
-          } else if (e.response?.statusCode == 404) {
-            errorMessage = "请求的资源不存在，请检查请求地址";
-          } else if (e.response!.statusCode! >= 500) {
-            errorMessage = "服务器内部错误，请稍后重试";
-          } else {
-            errorMessage = "服务器返回错误，状态码: ${e.response?.statusCode}";
-          }
-          break;
-        case DioExceptionType.cancel:
-          errorMessage = "请求已被取消";
-          break;
-        case DioExceptionType.badCertificate:
-          errorMessage = "证书验证出现问题，请检查服务器证书配置";
-          break;
-        case DioExceptionType.unknown:
-          errorMessage = "网络出现未知错误，请稍后重试";
-          break;
-        default:
-          errorMessage = "出现未知网络异常，请稍后重试";
-      }
-    } else {
-      // 其他非DioException类型的异常处理，比如文件读取错误等（如果相关方法涉及文件操作等）
-      errorMessage = "出现未知错误，请稍后重试";
-    }
-
-    // 在开发环境下，打印更详细的错误信息，方便排查问题
-    if (kDebugMode) {
-      if (e is DioException && e.response != null) {
-        // 打印请求的URL、请求方法、请求头、请求参数以及响应数据等详细信息
-        log("请求URL: ${e.requestOptions.path}");
-        log("请求方法: ${e.requestOptions.method}");
-        log("请求头: ${e.requestOptions.headers}");
-        log("请求参数: ${e.requestOptions.data}");
-        log("响应Data: ${e.response?.data}");
-      }
-      log("出现异常: $e");
-    }
-
-    // 显示错误提示给用户
-    Fluttertoast.showToast(msg: errorMessage);
   }
 }

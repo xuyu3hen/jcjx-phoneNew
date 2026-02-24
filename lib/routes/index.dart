@@ -1,4 +1,5 @@
 export 'login.dart';
+export 'message_center_page.dart';
 export 'normal_mainpage.dart';
 export 'main_page.dart';
 export 'main_scanner.dart';

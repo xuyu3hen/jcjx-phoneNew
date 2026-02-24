@@ -661,11 +661,31 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     return SafeArea(
         child: InkWell(
       onTap: () async {
-        if (false) {
-        } else {
-          var submit;
-          List<Map<String, dynamic>> l = [];
-          try {
+        // 验证必填字段
+        if (jcTypeListSelected['code'] == null || 
+            jcTypeListSelected['code'] == '') {
+          showToast("请选择机型");
+          return;
+        }
+        if (trainNumSelected['code'] == null || 
+            trainNumSelected['code'] == '') {
+          showToast("请选择车号");
+          return;
+        }
+        if (faultDesc == null || faultDesc!.trim().isEmpty) {
+          showToast("请填写故障现象");
+          return;
+        }
+        if (widget.locoInfo?["code"] == null || 
+            widget.locoInfo?["code"] == '') {
+          showToast("机车信息不完整，请重新进入");
+          return;
+        }
+        
+        // 所有必填字段验证通过，继续提报
+        var submit;
+        List<Map<String, dynamic>> l = [];
+        try {
             SmartDialog.showLoading();
             Map<String, dynamic> queryParameters = {
               // "faultAssumption": faultAssumption,
@@ -767,7 +787,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                   });
             }
           }
-        }
       },
       child: Container(
         alignment: Alignment.center,

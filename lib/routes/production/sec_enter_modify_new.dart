@@ -739,6 +739,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   callBack: (assetEntityList) async {
                     logger.i('assetEntityList-------------');
                     logger.i(assetEntityList);
+                    // 更新 assestPics 用于界面显示
+                    setState(() {
+                      assestPics = assetEntityList;
+                    });
                     // 不要清空 faultPics，而是重新赋值
                     faultPics = [];
                     for (var asset in assetEntityList) {

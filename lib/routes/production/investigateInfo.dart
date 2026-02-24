@@ -54,20 +54,11 @@ class _PlanListPageState extends State<PlanListPage> {
   Future<void> getMasInvestigate(RepairItem item) async {
     try {
       Map<String, dynamic> queryParametrs = {};
-      if (widget.shuntingItem == null) {
-        queryParametrs = {
-          'trainEntryCode': item.code,
-          // 'code': widget.shuntingItem != null
-          //     ? widget.shuntingItem!['shuntingCode'] ?? ''
-          //     : null,
-        };
+      final shuntingCode = widget.shuntingItem?['shuntingCode']?.toString();
+      if (shuntingCode != null && shuntingCode.isNotEmpty) {
+        queryParametrs = {'code': shuntingCode};
       } else {
-        queryParametrs = {
-          'trainEntryCode': item.code,
-          'code': widget.shuntingItem != null
-              ? widget.shuntingItem!['shuntingCode'] ?? ''
-              : null,
-        };
+        queryParametrs = {'trainEntryCode': item.code};
       }
       logger.i(queryParametrs);
       var r =
@@ -178,27 +169,37 @@ class _PlanListPageState extends State<PlanListPage> {
                     ),
                     SizedBox(height: 16),
 
-                    // 操作按钮区域
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // 查看详情操作
-                            _showDetailView(context, item);
-                          },
-                          icon: Icon(Icons.visibility),
-                          label: Text('查看'),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // 编辑操作 - 在当前界面显示编辑弹窗
-                            _showEditInvestigateDialog(context, item);
-                          },
-                          icon: Icon(Icons.edit),
-                          label: Text('编辑'),
-                        ),
-                      ],
+                    // 操作按钮区域：仅填报人（调查人）可编辑
+                    Builder(
+                      builder: (context) {
+                        final user = Global.profile.permissions?.user;
+                        final itemUserId = item['reportUserId']?.toString();
+                        final itemUserName = item['reportUserName']?.toString() ?? '';
+                        final bool canEdit = user != null && (
+                          (itemUserId != null && itemUserId.isNotEmpty && user.userId?.toString() == itemUserId) ||
+                          (itemUserName.isNotEmpty && (user.nickName ?? user.userName ?? '') == itemUserName)
+                        );
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                _showDetailView(context, item);
+                              },
+                              icon: Icon(Icons.visibility),
+                              label: Text('查看'),
+                            ),
+                            if (canEdit)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  _showEditInvestigateDialog(context, item);
+                                },
+                                icon: Icon(Icons.edit),
+                                label: Text('编辑'),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -302,7 +303,6 @@ class _PlanListPageState extends State<PlanListPage> {
       BuildContext context, Map<String, dynamic> item) {
     final masInvestigateList = item['masInvestigateListList'] ?? [];
     List<Map<String, dynamic>> mappedList = [];
-
     // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
     if (masInvestigateList is List) {
       mappedList = masInvestigateList
@@ -310,7 +310,6 @@ class _PlanListPageState extends State<PlanListPage> {
           .map((item) => item as Map<String, dynamic>)
           .toList();
     }
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -416,56 +415,56 @@ class _PlanListPageState extends State<PlanListPage> {
 
     logger.i('保存修程公里数: ${item['masInvestigateProcList']}');
     try {
-      SmartDialog.showLoading();
-
-      // 获取masInvestigateProcList数组
-      final masInvestigateProcList = item['masInvestigateProcList'] as List?;
-      if (masInvestigateProcList == null || masInvestigateProcList.isEmpty) {
-        SmartDialog.dismiss();
-        SmartDialog.showToast('修程公里数数据为空');
+      final mainCode = item['code'] ?? item['encode'];
+      if (mainCode == null || mainCode.toString().trim().isEmpty) {
+        SmartDialog.showToast('调查单编号缺失，无法保存');
         return;
       }
 
-      // 准备保存的数据，包含masInvestigateProcList数组
-      // 确保数据格式正确，移除null值，保留必要的字段
+      final rawList = item['masInvestigateProcList'];
+      if (rawList == null || rawList is! List) {
+        SmartDialog.showToast('修程公里数数据为空');
+        return;
+      }
+      final masInvestigateProcList = rawList;
+
+      SmartDialog.showLoading();
+
       List<Map<String, dynamic>> procListToSave = [];
       for (var proc in masInvestigateProcList) {
-        if (proc is Map) {
-          Map<String, dynamic> procMap = Map<String, dynamic>.from(proc);
-          
-          // 确保必要字段存在
-          Map<String, dynamic> cleanProc = {
-            'masInvestigateCode': procMap['masInvestigateCode'] ?? item['code'] ?? item['encode'] ?? '',
-          };
-          
-          // 如果有code（已存在的记录），保留它
-          if (procMap['code'] != null) {
-            cleanProc['code'] = procMap['code'];
-          }
-          
-          // 添加修程相关字段
-          if (procMap['repairProcCode'] != null && procMap['repairProcCode'].toString().isNotEmpty) {
-            cleanProc['repairProcCode'] = procMap['repairProcCode'];
-          }
-          if (procMap['repairProcName'] != null && procMap['repairProcName'].toString().isNotEmpty) {
-            cleanProc['repairProcName'] = procMap['repairProcName'];
-          }
-          if (procMap['repairTimes'] != null && procMap['repairTimes'].toString().isNotEmpty) {
-            cleanProc['repairTimes'] = procMap['repairTimes'];
-          }
-          if (procMap['repairKilometer'] != null) {
-            cleanProc['repairKilometer'] = procMap['repairKilometer'];
-          }
-          if (procMap['repairDate'] != null && procMap['repairDate'].toString().isNotEmpty) {
-            cleanProc['repairDate'] = procMap['repairDate'];
-          }
-          
-          procListToSave.add(cleanProc);
+        if (proc == null || proc is! Map) continue;
+        Map<String, dynamic> procMap = Map<String, dynamic>.from(proc);
+
+        Map<String, dynamic> cleanProc = {
+          'masInvestigateCode': procMap['masInvestigateCode'] ?? mainCode.toString(),
+        };
+        if (procMap['code'] != null) cleanProc['code'] = procMap['code'];
+        if (procMap['repairProcCode'] != null && procMap['repairProcCode'].toString().trim().isNotEmpty) {
+          cleanProc['repairProcCode'] = procMap['repairProcCode'];
         }
+        if (procMap['repairProcName'] != null && procMap['repairProcName'].toString().trim().isNotEmpty) {
+          cleanProc['repairProcName'] = procMap['repairProcName'];
+        }
+        if (procMap['repairTimes'] != null && procMap['repairTimes'].toString().trim().isNotEmpty) {
+          cleanProc['repairTimes'] = procMap['repairTimes'];
+        }
+        if (procMap['repairKilometer'] != null) {
+          cleanProc['repairKilometer'] = procMap['repairKilometer'];
+        }
+        if (procMap['repairDate'] != null && procMap['repairDate'].toString().trim().isNotEmpty) {
+          cleanProc['repairDate'] = procMap['repairDate'];
+        }
+        procListToSave.add(cleanProc);
+      }
+
+      if (procListToSave.isEmpty) {
+        SmartDialog.dismiss();
+        SmartDialog.showToast('没有可保存的修程公里数');
+        return;
       }
 
       Map<String, dynamic> saveData = {
-        'code': item['code'] ?? item['encode'], // 使用code或encode作为主键
+        'code': mainCode,
         'masInvestigateProcList': procListToSave,
         'encode': item['encode'],
         'trainEntryCode': item['trainEntryCode'],
@@ -474,17 +473,13 @@ class _PlanListPageState extends State<PlanListPage> {
 
       logger.i('保存修程公里数数据: $saveData');
 
-      // 调用API保存数据
       await ProductApi().updateMasInvestigateList(saveData);
 
       SmartDialog.dismiss();
       SmartDialog.showToast('保存成功');
 
-      // 刷新数据
       await getMasInvestigate(widget.repairItem);
-
-      // 关闭弹窗
-      Navigator.pop(context);
+      if (context.mounted) Navigator.pop(context);
     } catch (e) {
       SmartDialog.dismiss();
       SmartDialog.showToast('保存失败: $e');
@@ -580,35 +575,36 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
     _loadRepairProcList();
   }
 
-  // 从item中加载masInvestigateProcList数据
+  // 从item中加载masInvestigateProcList数据（安全解析，避免非 Map 元素导致类型转换报错）
   void _loadRepairProcList() {
-    final masInvestigateProcList = widget.item['masInvestigateProcList'];
-    if (masInvestigateProcList != null && masInvestigateProcList is List) {
-      repairProcList = masInvestigateProcList
-          .map((item) => Map<String, dynamic>.from(item as Map))
+    final raw = widget.item['masInvestigateProcList'];
+    if (raw != null && raw is List) {
+      repairProcList = raw
+          .where((e) => e != null && e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
           .toList();
-      
       // 为每个记录创建controller
-      for (var proc in repairProcList) {
+      for (var i = 0; i < repairProcList.length; i++) {
+        final proc = repairProcList[i];
         final code = proc['code']?.toString() ?? '';
-        final key = code.isNotEmpty ? code : 'new_${repairProcList.indexOf(proc)}';
+        final key = code.isNotEmpty ? code : 'new_$i';
         kilometerControllers[key] = TextEditingController(
           text: proc['repairKilometer']?.toString() ?? '',
         );
       }
     } else {
-      // 如果没有数据，初始化为空列表
       repairProcList = [];
-      // 确保masInvestigateProcList存在
-      if (widget.item['masInvestigateProcList'] == null) {
-        widget.item['masInvestigateProcList'] = [];
-      }
+      widget.item['masInvestigateProcList'] = [];
     }
   }
 
   // 新增修程公里数行
   void _addRepairProcRow() {
     setState(() {
+      if (widget.item['masInvestigateProcList'] == null) {
+        widget.item['masInvestigateProcList'] = [];
+      }
+      final masInvestigateProcList = widget.item['masInvestigateProcList'] as List;
       // 创建新行数据
       final newRow = {
         'code': null, // 新增行没有code
@@ -621,9 +617,6 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
       };
       
       repairProcList.add(newRow);
-      
-      // 同步添加到原始数据
-      final masInvestigateProcList = widget.item['masInvestigateProcList'] as List;
       masInvestigateProcList.add(newRow);
       
       // 为新行创建controller
@@ -637,20 +630,17 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
     if (index < 0 || index >= repairProcList.length) return;
     
     setState(() {
-      // 释放controller
       final proc = repairProcList[index];
       final code = proc['code']?.toString() ?? '';
       final key = code.isNotEmpty ? code : 'new_$index';
       kilometerControllers[key]?.dispose();
       kilometerControllers.remove(key);
       
-      // 从列表中删除
       repairProcList.removeAt(index);
       
-      // 同步从原始数据中删除
-      final masInvestigateProcList = widget.item['masInvestigateProcList'] as List;
-      if (index < masInvestigateProcList.length) {
-        masInvestigateProcList.removeAt(index);
+      final raw = widget.item['masInvestigateProcList'];
+      if (raw is List && index < raw.length) {
+        raw.removeAt(index);
       }
       
       // 重新创建controllers（因为索引改变了）
@@ -689,14 +679,36 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
       }
     }
 
-    // 解析日期
+    // 解析日期（仅接受字符串）
     DateTime? parseDate(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return null;
+      if (dateStr == null || dateStr.toString().trim().isEmpty) return null;
       try {
         return DateTime.parse(dateStr);
       } catch (e) {
         return null;
       }
+    }
+
+    // 从接口返回值解析日期（可能是 String 或 int 时间戳）
+    DateTime? parseDateFromDynamic(dynamic v) {
+      if (v == null) return null;
+      if (v is String) return parseDate(v);
+      if (v is int) {
+        try {
+          if (v > 10000000000) return DateTime.fromMillisecondsSinceEpoch(v);
+          return DateTime.fromMillisecondsSinceEpoch(v * 1000);
+        } catch (e) {
+          return null;
+        }
+      }
+      return parseDate(v.toString());
+    }
+
+    // 将日期转为显示字符串（支持 dynamic 的 repairDate）
+    String formatDateDynamic(dynamic dateValue) {
+      final dt = parseDateFromDynamic(dateValue);
+      if (dt == null) return '';
+      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
     }
 
     // 选择修程
@@ -733,34 +745,26 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
         setState(() {
           repairProcList[index]['repairProcCode'] = selected['code']?.toString() ?? '';
           repairProcList[index]['repairProcName'] = selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
+          final raw = widget.item['masInvestigateProcList'];
+          if (raw is List && index < raw.length) {
+            raw[index]['repairProcCode'] = repairProcList[index]['repairProcCode'];
+            raw[index]['repairProcName'] = repairProcList[index]['repairProcName'];
+          }
         });
-        // 同步更新原始数据
-        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
-        if (masInvestigateProcList != null) {
-          // 确保列表长度一致
-          while (masInvestigateProcList.length < repairProcList.length) {
-            masInvestigateProcList.add({});
-          }
-          if (index < masInvestigateProcList.length) {
-            masInvestigateProcList[index]['repairProcCode'] = selected['code']?.toString() ?? '';
-            masInvestigateProcList[index]['repairProcName'] = selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
-          }
-        }
       }
     }
 
     // 选择日期
     Future<void> selectDate(int index) async {
-      if (index >= repairProcList.length) return;
+      if (index < 0 || index >= repairProcList.length) return;
       
       final proc = repairProcList[index];
-      final currentDate = parseDate(proc['repairDate']) ?? DateTime.now();
+      final currentDate = parseDateFromDynamic(proc['repairDate']) ?? DateTime.now();
       final pickedDate = await showDatePicker(
         context: context,
         initialDate: currentDate,
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
-        locale: const Locale('zh', 'CN'),
         helpText: '选择修程日期',
         cancelText: '取消',
         confirmText: '确定',
@@ -770,18 +774,11 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
         final dateStr = '${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}';
         setState(() {
           repairProcList[index]['repairDate'] = dateStr;
+          final raw = widget.item['masInvestigateProcList'];
+          if (raw is List && index < raw.length) {
+            raw[index]['repairDate'] = dateStr;
+          }
         });
-        // 同步更新原始数据
-        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
-        if (masInvestigateProcList != null) {
-          // 确保列表长度一致
-          while (masInvestigateProcList.length < repairProcList.length) {
-            masInvestigateProcList.add({});
-          }
-          if (index < masInvestigateProcList.length) {
-            masInvestigateProcList[index]['repairDate'] = dateStr;
-          }
-        }
       }
     }
 
@@ -902,16 +899,9 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                       onChanged: (value) {
                         final numValue = value.isEmpty ? null : double.tryParse(value);
                         repairProcList[index]['repairKilometer'] = numValue;
-                        // 同步更新原始数据
-                        final masInvestigateProcList = widget.item['masInvestigateProcList'] as List?;
-                        if (masInvestigateProcList != null) {
-                          // 确保列表长度一致
-                          while (masInvestigateProcList.length < repairProcList.length) {
-                            masInvestigateProcList.add({});
-                          }
-                          if (index < masInvestigateProcList.length) {
-                            masInvestigateProcList[index]['repairKilometer'] = numValue;
-                          }
+                        final raw = widget.item['masInvestigateProcList'];
+                        if (raw is List && index < raw.length) {
+                          raw[index]['repairKilometer'] = numValue;
                         }
                       },
                     ),
@@ -928,8 +918,8 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          formatDate(proc['repairDate']) != '' 
-                              ? formatDate(proc['repairDate']) 
+                          formatDateDynamic(proc['repairDate']).isNotEmpty
+                              ? formatDateDynamic(proc['repairDate'])
                               : '点击选择',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.blue),
@@ -986,6 +976,20 @@ class _InvestigateItemCardWidgetState
   late TextEditingController resultController;
   List<XFile> _selectedMedia = [];
   List<String> _uploadedMedia = [];
+
+  /// 仅当调查人为当前用户时可填写
+  bool get _isCurrentUserInvestigator {
+    final user = Global.profile.permissions?.user;
+    if (user == null) return false;
+    final itemUserId = widget.masItem['reportUserId']?.toString();
+    final itemUserName = widget.masItem['reportUserName']?.toString() ?? '';
+    final currentUserId = user.userId?.toString();
+    final currentName = user.nickName ?? user.userName ?? '';
+    if (currentUserId != null && itemUserId != null && itemUserId.isNotEmpty) {
+      return currentUserId == itemUserId;
+    }
+    return itemUserName.isNotEmpty && currentName.isNotEmpty && itemUserName == currentName;
+  }
 
   @override
   void initState() {
@@ -1090,20 +1094,30 @@ class _InvestigateItemCardWidgetState
             Text('指派调查班组: ${widget.masItem['teamName'] ?? ''}'),
             SizedBox(height: 4),
             Text('调查人: ${widget.masItem['reportUserName'] ?? ''}'),
+            if (!_isCurrentUserInvestigator)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  '仅调查人可填写',
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                ),
+              ),
             SizedBox(height: 12),
-            // 调查结果输入框 - 增加行数
+            // 调查结果输入框 - 增加行数（仅调查人可编辑）
             TextField(
               controller: resultController,
+              readOnly: !_isCurrentUserInvestigator,
               decoration: InputDecoration(
                 labelText: '调查结果',
                 border: OutlineInputBorder(),
-                hintText: '请输入调查结果',
+                hintText: _isCurrentUserInvestigator ? '请输入调查结果' : '仅调查人可填写',
               ),
               maxLines: 10,
               minLines: 5,
             ),
             SizedBox(height: 16),
-            // 上传附件区域
+            // 上传附件区域（仅调查人可见）
+            if (_isCurrentUserInvestigator) ...[
             Text(
               '上传附件',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -1281,6 +1295,7 @@ class _InvestigateItemCardWidgetState
                 child: Text('保存'),
               ),
             ),
+            ],
           ],
         ),
       ),

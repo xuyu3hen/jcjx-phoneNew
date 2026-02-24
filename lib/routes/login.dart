@@ -379,11 +379,26 @@ class _LoginRouteState extends State<LoginRoute> {
       
       logger.i("当前版本: $currentVersion+$currentBuildNumber");
       
-      var r = await UpdateApi().checkUpdate(queryParametrs: {
-        'id': F.id,
-      });
+      // 获取当前环境对应的 env 参数
+      String env = 'release';
+      switch (F.appFlavor) {
+        case Flavor.env_dev:
+          env = 'dev';
+          break;
+        case Flavor.env_test:
+          env = 'test';
+          break;
+        case Flavor.env_release:
+          env = 'release';
+          break;
+        default:
+          env = 'release';
+      }
       
-      if (r.version == null) {
+      // 使用 getLatestOne 获取最新版本信息
+      var r = await ProductApi().getLatestOne(env: env);
+      
+      if (r == null || r.version == null) {
         logger.w("服务器返回的版本信息为空");
         return;
       }

@@ -786,7 +786,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                 // SmartDialog.dismiss(status: SmartStatus.loading);
               } else {
                 showToast("机统28提报失败，请检查网络连接");
-                // SmartDialog.dismiss(status: SmartStatus.loading);
+                // SmartDialo g.dismiss(status: SmartStatus.loading);
               }
             }
           } on DioException catch (e) {

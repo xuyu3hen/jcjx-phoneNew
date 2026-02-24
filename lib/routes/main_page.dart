@@ -7,6 +7,7 @@ import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
+import 'message_center_page.dart';
 import 'production/repair_train_temp.dart';
 import 'vehicle28/submit28_manage.dart';
 
@@ -21,12 +22,29 @@ class MainPage extends StatefulWidget {
 class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   PageController? pageController;
   int page = 0;
-  // int page = 1;
+  int _messageCount = 0;
 
   @override
   void initState() {
     super.initState();
     pageController = PageController(initialPage: page);
+    _loadMessageCount();
+  }
+
+  Future<void> _loadMessageCount() async {
+    try {
+      final res = await ProductApi().getMessageInfo(
+        queryParametrs: {
+          'type': [8],
+          'auditDTO': {},
+        },
+      );
+      final data = res is Map ? res : <String, dynamic>{};
+      final count = (data['count'] as num?)?.toInt() ?? 0;
+      if (mounted) {
+        setState(() => _messageCount = count);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -106,15 +124,61 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
             physics: const NeverScrollableScrollPhysics(),
             controller: pageController,
             onPageChanged: onPageChanged,
-            children: const <Widget>[
-              NormalMainPage(),
-              PersonPage(),
+            children: <Widget>[
+              MessageCenterPage(
+                onMessageCountChanged: (count) {
+                  if (mounted) setState(() => _messageCount = count);
+                },
+              ),
+              const NormalMainPage(),
+              const PersonPage(),
             ],
           ),
           bottomNavigationBar: BottomNavigationBar(
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.work), label: '工作'),
+            items: [
               BottomNavigationBarItem(
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications),
+                    if (_messageCount > 0)
+                      Positioned(
+                        right: -6,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(10)),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _messageCount > 99
+                                ? '99+'
+                                : '$_messageCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                label: '消息',
+              ),
+              const BottomNavigationBarItem(
+                  icon: Icon(Icons.work), label: '工作'),
+              const BottomNavigationBarItem(
                   icon: Icon(Icons.person), label: '我的'),
             ],
             onTap: onTap,
@@ -134,6 +198,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     setState(() {
       this.page = page;
     });
+    if (page == 0) _loadMessageCount();
   }
 
   //修改bottomNavigationBar的点击事件,可以在此处更换被选中表现形式s
@@ -150,12 +215,11 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     //     duration: const Duration(milliseconds: 300), curve: Curves.easeInOutExpo);
   }
 
-//添加图片的点击事件
+//添加图片的点击事件（跳转到「我的」页）
   void onBigImgTap() {
     setState(() {
-      page = 1;
-      // this.bigImg = 'images/icon_home.png';
-      onTap(1);
+      page = 2;
+      onTap(2);
     });
   }
 }

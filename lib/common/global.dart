@@ -1,6 +1,20 @@
+import 'dart:convert';
+import 'dart:io';
 import '../index.dart';
 import '../models/progress.dart';
 import '../api/production_api.dart';
+
+// #region agent log
+void _agentLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
+    final m = {'location': location, 'message': message, 'data': data, 'timestamp': DateTime.now().millisecondsSinceEpoch, 'sessionId': 'debug-session', 'hypothesisId': hypothesisId};
+    final line = '${jsonEncode(m)}\n';
+    File(path).writeAsStringSync(line, mode: FileMode.append);
+  } catch (_) {}
+  try { print('AGENT_LOG ${jsonEncode({'location': location, 'message': message, 'data': data, 'hypothesisId': hypothesisId})}'); } catch (_) {}
+}
+// #endregion
 
 
 
@@ -60,6 +74,9 @@ class Global {
 
   // 初始化全局信息
   static Future init() async {
+    // #region agent log
+    _agentLog('global.dart:init:entry', 'Global.init started', {}, 'H3');
+    // #endregion
     WidgetsFlutterBinding.ensureInitialized();
 
     _prefs = await SharedPreferences.getInstance();
@@ -93,8 +110,20 @@ class Global {
 
     // 初始化版本号（从 pubspec.yaml 统一读取）
     await F.initVersion();
-
-    AppApi.init();
+    // #region agent log
+    _agentLog('global.dart:before AppApi.init', 'about to call AppApi.init', {}, 'H3');
+    // #endregion
+    try {
+      await AppApi.init();
+      // #region agent log
+      _agentLog('global.dart:after AppApi.init', 'AppApi.init completed', {}, 'H3');
+      // #endregion
+    } catch (e, st) {
+      // #region agent log
+      _agentLog('global.dart:AppApi.init error', 'AppApi.init threw', {'error': e.toString(), 'stack': st.toString()}, 'H3');
+      // #endregion
+      rethrow;
+    }
   }
 
   // 持久化Profile信息

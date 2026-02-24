@@ -1,9 +1,23 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 
 import '../index.dart';
 // import '../config/loadCA.dart';
 export 'package:dio/dio.dart' show DioException;
+
+// #region agent log
+void _agentLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  try {
+    final path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
+    final m = {'location': location, 'message': message, 'data': data, 'timestamp': DateTime.now().millisecondsSinceEpoch, 'sessionId': 'debug-session', 'hypothesisId': hypothesisId};
+    final line = '${jsonEncode(m)}\n';
+    File(path).writeAsStringSync(line, mode: FileMode.append);
+  } catch (_) {}
+  try { print('AGENT_LOG ${jsonEncode({'location': location, 'message': message, 'data': data, 'hypothesisId': hypothesisId})}'); } catch (_) {}
+}
+// #endregion
 
 class AppApi {
   BuildContext? context;
@@ -55,23 +69,49 @@ static void disableCertificateVerification(Dio dioInstance) {
 
 // 初始化 Dio 配置
 static Future<void> init() async {
+  // #region agent log
+  _agentLog('app_api.dart:init:entry', 'AppApi.init started', {}, 'H2');
+  // #endregion
   var logger = AppLogger.logger;
+  // #region agent log
+  _agentLog('app_api.dart:after logger', 'logger obtained', {'hasLogger': true}, 'H2');
+  // #endregion
 
   // 设置用户 token
+  // #region agent log
+  try {
+    final p = Global.profile;
+    _agentLog('app_api.dart:before profile', 'before Global.profile access', {'dataNull': p.data == null, 'accessTokenNull': p.accessToken == null}, 'H1');
+  } catch (e) {
+    _agentLog('app_api.dart:profile access threw', 'Global.profile access threw', {'error': e.toString()}, 'H1');
+    rethrow;
+  }
+  // #endregion
   dio.options.headers[HttpHeaders.authorizationHeader] =
       Global.profile.data?.accessToken;
+  // #region agent log
+  _agentLog('app_api.dart:after auth header', 'first header set', {'authSet': dio.options.headers[HttpHeaders.authorizationHeader] != null}, 'H4');
+  // #endregion
   logger.i(
       "authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
   dio.options.headers.addAll({'token': Global.profile.accessToken});
+  // #region agent log
+  _agentLog('app_api.dart:after addAll', 'addAll done', {}, 'H4');
+  // #endregion
   dio2.options.headers["content-type"] = "application/json";
   dio2.options.headers[HttpHeaders.authorizationHeader] =
       Global.profile.data?.accessToken;
   logger.i('apptoken${dio.options.headers['token']}');
   logger.i('baseurl${dio.options.baseUrl}');
 
-
+  // #region agent log
+  _agentLog('app_api.dart:before disableCert', 'before disableCertificateVerification', {'dioAdapter': dio.httpClientAdapter.runtimeType.toString()}, 'H5');
+  // #endregion
   disableCertificateVerification(dio);
   disableCertificateVerification(dio2);
+  // #region agent log
+  _agentLog('app_api.dart:init:exit', 'AppApi.init completed', {}, 'H5');
+  // #endregion
   // 调试模式下禁用证书校验
 //    if (Global.isRelease) {
 //     // 生产环境加载证书
