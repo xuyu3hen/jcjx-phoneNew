@@ -28,6 +28,9 @@ class _LoginRouteState extends State<LoginRoute> {
     super.initState();
     initXUpdate();
     _loadSavedCredentials(); // 加载保存的凭据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getLastUpdate();
+    });
   }
 
   // 更新组件初始化
@@ -163,10 +166,6 @@ class _LoginRouteState extends State<LoginRoute> {
   @override
   Widget build(BuildContext context) {
     // UserModel usermodel = Provider.of<UserModel>(context, listen: false);
-    if (F.id != 'com.jcjx_phone_dev') {
-      getLastUpdate();
-    }
-
     return Scaffold(
       body: Stack(
         children: [
@@ -397,23 +396,14 @@ class _LoginRouteState extends State<LoginRoute> {
       
       // 使用 getLatestOne 获取最新版本信息
       var r = await ProductApi().getLatestOne(env: env);
-      
-      if (r == null || r.version == null) {
-        logger.w("服务器返回的版本信息为空");
+      logger.i("最新版本信息: $r");
+      if (r is! Map) {
         return;
       }
-      
-      // 比较版本号（支持语义化版本号比较）
-      bool hasUpdate = _compareVersion(currentVersion, r.version!) > 0 || 
-                       (r.buildNumber != null && r.buildNumber! > currentBuildNumber);
-      
-      if (hasUpdate) {
-        logger.i("发现新版本: ${r.version}+${r.buildNumber ?? 'N/A'}");
-        checkUpdateByUpdateEntity(r);
-      } else {
-        logger.i("已是最新版本");
-        // showToast("已是最新版本");
-      }
+      final url = r['url']?.toString() ?? '';
+      final version = r['version']?.toString() ?? '';
+      final description = r['description']?.toString() ?? '';
+      logger.i("更新信息: version=$version, url=$url, description=$description");
     } catch (e) {
       logger.e("检查更新失败: $e");
       // 不显示错误提示，避免影响用户体验

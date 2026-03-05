@@ -83,37 +83,44 @@ class _NormalMainPageState extends State<NormalMainPage> {
   }
 
   void initPermissions() async {
-    Permissions p = await LoginApi().getpermissions();
-    if (p.code == 200) {
-      Global.profile.permissions = p;
-      
-      // 权限信息加载完成后，预加载用户个人机车作业数据
-      if (!Global.isUserRepairTrainDataLoaded) {
-        Global.preloadUserRepairTrainData().catchError((e) {
-          logger.e('预加载用户个人机车作业数据失败: $e');
-        });
+    try {
+      Permissions p = await LoginApi().getpermissions();
+      if (p.code == 200) {
+        Global.profile.permissions = p;
+
+        if (!Global.isUserRepairTrainDataLoaded) {
+          Global.preloadUserRepairTrainData().catchError((e) {
+            logger.e('预加载用户个人机车作业数据失败: $e');
+          });
+        }
+      } else {
+        showToast("获取用户账号信息失败");
       }
-    } else {
-      showToast("获取用户账号信息失败");
-    }
-    Map<String, dynamic> queryParameters = {};
-    if (Global.profile.permissions?.user.dept?.parentId != null) {
-      queryParameters['idList'] =
-          Global.profile.permissions?.user.dept?.parentId;
-      var r = await ProductApi().getDeptByDeptIdList(queryParameters);
-      logger.i(r);
-      Global.parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
+      Map<String, dynamic> queryParameters = {};
+      if (Global.profile.permissions?.user.dept?.parentId != null) {
+        queryParameters['idList'] =
+            Global.profile.permissions?.user.dept?.parentId;
+        var r = await ProductApi().getDeptByDeptIdList(queryParameters);
+        logger.i(r);
+        Global.parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
+      }
+    } catch (e, stackTrace) {
+      logger.e('initPermissions 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
   // 初始化修程信息
   void initRepairProc() async {
-    Map<String, dynamic> queryParameters = {'pageNum': 0, 'pageSize': 0};
-    var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
-    if (r.code == 200) {
-      r.rows?.forEach((element) {
-        Global.repairProcInfo.add(element.toJson());
-      });
+    try {
+      Map<String, dynamic> queryParameters = {'pageNum': 0, 'pageSize': 0};
+      var r = await ProductApi().getRepairProc(queryParametrs: queryParameters);
+      if (r.code == 200) {
+        r.rows?.forEach((element) {
+          Global.repairProcInfo.add(element.toJson());
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.e('initRepairProc 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
@@ -251,6 +258,17 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //     ),
           //   ],
           // ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              _buildFeatureItem(
+                Icon(Icons.assignment, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainProgress'),
+                '调车',
+              ),
+            ],
+          ),
           const Divider(height: 10, indent: 10, endIndent: 10),
         ],
       ),

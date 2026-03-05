@@ -257,7 +257,7 @@ class ProductApi extends AppApi {
 
   // 获取最新数据
   // /fileserver/TApkVersion/getLatestOne
-  Future<MyApkVersion?> getLatestOne({
+  Future<dynamic> getLatestOne({
     String? env, // 环境参数：dev, test, release
   }) async {
     try {
@@ -265,13 +265,15 @@ class ProductApi extends AppApi {
       if (env != null) {
         queryParams['env'] = env;
       }
+      logger.i(queryParams);
       var r = await AppApi.dio.get(
         "/fileserver/TApkVersion/getLatestOne",
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       // 解析返回的数据为 MyApkVersion 对象
       if (r.data["data"] != null) {
-        return MyApkVersion.fromJson(r.data["data"]);
+
+        return r.data["data"];
       }
       return null;
     } catch (e) {

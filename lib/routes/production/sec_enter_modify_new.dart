@@ -546,18 +546,27 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   child: ZjcFormInputCell(
                     title: "车号",
                     hintText: "车号",
-                    inputCallBack: (value) {
-                      setState(() {
+                    rightWidget: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        if (trainNumSelected["trainNum"] != null &&
+                            trainNumSelected["trainNum"].toString().isNotEmpty) {
+                          getRepairPlanByTrainNum();
+                        } else {
+                           SmartDialog.showToast("请输入车号");
+                         }
+                       },
+                     ),
+                     inputCompletionCallBack: (value, isSubmitted) {
+                       if (isSubmitted && value.isNotEmpty) {
+                         getRepairPlanByTrainNum();
+                       }
+                     },
+                     inputCallBack: (value) {
+                       setState(() {
                         trainNumSelected["trainNum"] = value;
                       });
-
-                      // 车号输入完成后自动搜索
-                      if (value.isNotEmpty) {
-                        // 添加一个短暂的延迟，确保状态更新后再执行搜索
-                        Future.microtask(() {
-                          getRepairPlanByTrainNum();
-                        });
-                      }
                     },
                   ),
                 ),

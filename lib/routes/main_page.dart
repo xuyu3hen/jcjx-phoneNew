@@ -1,4 +1,6 @@
 
+
+
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
 
@@ -23,12 +25,169 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   PageController? pageController;
   int page = 0;
   int _messageCount = 0;
+  bool _hasUpdate = false; // 新增：是否有更新的标识
+  var logger = AppLogger.logger;
 
   @override
   void initState() {
     super.initState();
-    pageController = PageController(initialPage: page);
-    _loadMessageCount();
+    pageController = PageController(initialPage: this.page);
+
+    // 获取是线上版本还是线下版版本
+    // queryParameters = {
+    //   'app_id': F.id,
+    //   'app_version': await F.getVersion(),
+    //   'app_build_number': await F.getBuildNumber(),
+    //   'app_flavor': F.appFlavor.toString(),
+    // };
+    logger.i('当前环境: ${F.appFlavor}');
+    // ProductApi().getLatestOne(env: 'release');
+    // 初始化更新组件
+    initXUpdate();
+    
+    // 延迟检查更新，确保页面已加载
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getLastUpdate();
+    });
+  }
+
+  // 更新组件初始化
+  void initXUpdate() {
+    if (Platform.isAndroid) {
+      FlutterXUpdate.init(
+        ///是否输出日志
+        debug: true,
+
+        ///是否使用post请求
+        isPost: true,
+
+        ///post请求是否是上传json
+        isPostJson: false,
+
+        ///请求响应超时时间
+        timeout: 25000,
+
+        ///是否开启自动模式
+        isWifiOnly: false,
+
+        ///是否开启自动模式
+        isAutoMode: false,
+
+        ///需要设置的公共参数
+        supportSilentInstall: false,
+
+        ///在下载过程中，如果点击了取消的话，是否弹出切换下载方式的重试提示弹窗
+        enableRetry: false,
+      ).then((value) {
+        // updateMessage('初始化成功: $value');
+      }).catchError((error) {
+        // logger.e(error);
+      });
+    } else {
+      // updateMessage('ios暂不支持XUpdate更新');
+    }
+  }
+
+  void getLastUpdate() async {
+    try {
+      var logger = AppLogger.logger;
+      logger.i("检查更新，应用ID: ${F.id}");
+
+      // 获取当前应用版本信息
+      String currentVersion = await F.getVersion();
+      int currentBuildNumber = await F.getBuildNumber();
+
+      logger.i("当前版本: $currentVersion+$currentBuildNumber");
+
+      // 获取当前环境对应的 env 参数
+      String env = 'release';
+      switch (F.appFlavor) {
+        case Flavor.env_dev:
+          env = 'dev';
+          break;
+        case Flavor.env_test:
+          env = 'test';
+          break;
+        case Flavor.env_release:
+          env = 'release';
+          break;
+        default:
+          env = 'release';
+      }
+
+      // 使用 getLatestOne 获取最新版本信息
+      var r = await ProductApi().getLatestOne(env: env);
+      logger.i("服务器返回的版本信息: $r");
+      // if (r == null || r.version == null) {
+      //   logger.i("服务器返回的版本信息为空");
+      //   return;
+      // }
+
+      // 比较版本号（支持语义化版本号比较）
+
+
+      // 更新状态
+  
+
+      // if (hasUpdate) {
+      //   logger.i("准备弹出更新提示框，下载地址: ${r.url}");
+      //   checkUpdateByUpdateEntity(r);
+      // } else {
+      //   logger.i("无需更新");
+      //   // showToast("已是最新版本");
+      // }
+    } catch (e) {
+      // logger.e("检查更新失败: $e");
+      // 不显示错误提示，避免影响用户体验
+    }
+  }
+
+  // 比较版本号（语义化版本号比较）
+  // 返回值: >0 表示 version1 > version2, <0 表示 version1 < version2, 0 表示相等
+  int _compareVersion(String version1, String version2) {
+    List<int> v1Parts =
+        version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> v2Parts =
+        version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
+    // 补齐长度
+    while (v1Parts.length < v2Parts.length) v1Parts.add(0);
+    while (v2Parts.length < v1Parts.length) v2Parts.add(0);
+
+    for (int i = 0; i < v1Parts.length; i++) {
+      if (v1Parts[i] > v2Parts[i]) return -1; // version1 更新
+      if (v1Parts[i] < v2Parts[i]) return 1; // version2 更新
+    }
+    return 0; // 相等
+  }
+
+  // 转义成UpdateEntity
+  UpdateEntity customJsonParse(myapk) {
+    // 构建完整的下载URL（如果是相对路径，需要添加服务器地址）
+    String downloadUrl = myapk.url ?? '';
+    if (downloadUrl.isNotEmpty && !downloadUrl.startsWith('http')) {
+      // 相对路径，添加服务器地址
+      String baseUrl = UpdateApi.distributionServerUrl;
+      if (!downloadUrl.startsWith('/')) {
+        downloadUrl = '/$downloadUrl';
+      }
+      downloadUrl = '$baseUrl$downloadUrl';
+    }
+
+    return UpdateEntity(
+      isForce: myapk.isForceUpdate ?? false, // 使用服务器返回的强制更新标志
+      hasUpdate: true,
+      isIgnorable: !(myapk.isForceUpdate ?? false), // 强制更新时不可忽略
+      versionCode: myapk.buildNumber ?? 1,
+      versionName: myapk.version ?? '未知版本',
+      updateContent: myapk.dec ?? '新版本更新',
+      downloadUrl: downloadUrl,
+    );
+  }
+
+  ///传入UpdateEntity进行更新提示
+  void checkUpdateByUpdateEntity(myapk) {
+    FlutterXUpdate.updateByInfo(updateEntity: customJsonParse(myapk));
   }
 
   Future<void> _loadMessageCount() async {
@@ -178,8 +337,27 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
               ),
               const BottomNavigationBarItem(
                   icon: Icon(Icons.work), label: '工作'),
-              const BottomNavigationBarItem(
-                  icon: Icon(Icons.person), label: '我的'),
+              BottomNavigationBarItem(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.person),
+                      if (_hasUpdate)
+                        Positioned(
+                          right: -2,
+                          top: -2,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: '我的'),
             ],
             onTap: onTap,
             currentIndex: page,
