@@ -98,6 +98,16 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
       SmartDialog.showToast('代码为空');
       return;
     }
+    final idx = _packages.indexWhere(
+        (e) => (e['code']?.toString() ?? '') == (code.toString()));
+    if (idx != -1) {
+      final st = _packages[idx]['status'];
+      final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+      if (stInt == 1) {
+        SmartDialog.showToast('已领取，无需重复');
+        return;
+      }
+    }
     try {
       SmartDialog.showLoading();
       final r = await ProductApi().receiveTrainShuntingPackage(code: code);
@@ -165,6 +175,9 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                   (pkg['packageName'] ?? pkg['name'] ?? '')
                                       .toString();
                               final code = (pkg['code'] ?? '').toString();
+                              final st = pkg['status'];
+                              final stInt =
+                                  st is int ? st : int.tryParse(st?.toString() ?? '');
                               return Card(
                                 child: ListTile(
                                   title: Text(name),
@@ -172,8 +185,10 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       TextButton(
-                                        onPressed: () => _receive(code),
-                                        child: const Text('领取'),
+                                        onPressed: (stInt == 1)
+                                            ? null
+                                            : () => _receive(code),
+                                        child: Text(stInt == 1 ? '已领取' : '领取'),
                                       ),
                                       const Icon(Icons.arrow_forward_ios,
                                           size: 16),
@@ -210,7 +225,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   }
 }
 
-class TrainShuntingPlanListPage extends StatelessWidget {
+class TrainShuntingPlanListPage extends StatefulWidget {
   final String title;
   final List<Map<String, dynamic>> planList;
 
@@ -219,6 +234,19 @@ class TrainShuntingPlanListPage extends StatelessWidget {
     required this.title,
     required this.planList,
   });
+
+  @override
+  State<TrainShuntingPlanListPage> createState() =>
+      _TrainShuntingPlanListPageState();
+}
+
+class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
+  late List<Map<String, dynamic>> _planList;
+  @override
+  void initState() {
+    super.initState();
+    _planList = widget.planList.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
 
   String _fmt(dynamic v) {
     if (v == null) return '';
@@ -231,22 +259,30 @@ class TrainShuntingPlanListPage extends StatelessWidget {
     return s;
   }
 
+  void _start(int index) {
+    SmartDialog.showToast('开工成功');
+  }
+
+  void _complete(int index) {
+    SmartDialog.showToast('完成成功');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
-      body: planList.isEmpty
+      body: _planList.isEmpty
           ? const Center(child: Text('暂无计划'))
           : ListView.separated(
               padding: const EdgeInsets.all(16.0),
-              itemCount: planList.length,
+              itemCount: _planList.length,
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
-                final p = planList[index];
+                final p = _planList[index];
                 final ends = (p['ends'] ?? '').toString();
                 final startAreaName = (p['startAreaName'] ?? '').toString();
                 final startTrackNum = (p['startTrackNum'] ?? '').toString();
@@ -283,6 +319,27 @@ class TrainShuntingPlanListPage extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text('备注: $remark'),
                         ],
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            SizedBox(
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: () => _start(index),
+                                child: const Text('开工'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: () => _complete(index),
+                                child: const Text('完成'),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
