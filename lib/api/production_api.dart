@@ -129,6 +129,23 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/trainShuntingPackage/selectAll
+  Future<dynamic> getTrainShuntingPackage({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShuntingPackage/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i(((r.data["data"])["data"])['rows']);
+      return ((r.data["data"])["data"])['rows'];
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
   // /dispatch/trainShunting/selectAll
   Future<dynamic> saveTrainShunting({
     Map<String, dynamic>? queryParametrs,

@@ -264,7 +264,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
             children: <Widget>[
               _buildFeatureItem(
                 Icon(Icons.assignment, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainProgress'),
+                () => Navigator.pushNamed(context, 'trainShuntingPackage'),
                 '调车',
               ),
             ],

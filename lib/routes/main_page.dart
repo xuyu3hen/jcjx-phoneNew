@@ -9,6 +9,7 @@ import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
+import 'production/train_shunting_package_page.dart';
 import 'message_center_page.dart';
 import 'production/repair_train_temp.dart';
 import 'vehicle28/submit28_manage.dart';
@@ -267,6 +268,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'jt28submitManage':(context) => const Vehicle28FormManage(),
         'repairTrainManage':(context) => const TrainRepairPageManage(),
         'repairTrainProgress':(context) => const TrainRepairProgressPage(),
+        'trainShuntingPackage':(context) => const TrainShuntingPackagePage(),
         'workProgress':(context) => const WorkProgressPage(),
         'repairTrainTempManage':(context) => const TrainRepairTempManage(),
       },
