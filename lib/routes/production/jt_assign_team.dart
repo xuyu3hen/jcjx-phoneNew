@@ -106,7 +106,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
 
     try {
       var r = await ProductApi()
-          .getNeedToDispatchJt28(queryParametrs: queryParameters);
+          .getNeedToDispatchTeamJt28(queryParametrs: queryParameters);
       setState(() {
         sys28List = r;
 
@@ -800,7 +800,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
 
   void getTeamList() async {
     Map<String, dynamic> params = {
-      "parentIdList": Global.profile.permissions?.user.dept?.deptId,
+      "parentIdList": Global.profile.permissions?.user.dept?.parentId,
     };
     try {
       var response =

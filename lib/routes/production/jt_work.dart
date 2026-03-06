@@ -418,8 +418,8 @@ class _JtShowPageState extends State<JtWorkList> {
                                       ProductApi().getFaultVideoAndImage);
                                 }
                               : null,
-                          onStartWork: () {
-                            var result = Navigator.push(
+                          onStartWork: () async {
+                            var result = await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FaultDisposalPage(

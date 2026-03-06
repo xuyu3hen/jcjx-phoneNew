@@ -185,40 +185,47 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _buildLabeledText(
-                        label: '机型',
+                      child: ZjcFormInputCell(
+                        title: "机型",
                         text: _model,
+                        enabled: false,
+                        showRedStar: false,
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: _buildLabeledText(
-                        label: '机车号',
+                      child: ZjcFormInputCell(
+                        title: "机车号",
                         text: _trainNum,
+                        enabled: false,
+                        showRedStar: false,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
                 // 2. 工序节点
-                _buildLabeledTextBlock(
-                  label: '工序节点',
+                ZjcFormInputCell(
+                  title: "工序节点",
                   text: _processMainNode,
-                  height: 60,
+                  enabled: false,
+                  showRedStar: false,
                 ),
                 // 2. 故障现象 文本域
-                _buildLabeledTextBlock(
-                  label: '故障现象',
+                ZjcFormInputCell(
+                  title: "故障现象",
                   text: _faultPhenomenon,
-                  height: 60,
+                  maxLines: 3,
+                  enabled: false,
+                  showRedStar: false,
                 ),
-                const SizedBox(height: 16),
-
+                
                 // 3. 施修方案 文本域
-                _buildLabeledTextBlock(
-                  label: '施修方案',
+                ZjcFormInputCell(
+                  title: "施修方案",
                   text: _repairPlan,
-                  height: 60,
+                  maxLines: 3,
+                  enabled: false,
+                  showRedStar: false,
                 ),
                 const SizedBox(height: 16),
 
@@ -271,39 +278,18 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                   },
                 ),
 
-                const SizedBox(height: 16),
-
-                // 5. 施修情况（红色标签 + 文本域）
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '施修情况',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      padding: const EdgeInsets.all(8),
-                      height: 120,
-                      child: TextField(
-                        controller: _repairSituationController,
-                        maxLines: null, // 支持多行
-                        expands: true, // 填充父容器高度
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: '请输入施修情况...',
-                        ),
-                      ),
-                    ),
-                  ],
+                // 5. 施修情况
+                ZjcFormInputCell(
+                  title: "施修情况",
+                  hintText: "请输入施修情况...",
+                  text: _repairSituationController.text,
+                  maxLines: 5,
+                  showRedStar: true,
+                  inputCallBack: (value) {
+                     _repairSituationController.text = value;
+                  },
                 ),
+                const SizedBox(height: 16),
                 const SizedBox(height: 16),
 
                 // 6. 修复视频及图片（占位区域）
@@ -377,6 +363,40 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                     children: [
                       ElevatedButton(
                         onPressed: () async {
+                          if (dynamicMethodSelected['dictName'] == null ||
+                              dynamicMethodSelected['dictName']
+                                  .toString()
+                                  .isEmpty) {
+                            showToast("请选择加工方法");
+                            return;
+                          }
+                          if (_repairSituationController.text.trim().isEmpty) {
+                            showToast("请输入施修情况");
+                            return;
+                          }
+
+                          // Confirmation
+                          bool? confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('提示'),
+                              content: const Text('确认是否提交？'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('取消'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('确认'),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm != true) return;
+
                           var submit;
                           List<Map<String, dynamic>> l = [];
                           try {
@@ -393,34 +413,26 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                               await JtApi()
                                   .uploadMixJt(imagedata: faultPics)
                                   .then(
-                                    (value) async => {
-                                      if (value['data'] != null &&
-                                          value['data'] != "")
-                                        {
-                                          queryParameters["repairEndPicture"] =
-                                              value['data'],
-                                          l.insert(0, queryParameters),
-                                          submit = await JtApi()
-                                              .uploadJt28(queryParametrs: l),
-                                          if (submit['code'] == "S_T_S003")
-                                            {
-                                              // 上传成功后，保持图片显示状态（不清空）
-                                              // assestPics 和 faultPics 保持不变，继续显示
-                                              showToast("${submit['data'] ?? submit['message']}"),
-                                              // SmartDialog.dismiss(status: SmartStatus.loading)
-                                            }
-                                          else
-                                            {
-                                              showToast("提交失败：${submit['message'] ?? '未知错误'}"),
-                                            }
-                                        }
-                                      else
-                                        {
-                                          showToast("图片上传失败，请检查网络连接"),
-                                          // SmartDialog.dismiss(status: SmartStatus.loading)
-                                        }
-                                    },
-                                  );
+                                (value) async {
+                                  if (value['data'] != null &&
+                                      value['data'] != "") {
+                                    queryParameters["repairEndPicture"] =
+                                        value['data'];
+                                    l.insert(0, queryParameters);
+                                    submit = await JtApi()
+                                        .uploadJt28(queryParametrs: l);
+                                    if (submit['code'] == "S_T_S003") {
+                                      showToast(
+                                          "${submit['data'] ?? submit['message']}");
+                                    } else {
+                                      showToast(
+                                          "提交失败：${submit['message'] ?? '未知错误'}");
+                                    }
+                                  } else {
+                                    showToast("图片上传失败，请检查网络连接");
+                                  }
+                                },
+                              );
                             } else {
                               logger.i("$queryParameters");
                               l.insert(0, queryParameters);
@@ -428,10 +440,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                   await JtApi().uploadJt28(queryParametrs: l);
                               if (submit["code"] == "S_T_S003") {
                                 showToast("${submit['message']}");
-                                // SmartDialog.dismiss(status: SmartStatus.loading);
                               } else {
                                 showToast("机统28提报失败，请检查网络连接");
-                                // SmartDialog.dismiss(status: SmartStatus.loading);
                               }
                             }
                           } on DioException catch (e) {
@@ -439,7 +449,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                             logger.i(e.toString());
                           } finally {
                             SmartDialog.dismiss(status: SmartStatus.loading);
-                            if (submit['code'] == "S_T_S003") {
+                            if (submit != null &&
+                                submit['code'] == "S_T_S003") {
                               SmartDialog.show(
                                   clickMaskDismiss: false,
                                   builder: (con) {
@@ -470,7 +481,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                                 SmartDialog.dismiss().then(
                                                     (value) =>
                                                         Navigator.of(context)
-                                                            .pop());
+                                                            .pop(true));
                                               },
                                               label: const Text('确定'),
                                               icon: const Icon(Icons
@@ -508,7 +519,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                   onConfirm: () {
                                     // 确认操作
                                     SmartDialog.dismiss();
-                                    // 这里可以添加确认后的逻辑
+                                    Navigator.pop(context, true);
                                   },
                                   onCancel: () {
                                     // 取消操作
@@ -537,67 +548,6 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   }
 
 // ... existing code ...
-  // 封装“带标签的文本展示”
-  Widget _buildLabeledText({
-    required String label,
-    required String text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          child: Text(text),
-        ),
-      ],
-    );
-  }
-
-  // 封装“带标签的多行文本展示”
-  Widget _buildLabeledTextBlock({
-    required String label,
-    required String text,
-    required double height,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.all(8),
-          height: height,
-          child: SingleChildScrollView(
-            child: Text(text),
-          ),
-        ),
-      ],
-    );
-  }
-// ... existing code ...
-
-  // 封装“带标签的单行输入框”
-  Widget _buildLabeledInput({
-    required String label,
-    required TextEditingController controller,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 4),
-        TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 class ApplyReleaseDialog extends StatefulWidget {
@@ -667,6 +617,15 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
   }
 
   void releaseShunting() async {
+    if (_reasonController.text.trim().isEmpty) {
+      showToast("请输入放行原因");
+      return;
+    }
+    if (_selectedRecipient.isEmpty || _selectedRecipient['userId'] == null) {
+      showToast("请选择放行人员");
+      return;
+    }
+
     Map<String, dynamic> queryParameters = {};
     // 添加来自父页面的参数
     queryParameters['jt28Code'] = widget.extraParams?['code'];
@@ -699,7 +658,12 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
     try {
       var r = await ProductApi()
           .saveReleaseShunting(queryParametrs: queryParameters);
-      showToast(r['msg']);
+      if (r['code'] == 'S_T_S003' || r['code'] == 200) {
+         showToast(r['msg'] ?? "操作成功");
+         widget.onConfirm();
+      } else {
+         showToast(r['msg'] ?? "操作失败");
+      }
     } catch (e) {
       // 处理异常情况
       print('保存放行申请时发生错误: $e');
@@ -795,8 +759,6 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
                   onPressed: () {
                     // 调用放行申请函数
                     releaseShunting();
-                    // 执行原始的确认回调
-                    widget.onConfirm();
                   },
                   child: const Text('确认'),
                 ),

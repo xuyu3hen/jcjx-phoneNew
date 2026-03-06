@@ -744,6 +744,22 @@ class ProductApi extends AppApi {
     }
   }
 
+    // 机统28派工 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchTeamJt28
+  Future<dynamic> getNeedToDispatchTeamJt28({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/getNeedToDispatchTeamJt28",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])['data']);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+    }
+  }
+
   // 机统28待作业 tasks/locomotiveMaitenanceLogDO/getNeedToWorkJt28
   Future<dynamic> getNeedToWorkJt28({
     Map<String, dynamic>? queryParametrs,
@@ -1665,6 +1681,7 @@ class ProductApi extends AppApi {
   Future<dynamic> getDeptByParentIdList(
       {Map<String, dynamic>? queryParametrs}) async {
     try {
+      logger.i(queryParametrs);
       var r = await AppApi.dio.get(
         "/jcjxsystem/dept/getDeptByParentIdList",
         queryParameters: queryParametrs,

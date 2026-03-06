@@ -439,6 +439,7 @@ class _JtShowPageState extends State<MutualWorkList> {
                           item: item,
                           statusMap: status,
                           buildStatusBadge: _buildStatusBadge,
+                          allowedStatusCode: 2,
                           onViewMedia: item['repairPicture'] != null &&
                                   item['repairPicture'].toString().isNotEmpty
                               ? () {

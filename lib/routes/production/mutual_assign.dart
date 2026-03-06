@@ -660,6 +660,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
   List<Member> _filteredMembers = [];
 
   var logger = AppLogger.logger;
+  bool _hasAssigned = false;
 
   void getUserList() async {
     Map<String, dynamic> params = {
@@ -749,7 +750,10 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
       if (response['code'] == "S_T_S003") {
-        showToast("分配成功");
+        _hasAssigned = true;
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       print('分配人员失败: $e');
@@ -766,13 +770,7 @@ class _MutualAssignPeopleState extends State<MutualAssignPeople> {
         leading: IconButton(
           icon: const Icon(Icons.chevron_left),
           onPressed: () {
-            if (Navigator.canPop(context)) {
-              // 返回前刷新界面
-              Navigator.pop(context, true); // 传递true表示需要刷新
-            } else {
-              // 如果无法pop，尝试使用maybePop或者给出提示
-              Navigator.maybePop(context);
-            }
+            Navigator.pop(context, _hasAssigned);
           },
         ),
         title: const Text('开工点名(互检)'),

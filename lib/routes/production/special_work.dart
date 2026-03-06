@@ -410,6 +410,7 @@ class _JtShowPageState extends State<SpecialWorkList> {
                           item: item,
                           statusMap: status,
                           buildStatusBadge: _buildStatusBadge,
+                          allowedStatusCode: 3,
                           onViewMedia: item['repairPicture'] != null &&
                                   item['repairPicture'].toString().isNotEmpty
                               ? () {

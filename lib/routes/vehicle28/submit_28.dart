@@ -265,6 +265,14 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       if (r.code == 200 && r.rows != null) {
         setState(() {
           jtTypeList = r.rows!;
+          if ((repairWorkResource["code"] ?? "").toString().isEmpty &&
+              jtTypeList.isNotEmpty &&
+              jtTypeList.first is Map) {
+            final first = jtTypeList.first as Map;
+            repairWorkResource["name"] = (first["name"] ?? "").toString();
+            repairWorkResource["code"] = (first["code"] ?? "").toString();
+            riskLevel = first["riskLevel"]?.toString();
+          }
         });
       } else {
         showToast("未能获取作业来源");
@@ -281,6 +289,14 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       if (r.code == 200 && r.rows != null) {
         setState(() {
           jt28DictList = r.rows!;
+          if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty &&
+              jt28DictList.isNotEmpty &&
+              jt28DictList.first is Map) {
+            final first = jt28DictList.first as Map;
+            requiredProcessingMethod["dictName"] =
+                (first["dictName"] ?? "").toString();
+            requiredProcessingMethod["code"] = (first["code"] ?? "").toString();
+          }
         });
       } else {
         showToast("未能获取加工方法");
@@ -681,6 +697,14 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           showToast("机车信息不完整，请重新进入");
           return;
         }
+        if ((repairWorkResource["code"] ?? "").toString().isEmpty) {
+          showToast("检修作业来源未获取到，请稍后重试");
+          return;
+        }
+        if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty) {
+          showToast("加工方法未获取到，请稍后重试");
+          return;
+        }
         
         // 所有必填字段验证通过，继续提报
         var submit;
@@ -696,12 +720,17 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               "trainEntryCode": widget.locoInfo?["code"],
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
-              'deptId':Global.profile.permissions?.user.dept?.parentId,
-              'deptName':Global.profile.permissions?.user.dept?.parentName,
+              'deptId': Global.profile.permissions?.user.deptId,
+              'deptName': Global.profile.permissions?.user.dept?.deptName ,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus,
               "status": 0
             };
+            queryParameters.removeWhere((key, value) {
+              if (value == null) return true;
+              if (value is String && value.trim().isEmpty) return true;
+              return false;
+            });
             if (completeStatus == 1) {
               queryParameters["team"] = teamCode;
               // queryParameters["repairPersonnel"] = userSelected["userId"];
@@ -744,7 +773,12 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               }
             }
           } on DioException catch (e) {
-            showToast("故障提报失败");
+            final serverMsg = e.response?.data is Map
+                ? (e.response?.data["msg"] ??
+                    e.response?.data["message"] ??
+                    e.response?.data["error"])
+                : null;
+            showToast("故障提报失败${serverMsg != null ? "：$serverMsg" : ""}");
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);

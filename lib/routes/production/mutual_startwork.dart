@@ -58,6 +58,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
   Map<String, dynamic> dynamicMethodSelected = {};
   Map<String, dynamic> faultPartListInfo = {};
   Map<String, dynamic>? _selectedFaultPart;
+  bool _faultPartConfirmed = false;
 
   // 添加用于零部件搜索的控制器
   final TextEditingController _searchController = TextEditingController();
@@ -291,7 +292,6 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
            _buildLabeledTextBlock(
               label: '故障零部件',
               text: widget.trainInfo['jcNodeName'] ?? '',
-              height: 60,
             ),
             // 展示修复视频及图片（占位区域）
             const SizedBox(height: 16),
@@ -359,6 +359,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                         onChanged: (Map<String, dynamic>? newValue) {
                           setState(() {
                             _selectedFaultPart = newValue;
+                            _faultPartConfirmed = false;
                           });
                         },
                         items: _filteredFaultPartList
@@ -386,7 +387,31 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      // 显示选中的零部件信息
+                      if (_selectedFaultPart != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabeledTextBlock(
+                              label: '已选零部件',
+                              text: (_selectedFaultPart?['nodeName']?.toString() ??
+                                  _selectedFaultPart?['name']?.toString() ?? ''),
+                              height: 120,
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _faultPartConfirmed = true;
+                                  });
+                                  showToast('已确认零部件');
+                                },
+                                child: const Text('确认选择'),
+                              ),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -486,6 +511,27 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
+                  final c = await showDialog<bool>(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (ctx) {
+                      return AlertDialog(
+                        title: const Text('确认'),
+                        content: const Text('是否提交专互检确认？'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('取消'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('确认'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  if (c != true) return;
                   var submit;
                   List<Map<String, dynamic>> l = [];
                   try {
@@ -611,7 +657,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
   Widget _buildLabeledTextBlock({
     required String label,
     required String text,
-    required double height,
+    double? height,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,9 +667,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
         Container(
           padding: const EdgeInsets.all(8),
           height: height,
-          child: SingleChildScrollView(
-            child: Text(text),
-          ),
+          child: height != null ? SingleChildScrollView(child: Text(text)) : Text(text),
         ),
       ],
     );

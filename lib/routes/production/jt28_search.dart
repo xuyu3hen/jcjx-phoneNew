@@ -557,6 +557,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
   final VoidCallback? onViewMedia;
   final VoidCallback? onStartWork;
   final String startWorkButtonText;
+  final int allowedStatusCode;
 
   const Jt28StartWorkListItem({
     Key? key,
@@ -566,7 +567,16 @@ class Jt28StartWorkListItem extends StatelessWidget {
     this.onViewMedia,
     this.onStartWork,
     this.startWorkButtonText = '开工',
+    this.allowedStatusCode = 0,
   }) : super(key: key);
+
+  int? _getStatusCode() {
+    final cs = item['completeStatus'];
+    if (cs is int) return cs;
+    final st = item['status'];
+    if (st is int) return st;
+    return null;
+  }
 
   String _getSafeText(String key, {String defaultValue = ''}) {
     final value = item[key];
@@ -647,7 +657,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: buildStatusBadge(item['status'] as int?),
+                        child: buildStatusBadge(_getStatusCode()),
                       ),
                     ),
                   ],
@@ -663,7 +673,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
                 width: 80,
                 height: 120,
                 child: ElevatedButton(
-                  onPressed: onStartWork,
+                  onPressed: _getStatusCode() == allowedStatusCode ? onStartWork : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
@@ -779,8 +789,9 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
 
   void getTeamList() async {
     Map<String, dynamic> params = {
-      "parentIdList": Global.profile.permissions?.user.dept?.deptId,
+      "parentId": Global.profile.permissions?.user.dept?.parentId,
     };
+
     try {
       var response =
           await ProductApi().getDeptByParentIdList(queryParametrs: params);
@@ -1560,6 +1571,14 @@ class Jt28AssignListItem extends StatelessWidget {
     this.assignButtonText = '派工',
   }) : super(key: key);
 
+  int? _getStatusCode() {
+    final cs = item['completeStatus'];
+    if (cs is int) return cs;
+    final st = item['status'];
+    if (st is int) return st;
+    return null;
+  }
+
   String _getSafeText(String key, {String defaultValue = ''}) {
     final value = item[key];
     if (value == null) return defaultValue;
@@ -1639,7 +1658,7 @@ class Jt28AssignListItem extends StatelessWidget {
                     Expanded(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: buildStatusBadge(item['status'] as int?),
+                        child: buildStatusBadge(_getStatusCode()),
                       ),
                     ),
                   ],
