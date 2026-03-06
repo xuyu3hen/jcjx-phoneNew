@@ -19,7 +19,47 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   @override
   void initState() {
     super.initState();
+    if (!_canSeeShunting) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        SmartDialog.showToast('无权限查看');
+        if (mounted && Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      });
+      return;
+    }
     _loadData();
+  }
+
+  bool get _canSeeShunting {
+    final deptName =
+        Global.profile.permissions?.user.dept?.deptName?.toString() ?? '';
+    final parentDeptName = Global.parentDeptName?.toString() ?? '';
+    final roleKeys =
+        (Global.profile.permissions?.roles ?? const <String>[])
+            .map((e) => e.toString())
+            .toList();
+    final roleObjs =
+        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
+            .map((e) => e)
+            .toList();
+
+    if (deptName.contains('接车组') || parentDeptName.contains('接车组')) {
+      return true;
+    }
+    if (roleKeys.any((r) => r.contains('jieche') || r.contains('接车'))) {
+      return true;
+    }
+    if (roleObjs.any((r) {
+      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
+      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
+      return rn.contains('接车组') ||
+          rk.contains('jieche') ||
+          rk.contains('接车');
+    })) {
+      return true;
+    }
+    return false;
   }
 
   Future<void> _loadData() async {
@@ -51,6 +91,27 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     }
     if (s.length >= 19) return s;
     return s;
+  }
+
+  Future<void> _receive(String? code) async {
+    if (code == null || code.isEmpty) {
+      SmartDialog.showToast('代码为空');
+      return;
+    }
+    try {
+      SmartDialog.showLoading();
+      final r = await ProductApi().receiveTrainShuntingPackage(code: code);
+      SmartDialog.dismiss();
+      if (r != null) {
+        SmartDialog.showToast('领取成功');
+        await _loadData();
+      } else {
+        SmartDialog.showToast('领取失败');
+      }
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('领取失败');
+    }
   }
 
   @override
@@ -103,11 +164,21 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                               final name =
                                   (pkg['packageName'] ?? pkg['name'] ?? '')
                                       .toString();
+                              final code = (pkg['code'] ?? '').toString();
                               return Card(
                                 child: ListTile(
                                   title: Text(name),
-                                  trailing: const Icon(
-                                      Icons.arrow_forward_ios, size: 16),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextButton(
+                                        onPressed: () => _receive(code),
+                                        child: const Text('领取'),
+                                      ),
+                                      const Icon(Icons.arrow_forward_ios,
+                                          size: 16),
+                                    ],
+                                  ),
                                   onTap: () {
                                     final list = (pkg['trainShuntingPlanList']
                                                 is List)

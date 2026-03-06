@@ -146,6 +146,23 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/trainShuntingPackage/receiveShuntingPackage 领取作业包
+  Future<dynamic> receiveTrainShuntingPackage({
+    required String code,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShuntingPackage/receiveShuntingPackage",
+        queryParameters: {'code': code},
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
   // /dispatch/trainShunting/selectAll
   Future<dynamic> saveTrainShunting({
     Map<String, dynamic>? queryParametrs,

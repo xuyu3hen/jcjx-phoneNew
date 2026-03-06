@@ -259,20 +259,52 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //   ],
           // ),
           const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.assignment, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'trainShuntingPackage'),
-                '调车',
-              ),
-            ],
-          ),
+          if (_canSeeShunting)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                _buildFeatureItem(
+                  Icon(Icons.assignment, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'trainShuntingPackage'),
+                  '调车',
+                ),
+              ],
+            ),
           const Divider(height: 10, indent: 10, endIndent: 10),
         ],
       ),
     );
+  }
+
+  bool get _canSeeShunting {
+    final deptName =
+        Global.profile.permissions?.user.dept?.deptName?.toString() ?? '';
+    final parentDeptName = Global.parentDeptName?.toString() ?? '';
+    final roleKeys =
+        (Global.profile.permissions?.roles ?? const <String>[])
+            .map((e) => e.toString())
+            .toList();
+    final roleObjs =
+        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
+            .map((e) => e)
+            .toList();
+
+    if (deptName.contains('接车组') || parentDeptName.contains('接车组')) {
+      return true;
+    }
+    if (roleKeys.any((r) => r.contains('jieche') || r.contains('接车'))) {
+      return true;
+    }
+    if (roleObjs.any((r) {
+      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
+      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
+      return rn.contains('接车组') ||
+          rk.contains('jieche') ||
+          rk.contains('接车');
+    })) {
+      return true;
+    }
+    return false;
   }
 
   Widget _buildSection() {
