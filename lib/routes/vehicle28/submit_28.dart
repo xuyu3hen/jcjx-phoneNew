@@ -104,17 +104,19 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   void getDynamicType() async {
     var r = await ProductApi().getDynamicType();
     if (r.rows != []) {
-      setState(() {
-        List<DynamicType> dyn = r.rows!;
-        List<Map<String, dynamic>> temp = [];
-        for (DynamicType item in dyn) {
-          temp.add(item.toJson());
-        }
-        dynamicList = temp;
-        //默认动力类型
-        dynamciTypeSelected = dynamicList[0];
-        getTypeCode();
-      });
+      if (mounted) {
+        setState(() {
+          List<DynamicType> dyn = r.rows!;
+          List<Map<String, dynamic>> temp = [];
+          for (DynamicType item in dyn) {
+            temp.add(item.toJson());
+          }
+          dynamicList = temp;
+          //默认动力类型
+          dynamciTypeSelected = dynamicList[0];
+          getTypeCode();
+        });
+      }
     }
   }
 
@@ -125,9 +127,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       'dynamicCode': dynamciTypeSelected['code'],
     });
     if (r.rows != []) {
-      setState(() {
-        jcTypeList = r.toMapList();
-      });
+      if (mounted) {
+        setState(() {
+          jcTypeList = r.toMapList();
+        });
+      }
     }
   }
 
@@ -212,9 +216,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       var r = await JtApi().getAllConfigTreeByCode(
           queryParametrs: {'typeCode': jcTypeListSelected['code']});
       if (r['code'] != 200) {
-        setState(() {
-          configTree = r['data'];
-        });
+        if (mounted) {
+          setState(() {
+            configTree = r['data'];
+          });
+        }
       } else {
         showToast("获取零部件表失败,请检查网络");
       }
@@ -230,9 +236,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     try {
       var r = await JtApi().getUserDeptree();
       if (r != [] && r != null) {
-        setState(() {
-          deptTree = ((r[0])["children"])[0]["children"];
-        });
+        if (mounted) {
+          setState(() {
+            deptTree = ((r[0])["children"])[0]["children"];
+          });
+        }
       } else {
         showToast("未能获取车间班组");
       }
@@ -247,9 +255,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       var r = await JtApi().getUserList(
           queryParametrs: {'pageNum': 0, 'pageSize': 0, 'deptId': teamCode});
       if (r != [] && r != null) {
-        setState(() {
-          userList = r['rows'];
-        });
+        if (mounted) {
+          setState(() {
+            userList = r['rows'];
+          });
+        }
       } else {
         showToast("未能获取班组人员");
       }
@@ -263,17 +273,19 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     try {
       var r = await JtApi().getJtType();
       if (r.code == 200 && r.rows != null) {
-        setState(() {
-          jtTypeList = r.rows!;
-          if ((repairWorkResource["code"] ?? "").toString().isEmpty &&
-              jtTypeList.isNotEmpty &&
-              jtTypeList.first is Map) {
-            final first = jtTypeList.first as Map;
-            repairWorkResource["name"] = (first["name"] ?? "").toString();
-            repairWorkResource["code"] = (first["code"] ?? "").toString();
-            riskLevel = first["riskLevel"]?.toString();
-          }
-        });
+        if (mounted) {
+          setState(() {
+            jtTypeList = r.rows!;
+            if ((repairWorkResource["code"] ?? "").toString().isEmpty &&
+                jtTypeList.isNotEmpty &&
+                jtTypeList.first is Map) {
+              final first = jtTypeList.first as Map;
+              repairWorkResource["name"] = (first["name"] ?? "").toString();
+              repairWorkResource["code"] = (first["code"] ?? "").toString();
+              riskLevel = first["riskLevel"]?.toString();
+            }
+          });
+        }
       } else {
         showToast("未能获取作业来源");
       }
@@ -287,17 +299,19 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     try {
       var r = await JtApi().getJt28Dict();
       if (r.code == 200 && r.rows != null) {
-        setState(() {
-          jt28DictList = r.rows!;
-          if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty &&
-              jt28DictList.isNotEmpty &&
-              jt28DictList.first is Map) {
-            final first = jt28DictList.first as Map;
-            requiredProcessingMethod["dictName"] =
-                (first["dictName"] ?? "").toString();
-            requiredProcessingMethod["code"] = (first["code"] ?? "").toString();
-          }
-        });
+        if (mounted) {
+          setState(() {
+            jt28DictList = r.rows!;
+            if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty &&
+                jt28DictList.isNotEmpty &&
+                jt28DictList.first is Map) {
+              final first = jt28DictList.first as Map;
+              requiredProcessingMethod["dictName"] =
+                  (first["dictName"] ?? "").toString();
+              requiredProcessingMethod["code"] = (first["code"] ?? "").toString();
+            }
+          });
+        }
       } else {
         showToast("未能获取加工方法");
       }
@@ -652,15 +666,19 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                                 }
                               }
 
-                              setState(() {
-                                assestPics = assetEntityList;
-                                faultPics = files;
-                              });
+                              if (mounted) {
+                                setState(() {
+                                  assestPics = assetEntityList;
+                                  faultPics = files;
+                                });
+                              }
                             } else {
-                              setState(() {
-                                faultPics = [];
-                                assestPics = [];
-                              });
+                              if (mounted) {
+                                setState(() {
+                                  faultPics = [];
+                                  assestPics = [];
+                                });
+                              }
                             }
                             logger.i('assetEntityList-------------');
                           },
