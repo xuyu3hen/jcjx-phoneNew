@@ -105,17 +105,19 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   void getDynamicType() async {
     var r = await ProductApi().getDynamicType();
     if (r.rows != []) {
-      setState(() {
-        List<DynamicType> dyn = r.rows!;
-        List<Map<String, dynamic>> temp = [];
-        for (DynamicType item in dyn) {
-          temp.add(item.toJson());
-        }
-        dynamicList = temp;
-        //默认动力类型
-        dynamciTypeSelected = dynamicList[0];
-        getTypeCode();
-      });
+      if (mounted) {
+        setState(() {
+          List<DynamicType> dyn = r.rows!;
+          List<Map<String, dynamic>> temp = [];
+          for (DynamicType item in dyn) {
+            temp.add(item.toJson());
+          }
+          dynamicList = temp;
+          //默认动力类型
+          dynamciTypeSelected = dynamicList[0];
+          getTypeCode();
+        });
+      }
     }
   }
 
@@ -126,9 +128,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       'dynamicCode': dynamciTypeSelected['code'],
     });
     if (r.rows != []) {
-      setState(() {
-        jcTypeList = r.toMapList();
-      });
+      if (mounted) {
+        setState(() {
+          jcTypeList = r.toMapList();
+        });
+      }
     }
   }
 
@@ -214,9 +218,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       var r = await JtApi().getAllConfigTreeByCode(
           queryParametrs: {'typeCode': jcTypeListSelected['code']});
       if (r['code'] != 200) {
-        setState(() {
-          configTree = r['data'];
-        });
+        if (mounted) {
+          setState(() {
+            configTree = r['data'];
+          });
+        }
       } else {
         showToast("获取零部件表失败,请检查网络");
       }
@@ -232,9 +238,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
     try {
       var r = await JtApi().getUserDeptree();
       if (r != [] && r != null) {
-        setState(() {
-          deptTree = ((r[0])["children"])[0]["children"];
-        });
+        if (mounted) {
+          setState(() {
+            deptTree = ((r[0])["children"])[0]["children"];
+          });
+        }
       } else {
         showToast("未能获取车间班组");
       }
@@ -249,9 +257,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       var r = await JtApi().getUserList(
           queryParametrs: {'pageNum': 0, 'pageSize': 0, 'deptId': teamCode});
       if (r != [] && r != null) {
-        setState(() {
-          userList = r['rows'];
-        });
+        if (mounted) {
+          setState(() {
+            userList = r['rows'];
+          });
+        }
       } else {
         showToast("未能获取班组人员");
       }
@@ -265,9 +275,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
     try {
       var r = await JtApi().getJtType();
       if (r.code == 200 && r.rows != null) {
-        setState(() {
-          jtTypeList = r.rows!;
-        });
+        if (mounted) {
+          setState(() {
+            jtTypeList = r.rows!;
+          });
+        }
       } else {
         showToast("未能获取作业来源");
       }
@@ -281,9 +293,11 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
     try {
       var r = await JtApi().getJt28Dict();
       if (r.code == 200 && r.rows != null) {
-        setState(() {
-          jt28DictList = r.rows!;
-        });
+        if (mounted) {
+          setState(() {
+            jt28DictList = r.rows!;
+          });
+        }
       } else {
         showToast("未能获取加工方法");
       }
@@ -758,35 +772,31 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             }
             if (faultPics.isNotEmpty) {
               await JtApi().uploadMixJt(imagedata: faultPics).then(
-                    (value) async => {
-                      if (value['data'] != null && value['data'] != "")
-                        {
-                          queryParameters["repairPicture"] = value['data'],
-                          l.insert(0, queryParameters),
-                          submit = await JtApi().uploadJt28(queryParametrs: l),
-                          if (submit['data'] != null)
-                            {
-                              showToast("${submit['data']}"),
-                              // SmartDialog.dismiss(status: SmartStatus.loading)
-                            }
-                        }
-                      else
-                        {
-                          showToast("图片上传失败，请检查网络连接"),
+                    (value) async {
+                      if (value['data'] != null && value['data'] != "") {
+                        queryParameters["repairPicture"] = value['data'];
+                        l.insert(0, queryParameters);
+                        submit = await JtApi().uploadJt28(queryParametrs: l);
+                        if (submit['data'] != null) {
+                          showToast("${submit['data']}");
                           // SmartDialog.dismiss(status: SmartStatus.loading)
                         }
+                      } else {
+                        showToast("图片上传失败，请检查网络连接");
+                        // SmartDialog.dismiss(status: SmartStatus.loading)
+                      }
                     },
                   );
             } else {
               log("$queryParameters");
               l.insert(0, queryParameters);
-              // submit = await JtApi().uploadMixJt(queryParameters);
+              submit = await JtApi().uploadJt28(queryParametrs: l);
               if (submit["code"] == "S_T_S003") {
                 showToast("${submit['message']}");
                 // SmartDialog.dismiss(status: SmartStatus.loading);
-              } else {
+              } else if (submit["code"] != "S_T_S001") {
                 showToast("机统28提报失败，请检查网络连接");
-                // SmartDialo g.dismiss(status: SmartStatus.loading);
+                // SmartDialog.dismiss(status: SmartStatus.loading);
               }
             }
           } on DioException catch (e) {
@@ -794,6 +804,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);
+            if (submit != null && submit['code'] == "S_T_S001") {
               SmartDialog.show(
                   clickMaskDismiss: false,
                   builder: (con) {
@@ -831,6 +842,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                     );
                   });
             }
+          }
           }
         }
       ,
