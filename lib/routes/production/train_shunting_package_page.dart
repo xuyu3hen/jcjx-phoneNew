@@ -262,16 +262,21 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                                     e as Map))
                                             .toList()
                                         : <Map<String, dynamic>>[];
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute<void>(
-                                        builder: (context) =>
-                                            TrainShuntingPlanListPage(
-                                          title: name,
-                                          packageCode: code,
-                                          planList: list,
+                                    () async {
+                                      final res = await Navigator.of(context).push(
+                                        MaterialPageRoute<bool>(
+                                          builder: (context) =>
+                                              TrainShuntingPlanListPage(
+                                            title: name,
+                                            packageCode: code,
+                                            planList: list,
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                      if (res == true || res == null) {
+                                        await _loadData();
+                                      }
+                                    }();
                                   },
                                 ),
                               );
@@ -304,6 +309,7 @@ class TrainShuntingPlanListPage extends StatefulWidget {
 
 class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   late List<Map<String, dynamic>> _planList;
+  bool _changed = false;
   @override
   void initState() {
     super.initState();
@@ -405,6 +411,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       SmartDialog.showLoading(msg: '正在开工...');
       final r = await ProductApi().startTrainShuntingPackage(code: code);
       if (r != null) {
+        _changed = true;
         await _refresh();
         SmartDialog.dismiss();
         SmartDialog.showToast('开工成功');
@@ -606,6 +613,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
             _planList[index] = Map<String, dynamic>.from(r);
           }
         });
+        _changed = true;
         await _refresh();
       } else {
         SmartDialog.showToast('完成失败');
@@ -618,7 +626,12 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pop(_changed);
+        return false;
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Colors.white,
@@ -713,6 +726,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 );
               },
             ),
+      ),
     );
   }
 }
