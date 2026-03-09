@@ -1,5 +1,7 @@
 import '../../index.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 
 class TrainShuntingPackagePage extends StatefulWidget {
   const TrainShuntingPackagePage({super.key});
@@ -15,6 +17,8 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _packages = [];
   String _searchText = '';
+  final Set<String> _receivedPackageCodes = <String>{};
+  final Set<String> _receivingPackageCodes = <String>{};
 
   @override
   void initState() {
@@ -35,10 +39,9 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     final deptName =
         Global.profile.permissions?.user.dept?.deptName?.toString() ?? '';
     final parentDeptName = Global.parentDeptName?.toString() ?? '';
-    final roleKeys =
-        (Global.profile.permissions?.roles ?? const <String>[])
-            .map((e) => e.toString())
-            .toList();
+    final roleKeys = (Global.profile.permissions?.roles ?? const <String>[])
+        .map((e) => e.toString())
+        .toList();
     final roleObjs =
         (Global.profile.permissions?.user.roles ?? const <dynamic>[])
             .map((e) => e)
@@ -53,9 +56,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     if (roleObjs.any((r) {
       final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
       final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      return rn.contains('接车组') ||
-          rk.contains('jieche') ||
-          rk.contains('接车');
+      return rn.contains('接车组') || rk.contains('jieche') || rk.contains('接车');
     })) {
       return true;
     }
@@ -66,8 +67,20 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     try {
       setState(() => _isLoading = true);
       var r = await ProductApi().getTrainShuntingPackage();
-      List<Map<String, dynamic>> rows =
-          (r as List).map((e) => e as Map<String, dynamic>).toList();
+      List<Map<String, dynamic>> rows = (r as List)
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      for (final pkg in rows) {
+        final code = (pkg['code'] ?? '').toString();
+        final st = pkg['status'];
+        final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+        if (code.isNotEmpty &&
+            _receivedPackageCodes.contains(code) &&
+            stInt == 0) {
+          pkg['status'] = 1;
+        }
+      }
       setState(() {
         _packages = rows;
         _isLoading = false;
@@ -98,8 +111,15 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
       SmartDialog.showToast('代码为空');
       return;
     }
-    final idx = _packages.indexWhere(
-        (e) => (e['code']?.toString() ?? '') == (code.toString()));
+    if (_receivedPackageCodes.contains(code)) {
+      SmartDialog.showToast('已领取，无需重复');
+      return;
+    }
+    if (_receivingPackageCodes.contains(code)) {
+      return;
+    }
+    final idx = _packages
+        .indexWhere((e) => (e['code']?.toString() ?? '') == (code.toString()));
     if (idx != -1) {
       final st = _packages[idx]['status'];
       final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
@@ -107,12 +127,31 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
         SmartDialog.showToast('已领取，无需重复');
         return;
       }
+      if (stInt == 2) {
+        SmartDialog.showToast('已完成，无法领取');
+        return;
+      }
+      if (stInt != 0) {
+        SmartDialog.showToast('当前状态无法领取');
+        return;
+      }
     }
+    setState(() {
+      _receivingPackageCodes.add(code);
+    });
     try {
       SmartDialog.showLoading();
       final r = await ProductApi().receiveTrainShuntingPackage(code: code);
       SmartDialog.dismiss();
       if (r != null) {
+        _receivedPackageCodes.add(code);
+        final localIdx = _packages.indexWhere(
+            (e) => (e['code']?.toString() ?? '') == (code.toString()));
+        if (localIdx != -1) {
+          setState(() {
+            _packages[localIdx]['status'] = 1;
+          });
+        }
         SmartDialog.showToast('领取成功');
         await _loadData();
       } else {
@@ -121,6 +160,12 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     } catch (e) {
       SmartDialog.dismiss();
       SmartDialog.showToast('领取失败');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _receivingPackageCodes.remove(code);
+        });
+      }
     }
   }
 
@@ -176,8 +221,15 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                       .toString();
                               final code = (pkg['code'] ?? '').toString();
                               final st = pkg['status'];
-                              final stInt =
-                                  st is int ? st : int.tryParse(st?.toString() ?? '');
+                              final stInt = st is int
+                                  ? st
+                                  : int.tryParse(st?.toString() ?? '');
+                              final isCompleted = stInt == 2;
+                              final isReceived = stInt == 1 ||
+                                  (code.isNotEmpty &&
+                                      _receivedPackageCodes.contains(code));
+                              final isReceiving = code.isNotEmpty &&
+                                  _receivingPackageCodes.contains(code);
                               return Card(
                                 child: ListTile(
                                   title: Text(name),
@@ -185,10 +237,16 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       TextButton(
-                                        onPressed: (stInt == 1)
+                                        onPressed: (isCompleted ||
+                                                isReceived ||
+                                                isReceiving)
                                             ? null
                                             : () => _receive(code),
-                                        child: Text(stInt == 1 ? '已领取' : '领取'),
+                                        child: Text(isCompleted
+                                            ? '已完成'
+                                            : (isReceived
+                                                ? '已领取'
+                                                : (isReceiving ? '领取中' : '领取'))),
                                       ),
                                       const Icon(Icons.arrow_forward_ios,
                                           size: 16),
@@ -196,11 +254,12 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                   ),
                                   onTap: () {
                                     final list = (pkg['trainShuntingPlanList']
-                                                is List)
+                                            is List)
                                         ? (pkg['trainShuntingPlanList'] as List)
                                             .where((e) => e is Map)
-                                            .map((e) => Map<String, dynamic>.from(
-                                                e as Map))
+                                            .map((e) =>
+                                                Map<String, dynamic>.from(
+                                                    e as Map))
                                             .toList()
                                         : <Map<String, dynamic>>[];
                                     Navigator.of(context).push(
@@ -208,6 +267,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                                         builder: (context) =>
                                             TrainShuntingPlanListPage(
                                           title: name,
+                                          packageCode: code,
                                           planList: list,
                                         ),
                                       ),
@@ -227,11 +287,13 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
 
 class TrainShuntingPlanListPage extends StatefulWidget {
   final String title;
+  final String packageCode;
   final List<Map<String, dynamic>> planList;
 
   const TrainShuntingPlanListPage({
     super.key,
     required this.title,
+    required this.packageCode,
     required this.planList,
   });
 
@@ -245,7 +307,21 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   @override
   void initState() {
     super.initState();
-    _planList = widget.planList.map((e) => Map<String, dynamic>.from(e)).toList();
+    _planList =
+        widget.planList.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Widget _buildXFilePreview(XFile f) {
+    return FutureBuilder<Uint8List>(
+      future: f.readAsBytes(),
+      builder: (context, snap) {
+        final bytes = snap.data;
+        if (bytes == null) {
+          return const ColoredBox(color: Color(0xFFE0E0E0));
+        }
+        return Image.memory(bytes, fit: BoxFit.cover);
+      },
+    );
   }
 
   String _fmt(dynamic v) {
@@ -259,12 +335,285 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     return s;
   }
 
-  void _start(int index) {
-    SmartDialog.showToast('开工成功');
+  Future<void> _refresh() async {
+    try {
+      var r = await ProductApi().getTrainShuntingPackage(queryParametrs: {
+        'code': widget.packageCode,
+      });
+      Map<String, dynamic>? pkg;
+      if (r is List && r.isNotEmpty) {
+        for (final e in r) {
+          if (e is Map) {
+            final m = Map<String, dynamic>.from(e);
+            final c = (m['code'] ?? '').toString();
+            if (c == widget.packageCode) {
+              pkg = m;
+              break;
+            }
+          }
+        }
+        if (pkg == null) {
+          final first = r.first;
+          if (first is Map) {
+            pkg = Map<String, dynamic>.from(first);
+          }
+        }
+      }
+      if (pkg == null) {
+        r = await ProductApi().getTrainShuntingPackage();
+        if (r is List) {
+          for (final e in r) {
+            if (e is Map) {
+              final m = Map<String, dynamic>.from(e);
+              final c = (m['code'] ?? '').toString();
+              if (c == widget.packageCode) {
+                pkg = m;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (pkg == null) return;
+
+      final rawList = pkg['trainShuntingPlanList'];
+      final list = rawList is List
+          ? rawList
+              .where((e) => e is Map)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _planList = list;
+      });
+    } catch (e) {
+      if (mounted) {
+        SmartDialog.showToast('刷新失败');
+      }
+    }
   }
 
-  void _complete(int index) {
-    SmartDialog.showToast('完成成功');
+  Future<void> _start(int index) async {
+    final item = _planList[index];
+    final code = item['code']?.toString();
+    if (code == null || code.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return;
+    }
+    try {
+      SmartDialog.showLoading(msg: '正在开工...');
+      final r = await ProductApi().startTrainShuntingPackage(code: code);
+      if (r != null) {
+        await _refresh();
+        SmartDialog.dismiss();
+        SmartDialog.showToast('开工成功');
+      } else {
+        SmartDialog.dismiss();
+        SmartDialog.showToast('开工失败');
+      }
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('开工失败: $e');
+    }
+  }
+
+  Future<void> _showCompleteDialog(int index) async {
+    final item = _planList[index];
+    final code = item['code']?.toString();
+    if (code == null || code.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return;
+    }
+
+    List<XFile> imageFiles = [];
+    final ImagePicker picker = ImagePicker();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('上传完工凭证'),
+              content: SizedBox(
+                width: MediaQuery.sizeOf(context).width * 0.85,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (imageFiles.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 10),
+                          child: Text('请上传完工照片',
+                              style: TextStyle(color: Colors.grey)),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (int i = 0; i < imageFiles.length; i++)
+                                SizedBox(
+                                  width: 90,
+                                  height: 90,
+                                  child: Stack(
+                                    children: [
+                                      Positioned.fill(
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          child:
+                                              _buildXFilePreview(imageFiles[i]),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        top: 0,
+                                        right: 0,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setStateDialog(() {
+                                              imageFiles.removeAt(i);
+                                            });
+                                          },
+                                          child: Container(
+                                            decoration: const BoxDecoration(
+                                              color: Colors.black54,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            padding: const EdgeInsets.all(4),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final XFile? photo = await picker.pickImage(
+                                source: ImageSource.camera,
+                                imageQuality: 80,
+                              );
+                              if (photo != null) {
+                                setStateDialog(() {
+                                  imageFiles.add(photo);
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.camera_alt),
+                            label: const Text('拍照'),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              final List<XFile> photos =
+                                  await picker.pickMultiImage(
+                                imageQuality: 80,
+                              );
+                              if (photos.isNotEmpty) {
+                                setStateDialog(() {
+                                  imageFiles.addAll(photos);
+                                });
+                              }
+                            },
+                            icon: const Icon(Icons.photo_library),
+                            label: const Text('相册'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('取消'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (imageFiles.isEmpty) {
+                      SmartDialog.showToast('请先选择图片');
+                      return;
+                    }
+                    Navigator.of(context).pop();
+                    await _complete(index, imageFiles: imageFiles);
+                  },
+                  child: const Text('上传并完成'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _complete(int index, {List<XFile>? imageFiles}) async {
+    final item = _planList[index];
+    final code = item['code']?.toString();
+    if (code == null || code.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return;
+    }
+    // 先上传图片（必须）
+    if (imageFiles == null || imageFiles.isEmpty) {
+      SmartDialog.showToast('请先选择图片');
+      return;
+    }
+    SmartDialog.showLoading(msg: '正在上传...');
+    try {
+      var r = await ProductApi().upSlipImg(
+        queryParametrs: {
+          "trainEntryCode": item['trainEntryCode'],
+          "shuntingPlanCode": item['code'],
+        },
+        imagedataList: imageFiles.map((xFile) => File(xFile.path)).toList(),
+      );
+      if (r != 200) {
+        SmartDialog.dismiss();
+        SmartDialog.showToast('图片上传失败，状态码: $r');
+        return;
+      }
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('图片上传失败: $e');
+      return;
+    }
+    SmartDialog.dismiss();
+
+    // 再调用完成接口
+    SmartDialog.showLoading(msg: '正在完成...');
+    try {
+      final r = await ProductApi().completeTrainShuntingPackage(code: code);
+      SmartDialog.dismiss();
+      if (r != null) {
+        SmartDialog.showToast('完成成功');
+        setState(() {
+          if (r is Map) {
+            _planList[index] = Map<String, dynamic>.from(r);
+          }
+        });
+        await _refresh();
+      } else {
+        SmartDialog.showToast('完成失败');
+      }
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('完成失败: $e');
+    }
   }
 
   @override
@@ -289,6 +638,15 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final endAreaName = (p['endAreaName'] ?? '').toString();
                 final endTrackNum = (p['endTrackNum'] ?? '').toString();
                 final remark = (p['remark'] ?? '').toString();
+                final startTime = _fmt(p['startTime']);
+                final completeTime = _fmt(p['completeTime']);
+                final st = p['status'];
+                final stInt =
+                    st is int ? st : int.tryParse(st?.toString() ?? '');
+                final isStarted = stInt == 4;
+                final isCompleted = stInt == 2;
+                final canStart = stInt == 1;
+
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),
@@ -315,6 +673,10 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                             Expanded(child: Text('结束股道: $endTrackNum')),
                           ],
                         ),
+                        const SizedBox(height: 6),
+                        Text('开工时间: $startTime'),
+                        const SizedBox(height: 6),
+                        Text('完成时间: $completeTime'),
                         if (remark.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text('备注: $remark'),
@@ -326,16 +688,21 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                             SizedBox(
                               height: 36,
                               child: ElevatedButton(
-                                onPressed: () => _start(index),
-                                child: const Text('开工'),
+                                onPressed:
+                                    canStart ? () => _start(index) : null,
+                                child: Text(isStarted
+                                    ? '已开工'
+                                    : (isCompleted ? '已完成' : '开工')),
                               ),
                             ),
                             const SizedBox(width: 12),
                             SizedBox(
                               height: 36,
                               child: ElevatedButton(
-                                onPressed: () => _complete(index),
-                                child: const Text('完成'),
+                                onPressed: isStarted
+                                    ? () => _showCompleteDialog(index)
+                                    : null,
+                                child: Text(isCompleted ? '已完成' : '完成'),
                               ),
                             ),
                           ],

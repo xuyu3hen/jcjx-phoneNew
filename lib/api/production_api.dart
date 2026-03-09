@@ -162,6 +162,65 @@ class ProductApi extends AppApi {
       return null;
     }
   }
+  // /dispatch/trainShuntingPackage/startWork
+  Future<dynamic> startTrainShuntingPackage({
+    required String code,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShuntingPlan/startWork",
+        queryParameters: {'code': code},
+      );
+      logger.i((r.data["data"]));
+      return (r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+    // /dispatch/trainShuntingPackage/completeShuntingPlan
+    Future<dynamic> completeTrainShuntingPackage({
+      required String code,
+    }) async {
+      try {
+        var r = await AppApi.dio.get(
+          "/dispatch/trainShuntingPlan/completeShuntingPlan",
+          queryParameters: {'shuntingPlanCode': code},
+        );
+        logger.i((r.data["data"]));
+        return (r.data["data"]);
+      } catch (e) {
+        _handleException(e);
+        return null;
+      }
+    }
+
+  Future<dynamic> uploadTrainShuntingPlanFile({
+    required String code,
+    required XFile file,
+  }) async {
+    try {
+      final fileName = file.name.isNotEmpty
+          ? file.name
+          : file.path.split(RegExp(r'[\\/]+')).last;
+      final bytes = await file.readAsBytes();
+      FormData formData = FormData.fromMap({
+        "file": MultipartFile.fromBytes(bytes, filename: fileName),
+        "shuntingPlanCode": code,
+      });
+
+      var r = await AppApi.dio.post(
+        "/fileserver/trainShuntingPlanFile/uploadFile",
+        data: formData,
+      );
+      logger.i(r.data);
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
 
   // /dispatch/trainShunting/selectAll
   Future<dynamic> saveTrainShunting({
@@ -1247,6 +1306,32 @@ class ProductApi extends AppApi {
 
       FormData formData = FormData.fromMap({
         "trainEntryCode": queryParametrs!["trainEntryCode"],
+        'shuntingPlanCode': queryParametrs['shuntingPlanCode'],
+        "uploadFileList": multipartFiles
+      });
+      var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
+          data: formData, options: Options(contentType: "multipart/form-data"));
+      logger.i("upSlipImg${r.data}");
+      return (r.data["code"]);
+    } catch (e) {
+      _handleException(e);
+      return -1;
+    }
+  }
+
+  // 上传调车防溜照片
+  Future<int> upShuntingImg(
+      {Map<String, dynamic>? queryParametrs, List<File>? imagedataList}) async {
+    try {
+      List<MultipartFile> multipartFiles = [];
+      for (var file in imagedataList!) {
+        var multipartFile = await MultipartFile.fromFile(file.path);
+        multipartFiles.add(multipartFile);
+      }
+
+      FormData formData = FormData.fromMap({
+        "trainEntryCode": queryParametrs!["trainEntryCode"],
+        'shuntingPlanCode': queryParametrs['shuntingPlanCode'],
         "uploadFileList": multipartFiles
       });
       var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",

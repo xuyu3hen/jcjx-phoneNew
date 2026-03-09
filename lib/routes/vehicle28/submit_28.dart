@@ -109,7 +109,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           List<DynamicType> dyn = r.rows!;
           List<Map<String, dynamic>> temp = [];
           for (DynamicType item in dyn) {
-            temp.add(item.toJson());
+            temp.add(item.toJson()); 
           }
           dynamicList = temp;
           //默认动力类型
