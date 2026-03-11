@@ -4,6 +4,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../index.dart';
 
 
+import 'package:jcjx_phone/zjc_common/utils/zjc_permission_utils.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+
 class LoginRoute extends StatefulWidget {
   const LoginRoute({super.key});
 
@@ -21,15 +25,13 @@ class _LoginRouteState extends State<LoginRoute> {
   bool pwdShow = false;
   bool rememberPassword = false; // 记住密码选项
   final String _credentialsKey = 'credentials';
-  bool _isManualInput = false;
   String publicKey = '049d14df9951e1d14dd0e411419f111cb6f42da259ab9af5beea52276ed651e74c70eabe623f56e7f2716c3211e5bae9ec041dcda194840bca87290593e0b06640';
   @override
   void initState() {
     super.initState();
-    initXUpdate();
-    _loadSavedCredentials(); // 加载保存的凭据
+    // initXUpdate();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      getLastUpdate();
+      // getLastUpdate();
     });
   }
 
@@ -75,24 +77,6 @@ class _LoginRouteState extends State<LoginRoute> {
     // showToast(_message);
   }
 
-  // 加载保存的凭据
-  void _loadSavedCredentials() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? savedCredentials = prefs.getString(_credentialsKey);
-
-    if (savedCredentials != null) {
-      List<Map<String, dynamic>> credentialsList =
-          List<Map<String, dynamic>>.from(json.decode(savedCredentials));
-      if (credentialsList.isNotEmpty) {
-        setState(() {
-          _unameController.text = credentialsList.first['username'];
-          _pwdController.text = credentialsList.first['password'];
-          rememberPassword = credentialsList.first['rememberPassword'];
-        });
-      }
-    }
-  }
-
   // 保存凭据
   void _saveCredentials(String username, String password, bool remember) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -126,40 +110,66 @@ class _LoginRouteState extends State<LoginRoute> {
     await prefs.setString(_credentialsKey, json.encode(credentialsList));
   }
 
-  Future<List<String>> _getSavedUsernames() async {
+  Future<List<Map<String, dynamic>>> _getSavedCredentials() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? savedCredentials = prefs.getString(_credentialsKey);
 
     if (savedCredentials != null) {
-      List<Map<String, dynamic>> credentialsList =
-          List<Map<String, dynamic>>.from(json.decode(savedCredentials));
-      // 显式转换为 List<String>
-      return credentialsList
-          .where((credential) => credential['username'] is String)
-          .map((credential) => credential['username'] as String)
+      final decoded = json.decode(savedCredentials);
+      if (decoded is! List) return [];
+      return decoded
+          .whereType<Map>()
+          .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
           .toList();
-    } else {
-      return [];
     }
+    return [];
   }
-  //解决问题
 
-  void _loadPasswordForUsername(String username) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? savedCredentials = prefs.getString(_credentialsKey);
+  Future<void> _showHistoryLoginSheet() async {
+    final credentialsList = await _getSavedCredentials();
+    if (!mounted) return;
+    if (credentialsList.isEmpty) {
+      Fluttertoast.showToast(msg: "暂无历史登录信息");
+      return;
+    }
 
-    if (savedCredentials != null) {
-      List<Map<String, dynamic>> credentialsList =
-          List<Map<String, dynamic>>.from(json.decode(savedCredentials));
-      for (var credential in credentialsList) {
-        if (credential['username'] == username) {
-          setState(() {
-            _pwdController.text = credential['password'];
-            rememberPassword = credential['rememberPassword'];
-          });
-          break;
-        }
-      }
+    final selected = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: credentialsList.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final item = credentialsList[index];
+              final username = (item['username'] ?? '').toString();
+              return ListTile(
+                title: Text(username.isNotEmpty ? username : "未知账号"),
+                onTap: () => Navigator.of(context).pop(item),
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) return;
+
+    final username = (selected['username'] ?? '').toString();
+    final password = (selected['password'] ?? '').toString();
+    final remember = selected['rememberPassword'] == true;
+
+    setState(() {
+      _unameController.text = username;
+      _pwdController.text = password;
+      rememberPassword = remember;
+    });
+
+    if (username.isNotEmpty && password.isNotEmpty) {
+      _loginIn();
+    } else {
+      Fluttertoast.showToast(msg: "历史账号信息不完整");
     }
   }
 
@@ -184,85 +194,19 @@ class _LoginRouteState extends State<LoginRoute> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  FutureBuilder<List<String>>(
-                    future: _getSavedUsernames(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      } else if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
-                      } else {
-                        List<String> usernames = snapshot.data ?? [];
-                        if (_isManualInput) {
-                          // 如果是手动输入模式，显示 TextFormField
-                          return TextFormField(
-                            controller: _unameController,
-                            decoration: InputDecoration(
-                              labelText: "请输入用户名",
-                              hintText: "请输入用户名",
-                              prefixIcon: const Icon(Icons.person),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.8),
-                            ),
-                            validator: (v) {
-                              return v == null || v.trim().isNotEmpty
-                                  ? null
-                                  : "用户名不能为空";
-                            },
-                            autofocus: _nameAutoFouce, // 确保聚焦
-                          );
-                        } else {
-                          // 否则显示 DropdownButtonFormField
-                          return DropdownButtonFormField<String>(
-                            value: _unameController.text.isNotEmpty
-                                ? _unameController.text
-                                : null,
-                            items: [
-                              // 添加一个选项用于手动输入
-                              const DropdownMenuItem<String>(
-                                value: '',
-                                child: Text('手动输入用户名'),
-                              ),
-                              ...usernames
-                                  .map((username) => DropdownMenuItem<String>(
-                                        value: username,
-                                        child: Text(username),
-                                      ))
-                                  .toList(),
-                            ],
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                if (newValue == '') {
-                                  // 切换到手动输入模式
-                                  _isManualInput = true;
-                                  _unameController.clear();
-                                  // 确保焦点转移到 TextFormField
-                                  FocusScope.of(context)
-                                      .requestFocus(FocusNode());
-                                } else {
-                                  // 选择已有用户名
-                                  _isManualInput = false;
-                                  _unameController.text = newValue ?? '';
-                                  _loadPasswordForUsername(newValue ?? '');
-                                }
-                              });
-                            },
-                            decoration: InputDecoration(
-                              labelText: "选择或输入用户名",
-                              hintText: "选择或输入用户名",
-                              prefixIcon: const Icon(Icons.person),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.8),
-                            ),
-                            validator: (v) {
-                              return v == null || v.trim().isNotEmpty
-                                  ? null
-                                  : "用户名不能为空";
-                            },
-                          );
-                        }
-                      }
+                  TextFormField(
+                    controller: _unameController,
+                    decoration: InputDecoration(
+                      labelText: "请输入用户名",
+                      hintText: "请输入用户名",
+                      prefixIcon: const Icon(Icons.person),
+                      filled: true,
+                      fillColor: Colors.white.withOpacity(0.8),
+                    ),
+                    validator: (v) {
+                      return v == null || v.trim().isNotEmpty ? null : "用户名不能为空";
                     },
+                    autofocus: _nameAutoFouce,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -291,6 +235,13 @@ class _LoginRouteState extends State<LoginRoute> {
                           ? null
                           : "密码不能为空！";
                     },
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton(
+                      onPressed: _showHistoryLoginSheet,
+                      child: const Text("历史账号"),
+                    ),
                   ),
 
                   Padding(
@@ -394,19 +345,158 @@ class _LoginRouteState extends State<LoginRoute> {
           env = 'release';
       }
       
+      
       // 使用 getLatestOne 获取最新版本信息
       var r = await ProductApi().getLatestOne(env: env);
-      logger.i("最新版本信息: $r");
+      logger.i("最新版本信息123: $r");
       if (r is! Map) {
         return;
       }
-      final url = r['url']?.toString() ?? '';
-      final version = r['version']?.toString() ?? '';
-      final description = r['description']?.toString() ?? '';
-      logger.i("更新信息: version=$version, url=$url, description=$description");
+      String downloadUrl = (r['downloadUrl'] ?? r['url'] ?? '').toString();
+      String version = (r['version'] ?? r['versionName'] ?? '').toString();
+      String description =
+          (r['description'] ?? r['dec'] ?? r['updateContent'] ?? '').toString();
+      logger.i("更新信息: version=$version, url=$downloadUrl, description=$description");
+      // 比较版本并使用 XUpdate 下载与安装
+      if (version.isNotEmpty && downloadUrl.isNotEmpty) {
+        final cmp = _compareVersion(version, currentVersion);
+        if (cmp == -1) {
+          // 发现新版本，开始手动下载流程
+          final force =
+              (r['isForceUpdate'] == true) || (r['force'] == true) || false;
+          final versionCode =
+              (r['buildNumber'] is int) ? r['buildNumber'] as int : 1;
+          // ProductApi().downloadFileByGeneralDownload(
+          //   url: downloadUrl,
+          //   savePath: "${storageDir.path}/app_update_v$version.apk",
+          //   onReceiveProgress: (received, total) {
+          //     if (total != -1) {
+          //       progressNotifier.value = received / total;
+          //     }
+          //   },
+          // );
+          _downloadAndInstall(
+            downloadUrl,
+            version,
+            description.isNotEmpty ? description : '新版本更新',
+            force,
+            versionCode,
+          );
+        }
+      }
     } catch (e) {
       logger.e("检查更新失败: $e");
       // 不显示错误提示，避免影响用户体验
+    }
+  }
+
+  // 手动下载并安装APK
+  Future<void> _downloadAndInstall(String url, String version, String description, bool isForce, int versionCode) async {
+    // 1. 检查存储权限
+    bool hasPermission = await ZjcPermissionUtils.storage();
+    if (!hasPermission) {
+      Fluttertoast.showToast(msg: "存储权限被拒绝，无法下载更新");
+      return;
+    }
+
+    // 2. 获取存储路径
+    Directory? storageDir = await getExternalStorageDirectory();
+    if (storageDir == null) {
+      Fluttertoast.showToast(msg: "无法获取存储路径");
+      return;
+    }
+    // 确保目录存在
+    if (!storageDir.existsSync()) {
+      storageDir.createSync(recursive: true);
+    }
+    
+    String savePath = "${storageDir.path}/app_update_v$version.apk";
+    File file = File(savePath);
+    if (file.existsSync()) {
+      try {
+        file.deleteSync();
+      } catch (e) {
+        logger.w("删除旧文件失败: $e");
+      }
+    }
+
+    // 3. 显示进度弹窗
+    if (!mounted) return;
+    ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            title: Text("正在下载新版本 $version"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<double>(
+                  valueListenable: progressNotifier,
+                  builder: (context, value, child) {
+                    return LinearProgressIndicator(value: value);
+                  },
+                ),
+                SizedBox(height: 10),
+                ValueListenableBuilder<double>(
+                  valueListenable: progressNotifier,
+                  builder: (context, value, child) {
+                    return Text("${(value * 100).toStringAsFixed(0)}%");
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // 4. 开始下载
+    try {
+      String? path = await ProductApi().downloadFileByGeneralDownload(
+        url: url,
+        savePath: savePath,
+        onReceiveProgress: (received, total) {
+           if (total != -1) {
+             progressNotifier.value = received / total;
+           }
+        },
+      );
+
+      // 关闭弹窗
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (path != null) {
+        // 5. 安装
+        logger.i("下载完成，开始安装: $path");
+        // await FlutterXUpdate.install(
+        //   path: path, 
+        //   updateEntity: UpdateEntity(
+        //     hasUpdate: true, 
+        //     isForce: isForce, 
+        //     isIgnorable: !isForce, 
+        //     versionCode: versionCode, 
+        //     versionName: version, 
+        //     updateContent: description, 
+        //     downloadUrl: url, 
+        //     size: 0
+        //   )
+        // );
+      } else {
+        Fluttertoast.showToast(msg: "下载失败，请稍后重试");
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // 确保弹窗关闭
+      }
+      logger.e("下载出错: $e");
+      Fluttertoast.showToast(msg: "下载出错: $e");
     }
   }
   

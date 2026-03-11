@@ -46,10 +46,6 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     // 初始化更新组件
     initXUpdate();
     
-    // 延迟检查更新，确保页面已加载
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      getLastUpdate();
-    });
   }
 
   // 更新组件初始化

@@ -366,7 +366,7 @@ class ProductApi extends AppApi {
       // 解析返回的数据为 MyApkVersion 对象
       if (r.data["data"] != null) {
 
-        return r.data["data"];
+        return (r.data["data"])['data'];
       }
       return null;
     } catch (e) {
@@ -375,23 +375,25 @@ class ProductApi extends AppApi {
     }
   }
 
-  // 通过通用下载接口下载文件
-  // url: 下载地址（通常是 getLatestOne 返回的 downloadUrl）
-  Future<dynamic> downloadFileByGeneralDownload({
+  // 通过通用下载接口下载文件 (POST请求，参数为url)
+  Future<String?> downloadFileByGeneralDownload({
     required String url,
+    required String savePath,
+    required Function(int, int) onReceiveProgress,
   }) async {
     try {
-      var r = await AppApi.dio.get(
-        "https://10.105.84.122:8080/fileserver/FileOperation/generalDownloadFile",
-        queryParameters: {'url': url},
+      // 使用 download 方法直接保存文件
+      // url 是目标文件的地址，通过 POST body 传递给通用下载接口
+      await AppApi.dio.download(
+        "/fileserver/FileOperation/generalDownloadFile",
+        savePath,
+        data: {'url': url},
         options: Options(
-          responseType: ResponseType.bytes,
-          followRedirects: true,
-          validateStatus: (status) => status != null && status < 500,
+          method: 'POST',
         ),
+        onReceiveProgress: onReceiveProgress,
       );
-      // 返回响应数据
-      return r.data;
+      return savePath;
     } catch (e) {
       _handleException(e);
       return null;
