@@ -26,6 +26,34 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   List<RepairGroup> repairGroups = [];
 
+  final Map<String, Future<String>> _stopLocationDisplayFutureByCode = {};
+
+  Future<String> _getStopLocationDisplayByCode(String? code) {
+    final trimmed = (code ?? '').trim();
+    if (trimmed.isEmpty) {
+      return Future.value('');
+    }
+    return _stopLocationDisplayFutureByCode.putIfAbsent(trimmed, () async {
+      try {
+        final r = await ProductApi().getstopLocation({
+          'pageNum': 0,
+          'pageSize': 0,
+          'code': trimmed,
+        });
+        final first = (r.rows != null && r.rows!.isNotEmpty) ? r.rows!.first : null;
+        final deptName = first?.deptName;
+        final trackNum = first?.trackNum;
+        final areaName = first?.areaName;
+        if (deptName != null && deptName.isNotEmpty && trackNum != null && trackNum.isNotEmpty && areaName != null && areaName.isNotEmpty) {
+          return '$deptName-$trackNum-$areaName';
+        }
+        return trimmed;
+      } catch (_) {
+        return trimmed;
+      }
+    });
+  }
+
   // 用于追踪每个组的展开状态
   Map<int, bool> _groupExpansionStates = {};
 
@@ -400,13 +428,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  '停留地点：${item.stoppingPlace ?? ''}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
+                FutureBuilder<String>(
+                  future: _getStopLocationDisplayByCode(item.repairLocation),
+                  builder: (context, snapshot) {
+                    final text = snapshot.data ?? (item.repairLocation ?? '');
+                    return Text(
+                      '停留地点：$text',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    );
+                  },
                 ),
+         
+                
               ],
             ),
           ),
@@ -719,7 +755,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // ... existing code ...
   // 显示检修调令对话框
   void _showMaintenanceOrderDialog(BuildContext context, RepairItem item) {
-    int selectedOption = -1; // -1表示未选择，0表示调车申请单，1表示调车通知单，2表示调查清单
+    int selectedOption = -1; // -1表示未选择，0表示调车作业申请单，1表示调车通知单，2表示调查清单
 
     showDialog(
       context: context,
@@ -745,7 +781,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           });
                         },
                       ),
-                      title: const Text('调车申请单'),
+                      title: const Text('调车作业申请单'),
                       onTap: () {
                         setState(() {
                           selectedOption = 0;
@@ -841,12 +877,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       : () async {
                           Navigator.pop(context);
                           switch (selectedOption) {
-                            case 0: // 调车申请单
-                              getStopLocation();
+                            case 0: // 调车作业申请单
+                              getStopLocation(item);
                               _showShuntingApplicationDialog(context, item);
                               break;
                             case 1: // 调车通知单
-                              getStopLocation();
+                              getStopLocation(item);
                               _showShuntingAnswerDialog(context, item);
                               break;
                             case 2: // 调查清单
@@ -881,18 +917,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 产生停留地点
   // 起始位置
   List<Map<String, dynamic>> stopLocationList = [];
+  List<Map<String, dynamic>> startStopLocationList = [];
 
   // 开始位置
   Map<String, dynamic> stopLocationSelected = {};
   // 结束位置
   Map<String, dynamic> stopLocationSelectedEnd = {};
   // 获取检修地点
-  void getStopLocation() async {
+  void getStopLocation(RepairItem item) async {
+    await _refreshAllStopLocations();
+    _applyDefaultStartStopLocation(item, null);
+  }
+
+  Future<void> _refreshAllStopLocations() async {
     try {
-      var r = await ProductApi().getstopLocation({
+      final queryParametrs = <String, dynamic>{
         'pageNum': 0,
         'pageSize': 0,
-      });
+      };
+      var r = await ProductApi().getstopLocation(queryParametrs);
       List<Map<String, dynamic>> processedStopLocations = [];
       if (r.rows != null && r.rows!.isNotEmpty) {
         for (var item in r.rows!) {
@@ -912,20 +955,50 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
       setState(() {
         stopLocationList = processedStopLocations;
-        logger.i(stopLocationList);
+        startStopLocationList = processedStopLocations;
       });
     } catch (e, stackTrace) {
       logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
     }
   }
 
+  void _applyDefaultStartStopLocation(RepairItem item, String? endValue) {
+    final e = (endValue ?? '').toUpperCase();
+    String codeParam;
+    if (e == 'B') {
+      codeParam = (item.repairLocationB ?? '').trim();
+    } else {
+      codeParam = (item.repairLocation ?? '').trim();
+    }
+    if (codeParam.isEmpty) {
+      setState(() {
+        stopLocationSelected = {};
+      });
+      return;
+    }
+    final match = stopLocationList.cast<Map<String, dynamic>>().where((m) {
+      return (m['code']?.toString() ?? '') == codeParam;
+    }).toList();
+
+    setState(() {
+      stopLocationSelected =
+          match.isEmpty ? {} : Map<String, dynamic>.from(match.first);
+    });
+  }
+
   Map<String, dynamic> directionSelected = {};
   List<Map<String, dynamic>> directionList = [
     {
       'name': 'A',
+      'value': 'A',
     },
     {
       'name': 'B',
+      'value': 'B',
+    },
+    {
+      'name': 'AB',
+      'value': 'AB',
     }
   ];
 
@@ -1284,7 +1357,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     );
   }
 
-  // 显示调车申请单输入对话框
+  // 显示调车作业申请单输入对话框
   void _showShuntingApplicationDialog(BuildContext context, RepairItem item) {
     final TextEditingController _reasonController = TextEditingController();
     final TextEditingController _locationController = TextEditingController();
@@ -1297,7 +1370,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'applyUserName': Global.profile.permissions?.user.userName,
           'dynamicCode': item.dynamicCode,
           'endStopPositionCode': stopLocationSelectedEnd['code'],
-          'ends': directionSelected['name'],
           'remark': _reasonController.text,
           'sort': 0,
           'startStopPositionCode': stopLocationSelected['code'],
@@ -1305,6 +1377,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'trainEntryCode': item.code,
           'typeCode': item.typeCode,
         };
+        if (item.doubleCarriage == true) {
+          queryParametrs['ends'] =
+              directionSelected['value'] ?? directionSelected['name'];
+        }
         var r = await ProductApi()
             .saveTrainShunting(queryParametrs: queryParametrs);
       } catch (e) {
@@ -1312,141 +1388,150 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
 
+    if (item.doubleCarriage != true) {
+      directionSelected = {};
+    }
+    stopLocationSelected = {};
+    stopLocationSelectedEnd = {};
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('调车申请单'),
+              title: const Text('调车作业申请单'),
               content: SizedBox(
                 width: double.maxFinite,
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  // 展示车号和停留地点信息
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '车号: ${item.trainNum ?? "未知"}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                child: SingleChildScrollView(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            '车号: ${item.trainNum ?? "未知"}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '停留地点: ${item.stoppingPlace ?? "未知"}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  //增加朝向
-                  ZjcFormSelectCell(
-                      title: "端",
-                      text: directionSelected["name"] ?? '',
+                    ZjcFormSelectCell(
+                        title: "端",
+                        text: directionSelected["name"] ?? '',
+                        hintText: item.doubleCarriage == true ? "请选择" : "无需选择",
+                        clickCallBack: () {
+                          if (item.doubleCarriage != true) {
+                            showToast("非重联无需选择端");
+                            return;
+                          }
+                          if (directionList.isEmpty) {
+                            showToast("无端可选择");
+                          } else {
+                            ZjcCascadeTreePicker.show(
+                              context,
+                              data: directionList,
+                              labelKey: 'name',
+                              valueKey: 'value',
+                              childrenKey: 'children',
+                              title: "选择端",
+                              clickCallBack: (selectItem, selectArr) {
+                                final selectedEnd =
+                                    (selectItem['value'] ?? selectItem['name'])
+                                        ?.toString();
+                                setState(() {
+                                  directionSelected['name'] =
+                                      selectItem['name'];
+                                  directionSelected['value'] = selectedEnd;
+                                  stopLocationSelected = {};
+                                });
+                                _applyDefaultStartStopLocation(item, selectedEnd);
+                              },
+                            );
+                          }
+                        }),
+                    const SizedBox(height: 10),
+                    ZjcFormSelectCell(
+                      title: "起始位置",
+                      text: stopLocationSelected["realLocation"],
                       hintText: "请选择",
                       clickCallBack: () {
-                        if (directionList.isEmpty) {
-                          showToast("无朝向可选择");
+                        if (startStopLocationList.isEmpty) {
+                          showToast("无检修地点可选择");
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
-                            data: directionList,
-                            labelKey: 'name',
-                            valueKey: 'name',
+                            data: startStopLocationList,
+                            labelKey: 'realLocation',
+                            valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择朝向",
+                            title: "选择检修地点",
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 logger.i(selectArr);
-                                directionSelected['name'] = selectItem['name'];
+                                stopLocationSelected["code"] = selectItem["code"];
+                                stopLocationSelected["realLocation"] =
+                                    selectItem["realLocation"];
+                                stopLocationSelected["areaName"] =
+                                    selectItem["areaName"];
+                                stopLocationSelected["trackNum"] =
+                                    selectItem["trackNum"];
                               });
                             },
                           );
                         }
-                      }),
-                  const SizedBox(height: 10),
-                  ZjcFormSelectCell(
-                    title: "起始位置",
-                    text: stopLocationSelected["realLocation"],
-                    hintText: "请选择",
-                    clickCallBack: () {
-                      if (stopLocationList.isEmpty) {
-                        showToast("无检修地点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: stopLocationList,
-                          labelKey: 'realLocation',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择检修地点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              stopLocationSelected["code"] = selectItem["code"];
-                              stopLocationSelected["realLocation"] =
-                                  selectItem["realLocation"];
-                              stopLocationSelected["areaName"] =
-                                  selectItem["areaName"];
-                              stopLocationSelected["trackNum"] =
-                                  selectItem["trackNum"];
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                    title: "终点位置",
-                    text: stopLocationSelectedEnd["realLocation"],
-                    hintText: "请选择",
-                    clickCallBack: () {
-                      if (stopLocationList.isEmpty) {
-                        showToast("无检修地点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: stopLocationList,
-                          labelKey: 'realLocation',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择检修地点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              stopLocationSelectedEnd["code"] =
-                                  selectItem["code"];
-                              stopLocationSelectedEnd["realLocation"] =
-                                  selectItem["realLocation"];
-                              stopLocationSelectedEnd["areaName"] =
-                                  selectItem["areaName"];
-                              stopLocationSelectedEnd["trackNum"] =
-                                  selectItem["trackNum"];
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  TextFormField(
-                    controller: _reasonController,
-                    decoration: const InputDecoration(
-                      labelText: '备注',
-                      border: OutlineInputBorder(),
+                      },
                     ),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 10),
-                ]),
+                    ZjcFormSelectCell(
+                      title: "终点位置",
+                      text: stopLocationSelectedEnd["realLocation"],
+                      hintText: "请选择",
+                      clickCallBack: () {
+                        if (stopLocationList.isEmpty) {
+                          showToast("无检修地点可选择");
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            context,
+                            data: stopLocationList,
+                            labelKey: 'realLocation',
+                            valueKey: 'code',
+                            childrenKey: 'children',
+                            title: "选择检修地点",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                logger.i(selectArr);
+                                stopLocationSelectedEnd["code"] =
+                                    selectItem["code"];
+                                stopLocationSelectedEnd["realLocation"] =
+                                    selectItem["realLocation"];
+                                stopLocationSelectedEnd["areaName"] =
+                                    selectItem["areaName"];
+                                stopLocationSelectedEnd["trackNum"] =
+                                    selectItem["trackNum"];
+                              });
+                            },
+                          );
+                        }
+                      },
+                    ),
+                    TextFormField(
+                      controller: _reasonController,
+                      decoration: const InputDecoration(
+                        labelText: '备注',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 10),
+                  ]),
+                ),
               ),
               actions: [
                 TextButton(
@@ -1461,7 +1546,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     // 处理提交逻辑
                     Navigator.pop(context);
                     savetrainShunting();
-                    SmartDialog.showToast('调车申请已提交');
+                    SmartDialog.showToast('调车作业申请已提交');
                   },
                   child: const Text('确认'),
                 ),
@@ -1490,7 +1575,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         List<Map<String, dynamic>> queryParametrs = [
           {
             'endStopPositionCode': stopLocationSelectedEnd['code'],
-            'ends': directionSelected['name'],
+            'ends': directionSelected['value'] ?? directionSelected['name'],
             'planDate': _estimatedStartDate!.millisecondsSinceEpoch,
             'planStartTime': _planDateSelected.toString(),
             'planEndTime': _planDateSelectedEnd.toString(),
@@ -1567,19 +1652,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       hintText: "请选择",
                       clickCallBack: () {
                         if (directionList.isEmpty) {
-                          showToast("无朝向可选择");
+                          showToast("无端可选择");
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
                             data: directionList,
                             labelKey: 'name',
-                            valueKey: 'name',
+                            valueKey: 'value',
                             childrenKey: 'children',
-                            title: "选择朝向",
+                            title: "选择端",
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 logger.i(selectArr);
                                 directionSelected['name'] = selectItem['name'];
+                                directionSelected['value'] =
+                                    selectItem['value'] ?? selectItem['name'];
                               });
                             },
                           );

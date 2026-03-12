@@ -37,6 +37,7 @@ class RepairItem {
   final String? createdBy;
   final String? createdTime;
   final String? dynamicCode;
+  final bool? doubleCarriage;
   final String? handOverTime;
   final String? leavePlatformTime;
   final String? masSaleInformationCode;
@@ -50,6 +51,7 @@ class RepairItem {
   final String? repairEndTime;
   final String? repairEndTimeReal;
   final String? repairLocation;
+  final String? repairLocationB;
   final String? repairPlanCode;
   final String? repairProcCode;
   final String? repairProcName;
@@ -86,6 +88,7 @@ class RepairItem {
     this.createdBy,
     this.createdTime,
     this.dynamicCode,
+    this.doubleCarriage,
     this.handOverTime,
     this.leavePlatformTime,
     this.masSaleInformationCode,
@@ -99,6 +102,7 @@ class RepairItem {
     this.repairEndTime,
     this.repairEndTimeReal,
     this.repairLocation,
+    this.repairLocationB,
     this.repairPlanCode,
     this.repairProcCode,
     this.repairProcName,

@@ -1277,7 +1277,7 @@ class ProductApi extends AppApi {
         "/dispatch/trainEntry/getTrainEntryAndDynamics",
         queryParameters: queryParametrs,
       );
-      // logger.i((r.data["data"])["data"]);
+      logger.i((r.data["data"])["data"]);
       List<RepairGroup> repairGroups = [];
 
       for (var item in (r.data["data"])["data"]) {
