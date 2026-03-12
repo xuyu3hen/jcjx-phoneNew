@@ -20,12 +20,25 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   final Set<String> _receivedPackageCodes = <String>{};
   final Set<String> _receivingPackageCodes = <String>{};
 
-  bool _isReceivedPkg(Map<String, dynamic> pkg) {
+  int? _pkgStatus(Map<String, dynamic> pkg) {
     final st = pkg['status'];
-    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
-    if (stInt != null && stInt != 0) return true;
+    return st is int ? st : int.tryParse(st?.toString() ?? '');
+  }
+
+  bool _isCompletedPkg(Map<String, dynamic> pkg) {
+    return _pkgStatus(pkg) == 2;
+  }
+
+  bool _isUnreceivedPkg(Map<String, dynamic> pkg) {
+    final stInt = _pkgStatus(pkg);
     final code = (pkg['code'] ?? '').toString();
-    return code.isNotEmpty && _receivedPackageCodes.contains(code);
+    final localReceived =
+        code.isNotEmpty && _receivedPackageCodes.contains(code);
+    return (stInt == null || stInt == 0) && !localReceived;
+  }
+
+  bool _isReceivedPkg(Map<String, dynamic> pkg) {
+    return !_isCompletedPkg(pkg) && !_isUnreceivedPkg(pkg);
   }
 
   Widget _buildPackageList(List<Map<String, dynamic>> list) {
@@ -47,9 +60,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
         final pkg = list[index];
         final name = (pkg['packageName'] ?? pkg['name'] ?? '').toString();
         final code = (pkg['code'] ?? '').toString();
-        final st = pkg['status'];
-        final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
-        final isCompleted = stInt == 2;
+        final isCompleted = _isCompletedPkg(pkg);
         final isReceived = _isReceivedPkg(pkg);
         final isReceiving =
             code.isNotEmpty && _receivingPackageCodes.contains(code);
@@ -256,14 +267,16 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
             return name.contains(_searchText);
           }).toList();
 
+    final unreceivedList =
+        filtered.where((pkg) => _isUnreceivedPkg(pkg)).toList(growable: false);
     final receivedList =
         filtered.where((pkg) => _isReceivedPkg(pkg)).toList(growable: false);
-    final unreceivedList =
-        filtered.where((pkg) => !_isReceivedPkg(pkg)).toList(growable: false);
+    final completedList =
+        filtered.where((pkg) => _isCompletedPkg(pkg)).toList(growable: false);
 
     return DefaultTabController(
-      length: 2,
-      initialIndex: 0,
+      length: 3,
+      initialIndex: 1,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('调车作业包'),
@@ -271,8 +284,9 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
           elevation: 1,
           bottom: const TabBar(
             tabs: [
-              Tab(text: '未领取'),
               Tab(text: '已领取'),
+              Tab(text: '未领取'),
+              Tab(text: '已完成'),
             ],
           ),
           actions: [
@@ -303,11 +317,15 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                       children: [
                         RefreshIndicator(
                           onRefresh: _loadData,
+                          child: _buildPackageList(receivedList),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: _loadData,
                           child: _buildPackageList(unreceivedList),
                         ),
                         RefreshIndicator(
                           onRefresh: _loadData,
-                          child: _buildPackageList(receivedList),
+                          child: _buildPackageList(completedList),
                         ),
                       ],
                     ),
@@ -557,6 +575,9 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
               itemBuilder: (context, index) {
                 final p = _planList[index];
                 final ends = (p['ends'] ?? '').toString();
+                final executorName = (p['executorName'] ?? '').toString();
+                final typeName = (p['typeName'] ?? '').toString();
+                final trainNum = (p['trainNum'] ?? '').toString();
                 final startAreaName = (p['startAreaName'] ?? '').toString();
                 final startTrackNum = (p['startTrackNum'] ?? '').toString();
                 final endAreaName = (p['endAreaName'] ?? '').toString();
@@ -580,9 +601,13 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                         Row(
                           children: [
                             Expanded(child: Text('方向: $ends')),
-                            Expanded(child: Text('车号: ${p['trainNum'] ?? ''}')),
+                            Expanded(child: Text('车号: $trainNum')),
                           ],
                         ),
+                        const SizedBox(height: 6),
+                        Text('机型: $typeName'),
+                        const SizedBox(height: 6),
+                        Text('处理人: $executorName'),
                         const SizedBox(height: 6),
                         Row(
                           children: [
@@ -661,39 +686,7 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
   final List<XFile> _images = [];
   final ImagePicker _picker = ImagePicker();
 
-  Map<String, dynamic>? _locoInfo;
-  bool _loadingLoco = true;
   bool _submitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLocoInfo();
-  }
-
-  Future<void> _loadLocoInfo() async {
-    final trainNum = widget.plan['trainNum']?.toString();
-    if (trainNum == null || trainNum.isEmpty) {
-      if (!mounted) return;
-      setState(() => _loadingLoco = false);
-      return;
-    }
-    try {
-      final r = await ProductApi().getTrainInfoByPlan(
-        queryParametrs: {'trainNum': trainNum},
-      );
-      if (!mounted) return;
-      if (r is Map) {
-        _locoInfo = Map<String, dynamic>.from(r);
-      }
-    } catch (_) {
-      if (!mounted) return;
-    } finally {
-      if (mounted) {
-        setState(() => _loadingLoco = false);
-      }
-    }
-  }
 
   String _fmtDate(dynamic v) {
     if (v == null) return '';
@@ -719,14 +712,6 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
     if (photo == null || !mounted) return;
     setState(() {
       _images.add(photo);
-    });
-  }
-
-  Future<void> _pickGallery() async {
-    final List<XFile> photos = await _picker.pickMultiImage(imageQuality: 80);
-    if (photos.isEmpty || !mounted) return;
-    setState(() {
-      _images.addAll(photos);
     });
   }
 
@@ -790,27 +775,21 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
   @override
   Widget build(BuildContext context) {
     final trainNum = (widget.plan['trainNum'] ?? '').toString();
-    final typeName = (_locoInfo?['typeName'] ??
-            _locoInfo?['trainTypeName'] ??
-            _locoInfo?['type'] ??
-            '')
-        .toString();
-    final stopPlace =
-        (_locoInfo?['stopPlace'] ?? _locoInfo?['stopPositionName'] ?? '')
-            .toString();
-    final arriveTime = _fmtDate(_locoInfo?['arrivePlatformTime']);
-    final nodeName = (_locoInfo?['repairMainNodeName'] ?? '').toString();
+    final typeName = (widget.plan['typeName'] ?? '').toString();
 
     final ends = (widget.plan['ends'] ?? '').toString();
+    final executorName = (widget.plan['executorName'] ?? '').toString();
     final startAreaName = (widget.plan['startAreaName'] ?? '').toString();
     final startTrackNum = (widget.plan['startTrackNum'] ?? '').toString();
     final endAreaName = (widget.plan['endAreaName'] ?? '').toString();
     final endTrackNum = (widget.plan['endTrackNum'] ?? '').toString();
     final remark = (widget.plan['remark'] ?? '').toString();
+    final startTime = _fmtDate(widget.plan['startTime']);
+    final completeTime = _fmtDate(widget.plan['completeTime']);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('调车完工'),
+        title: const Text('调车作业'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -831,44 +810,21 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '机车信息',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 10),
-                    if (_loadingLoco) ...[
-                      const SizedBox(height: 8),
-                      const Center(child: CircularProgressIndicator()),
-                      const SizedBox(height: 8),
-                    ] else ...[
-                      _infoRow('机型', typeName),
-                      _infoRow('车号', trainNum),
-                      _infoRow('入段时间', arriveTime),
-                      _infoRow('停留地点', stopPlace),
-                      _infoRow('工序节点', nodeName),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
                       '调车信息',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 10),
+                    _infoRow('机型', typeName),
+                    _infoRow('车号', trainNum),
                     _infoRow('方向', ends),
+                    _infoRow('处理人', executorName),
                     _infoRow('起始区域', startAreaName),
                     _infoRow('起始股道', startTrackNum),
                     _infoRow('结束区域', endAreaName),
                     _infoRow('结束股道', endTrackNum),
+                    _infoRow('开工时间', startTime),
+                    _infoRow('完成时间', completeTime),
                     if (remark.isNotEmpty) _infoRow('备注', remark),
                   ],
                 ),
@@ -882,7 +838,7 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '上传图片',
+                      '上传防溜资源',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
@@ -890,7 +846,7 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
                     if (_images.isEmpty)
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 10),
-                        child: Text('请上传完工照片', style: TextStyle(color: Colors.grey)),
+                        child: Text('请拍摄防溜照片', style: TextStyle(color: Colors.grey)),
                       )
                     else
                       Wrap(
@@ -945,11 +901,6 @@ class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
                           onPressed: _pickCamera,
                           icon: const Icon(Icons.camera_alt),
                           label: const Text('拍照'),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _pickGallery,
-                          icon: const Icon(Icons.photo_library),
-                          label: const Text('相册'),
                         ),
                       ],
                     ),
