@@ -239,12 +239,12 @@ class ProductApi extends AppApi {
   }
 
   // /dispatch/trainShuntingPlan/addToPlan
-  Future<dynamic> addTrainShuntingPlan({
-    List<Map<String, dynamic>>? queryParametrs,
+  Future<dynamic> directPublishShuntingPlan({
+    Map<String, dynamic>? queryParametrs,
   }) async {
     try {
       var r = await AppApi.dio.post(
-        "/dispatch/trainShuntingPlan/addToPlan",
+        "/dispatch/trainShuntingPlan/directPublishShuntingPlan",
         data: queryParametrs,
       );
       logger.i((r.data["data"]));
