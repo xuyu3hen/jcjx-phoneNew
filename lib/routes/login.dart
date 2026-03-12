@@ -6,7 +6,7 @@ import '../index.dart';
 
 import 'package:jcjx_phone/zjc_common/utils/zjc_permission_utils.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+// toast 统一使用 showToast 包装
 
 class LoginRoute extends StatefulWidget {
   const LoginRoute({super.key});
@@ -129,7 +129,7 @@ class _LoginRouteState extends State<LoginRoute> {
     final credentialsList = await _getSavedCredentials();
     if (!mounted) return;
     if (credentialsList.isEmpty) {
-      Fluttertoast.showToast(msg: "暂无历史登录信息");
+      showToast("暂无历史登录信息");
       return;
     }
 
@@ -169,7 +169,7 @@ class _LoginRouteState extends State<LoginRoute> {
     if (username.isNotEmpty && password.isNotEmpty) {
       _loginIn();
     } else {
-      Fluttertoast.showToast(msg: "历史账号信息不完整");
+      showToast("历史账号信息不完整");
     }
   }
 
@@ -395,14 +395,14 @@ class _LoginRouteState extends State<LoginRoute> {
     // 1. 检查存储权限
     bool hasPermission = await ZjcPermissionUtils.storage();
     if (!hasPermission) {
-      Fluttertoast.showToast(msg: "存储权限被拒绝，无法下载更新");
+      showToast("存储权限被拒绝，无法下载更新");
       return;
     }
 
     // 2. 获取存储路径
     Directory? storageDir = await getExternalStorageDirectory();
     if (storageDir == null) {
-      Fluttertoast.showToast(msg: "无法获取存储路径");
+      showToast( "无法获取存储路径");
       return;
     }
     // 确保目录存在
@@ -489,14 +489,14 @@ class _LoginRouteState extends State<LoginRoute> {
         //   )
         // );
       } else {
-        Fluttertoast.showToast(msg: "下载失败，请稍后重试");
+        showToast("下载失败，请稍后重试");
       }
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop(); // 确保弹窗关闭
       }
       logger.e("下载出错: $e");
-      Fluttertoast.showToast(msg: "下载出错: $e");
+      showToast("下载出错: $e");
     }
   }
   

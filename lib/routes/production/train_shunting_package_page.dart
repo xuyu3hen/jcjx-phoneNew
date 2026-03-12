@@ -20,6 +20,84 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   final Set<String> _receivedPackageCodes = <String>{};
   final Set<String> _receivingPackageCodes = <String>{};
 
+  bool _isReceivedPkg(Map<String, dynamic> pkg) {
+    final st = pkg['status'];
+    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+    if (stInt != null && stInt != 0) return true;
+    final code = (pkg['code'] ?? '').toString();
+    return code.isNotEmpty && _receivedPackageCodes.contains(code);
+  }
+
+  Widget _buildPackageList(List<Map<String, dynamic>> list) {
+    if (list.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        children: const [
+          SizedBox(height: 140),
+          Center(child: Text('暂无数据')),
+        ],
+      );
+    }
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16.0),
+      itemCount: list.length,
+      itemBuilder: (context, index) {
+        final pkg = list[index];
+        final name = (pkg['packageName'] ?? pkg['name'] ?? '').toString();
+        final code = (pkg['code'] ?? '').toString();
+        final st = pkg['status'];
+        final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+        final isCompleted = stInt == 2;
+        final isReceived = _isReceivedPkg(pkg);
+        final isReceiving =
+            code.isNotEmpty && _receivingPackageCodes.contains(code);
+        return Card(
+          child: ListTile(
+            title: Text(name),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed:
+                      (isCompleted || isReceived || isReceiving) ? null : () => _receive(code),
+                  child: Text(isCompleted
+                      ? '已完成'
+                      : (isReceived ? '已领取' : (isReceiving ? '领取中' : '领取'))),
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16),
+              ],
+            ),
+            onTap: () {
+              final raw = pkg['trainShuntingPlanList'];
+              final plans = raw is List
+                  ? raw
+                      .where((e) => e is Map)
+                      .map((e) => Map<String, dynamic>.from(e as Map))
+                      .toList()
+                  : <Map<String, dynamic>>[];
+              () async {
+                final res = await Navigator.of(context).push(
+                  MaterialPageRoute<bool>(
+                    builder: (context) => TrainShuntingPlanListPage(
+                      title: name,
+                      packageCode: code,
+                      planList: plans,
+                    ),
+                  ),
+                );
+                if (res == true || res == null) {
+                  await _loadData();
+                }
+              }();
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -178,113 +256,64 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
             return name.contains(_searchText);
           }).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('调车作业包'),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: '按名称或车号搜索',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-              ),
-              onChanged: (v) {
-                setState(() => _searchText = v);
-              },
-            ),
+    final receivedList =
+        filtered.where((pkg) => _isReceivedPkg(pkg)).toList(growable: false);
+    final unreceivedList =
+        filtered.where((pkg) => !_isReceivedPkg(pkg)).toList(growable: false);
+
+    return DefaultTabController(
+      length: 2,
+      initialIndex: 0,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('调车作业包'),
+          backgroundColor: Colors.white,
+          elevation: 1,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: '未领取'),
+              Tab(text: '已领取'),
+            ],
           ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: _loadData,
-                    child: filtered.isEmpty
-                        ? const Center(child: Text('暂无数据'))
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16.0),
-                            itemCount: filtered.length,
-                            itemBuilder: (context, index) {
-                              final pkg = filtered[index];
-                              final name =
-                                  (pkg['packageName'] ?? pkg['name'] ?? '')
-                                      .toString();
-                              final code = (pkg['code'] ?? '').toString();
-                              final st = pkg['status'];
-                              final stInt = st is int
-                                  ? st
-                                  : int.tryParse(st?.toString() ?? '');
-                              final isCompleted = stInt == 2;
-                              final isReceived = stInt == 1 ||
-                                  (code.isNotEmpty &&
-                                      _receivedPackageCodes.contains(code));
-                              final isReceiving = code.isNotEmpty &&
-                                  _receivingPackageCodes.contains(code);
-                              return Card(
-                                child: ListTile(
-                                  title: Text(name),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      TextButton(
-                                        onPressed: (isCompleted ||
-                                                isReceived ||
-                                                isReceiving)
-                                            ? null
-                                            : () => _receive(code),
-                                        child: Text(isCompleted
-                                            ? '已完成'
-                                            : (isReceived
-                                                ? '已领取'
-                                                : (isReceiving ? '领取中' : '领取'))),
-                                      ),
-                                      const Icon(Icons.arrow_forward_ios,
-                                          size: 16),
-                                    ],
-                                  ),
-                                  onTap: () {
-                                    final list = (pkg['trainShuntingPlanList']
-                                            is List)
-                                        ? (pkg['trainShuntingPlanList'] as List)
-                                            .where((e) => e is Map)
-                                            .map((e) =>
-                                                Map<String, dynamic>.from(
-                                                    e as Map))
-                                            .toList()
-                                        : <Map<String, dynamic>>[];
-                                    () async {
-                                      final res = await Navigator.of(context).push(
-                                        MaterialPageRoute<bool>(
-                                          builder: (context) =>
-                                              TrainShuntingPlanListPage(
-                                            title: name,
-                                            packageCode: code,
-                                            planList: list,
-                                          ),
-                                        ),
-                                      );
-                                      if (res == true || res == null) {
-                                        await _loadData();
-                                      }
-                                    }();
-                                  },
-                                ),
-                              );
-                            },
-                          ),
+          actions: [
+            IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
+          ],
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  hintText: '按名称或车号搜索',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
-          ),
-        ],
+                ),
+                onChanged: (v) {
+                  setState(() => _searchText = v);
+                },
+              ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : TabBarView(
+                      children: [
+                        RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: _buildPackageList(unreceivedList),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: _buildPackageList(receivedList),
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -432,153 +461,32 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       SmartDialog.showToast('数据异常：缺少代码');
       return;
     }
-
-    List<XFile> imageFiles = [];
-    final ImagePicker picker = ImagePicker();
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('上传完工凭证'),
-              content: SizedBox(
-                width: MediaQuery.sizeOf(context).width * 0.85,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (imageFiles.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 10),
-                          child: Text('请上传完工照片',
-                              style: TextStyle(color: Colors.grey)),
-                        )
-                      else
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              for (int i = 0; i < imageFiles.length; i++)
-                                SizedBox(
-                                  width: 90,
-                                  height: 90,
-                                  child: Stack(
-                                    children: [
-                                      Positioned.fill(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                          child:
-                                              _buildXFilePreview(imageFiles[i]),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 0,
-                                        right: 0,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            setStateDialog(() {
-                                              imageFiles.removeAt(i);
-                                            });
-                                          },
-                                          child: Container(
-                                            decoration: const BoxDecoration(
-                                              color: Colors.black54,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            padding: const EdgeInsets.all(4),
-                                            child: const Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final XFile? photo = await picker.pickImage(
-                                source: ImageSource.camera,
-                                imageQuality: 80,
-                              );
-                              if (photo != null) {
-                                setStateDialog(() {
-                                  imageFiles.add(photo);
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.camera_alt),
-                            label: const Text('拍照'),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final List<XFile> photos =
-                                  await picker.pickMultiImage(
-                                imageQuality: 80,
-                              );
-                              if (photos.isNotEmpty) {
-                                setStateDialog(() {
-                                  imageFiles.addAll(photos);
-                                });
-                              }
-                            },
-                            icon: const Icon(Icons.photo_library),
-                            label: const Text('相册'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('取消'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (imageFiles.isEmpty) {
-                      SmartDialog.showToast('请先选择图片');
-                      return;
-                    }
-                    Navigator.of(context).pop();
-                    await _complete(index, imageFiles: imageFiles);
-                  },
-                  child: const Text('上传并完成'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+    final res = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => TrainShuntingCompletePage(
+          plan: Map<String, dynamic>.from(item),
+          onComplete: (images) => _complete(index, imageFiles: images),
+        ),
+      ),
     );
+    if (res == true && mounted) {
+      setState(() {
+        _changed = true;
+      });
+    }
   }
 
-  Future<void> _complete(int index, {List<XFile>? imageFiles}) async {
+  Future<bool> _complete(int index, {List<XFile>? imageFiles}) async {
     final item = _planList[index];
     final code = item['code']?.toString();
     if (code == null || code.isEmpty) {
       SmartDialog.showToast('数据异常：缺少代码');
-      return;
+      return false;
     }
     // 先上传图片（必须）
     if (imageFiles == null || imageFiles.isEmpty) {
       SmartDialog.showToast('请先选择图片');
-      return;
+      return false;
     }
     SmartDialog.showLoading(msg: '正在上传...');
     try {
@@ -592,12 +500,12 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       if (r != 200) {
         SmartDialog.dismiss();
         SmartDialog.showToast('图片上传失败，状态码: $r');
-        return;
+        return false;
       }
     } catch (e) {
       SmartDialog.dismiss();
       SmartDialog.showToast('图片上传失败: $e');
-      return;
+      return false;
     }
     SmartDialog.dismiss();
 
@@ -615,12 +523,15 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
         });
         _changed = true;
         await _refresh();
+        return true;
       } else {
         SmartDialog.showToast('完成失败');
+        return false;
       }
     } catch (e) {
       SmartDialog.dismiss();
       SmartDialog.showToast('完成失败: $e');
+      return false;
     }
   }
 
@@ -726,6 +637,337 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 );
               },
             ),
+      ),
+    );
+  }
+}
+
+class TrainShuntingCompletePage extends StatefulWidget {
+  final Map<String, dynamic> plan;
+  final Future<bool> Function(List<XFile> images) onComplete;
+
+  const TrainShuntingCompletePage({
+    super.key,
+    required this.plan,
+    required this.onComplete,
+  });
+
+  @override
+  State<TrainShuntingCompletePage> createState() =>
+      _TrainShuntingCompletePageState();
+}
+
+class _TrainShuntingCompletePageState extends State<TrainShuntingCompletePage> {
+  final List<XFile> _images = [];
+  final ImagePicker _picker = ImagePicker();
+
+  Map<String, dynamic>? _locoInfo;
+  bool _loadingLoco = true;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocoInfo();
+  }
+
+  Future<void> _loadLocoInfo() async {
+    final trainNum = widget.plan['trainNum']?.toString();
+    if (trainNum == null || trainNum.isEmpty) {
+      if (!mounted) return;
+      setState(() => _loadingLoco = false);
+      return;
+    }
+    try {
+      final r = await ProductApi().getTrainInfoByPlan(
+        queryParametrs: {'trainNum': trainNum},
+      );
+      if (!mounted) return;
+      if (r is Map) {
+        _locoInfo = Map<String, dynamic>.from(r);
+      }
+    } catch (_) {
+      if (!mounted) return;
+    } finally {
+      if (mounted) {
+        setState(() => _loadingLoco = false);
+      }
+    }
+  }
+
+  String _fmtDate(dynamic v) {
+    if (v == null) return '';
+    final s = v.toString();
+    final ms = int.tryParse(s);
+    if (ms != null && ms > 100000000000) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(ms);
+      return DateFormat('yyyy-MM-dd HH:mm:ss').format(dt);
+    }
+    try {
+      final dt = DateTime.parse(s);
+      return DateFormat('yyyy-MM-dd HH:mm:ss').format(dt);
+    } catch (_) {
+      return s;
+    }
+  }
+
+  Future<void> _pickCamera() async {
+    final XFile? photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
+    if (photo == null || !mounted) return;
+    setState(() {
+      _images.add(photo);
+    });
+  }
+
+  Future<void> _pickGallery() async {
+    final List<XFile> photos = await _picker.pickMultiImage(imageQuality: 80);
+    if (photos.isEmpty || !mounted) return;
+    setState(() {
+      _images.addAll(photos);
+    });
+  }
+
+  Widget _buildXFilePreview(XFile f) {
+    return FutureBuilder<Uint8List>(
+      future: f.readAsBytes(),
+      builder: (context, snap) {
+        final bytes = snap.data;
+        if (bytes == null) {
+          return const ColoredBox(color: Color(0xFFE0E0E0));
+        }
+        return Image.memory(bytes, fit: BoxFit.cover);
+      },
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 92,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+          Expanded(
+            child: Text(value.isEmpty ? '无' : value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    if (_images.isEmpty) {
+      SmartDialog.showToast('请先上传图片');
+      return;
+    }
+    setState(() {
+      _submitting = true;
+    });
+    try {
+      final ok = await widget.onComplete(_images);
+      if (!mounted) return;
+      if (ok) {
+        Navigator.of(context).pop(true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _submitting = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final trainNum = (widget.plan['trainNum'] ?? '').toString();
+    final typeName = (_locoInfo?['typeName'] ??
+            _locoInfo?['trainTypeName'] ??
+            _locoInfo?['type'] ??
+            '')
+        .toString();
+    final stopPlace =
+        (_locoInfo?['stopPlace'] ?? _locoInfo?['stopPositionName'] ?? '')
+            .toString();
+    final arriveTime = _fmtDate(_locoInfo?['arrivePlatformTime']);
+    final nodeName = (_locoInfo?['repairMainNodeName'] ?? '').toString();
+
+    final ends = (widget.plan['ends'] ?? '').toString();
+    final startAreaName = (widget.plan['startAreaName'] ?? '').toString();
+    final startTrackNum = (widget.plan['startTrackNum'] ?? '').toString();
+    final endAreaName = (widget.plan['endAreaName'] ?? '').toString();
+    final endTrackNum = (widget.plan['endTrackNum'] ?? '').toString();
+    final remark = (widget.plan['remark'] ?? '').toString();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('调车完工'),
+        backgroundColor: Colors.white,
+        elevation: 1,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$typeName $trainNum'.trim(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '机车信息',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_loadingLoco) ...[
+                      const SizedBox(height: 8),
+                      const Center(child: CircularProgressIndicator()),
+                      const SizedBox(height: 8),
+                    ] else ...[
+                      _infoRow('机型', typeName),
+                      _infoRow('车号', trainNum),
+                      _infoRow('入段时间', arriveTime),
+                      _infoRow('停留地点', stopPlace),
+                      _infoRow('工序节点', nodeName),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '调车信息',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    _infoRow('方向', ends),
+                    _infoRow('起始区域', startAreaName),
+                    _infoRow('起始股道', startTrackNum),
+                    _infoRow('结束区域', endAreaName),
+                    _infoRow('结束股道', endTrackNum),
+                    if (remark.isNotEmpty) _infoRow('备注', remark),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '上传图片',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 10),
+                    if (_images.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: Text('请上传完工照片', style: TextStyle(color: Colors.grey)),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (int i = 0; i < _images.length; i++)
+                            SizedBox(
+                              width: 90,
+                              height: 90,
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: _buildXFilePreview(_images[i]),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    right: 0,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _images.removeAt(i);
+                                        });
+                                      },
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        padding: const EdgeInsets.all(4),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: _pickCamera,
+                          icon: const Icon(Icons.camera_alt),
+                          label: const Text('拍照'),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _pickGallery,
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('相册'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                child: Text(_submitting ? '提交中...' : '上传并完成'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

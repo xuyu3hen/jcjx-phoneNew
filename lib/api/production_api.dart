@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:jcjx_phone/models/prework/repair_sys.dart';
 import 'package:jcjx_phone/models/prework/repair_main_node.dart';
 import 'package:jcjx_phone/models/searchWorkPackage/main_node.dart';
@@ -75,7 +74,7 @@ class ProductApi extends AppApi {
     }
 
     // 显示错误提示给用户
-    Fluttertoast.showToast(msg: errorMessage);
+    showToast(errorMessage);
   }
 
   // 入段列车查询

@@ -25,6 +25,8 @@ class MyApp extends StatelessWidget {
             title: F.title,
             debugShowCheckedModeBanner: false,
             // debugShowCheckedModeBanner: true,
+            builder: FlutterSmartDialog.init(),
+            navigatorObservers: [FlutterSmartDialog.observer],
             theme: ThemeData(
               // colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               // 调用主题色时直接Theme.of(context).primaryColor即可
@@ -48,7 +50,7 @@ class MyApp extends StatelessWidget {
               // 开屏(废弃)
               // "opening":(context) => const MyHomePage(title: 'Maitre Scan Home Page'),
               // 主路由展示
-              "main_page":(context) => const NormalMainPage(),
+              "main_page":(context) => const MainPage(),
               // 筛选器测试
               // "menu":(context) => DownnMenu(),
               // 拣配

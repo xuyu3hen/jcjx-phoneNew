@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 
 Widget gmAvatar(String url, {
   double width = 30,
@@ -26,17 +26,8 @@ Widget gmAvatar(String url, {
   );
 }
 
-void showToast(String text, {
-  gravity = ToastGravity.CENTER,
-  toastLength = Toast.LENGTH_SHORT,
-}) {
-  Fluttertoast.showToast(
-    msg: text,
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
-    backgroundColor: Colors.grey[600],
-    fontSize: 16.0,
-  );
+void showToast(String text, {dynamic gravity, dynamic toastLength}) {
+  // FlutterSmartDialog.showToast(text);
 }
 
 void showLoading(context, [String? text]) {
