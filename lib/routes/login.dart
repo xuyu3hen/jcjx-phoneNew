@@ -3,7 +3,6 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../index.dart';
 
-
 import 'package:jcjx_phone/zjc_common/utils/zjc_permission_utils.dart';
 import 'package:path_provider/path_provider.dart';
 // toast 统一使用 showToast 包装
@@ -25,13 +24,14 @@ class _LoginRouteState extends State<LoginRoute> {
   bool pwdShow = false;
   bool rememberPassword = false; // 记住密码选项
   final String _credentialsKey = 'credentials';
-  String publicKey = '049d14df9951e1d14dd0e411419f111cb6f42da259ab9af5beea52276ed651e74c70eabe623f56e7f2716c3211e5bae9ec041dcda194840bca87290593e0b06640';
+  String publicKey =
+      '049d14df9951e1d14dd0e411419f111cb6f42da259ab9af5beea52276ed651e74c70eabe623f56e7f2716c3211e5bae9ec041dcda194840bca87290593e0b06640';
   @override
   void initState() {
     super.initState();
-    // initXUpdate();
+    initXUpdate();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // getLastUpdate();
+      getLastUpdate();
     });
   }
 
@@ -145,7 +145,10 @@ class _LoginRouteState extends State<LoginRoute> {
               final item = credentialsList[index];
               final username = (item['username'] ?? '').toString();
               return ListTile(
-                title: Text(username.isNotEmpty ? username : "未知账号"),
+                contentPadding: EdgeInsets.zero,
+                title: Center(
+                  child: Text(username.isNotEmpty ? username : "未知账号"),
+                ),
                 onTap: () => Navigator.of(context).pop(item),
               );
             },
@@ -204,7 +207,9 @@ class _LoginRouteState extends State<LoginRoute> {
                       fillColor: Colors.white.withOpacity(0.8),
                     ),
                     validator: (v) {
-                      return v == null || v.trim().isNotEmpty ? null : "用户名不能为空";
+                      return v == null || v.trim().isNotEmpty
+                          ? null
+                          : "用户名不能为空";
                     },
                     autofocus: _nameAutoFouce,
                   ),
@@ -222,7 +227,6 @@ class _LoginRouteState extends State<LoginRoute> {
                         onPressed: () {
                           setState(() {
                             pwdShow = !pwdShow;
-                            
                           });
                         },
                       ),
@@ -243,7 +247,6 @@ class _LoginRouteState extends State<LoginRoute> {
                       child: const Text("历史账号"),
                     ),
                   ),
-
                   Padding(
                     padding: const EdgeInsets.only(top: 25),
                     child: ConstrainedBox(
@@ -269,11 +272,9 @@ class _LoginRouteState extends State<LoginRoute> {
     // if(F.id == "com.jcjx_phone_dev"){
     if (true) {
       try {
-       
-        
-        
         // 正确调用SM2加密：encrypt(明文, 公钥)
-        String passwd = SM2.encrypt(_pwdController.text, publicKey, cipherMode: 1);
+        String passwd =
+            SM2.encrypt(_pwdController.text, publicKey, cipherMode: 1);
         logger.i("加密后的密码：$passwd");
         logger.i(_unameController.text);
         // 调用api接口函数
@@ -296,9 +297,8 @@ class _LoginRouteState extends State<LoginRoute> {
             _saveCredentials(
                 _unameController.text, _pwdController.text, rememberPassword);
 
-
             await AppApi.init();
-            
+
             // 登录成功后，后台预加载数据（不阻塞UI）
             Global.preloadRepairData().catchError((e) {
               logger.e('预加载数据失败: $e');
@@ -321,14 +321,14 @@ class _LoginRouteState extends State<LoginRoute> {
   void getLastUpdate() async {
     try {
       logger.i("检查更新，应用ID: ${F.id}");
-      
+
       // 获取当前应用版本信息
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String currentVersion = packageInfo.version;
       int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
-      
+
       logger.i("当前版本: $currentVersion+$currentBuildNumber");
-      
+
       // 获取当前环境对应的 env 参数
       String env = 'release';
       switch (F.appFlavor) {
@@ -344,8 +344,7 @@ class _LoginRouteState extends State<LoginRoute> {
         default:
           env = 'release';
       }
-      
-      
+
       // 使用 getLatestOne 获取最新版本信息
       var r = await ProductApi().getLatestOne(env: env);
       logger.i("最新版本信息123: $r");
@@ -356,7 +355,8 @@ class _LoginRouteState extends State<LoginRoute> {
       String version = (r['version'] ?? r['versionName'] ?? '').toString();
       String description =
           (r['description'] ?? r['dec'] ?? r['updateContent'] ?? '').toString();
-      logger.i("更新信息: version=$version, url=$downloadUrl, description=$description");
+      logger.i(
+          "更新信息: version=$version, url=$downloadUrl, description=$description");
       // 比较版本并使用 XUpdate 下载与安装
       if (version.isNotEmpty && downloadUrl.isNotEmpty) {
         final cmp = _compareVersion(version, currentVersion);
@@ -366,21 +366,9 @@ class _LoginRouteState extends State<LoginRoute> {
               (r['isForceUpdate'] == true) || (r['force'] == true) || false;
           final versionCode =
               (r['buildNumber'] is int) ? r['buildNumber'] as int : 1;
-          // ProductApi().downloadFileByGeneralDownload(
-          //   url: downloadUrl,
-          //   savePath: "${storageDir.path}/app_update_v$version.apk",
-          //   onReceiveProgress: (received, total) {
-          //     if (total != -1) {
-          //       progressNotifier.value = received / total;
-          //     }
-          //   },
-          // );
-          _downloadAndInstall(
-            downloadUrl,
-            version,
-            description.isNotEmpty ? description : '新版本更新',
-            force,
-            versionCode,
+          //使用 xupdate 进行更新
+          FlutterXUpdate.updateByInfo(
+            updateEntity: customJsonParse(r),
           );
         }
       }
@@ -390,159 +378,68 @@ class _LoginRouteState extends State<LoginRoute> {
     }
   }
 
-  // 手动下载并安装APK
-  Future<void> _downloadAndInstall(String url, String version, String description, bool isForce, int versionCode) async {
-    // 1. 检查存储权限
-    bool hasPermission = await ZjcPermissionUtils.storage();
-    if (!hasPermission) {
-      showToast("存储权限被拒绝，无法下载更新");
-      return;
-    }
-
-    // 2. 获取存储路径
-    Directory? storageDir = await getExternalStorageDirectory();
-    if (storageDir == null) {
-      showToast( "无法获取存储路径");
-      return;
-    }
-    // 确保目录存在
-    if (!storageDir.existsSync()) {
-      storageDir.createSync(recursive: true);
-    }
-    
-    String savePath = "${storageDir.path}/app_update_v$version.apk";
-    File file = File(savePath);
-    if (file.existsSync()) {
-      try {
-        file.deleteSync();
-      } catch (e) {
-        logger.w("删除旧文件失败: $e");
-      }
-    }
-
-    // 3. 显示进度弹窗
-    if (!mounted) return;
-    ValueNotifier<double> progressNotifier = ValueNotifier(0.0);
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: AlertDialog(
-            title: Text("正在下载新版本 $version"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ValueListenableBuilder<double>(
-                  valueListenable: progressNotifier,
-                  builder: (context, value, child) {
-                    return LinearProgressIndicator(value: value);
-                  },
-                ),
-                SizedBox(height: 10),
-                ValueListenableBuilder<double>(
-                  valueListenable: progressNotifier,
-                  builder: (context, value, child) {
-                    return Text("${(value * 100).toStringAsFixed(0)}%");
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    // 4. 开始下载
-    try {
-      String? path = await ProductApi().downloadFileByGeneralDownload(
-        url: url,
-        savePath: savePath,
-        onReceiveProgress: (received, total) {
-           if (total != -1) {
-             progressNotifier.value = received / total;
-           }
-        },
-      );
-
-      // 关闭弹窗
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-
-      if (path != null) {
-        // 5. 安装
-        logger.i("下载完成，开始安装: $path");
-        // await FlutterXUpdate.install(
-        //   path: path, 
-        //   updateEntity: UpdateEntity(
-        //     hasUpdate: true, 
-        //     isForce: isForce, 
-        //     isIgnorable: !isForce, 
-        //     versionCode: versionCode, 
-        //     versionName: version, 
-        //     updateContent: description, 
-        //     downloadUrl: url, 
-        //     size: 0
-        //   )
-        // );
-      } else {
-        showToast("下载失败，请稍后重试");
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.of(context).pop(); // 确保弹窗关闭
-      }
-      logger.e("下载出错: $e");
-      showToast("下载出错: $e");
-    }
-  }
-  
   // 比较版本号（语义化版本号比较）
   // 返回值: >0 表示 version1 > version2, <0 表示 version1 < version2, 0 表示相等
   int _compareVersion(String version1, String version2) {
-    List<int> v1Parts = version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    List<int> v2Parts = version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    
+    List<int> v1Parts =
+        version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+    List<int> v2Parts =
+        version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+
     // 补齐长度
     while (v1Parts.length < v2Parts.length) v1Parts.add(0);
     while (v2Parts.length < v1Parts.length) v2Parts.add(0);
-    
+
     for (int i = 0; i < v1Parts.length; i++) {
       if (v1Parts[i] > v2Parts[i]) return -1; // version1 更新
-      if (v1Parts[i] < v2Parts[i]) return 1;  // version2 更新
+      if (v1Parts[i] < v2Parts[i]) return 1; // version2 更新
     }
     return 0; // 相等
   }
 
   // 转义成UpdateEntity
-  UpdateEntity customJsonParse(myapk) {
-    // 构建完整的下载URL（如果是相对路径，需要添加服务器地址）
-    String downloadUrl = myapk.url ?? '';
+  UpdateEntity customJsonParse(Map<dynamic, dynamic> apk) {
+    String downloadUrl = (apk['downloadUrl'] ?? apk['url'] ?? '').toString();
     if (downloadUrl.isNotEmpty && !downloadUrl.startsWith('http')) {
-      // 相对路径，添加服务器地址
-      String baseUrl = UpdateApi.distributionServerUrl;
-      if (!downloadUrl.startsWith('/')) {
-        downloadUrl = '/$downloadUrl';
+      String baseUrl = F.baseURL;
+      //如果是env_release环境将baseUrl转换为http开头的 原来是这样的https://10.102.124.50/jcjx-prod-api/
+      if (baseUrl.startsWith('https')) {
+        baseUrl = 'http://10.102.124.50/xc-prod-api';
       }
-      downloadUrl = '$baseUrl$downloadUrl';
-    }
+
+      //将downloadUrl第一个/去掉
     
+     
+      downloadUrl =
+          '$baseUrl/fileserver/FileOperation/generalDownloadFile?url=$downloadUrl';
+    }
+    logger.d('downloadUrl: $downloadUrl');
+
+    final isForce = (apk['isForceUpdate'] == true) || (apk['force'] == true);
+    final versionCodeRaw = apk['buildNumber'];
+    final versionCode = versionCodeRaw is num
+        ? versionCodeRaw.toInt()
+        : int.tryParse(versionCodeRaw?.toString() ?? '') ?? 1;
+
+    final versionName =
+        (apk['version'] ?? apk['versionName'] ?? '未知版本').toString();
+    final updateContent =
+        (apk['dec'] ?? apk['description'] ?? apk['updateContent'] ?? '新版本更新')
+            .toString();
+
     return UpdateEntity(
-      isForce: myapk.isForceUpdate ?? false, // 使用服务器返回的强制更新标志
       hasUpdate: true,
-      isIgnorable: !(myapk.isForceUpdate ?? false), // 强制更新时不可忽略
-      versionCode: myapk.buildNumber ?? 1,
-      versionName: myapk.version ?? '未知版本',
-      updateContent: myapk.dec ?? '新版本更新',
+      isForce: isForce,
+      isIgnorable: !isForce,
+      versionCode: versionCode,
+      versionName: versionName,
+      updateContent: updateContent,
       downloadUrl: downloadUrl,
     );
   }
 
   ///传入UpdateEntity进行更新提示
-  void checkUpdateByUpdateEntity(myapk) {
-    FlutterXUpdate.updateByInfo(updateEntity: customJsonParse(myapk));
+  void checkUpdateByUpdateEntity(Map<String, dynamic> apk) {
+    FlutterXUpdate.updateByInfo(updateEntity: customJsonParse(apk));
   }
 }
