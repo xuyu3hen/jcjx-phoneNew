@@ -1614,6 +1614,49 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            Future<void> pickDateTime({
+              required DateTime? current,
+              required void Function(DateTime dateTime) onPicked,
+            }) async {
+              final DateTime? pickedDate = await showDatePicker(
+                context: context,
+                initialDate: current ?? DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+                locale: const Locale('zh', 'CN'),
+                helpText: '选择日期',
+                cancelText: '取消',
+                confirmText: '确定',
+              );
+
+              if (pickedDate == null) return;
+
+              final TimeOfDay? pickedTime = await showTimePicker(
+                context: context,
+                initialTime: current != null
+                    ? TimeOfDay.fromDateTime(current)
+                    : TimeOfDay.now(),
+                helpText: '选择时间',
+                cancelText: '取消',
+                confirmText: '确定',
+              );
+
+              if (pickedTime == null) return;
+
+              final DateTime dateTimeWithTime = DateTime(
+                pickedDate.year,
+                pickedDate.month,
+                pickedDate.day,
+                pickedTime.hour,
+                pickedTime.minute,
+                0,
+              );
+
+              setState(() {
+                onPicked(dateTimeWithTime);
+              });
+            }
+
             return AlertDialog(
               title: const Text('调车作业通知单'),
               content: SizedBox(
@@ -1747,6 +1790,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   ),
                   TextField(
                     readOnly: true,
+                    onTap: () => pickDateTime(
+                      current: _planDateSelected,
+                      onPicked: (dateTime) {
+                        _planDateSelected = dateTime;
+                      },
+                    ),
                     controller: TextEditingController(
                       text: _planDateSelected != null
                           ? DateFormat('yyyy-MM-dd HH:mm:ss')
@@ -1774,43 +1823,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         IconButton(
                           icon: const Icon(Icons.calendar_today),
                           onPressed: () async {
-                            final DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: _planDateSelected ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                              locale: const Locale('zh', 'CN'),
-                              helpText: '选择日期',
-                              cancelText: '取消',
-                              confirmText: '确定',
+                            await pickDateTime(
+                              current: _planDateSelected,
+                              onPicked: (dateTime) {
+                                _planDateSelected = dateTime;
+                              },
                             );
-
-                            if (pickedDate != null) {
-                              final TimeOfDay? pickedTime =
-                                  await showTimePicker(
-                                context: context,
-                                initialTime: _planDateSelected != null
-                                    ? TimeOfDay.fromDateTime(_planDateSelected!)
-                                    : TimeOfDay.now(),
-                                helpText: '选择时间',
-                                cancelText: '取消',
-                                confirmText: '确定',
-                              );
-                              if (pickedTime != null) {
-                                final DateTime dateTimeWithTime = DateTime(
-                                  pickedDate.year,
-                                  pickedDate.month,
-                                  pickedDate.day,
-                                  pickedTime.hour,
-                                  pickedTime.minute,
-                                  0,
-                                );
-
-                                setState(() {
-                                  _planDateSelected = dateTimeWithTime;
-                                });
-                              }
-                            }
                           },
                         ),
                       ],
@@ -1819,6 +1837,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   const SizedBox(height: 10),
                   TextField(
                     readOnly: true,
+                    onTap: () => pickDateTime(
+                      current: _planDateSelectedEnd,
+                      onPicked: (dateTime) {
+                        _planDateSelectedEnd = dateTime;
+                      },
+                    ),
                     controller: TextEditingController(
                       text: _planDateSelectedEnd != null
                           ? DateFormat('yyyy-MM-dd HH:mm:ss')
@@ -1846,43 +1870,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         IconButton(
                           icon: const Icon(Icons.calendar_today),
                           onPressed: () async {
-                            final DateTime? pickedDate = await showDatePicker(
-                              context: context,
-                              initialDate: _planDateSelectedEnd ?? DateTime.now(),
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime(2100),
-                              locale: const Locale('zh', 'CN'),
-                              helpText: '选择日期',
-                              cancelText: '取消',
-                              confirmText: '确定',
+                            await pickDateTime(
+                              current: _planDateSelectedEnd,
+                              onPicked: (dateTime) {
+                                _planDateSelectedEnd = dateTime;
+                              },
                             );
-
-                            if (pickedDate != null) {
-                              final TimeOfDay? pickedTime =
-                                  await showTimePicker(
-                                context: context,
-                                initialTime: _planDateSelectedEnd != null
-                                    ? TimeOfDay.fromDateTime(_planDateSelectedEnd!)
-                                    : TimeOfDay.now(),
-                                helpText: '选择时间',
-                                cancelText: '取消',
-                                confirmText: '确定',
-                              );
-                              if (pickedTime != null) {
-                                final DateTime dateTimeWithTime = DateTime(
-                                  pickedDate.year,
-                                  pickedDate.month,
-                                  pickedDate.day,
-                                  pickedTime.hour,
-                                  pickedTime.minute,
-                                  0,
-                                );
-
-                                setState(() {
-                                  _planDateSelectedEnd = dateTimeWithTime;
-                                });
-                              }
-                            }
                           },
                         ),
                       ],
