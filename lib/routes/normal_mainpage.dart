@@ -162,6 +162,10 @@ class _NormalMainPageState extends State<NormalMainPage> {
       child: Column(
         children: [
           const SizedBox(height: 30),
+          const ListTile(
+            title: Text("检修进度",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
