@@ -31,6 +31,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   List<Map<String, dynamic>> repairTrainInfo = [];
 
   bool _isLoading = true; // 添加加载状态标识
+  static const double _tabSwitchVelocityThreshold = 250.0;
 
   @override
   void initState() {
@@ -195,7 +196,23 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+          : GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragEnd: (details) {
+                final velocity = details.primaryVelocity ?? 0;
+                if (velocity.abs() < _tabSwitchVelocityThreshold) return;
+                if (velocity < 0 && _currentTab < 2) {
+                  _setTab(_currentTab + 1);
+                } else if (velocity > 0 && _currentTab > 0) {
+                  _setTab(_currentTab - 1);
+                }
+              },
+              child: _buildLocomotiveList(_currentTab == 0
+                  ? repairMainNodeInfo
+                  : _currentTab == 1
+                      ? repairMainNodeInfo1
+                      : repairMainNodeInfo2),
+            ),
     );
   }
 
@@ -235,13 +252,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 0) {
-                      setState(() {
-                        _currentTab = 0;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(0));
-                    }
+                    _setTab(0);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -300,13 +311,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 1) {
-                      setState(() {
-                        _currentTab = 1;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(1));
-                    }
+                    _setTab(1);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -364,13 +369,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 2) {
-                      setState(() {
-                        _currentTab = 2;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(2));
-                    }
+                    _setTab(2);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -431,6 +430,14 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         ),
       ),
     );
+  }
+
+  void _setTab(int tabIndex) {
+    if (_currentTab == tabIndex) return;
+    setState(() {
+      _currentTab = tabIndex;
+    });
+    Future.microtask(() => _loadFirstProcessNode(tabIndex));
   }
 
   /// 加载指定标签的第一个工序节点内容

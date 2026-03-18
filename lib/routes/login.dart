@@ -133,26 +133,38 @@ class _LoginRouteState extends State<LoginRoute> {
       return;
     }
 
-    final selected = await showModalBottomSheet<Map<String, dynamic>>(
+    final selected = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
-        return SafeArea(
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: credentialsList.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final item = credentialsList[index];
-              final username = (item['username'] ?? '').toString();
-              return ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Center(
-                  child: Text(username.isNotEmpty ? username : "未知账号"),
-                ),
-                onTap: () => Navigator.of(context).pop(item),
-              );
-            },
+        final screenHeight = MediaQuery.of(context).size.height;
+        final dialogHeight = screenHeight * 0.5 > 420 ? 420.0 : screenHeight * 0.5;
+        return AlertDialog(
+          title: const Center(child: Text("历史账号")),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: dialogHeight,
+            child: ListView.separated(
+              itemCount: credentialsList.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final item = credentialsList[index];
+                final username = (item['username'] ?? '').toString();
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Center(
+                    child: Text(username.isNotEmpty ? username : "未知账号"),
+                  ),
+                  onTap: () => Navigator.of(context).pop(item),
+                );
+              },
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("取消"),
+            ),
+          ],
         );
       },
     );
