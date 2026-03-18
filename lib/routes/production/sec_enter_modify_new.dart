@@ -371,18 +371,24 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     );
   }
 
-  Future<void> uploadSlip(String trainEntryCode, List<File> images) async {
-    try {
-      var r = await ProductApi().upSlipImg(
-        queryParametrs: {"trainEntryCode": trainEntryCode},
-        imagedataList: images,
-      );
-      if (r != 200) {
-        throw Exception('图片上传失败，服务器返回状态码: $r');
+  Future<dynamic> uploadSlip(val) async {
+    if (faultPics.isNotEmpty) {
+      try {
+        var r = await ProductApi().upSlipImg(
+            queryParametrs: {"trainEntryCode": val}, imagedataList: faultPics);
+        if (r == 200) {
+          SmartDialog.dismiss();
+          // 上传成功后才清除图片
+          faultPics.clear();
+          assestPics.clear();
+        } else {
+          // 如果上传失败，抛出异常供上层捕获
+          throw Exception('图片上传失败，服务器返回状态码: $r');
+        }
+      } catch (e, stackTrace) {
+        logger.e('uploadSlip 方法中发生异常: $e\n堆栈信息: $stackTrace');
+        rethrow; // 重新抛出异常
       }
-    } catch (e, stackTrace) {
-      logger.e('uploadSlip 方法中发生异常: $e\n堆栈信息: $stackTrace');
-      rethrow;
     }
   }
 
@@ -419,84 +425,30 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         final isBusinessError = dataCode == 500 || dataCode?.toString() == "500";
 
         if (topCode == "S_F_S000" && !isBusinessError) {
-          logger.i("trainEntrySave success: ${r['data']}");
+          logger.i("trainEntrySave success: ${r['data']['code']}");
 
-          // 仅当数据保存成功且所有图片上传成功后，才算入段成功
-          if (data is List) {
-            if (data.isEmpty) {
-              showToast("入段失败：返回数据为空");
-              return "";
-            }
-
-            if (faultPics.isEmpty) {
-              showToast("入段失败：未选择图片");
-              return "";
-            }
-
-            try {
-              final imagesSnapshot = List<File>.from(faultPics);
-              SmartDialog.showLoading(msg: '正在上传图片');
-              for (final item in data) {
-                if (item is! Map) {
-                  logger.e('trainEntrySave item 非 Map: $item');
-                  showToast("入段失败：返回数据格式错误");
-                  return "";
-                }
-                final entryCode = (item["code"] ??
-                        item["trainEntryCode"] ??
-                        item["entryCode"])
-                    ?.toString();
-                if (entryCode == null || entryCode.isEmpty) {
-                  logger.e('trainEntrySave item 缺少 code/trainEntryCode');
-                  showToast("入段失败：返回数据缺少必要字段");
-                  return "";
-                }
-                await uploadSlip(entryCode, imagesSnapshot);
-              }
-              faultPics.clear();
-              assestPics.clear();
-              return r["code"];
-            } catch (e, stackTrace) {
-              logger.e('批量 uploadSlip 异常: $e\n堆栈信息: $stackTrace');
-              showToast("入段失败：图片上传失败");
-              return "";
-            } finally {
-              SmartDialog.dismiss();
-            }
-          } else if (data is Map) {
-            if (data["code"] == null) {
-              logger.e('trainEntrySave data or code is null');
-              showToast("入段失败：缺少必要数据无法上传图片");
-              return "";
-            }
-
-            if (faultPics.isEmpty) {
-              showToast("入段失败：未选择图片");
-              return "";
-            }
-
-            try {
-              final imagesSnapshot = List<File>.from(faultPics);
-              SmartDialog.showLoading(msg: '正在上传图片');
-              final entryCode = data["code"]?.toString();
-              if (entryCode == null || entryCode.isEmpty) {
-                showToast("入段失败：返回数据缺少必要字段");
-                return "";
-              }
-              await uploadSlip(entryCode, imagesSnapshot);
-              faultPics.clear();
-              assestPics.clear();
-              return r["code"];
-            } catch (e, stackTrace) {
-              logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
-              showToast("入段失败：图片上传失败");
-              return "";
-            } finally {
-              SmartDialog.dismiss();
-            }
-          } else {
-            showToast("入段失败：返回数据格式错误");
+          if (data is! Map || data["code"] == null) {
+            logger.e('trainEntrySave data or code is null');
+            showToast("基础信息保存成功，但缺少必要数据无法上传图片");
             return "";
+          }
+
+          if (faultPics.isEmpty) {
+            logger.w('没有选择图片，跳过上传');
+            // showToast("基础信息保存成功，但未选择图片");
+            return r["code"];
+          }
+
+          try {
+            SmartDialog.showLoading(msg: '正在入段');
+            await uploadSlip(data["code"]);
+            return r["code"];
+          } catch (e, stackTrace) {
+            logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
+
+            return "";
+          } finally {
+            SmartDialog.dismiss();
           }
         } else {
           final msg = (data is Map ? data["msg"] : null)?.toString();

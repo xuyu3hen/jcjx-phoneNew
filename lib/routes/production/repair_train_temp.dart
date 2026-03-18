@@ -195,8 +195,28 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+          : GestureDetector(
+              onHorizontalDragEnd: (details) {
+                const swipeThreshold = 100;
+                final dx = details.velocity.pixelsPerSecond.dx;
+                if (dx > swipeThreshold && _currentTab > 0) {
+                  _switchTab(_currentTab - 1);
+                } else if (dx < -swipeThreshold && _currentTab < 2) {
+                  _switchTab(_currentTab + 1);
+                }
+              },
+              child: _buildLocomotiveList(repairMainNodeInfo),
+            ),
     );
+  }
+
+  void _switchTab(int tabIndex) {
+    if (tabIndex < 0 || tabIndex >= 3) return;
+    if (_currentTab == tabIndex) return;
+    setState(() {
+      _currentTab = tabIndex;
+      _loadFirstProcessNode(tabIndex);
+    });
   }
 
   /// 构建顶部导航栏（含标签切换+红点提示）
@@ -233,13 +253,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 0) {
-                      setState(() {
-                        _currentTab = 0;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(0));
-                    }
+                    _switchTab(0);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -298,13 +312,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 1) {
-                      setState(() {
-                        _currentTab = 1;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(1));
-                    }
+                    _switchTab(1);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
@@ -362,13 +370,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentTab != 2) {
-                      setState(() {
-                        _currentTab = 2;
-                      });
-                      // 延迟加载第一个工序节点的内容，提高响应速度
-                      Future.microtask(() => _loadFirstProcessNode(2));
-                    }
+                    _switchTab(2);
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
