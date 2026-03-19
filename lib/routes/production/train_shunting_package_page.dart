@@ -152,7 +152,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
         final canEnable = !isCompleted && !isReceived && !isReceiving;
         final statusText = isCompleted
             ? '已完成'
-            : (isReceived ? '已启用' : (stInt == 0 ? '未完成' : '未完成'));
+            : (isReceived ? '作业中' : (stInt == 0 ? '未完成' : '未完成'));
 
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
@@ -213,7 +213,22 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                       alignment: Alignment.centerRight,
                       child: canEnable
                           ? TextButton(
-                              onPressed: () => _receive(code),
+                              onPressed: () async {
+                                if (isReceiving) return;
+                                _receive(code);
+                                final res = await Navigator.of(context).push(
+                                  MaterialPageRoute<bool>(
+                                    builder: (context) => TrainShuntingPlanListPage(
+                                      title: name,
+                                      packageCode: code,
+                                      planList: plans,
+                                    ),
+                                  ),
+                                );
+                                if (res == true || res == null) {
+                                  await _loadData();
+                                }
+                              },
                               child: const Text('启用'),
                             )
                           : Text(
@@ -541,6 +556,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   bool _changed = false;
   final Map<String, XFile?> _slipRemoveImageByPlanCode = <String, XFile?>{};
   final Map<String, XFile?> _slipSetupImageByPlanCode = <String, XFile?>{};
+  final Map<String, bool> _slipRemoveUploadedByPlanCode = <String, bool>{};
   final ImagePicker _slipImagePicker = ImagePicker();
   @override
   void initState() {
@@ -562,7 +578,41 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     );
   }
 
-  Future<void> _pickSlipCamera(String planCode, {required bool isRemove}) async {
+  Future<bool> _uploadSlipImage({
+    required Map<String, dynamic> plan,
+    required XFile image,
+    required int antiSlipType,
+  }) async {
+    try {
+      SmartDialog.showLoading(msg: '正在上传...');
+      final r = await ProductApi().upSlipImg(
+        queryParametrs: {
+          "trainEntryCode": plan['trainEntryCode'],
+          "shuntingPlanCode": plan['code'],
+          "antiSlipType": antiSlipType,
+        },
+        imagedataList: [File(image.path)],
+      );
+      SmartDialog.dismiss();
+      if (r != 200) {
+        SmartDialog.showToast('图片上传失败，状态码: $r');
+        return false;
+      }
+      return true;
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('图片上传失败: $e');
+      return false;
+    }
+  }
+
+  Future<void> _pickSlipCamera(int index, {required bool isRemove}) async {
+    final plan = _planList[index];
+    final planCode = (plan['code'] ?? '').toString();
+    if (planCode.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return;
+    }
     final XFile? photo = await _slipImagePicker.pickImage(
       source: ImageSource.camera,
       imageQuality: 80,
@@ -571,16 +621,33 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     setState(() {
       if (isRemove) {
         _slipRemoveImageByPlanCode[planCode] = photo;
+        _slipRemoveUploadedByPlanCode[planCode] = false;
       } else {
         _slipSetupImageByPlanCode[planCode] = photo;
       }
     });
+
+    if (isRemove) {
+      final ok = await _uploadSlipImage(
+        plan: plan,
+        image: photo,
+        antiSlipType: 1,
+      );
+      if (!mounted) return;
+      if (ok) {
+        setState(() {
+          _slipRemoveUploadedByPlanCode[planCode] = true;
+        });
+        await _start(index);
+      }
+    }
   }
 
   void _removeSlipImage(String planCode, {required bool isRemove}) {
     setState(() {
       if (isRemove) {
         _slipRemoveImageByPlanCode.remove(planCode);
+        _slipRemoveUploadedByPlanCode.remove(planCode);
       } else {
         _slipSetupImageByPlanCode.remove(planCode);
       }
@@ -667,6 +734,27 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     try {
       SmartDialog.showLoading(msg: '正在开工...');
       final r = await ProductApi().startTrainShuntingPackage(code: code);
+      String? errMsg;
+      if (r is Map) {
+        final inner = r['data'];
+        if (inner is Map) {
+          final innerCode = inner['code'];
+          final innerCodeInt =
+              innerCode is int ? innerCode : int.tryParse('$innerCode');
+          if (innerCodeInt != null && innerCodeInt != 0 && innerCodeInt != 200) {
+            final m = inner['msg'] ?? inner['message'];
+            if (m != null) {
+              errMsg = m.toString();
+            }
+          }
+        }
+      }
+      final msg = errMsg?.trim();
+      if (msg != null && msg.isNotEmpty) {
+        SmartDialog.dismiss();
+        SmartDialog.showToast(msg);
+        return;
+      }
       if (r != null) {
         _changed = true;
         await _refresh();
@@ -689,31 +777,48 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       SmartDialog.showToast('数据异常：缺少代码');
       return false;
     }
-    // 先上传图片（必须）
-    if (imageFiles == null || imageFiles.length != 2) {
-      SmartDialog.showToast('请上传起防溜撤除图片和止防溜设置图片');
-      return false;
-    }
-    SmartDialog.showLoading(msg: '正在上传...');
-    try {
-      var r = await ProductApi().upSlipImg(
-        queryParametrs: {
-          "trainEntryCode": item['trainEntryCode'],
-          "shuntingPlanCode": item['code'],
-        },
-        imagedataList: imageFiles.map((xFile) => File(xFile.path)).toList(),
-      );
-      if (r != 200) {
-        SmartDialog.dismiss();
-        SmartDialog.showToast('图片上传失败，状态码: $r');
+    final st = item['status'];
+    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+    final isStarted = stInt == 4;
+
+    if (isStarted) {
+      if (imageFiles == null || imageFiles.isEmpty) {
+        SmartDialog.showToast('请上传止防溜设置图片');
         return false;
       }
-    } catch (e) {
-      SmartDialog.dismiss();
-      SmartDialog.showToast('图片上传失败: $e');
-      return false;
+      final ok2 = await _uploadSlipImage(
+        plan: item,
+        image: imageFiles.last,
+        antiSlipType: 2,
+      );
+      if (!ok2) return false;
+    } else {
+      if (imageFiles == null || imageFiles.length != 2) {
+        SmartDialog.showToast('请上传起防溜撤除图片和止防溜设置图片');
+        return false;
+      }
+      final planCode = code;
+      final removeUploaded = _slipRemoveUploadedByPlanCode[planCode] == true;
+      if (!removeUploaded) {
+        final ok1 = await _uploadSlipImage(
+          plan: item,
+          image: imageFiles[0],
+          antiSlipType: 1,
+        );
+        if (!ok1) return false;
+        if (mounted) {
+          setState(() {
+            _slipRemoveUploadedByPlanCode[planCode] = true;
+          });
+        }
+      }
+      final ok2 = await _uploadSlipImage(
+        plan: item,
+        image: imageFiles[1],
+        antiSlipType: 2,
+      );
+      if (!ok2) return false;
     }
-    SmartDialog.dismiss();
 
     // 再调用完成接口
     SmartDialog.showLoading(msg: '正在完成...');
@@ -778,13 +883,18 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                     st is int ? st : int.tryParse(st?.toString() ?? '');
                 final isStarted = stInt == 4;
                 final isCompleted = stInt == 2;
-                final canStart = stInt == 1;
                 final removeImage = planCode.isEmpty
                     ? null
                     : _slipRemoveImageByPlanCode[planCode];
                 final setupImage = planCode.isEmpty
                     ? null
                     : _slipSetupImageByPlanCode[planCode];
+                final remoteUrls = (p['downLoadUrlList'] is List)
+                    ? (p['downLoadUrlList'] as List)
+                        .map((e) => (e ?? '').toString().trim())
+                        .where((e) => e.isNotEmpty)
+                        .toList()
+                    : <String>[];
 
                 return Card(
                   child: Padding(
@@ -833,211 +943,245 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                         Text('开工时间: $startTime'),
                         const SizedBox(height: 6),
                         Text('完成时间: $completeTime'),
+                        if (remoteUrls.isNotEmpty)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                PhotoPreviewDialog.show2(
+                                  context,
+                                  remoteUrls
+                                      .map((u) => <String, dynamic>{
+                                            'downloadUrl': u,
+                                          })
+                                      .toList(),
+                                );
+                              },
+                              child: Text('查看已上传图片(${remoteUrls.length})'),
+                            ),
+                          ),
                         if (remark.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text('备注: $remark'),
                         ],
                         const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
+                        if (!isCompleted)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
                                 '上传防溜资源',
                                 style: TextStyle(fontWeight: FontWeight.w600),
                               ),
-                            ),
-                            TextButton.icon(
-                              onPressed:
-                                  isCompleted ? null : () => _pickSlipCamera(planCode, isRemove: true),
-                              icon: const Icon(Icons.camera_alt, size: 18),
-                              label: const Text('拍摄起防溜撤除'),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6, bottom: 6),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 74,
-                                height: 74,
-                                child: removeImage == null
-                                    ? const DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFFF0F0F0),
-                                          borderRadius:
-                                              BorderRadius.all(Radius.circular(6)),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '未上传',
-                                            style: TextStyle(
-                                                fontSize: 12, color: Colors.grey),
-                                          ),
-                                        ),
-                                      )
-                                    : Stack(
-                                        children: [
-                                          Positioned.fill(
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              child: _buildXFilePreview(removeImage),
-                                            ),
-                                          ),
-                                          if (!isCompleted)
-                                            Positioned(
-                                              top: 0,
-                                              right: 0,
-                                              child: GestureDetector(
-                                                onTap: () => _removeSlipImage(
-                                                  planCode,
-                                                  isRemove: true,
-                                                ),
-                                                child: Container(
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.black54,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  padding: const EdgeInsets.all(4),
-                                                  child: const Icon(
-                                                    Icons.close,
-                                                    color: Colors.white,
-                                                    size: 14,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  removeImage == null
-                                      ? '起防溜撤除图片'
-                                      : '起防溜撤除图片已上传',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.black54),
+                              if (!isStarted) ...[
+                                const SizedBox(height: 6),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
+                                    onPressed: () => _pickSlipCamera(
+                                      index,
+                                      isRemove: true,
+                                    ),
+                                    icon: const Icon(Icons.camera_alt, size: 18),
+                                    label: const Text('拍摄起防溜撤除图片'),
+                                  ),
                                 ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6, bottom: 6),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 74,
+                                        height: 74,
+                                        child: removeImage == null
+                                            ? const DecoratedBox(
+                                                decoration: BoxDecoration(
+                                                  color: Color(0xFFF0F0F0),
+                                                  borderRadius: BorderRadius.all(
+                                                    Radius.circular(6),
+                                                  ),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    '未上传',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Stack(
+                                                children: [
+                                                  Positioned.fill(
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(6),
+                                                      child: _buildXFilePreview(
+                                                        removeImage,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    top: 0,
+                                                    right: 0,
+                                                    child: GestureDetector(
+                                                      onTap: () => _removeSlipImage(
+                                                        planCode,
+                                                        isRemove: true,
+                                                      ),
+                                                      child: Container(
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          color: Colors.black54,
+                                                          shape: BoxShape.circle,
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets.all(4),
+                                                        child: const Icon(
+                                                          Icons.close,
+                                                          color: Colors.white,
+                                                          size: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          removeImage == null
+                                              ? '起防溜撤除图片'
+                                              : '起防溜撤除图片已上传',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        if (!isCompleted) ...[
+                          Row(
+                            children: [
+                              const Expanded(
+                                child: Text(
+                                  '',
+                                  style: TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: isCompleted
+                                    ? null
+                                    : () => _pickSlipCamera(
+                                          index,
+                                          isRemove: false,
+                                        ),
+                                icon: const Icon(Icons.camera_alt, size: 18),
+                                label: const Text('拍摄止防溜设置图片'),
                               ),
                             ],
                           ),
-                        ),
-                        Row(
-                          children: [
-                            const Expanded(
-                              child: Text(
-                                '',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed:
-                                  isCompleted ? null : () => _pickSlipCamera(planCode, isRemove: false),
-                              icon: const Icon(Icons.camera_alt, size: 18),
-                              label: const Text('拍摄止防溜设置'),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6, bottom: 6),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 74,
-                                height: 74,
-                                child: setupImage == null
-                                    ? const DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          color: Color(0xFFF0F0F0),
-                                          borderRadius:
-                                              BorderRadius.all(Radius.circular(6)),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '未上传',
-                                            style: TextStyle(
-                                                fontSize: 12, color: Colors.grey),
-                                          ),
-                                        ),
-                                      )
-                                    : Stack(
-                                        children: [
-                                          Positioned.fill(
-                                            child: ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(6),
-                                              child: _buildXFilePreview(setupImage),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6, bottom: 6),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 74,
+                                  height: 74,
+                                  child: setupImage == null
+                                      ? const DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: Color(0xFFF0F0F0),
+                                            borderRadius: BorderRadius.all(
+                                              Radius.circular(6),
                                             ),
                                           ),
-                                          if (!isCompleted)
-                                            Positioned(
-                                              top: 0,
-                                              right: 0,
-                                              child: GestureDetector(
-                                                onTap: () => _removeSlipImage(
-                                                  planCode,
-                                                  isRemove: false,
-                                                ),
-                                                child: Container(
-                                                  decoration: const BoxDecoration(
-                                                    color: Colors.black54,
-                                                    shape: BoxShape.circle,
+                                          child: Center(
+                                            child: Text(
+                                              '未上传',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Stack(
+                                          children: [
+                                            Positioned.fill(
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child:
+                                                    _buildXFilePreview(setupImage),
+                                              ),
+                                            ),
+                                            if (!isCompleted)
+                                              Positioned(
+                                                top: 0,
+                                                right: 0,
+                                                child: GestureDetector(
+                                                  onTap: () => _removeSlipImage(
+                                                    planCode,
+                                                    isRemove: false,
                                                   ),
-                                                  padding: const EdgeInsets.all(4),
-                                                  child: const Icon(
-                                                    Icons.close,
-                                                    color: Colors.white,
-                                                    size: 14,
+                                                  child: Container(
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.black54,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      color: Colors.white,
+                                                      size: 14,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                        ],
-                                      ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  setupImage == null
-                                      ? '止防溜设置图片'
-                                      : '止防溜设置图片已上传',
-                                  style: const TextStyle(
-                                      fontSize: 12, color: Colors.black54),
+                                          ],
+                                        ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    setupImage == null
+                                        ? '止防溜设置图片'
+                                        : '止防溜设置图片已上传',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             SizedBox(
                               height: 36,
                               child: ElevatedButton(
-                                onPressed: canStart ? () => _start(index) : null,
-                                child: Text(isStarted
-                                    ? '已开工'
-                                    : (isCompleted ? '已完成' : '开工')),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              height: 36,
-                              child: ElevatedButton(
                                 onPressed: (isStarted && !isCompleted)
                                     ? () async {
-                                        final rImg = planCode.isEmpty
-                                            ? null
-                                            : _slipRemoveImageByPlanCode[planCode];
                                         final sImg = planCode.isEmpty
                                             ? null
                                             : _slipSetupImageByPlanCode[planCode];
-                                        final imgs = <XFile>[
-                                          if (rImg != null) rImg,
-                                          if (sImg != null) sImg,
-                                        ];
+                                        if (sImg == null) {
+                                          SmartDialog.showToast('请上传止防溜设置图片');
+                                          return;
+                                        }
+                                        final imgs = <XFile>[sImg];
                                         final ok = await _complete(
                                           index,
                                           imageFiles: imgs,
@@ -1049,6 +1193,8 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                             _slipRemoveImageByPlanCode
                                                 .remove(planCode);
                                             _slipSetupImageByPlanCode
+                                                .remove(planCode);
+                                            _slipRemoveUploadedByPlanCode
                                                 .remove(planCode);
                                           });
                                         }
