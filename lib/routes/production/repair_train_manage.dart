@@ -1692,41 +1692,34 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
               // 主修人和辅修人信息
               // ... existing code ...
               // 主修人和辅修人信息
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 主修
-                  Text(
-                    "主修人：${task['executorName'] ?? '未指定'}",
-                    style: const TextStyle(
-                      fontSize: 14,
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "主修人：${task['executorName'] ?? '未指定'}",
+                      style: const TextStyle(fontSize: 14),
+                      softWrap: true,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    "主修人列表：${task['repairPersonnelNameList'] ?? '未指定'}",
-                    style: const TextStyle(
-                      fontSize: 14,
+                    Text(
+                      "主修人列表：${task['repairPersonnelNameList'] ?? '未指定'}",
+                      style: const TextStyle(fontSize: 14),
+                      softWrap: true,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // 辅修
-                  Text(
-                    "辅修人：${task['assistantName'] ?? '未指定'}",
-                    style: const TextStyle(
-                      fontSize: 14,
+                    const SizedBox(height: 4),
+                    Text(
+                      "辅修人：${task['assistantName'] ?? '未指定'}",
+                      style: const TextStyle(fontSize: 14),
+                      softWrap: true,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    "辅修人列表：${task['assistantNameList'] ?? '未指定'}",
-                    style: const TextStyle(
-                      fontSize: 14,
+                    Text(
+                      "辅修人列表：${task['assistantNameList'] ?? '未指定'}",
+                      style: const TextStyle(fontSize: 14),
+                      softWrap: true,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                  ],
+                ),
               ),
 // ... existing code ...
               const SizedBox(width: 12),
