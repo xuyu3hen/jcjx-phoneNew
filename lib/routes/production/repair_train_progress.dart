@@ -1368,6 +1368,158 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     final TextEditingController _reasonController = TextEditingController();
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
+    List<Map<String, dynamic>> repairMainNodeList = [];
+    Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
+    bool repairMainNodeRequested = false;
+    bool repairMainNodeLoading = false;
+    List<Map<String, dynamic>> scheduleNodePickerList = [];
+    Map<String, dynamic> scheduleNodeSelected = {
+      'name': '',
+      'code': '',
+      'scheduleNodeName': '',
+    };
+    bool scheduleNodeLoading = false;
+
+    List<Map<String, dynamic>> parseScheduleRows(dynamic response) {
+      dynamic raw = response;
+      if (raw is Map) {
+        raw = raw['rows'] ?? raw['data'] ?? raw['list'] ?? raw;
+      }
+      final list = raw is List ? raw : const <dynamic>[];
+      return list
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+
+    String scheduleNodeName(Map<String, dynamic> row) {
+      return (row['schedleNodeName'] ??
+              row['scheduleNodeName'] ??
+              row['mainNodeSchedleNodeName'] ??
+              row['nodeName'] ??
+              row['name'] ??
+              '')
+          .toString();
+    }
+
+    int scheduleNodeSort(Map<String, dynamic> row) {
+      final v = row['sort'] ?? row['orderNum'] ?? row['seq'] ?? row['index'];
+      if (v is num) return v.toInt();
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    bool isScheduleNodeActive(Map<String, dynamic> row) {
+      final state = row['state'];
+      if (state != null) {
+        if (state is bool) return state;
+        final s = state.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      final status = row['status'];
+      if (status != null) {
+        if (status is bool) return status;
+        if (status is num) return status.toInt() == 1;
+        final s = status.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      final enabled = row['enabled'] ?? row['enable'];
+      if (enabled != null) {
+        if (enabled is bool) return enabled;
+        if (enabled is num) return enabled.toInt() == 1;
+        final s = enabled.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      return true;
+    }
+
+    String scheduleNodeTimeRange(Map<String, dynamic> row) {
+      final startRaw = (row['planStartTime'] ??
+              row['theoreticStartTime'] ??
+              row['startTime'] ??
+              '')
+          .toString();
+      final endRaw = (row['planEndTime'] ??
+              row['theoreticEndTime'] ??
+              row['endTime'] ??
+              '')
+          .toString();
+      if (startRaw.trim().isEmpty && endRaw.trim().isEmpty) return '';
+      final start = startRaw.trim().isEmpty ? '' : _formatDateTime(startRaw);
+      final end = endRaw.trim().isEmpty ? '' : _formatDateTime(endRaw);
+      if (start.isEmpty) return end;
+      if (end.isEmpty) return start;
+      return '$start ~ $end';
+    }
+
+    Future<void> loadScheduleNodes(StateSetter setState) async {
+      final repairMainNodeCode =
+          (repairMainNodeSelected['code'] ?? '').toString().trim();
+      if (repairMainNodeCode.isEmpty) {
+        setState(() {
+          scheduleNodePickerList = [];
+          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeLoading = false;
+        });
+        return;
+      }
+      setState(() {
+        scheduleNodeLoading = true;
+        scheduleNodePickerList = [];
+        scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+      });
+      try {
+        final r = await ProductApi().getMainNodeSchedleNodeAll(
+          queryParametrs: <String, dynamic>{
+            'pageNum': 0,
+            'pageSize': 0,
+            'repairMainNodeCode': repairMainNodeCode,
+          },
+        );
+        var rows = parseScheduleRows(r);
+        rows = rows.where((m) => m['deleted'] != true).toList();
+        final activeRows = rows.where(isScheduleNodeActive).toList();
+        if (activeRows.isNotEmpty && activeRows.length != rows.length) {
+          rows = activeRows;
+        }
+        rows.sort((a, b) => scheduleNodeSort(a).compareTo(scheduleNodeSort(b)));
+        final pickerList = rows.map((row) {
+          final code = (row['code'] ??
+                  row['mainNodeSchedleNodeCode'] ??
+                  row['mainNodeScheduleNodeCode'] ??
+                  row['scheduleNodeCode'] ??
+                  row['schedleNodeCode'] ??
+                  '')
+              .toString();
+          final name = scheduleNodeName(row);
+          final timeText = scheduleNodeTimeRange(row);
+          final displayName = timeText.isEmpty ? name : '$name  $timeText';
+          return <String, dynamic>{
+            'code': code,
+            'name': displayName,
+            'scheduleNodeName': name,
+            'sort': scheduleNodeSort(row),
+          };
+        }).where((m) => (m['code'] ?? '').toString().trim().isNotEmpty).toList();
+        setState(() {
+          scheduleNodePickerList = pickerList;
+          if (pickerList.length == 1) {
+            scheduleNodeSelected = {
+              'name': pickerList.first['name'],
+              'code': pickerList.first['code'],
+              'scheduleNodeName': pickerList.first['scheduleNodeName'],
+            };
+          }
+          scheduleNodeLoading = false;
+        });
+      } catch (_) {
+        setState(() {
+          scheduleNodePickerList = [];
+          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeLoading = false;
+        });
+      }
+    }
+
     void savetrainShunting() async {
       try {
         Map<String, dynamic> queryParametrs = {
@@ -1383,16 +1535,34 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'trainEntryCode': item.code,
           'typeCode': item.typeCode,
         };
+        final nodeCode = (repairMainNodeSelected['code'] ?? '').toString().trim();
+        if (nodeCode.isNotEmpty) {
+          queryParametrs['repairMainNodeCode'] = nodeCode;
+          queryParametrs['repairMainNodeName'] =
+              (repairMainNodeSelected['name'] ?? '').toString();
+        }
+        final scheduleCode =
+            (scheduleNodeSelected['code'] ?? '').toString().trim();
+        if (scheduleCode.isNotEmpty) {
+          queryParametrs['scheduleNodeCode'] = scheduleCode;
+          queryParametrs['scheduleNodeName'] = (scheduleNodeSelected[
+                      'scheduleNodeName'] ??
+                  scheduleNodeSelected['name'] ??
+                  '')
+              .toString();
+        }
         if (item.doubleCarriage == true) {
           queryParametrs['ends'] =
               directionSelected['value'] ?? directionSelected['name'];
         }
-        var r = await ProductApi()
-            .saveTrainShunting(queryParametrs: queryParametrs);
+        await ProductApi().saveTrainShunting(queryParametrs: queryParametrs);
       } catch (e) {
         logger.e('savetrainShunting 方法中发生异常: $e');
       }
     }
+
+  
+    
 
     if (item.doubleCarriage != true) {
       directionSelected = {};
@@ -1405,6 +1575,71 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            if (!repairMainNodeRequested) {
+              repairMainNodeRequested = true;
+              repairMainNodeLoading = true;
+              Future(() async {
+                try {
+                  final repairProcCode = (item.repairProcCode ?? '').trim();
+                  final queryParametrs = <String, dynamic>{
+                    'pageNum': 0,
+                    'pageSize': 0,
+                    'repairProcCode': repairProcCode,
+                  };
+                  final r = await ProductApi()
+                      .getRepairMainNodeAll(queryParametrs: queryParametrs);
+                  var list = r.toMapList();
+                  list = list
+                      .where((m) => m['deleted'] != true)
+                      .toList();
+                  list.sort((a, b) {
+                    final sa = (a['sort'] as num?)?.toInt() ?? 0;
+                    final sb = (b['sort'] as num?)?.toInt() ?? 0;
+                    return sa.compareTo(sb);
+                  });
+                  final activeCodes = (item.stateDetailList ?? const [])
+                      .where((e) => (e.state ?? '').toString() == '1')
+                      .map((e) => (e.repairMainNodeCode ?? '').toString().trim())
+                      .where((e) => e.isNotEmpty)
+                      .toSet();
+                  if (activeCodes.isNotEmpty) {
+                    list = list
+                        .where((m) =>
+                            activeCodes.contains((m['code'] ?? '').toString()))
+                        .toList();
+                  }
+                  if (!context.mounted) return;
+                  setState(() {
+                    repairMainNodeList = list;
+                    if (((repairMainNodeSelected['code'] ?? '')
+                            .toString()
+                            .trim())
+                        .isEmpty) {
+                      if (list.length == 1) {
+                        repairMainNodeSelected = {
+                          'name': list.first['name'],
+                          'code': list.first['code'],
+                        };
+                      }
+                    }
+                    repairMainNodeLoading = false;
+                  });
+                  if (!context.mounted) return;
+                  if (((repairMainNodeSelected['code'] ?? '')
+                          .toString()
+                          .trim())
+                      .isNotEmpty) {
+                    await loadScheduleNodes(setState);
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  setState(() {
+                    repairMainNodeList = [];
+                    repairMainNodeLoading = false;
+                  });
+                }
+              });
+            }
             return AlertDialog(
               title: const Text('调车作业申请单'),
               content: SizedBox(
@@ -1428,6 +1663,73 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    ZjcFormSelectCell(
+                      title: "工序节点",
+                      text: repairMainNodeSelected['name'] ?? '',
+                      hintText: repairMainNodeLoading ? "加载中..." : "请选择",
+                      clickCallBack: () {
+                        if (repairMainNodeLoading) return;
+                        if (repairMainNodeList.isEmpty) {
+                          showToast("无工序节点可选择");
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            context,
+                            data: repairMainNodeList,
+                            labelKey: 'name',
+                            valueKey: 'code',
+                            childrenKey: 'children',
+                            title: "选择工序节点",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                repairMainNodeSelected = {
+                                  'name': selectItem['name'],
+                                  'code': selectItem['code'],
+                                };
+                                scheduleNodePickerList = [];
+                                scheduleNodeSelected = {
+                                  'name': '',
+                                  'code': '',
+                                  'scheduleNodeName': '',
+                                };
+                                scheduleNodeLoading = true;
+                              });
+                              loadScheduleNodes(setState);
+                            },
+                          );
+                        }
+                      },
+                    ),
+                    ZjcFormSelectCell(
+                      title: "排程节点",
+                      text: scheduleNodeSelected['name'] ?? '',
+                      hintText: scheduleNodeLoading ? "加载中..." : "请选择",
+                      clickCallBack: () {
+                        if (scheduleNodeLoading) return;
+                        if (scheduleNodePickerList.isEmpty) {
+                          showToast("无排程节点可选择");
+                        } else {
+                          ZjcCascadeTreePicker.show(
+                            context,
+                            data: scheduleNodePickerList,
+                            labelKey: 'name',
+                            valueKey: 'code',
+                            childrenKey: 'children',
+                            title: "选择排程节点",
+                            clickCallBack: (selectItem, selectArr) {
+                              setState(() {
+                                scheduleNodeSelected = {
+                                  'name': selectItem['name'],
+                                  'code': selectItem['code'],
+                                  'scheduleNodeName':
+                                      selectItem['scheduleNodeName'],
+                                };
+                              });
+                            },
+                          );
+                        }
+                      },
                     ),
                     ZjcFormSelectCell(
                         title: "端",
@@ -1550,6 +1852,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ElevatedButton(
                   onPressed: () {
                     // 处理提交逻辑
+                    final nodeCode =
+                        (repairMainNodeSelected['code'] ?? '').toString().trim();
+                    if (nodeCode.isEmpty) {
+                      showToast("请选择工序节点");
+                      return;
+                    }
+                    final scheduleCode =
+                        (scheduleNodeSelected['code'] ?? '').toString().trim();
+                    if (scheduleCode.isEmpty) {
+                      showToast("请选择排程节点");
+                      return;
+                    }
                     Navigator.pop(context);
                     savetrainShunting();
                     SmartDialog.showToast('调车作业申请已提交');
@@ -1571,6 +1885,158 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     String? _selectedType;
     DateTime? _planDateSelected;
     DateTime? _planDateSelectedEnd;
+    List<Map<String, dynamic>> repairMainNodeList = [];
+    Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
+    bool repairMainNodeRequested = false;
+    bool repairMainNodeLoading = false;
+    List<Map<String, dynamic>> scheduleNodePickerList = [];
+    Map<String, dynamic> scheduleNodeSelected = {
+      'name': '',
+      'code': '',
+      'scheduleNodeName': '',
+    };
+    bool scheduleNodeLoading = false;
+
+    List<Map<String, dynamic>> _parseScheduleRows(dynamic response) {
+      dynamic raw = response;
+      if (raw is Map) {
+        raw = raw['rows'] ?? raw['data'] ?? raw['list'] ?? raw;
+      }
+      final list = raw is List ? raw : const <dynamic>[];
+      return list
+          .where((e) => e is Map)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
+
+    String _scheduleNodeName(Map<String, dynamic> row) {
+      return (row['schedleNodeName'] ??
+              row['scheduleNodeName'] ??
+              row['mainNodeSchedleNodeName'] ??
+              row['nodeName'] ??
+              row['name'] ??
+              '')
+          .toString();
+    }
+
+    int _scheduleNodeSort(Map<String, dynamic> row) {
+      final v = row['sort'] ?? row['orderNum'] ?? row['seq'] ?? row['index'];
+      if (v is num) return v.toInt();
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    bool _isScheduleNodeActive(Map<String, dynamic> row) {
+      final state = row['state'];
+      if (state != null) {
+        if (state is bool) return state;
+        final s = state.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      final status = row['status'];
+      if (status != null) {
+        if (status is bool) return status;
+        if (status is num) return status.toInt() == 1;
+        final s = status.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      final enabled = row['enabled'] ?? row['enable'];
+      if (enabled != null) {
+        if (enabled is bool) return enabled;
+        if (enabled is num) return enabled.toInt() == 1;
+        final s = enabled.toString().trim();
+        return s == '1' || s.toLowerCase() == 'true';
+      }
+      return true;
+    }
+
+    String _scheduleNodeTimeRange(Map<String, dynamic> row) {
+      final startRaw = (row['planStartTime'] ??
+              row['theoreticStartTime'] ??
+              row['startTime'] ??
+              '')
+          .toString();
+      final endRaw = (row['planEndTime'] ??
+              row['theoreticEndTime'] ??
+              row['endTime'] ??
+              '')
+          .toString();
+      if (startRaw.trim().isEmpty && endRaw.trim().isEmpty) return '';
+      final start = startRaw.trim().isEmpty ? '' : _formatDateTime(startRaw);
+      final end = endRaw.trim().isEmpty ? '' : _formatDateTime(endRaw);
+      if (start.isEmpty) return end;
+      if (end.isEmpty) return start;
+      return '$start ~ $end';
+    }
+
+    Future<void> _loadScheduleNodes(StateSetter setState) async {
+      final repairMainNodeCode =
+          (repairMainNodeSelected['code'] ?? '').toString().trim();
+      if (repairMainNodeCode.isEmpty) {
+        setState(() {
+          scheduleNodePickerList = [];
+          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeLoading = false;
+        });
+        return;
+      }
+      setState(() {
+        scheduleNodeLoading = true;
+        scheduleNodePickerList = [];
+        scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+      });
+      try {
+        final r = await ProductApi().getMainNodeSchedleNodeAll(
+          queryParametrs: <String, dynamic>{
+            'pageNum': 0,
+            'pageSize': 0,
+            'repairMainNodeCode': repairMainNodeCode,
+          },
+        );
+        var rows = _parseScheduleRows(r);
+        rows = rows.where((m) => m['deleted'] != true).toList();
+        final activeRows = rows.where(_isScheduleNodeActive).toList();
+        if (activeRows.isNotEmpty && activeRows.length != rows.length) {
+          rows = activeRows;
+        }
+        rows.sort((a, b) => _scheduleNodeSort(a).compareTo(_scheduleNodeSort(b)));
+        final pickerList = rows.map((row) {
+          final code = (row['code'] ??
+                  row['mainNodeSchedleNodeCode'] ??
+                  row['mainNodeScheduleNodeCode'] ??
+                  row['scheduleNodeCode'] ??
+                  row['schedleNodeCode'] ??
+                  '')
+              .toString();
+          final name = _scheduleNodeName(row);
+          final timeText = _scheduleNodeTimeRange(row);
+          final displayName = timeText.isEmpty ? name : '$name  $timeText';
+          return <String, dynamic>{
+            'code': code,
+            'name': displayName,
+            'scheduleNodeName': name,
+            'sort': _scheduleNodeSort(row),
+          };
+        }).where((m) => (m['code'] ?? '').toString().trim().isNotEmpty).toList();
+        setState(() {
+          scheduleNodePickerList = pickerList;
+          if (pickerList.length == 1) {
+            scheduleNodeSelected = {
+              'name': pickerList.first['name'],
+              'code': pickerList.first['code'],
+              'scheduleNodeName': pickerList.first['scheduleNodeName'],
+            };
+          }
+          scheduleNodeLoading = false;
+        });
+      } catch (_) {
+        setState(() {
+          scheduleNodePickerList = [];
+          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeLoading = false;
+        });
+      }
+    }
+
     void saveShuntingAnswer() async {
       try {
         logger
@@ -1592,6 +2058,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'trainNum': item.trainNum,
           'typeCode': item.typeCode,
         };
+        final nodeCode = (repairMainNodeSelected['code'] ?? '').toString().trim();
+        if (nodeCode.isNotEmpty) {
+          row['repairMainNodeCode'] = nodeCode;
+          row['repairMainNodeName'] =
+              (repairMainNodeSelected['name'] ?? '').toString();
+        }
+        final scheduleCode =
+            (scheduleNodeSelected['code'] ?? '').toString().trim();
+        if (scheduleCode.isNotEmpty) {
+          row['scheduleNodeCode'] = scheduleCode;
+          row['scheduleNodeName'] = (scheduleNodeSelected['scheduleNodeName'] ??
+                  scheduleNodeSelected['name'] ??
+                  '')
+              .toString();
+        }
         if (item.doubleCarriage == true) {
           row['ends'] = directionSelected['value'] ?? directionSelected['name'];
         }
@@ -1614,6 +2095,69 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
+            if (!repairMainNodeRequested) {
+              repairMainNodeRequested = true;
+              repairMainNodeLoading = true;
+              Future(() async {
+                try {
+                  final repairProcCode = (item.repairProcCode ?? '').trim();
+                  final queryParametrs = <String, dynamic>{
+                    'pageNum': 0,
+                    'pageSize': 0,
+                    'repairProcCode': repairProcCode,
+                  };
+                  final r = await ProductApi()
+                      .getRepairMainNodeAll(queryParametrs: queryParametrs);
+                  var list = r.toMapList();
+                  list = list.where((m) => m['deleted'] != true).toList();
+                  list.sort((a, b) {
+                    final sa = (a['sort'] as num?)?.toInt() ?? 0;
+                    final sb = (b['sort'] as num?)?.toInt() ?? 0;
+                    return sa.compareTo(sb);
+                  });
+                  final activeCodes = (item.stateDetailList ?? const [])
+                      .where((e) => (e.state ?? '').toString() == '1')
+                      .map((e) => (e.repairMainNodeCode ?? '').toString().trim())
+                      .where((e) => e.isNotEmpty)
+                      .toSet();
+                  if (activeCodes.isNotEmpty) {
+                    list = list
+                        .where((m) =>
+                            activeCodes.contains((m['code'] ?? '').toString()))
+                        .toList();
+                  }
+                  if (!context.mounted) return;
+                  setState(() {
+                    repairMainNodeList = list;
+                    if (((repairMainNodeSelected['code'] ?? '')
+                            .toString()
+                            .trim())
+                        .isEmpty) {
+                      if (list.length == 1) {
+                        repairMainNodeSelected = {
+                          'name': list.first['name'],
+                          'code': list.first['code'],
+                        };
+                      }
+                    }
+                    repairMainNodeLoading = false;
+                  });
+                  if (!context.mounted) return;
+                  if (((repairMainNodeSelected['code'] ?? '')
+                          .toString()
+                          .trim())
+                      .isNotEmpty) {
+                    await _loadScheduleNodes(setState);
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  setState(() {
+                    repairMainNodeList = [];
+                    repairMainNodeLoading = false;
+                  });
+                }
+              });
+            }
             Future<void> pickDateTime({
               required DateTime? current,
               required void Function(DateTime dateTime) onPicked,
@@ -1690,6 +2234,71 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     ),
                   ),
                   //增加朝向
+                  ZjcFormSelectCell(
+                    title: "工序节点",
+                    text: repairMainNodeSelected['name'] ?? '',
+                    hintText: repairMainNodeLoading ? "加载中..." : "请选择",
+                    clickCallBack: () {
+                      if (repairMainNodeLoading) return;
+                      if (repairMainNodeList.isEmpty) {
+                        showToast("无工序节点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: repairMainNodeList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择工序节点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              repairMainNodeSelected = {
+                                'name': selectItem['name'],
+                                'code': selectItem['code'],
+                              };
+                              scheduleNodePickerList = [];
+                              scheduleNodeSelected = {
+                                'name': '',
+                                'code': '',
+                                'scheduleNodeName': '',
+                              };
+                              scheduleNodeLoading = true;
+                            });
+                            _loadScheduleNodes(setState);
+                          },
+                        );
+                      }
+                    },
+                  ),
+                  ZjcFormSelectCell(
+                    title: "排程节点",
+                    text: scheduleNodeSelected['name'] ?? '',
+                    hintText: scheduleNodeLoading ? "加载中..." : "请选择",
+                    clickCallBack: () {
+                      if (scheduleNodeLoading) return;
+                      if (scheduleNodePickerList.isEmpty) {
+                        showToast("无排程节点可选择");
+                      } else {
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          data: scheduleNodePickerList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择排程节点",
+                          clickCallBack: (selectItem, selectArr) {
+                            setState(() {
+                              scheduleNodeSelected = {
+                                'name': selectItem['name'],
+                                'code': selectItem['code'],
+                                'scheduleNodeName': selectItem['scheduleNodeName'],
+                              };
+                            });
+                          },
+                        );
+                      }
+                    },
+                  ),
                   ZjcFormSelectCell(
                       title: "端",
                       text: directionSelected["name"] ?? '',
@@ -1902,7 +2511,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    // 处理提交逻辑
+                    final nodeCode =
+                        (repairMainNodeSelected['code'] ?? '').toString().trim();
+                    if (nodeCode.isEmpty) {
+                      showToast("请选择工序节点");
+                      return;
+                    }
+                    final scheduleCode =
+                        (scheduleNodeSelected['code'] ?? '').toString().trim();
+                    if (scheduleCode.isEmpty) {
+                      showToast("请选择排程节点");
+                      return;
+                    }
                     Navigator.pop(context);
                     saveShuntingAnswer();
                     SmartDialog.showToast('调车申请已提交');

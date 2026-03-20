@@ -1517,6 +1517,23 @@ class ProductApi extends AppApi {
     // }
   }
 
+  // 获取相关联排程 /dispatch/mainNodeSchedleNode/selectAll
+  Future<dynamic> getMainNodeSchedleNodeAll(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/mainNodeScheduleNode/selectAll",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+  
+
   // 获取个人作业包
   Future<dynamic> getPersonalWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {
