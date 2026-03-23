@@ -1305,11 +1305,16 @@ class ProductApi extends AppApi {
         multipartFiles.add(multipartFile);
       }
 
-      FormData formData = FormData.fromMap({
+      final antiSlipType = queryParametrs?['antiSlipType'];
+      final formMap = <String, dynamic>{
         "trainEntryCode": queryParametrs!["trainEntryCode"],
         'shuntingPlanCode': queryParametrs['shuntingPlanCode'],
-        "uploadFileList": multipartFiles
-      });
+        "uploadFileList": multipartFiles,
+      };
+      if (antiSlipType != null) {
+        formMap['antiSlipType'] = antiSlipType;
+      }
+      FormData formData = FormData.fromMap(formMap);
       var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
       logger.i("upSlipImg${r.data}");
@@ -1330,14 +1335,19 @@ class ProductApi extends AppApi {
         multipartFiles.add(multipartFile);
       }
 
-      FormData formData = FormData.fromMap({
+      final antiSlipType = queryParametrs?['antiSlipType'];
+      final formMap = <String, dynamic>{
         "trainEntryCode": queryParametrs!["trainEntryCode"],
         'shuntingPlanCode': queryParametrs['shuntingPlanCode'],
-        "uploadFileList": multipartFiles
-      });
+        "uploadFileList": multipartFiles,
+      };
+      if (antiSlipType != null) {
+        formMap['antiSlipType'] = antiSlipType;
+      }
+      FormData formData = FormData.fromMap(formMap);
       var r = await AppApi.dio.post("/fileserver/antiSlipFile/uploadFile",
           data: formData, options: Options(contentType: "multipart/form-data"));
-      logger.i("upSlipImg${r.data}");
+      logger.i("upShuntingImg${r.data}");
       return (r.data["code"]);
     } catch (e) {
       _handleException(e);

@@ -1,6 +1,5 @@
 import '../../index.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 
 class TrainShuntingPackagePage extends StatefulWidget {
@@ -120,8 +119,8 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
         final raw = pkg['trainShuntingPlanList'];
         final plans = raw is List
             ? raw
-                .where((e) => e is Map)
-                .map((e) => Map<String, dynamic>.from(e as Map))
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
                 .toList()
             : <Map<String, dynamic>>[];
         final startPlan = plans.isNotEmpty ? plans.first : null;
@@ -304,8 +303,8 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
       setState(() => _isLoading = true);
       var r = await ProductApi().getTrainShuntingPackage();
       List<Map<String, dynamic>> rows = (r as List)
-          .where((e) => e is Map)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
           .toList();
       for (final pkg in rows) {
         final code = (pkg['code'] ?? '').toString();
@@ -578,6 +577,80 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     );
   }
 
+  List<String> _extractUploadedImageUrls(Map<String, dynamic> plan) {
+    List<String> parseValue(dynamic v) {
+      final out = <String>[];
+      if (v == null) return out;
+      if (v is String) {
+        final s = v.trim();
+        if (s.isEmpty) return out;
+        if (s.contains(',')) {
+          out.addAll(s
+              .split(',')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty));
+          return out;
+        }
+        out.add(s);
+        return out;
+      }
+      if (v is List) {
+        for (final e in v) {
+          if (e == null) continue;
+          if (e is String) {
+            final s = e.trim();
+            if (s.isNotEmpty) out.add(s);
+            continue;
+          }
+          if (e is Map) {
+            final m = Map<String, dynamic>.from(e);
+            final raw = m['downloadUrl'] ?? m['url'] ?? m['path'];
+            final s = (raw ?? '').toString().trim();
+            if (s.isNotEmpty) out.add(s);
+          }
+        }
+      }
+      if (v is Map) {
+        final m = Map<String, dynamic>.from(v);
+        final raw = m['downloadUrl'] ?? m['url'] ?? m['path'];
+        final s = (raw ?? '').toString().trim();
+        if (s.isNotEmpty) out.add(s);
+      }
+      return out;
+    }
+
+    final candidates = <dynamic>[
+      plan['downLoadUrlList'],
+      plan['downloadUrlList'],
+      plan['downLoadUrls'],
+      plan['downloadUrls'],
+      plan['downLoadUrl'],
+      plan['downloadUrl'],
+      plan['antiSlipFileList'],
+      plan['fileList'],
+      plan['files'],
+    ];
+    final urls = <String>[];
+    for (final c in candidates) {
+      urls.addAll(parseValue(c));
+    }
+    if (urls.isEmpty) {
+      for (final entry in plan.entries) {
+        final k = entry.key.toString().toLowerCase();
+        if (!k.contains('download')) continue;
+        urls.addAll(parseValue(entry.value));
+      }
+    }
+    final seen = <String>{};
+    final result = <String>[];
+    for (final u in urls) {
+      final s = u.trim();
+      if (s.isEmpty) continue;
+      if (seen.add(s)) result.add(s);
+    }
+    return result;
+  }
+
   Future<bool> _uploadSlipImage({
     required Map<String, dynamic> plan,
     required XFile image,
@@ -585,7 +658,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   }) async {
     try {
       SmartDialog.showLoading(msg: '正在上传...');
-      final r = await ProductApi().upSlipImg(
+      final r = await ProductApi().upShuntingImg(
         queryParametrs: {
           "trainEntryCode": plan['trainEntryCode'],
           "shuntingPlanCode": plan['code'],
@@ -709,8 +782,8 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       final rawList = pkg['trainShuntingPlanList'];
       final list = rawList is List
           ? rawList
-              .where((e) => e is Map)
-              .map((e) => Map<String, dynamic>.from(e as Map))
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
               .toList()
           : <Map<String, dynamic>>[];
       if (!mounted) return;
@@ -889,12 +962,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final setupImage = planCode.isEmpty
                     ? null
                     : _slipSetupImageByPlanCode[planCode];
-                final remoteUrls = (p['downLoadUrlList'] is List)
-                    ? (p['downLoadUrlList'] as List)
-                        .map((e) => (e ?? '').toString().trim())
-                        .where((e) => e.isNotEmpty)
-                        .toList()
-                    : <String>[];
+                final remoteUrls = _extractUploadedImageUrls(p);
 
                 return Card(
                   child: Padding(
@@ -955,9 +1023,10 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                             'downloadUrl': u,
                                           })
                                       .toList(),
+                                  title: '防溜图片',
                                 );
                               },
-                              child: Text('查看已上传图片(${remoteUrls.length})'),
+                              child: Text('查看防溜图片(${remoteUrls.length})'),
                             ),
                           ),
                         if (remark.isNotEmpty) ...[

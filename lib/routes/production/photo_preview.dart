@@ -11,6 +11,7 @@ class PhotoPreviewDialog {
     String groupId,
     Future<dynamic> Function({Map<String, dynamic>? queryParametrs}) api,
   ) async {
+    final nav = Navigator.of(context);
     SmartDialog.showLoading(msg: '加载中...');
     try {
       Map<String, dynamic> queryParameters = {
@@ -24,10 +25,14 @@ class PhotoPreviewDialog {
           .map((item) => item as Map<String, dynamic>)
           .toList();
 
+      if (!nav.mounted) {
+        SmartDialog.dismiss();
+        return;
+      }
       SmartDialog.dismiss();
 
       showDialog(
-        context: context,
+        context: nav.context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text("故障视频及图片"),
@@ -84,21 +89,26 @@ class PhotoPreviewDialog {
   static void show2(
     BuildContext context,
     List<dynamic> repairList,
+    {String title = "故障视频及图片"}
   ) async {
+    final nav = Navigator.of(context);
     SmartDialog.showLoading(msg: '加载中...');
     try {
       // 将List<dynamic>转换为List<Map<String, dynamic>>
-      List<Map<String, dynamic>> photoList = (repairList as List)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      List<Map<String, dynamic>> photoList =
+          repairList.map((item) => item as Map<String, dynamic>).toList();
 
+      if (!nav.mounted) {
+        SmartDialog.dismiss();
+        return;
+      }
       SmartDialog.dismiss();
 
       showDialog(
-        context: context,
+        context: nav.context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("故障视频及图片"),
+            title: Text(title),
             content: photoList.isNotEmpty
                 ? SizedBox(
                     width: double.maxFinite,
@@ -150,6 +160,7 @@ class PhotoPreviewDialog {
     Map<String, dynamic> photo,
     Future<dynamic> Function({Map<String, dynamic>? queryParametrs}) api,
   ) async {
+    final nav = Navigator.of(context);
     Image? image;
     try {
       Map<String, dynamic> queryParameters = {'url': photo['downloadUrl']};
@@ -159,8 +170,9 @@ class PhotoPreviewDialog {
       // 忽略错误，使用网络图片作为备选方案
     }
 
+    if (!nav.mounted) return;
     showDialog(
-      context: context,
+      context: nav.context,
       builder: (BuildContext context) {
         return AlertDialog(
           content: SingleChildScrollView(
