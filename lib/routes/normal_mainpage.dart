@@ -259,7 +259,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //   ],
           // ),
           const SizedBox(height: 15),
-          if (_canSeeShunting)
+          // if (_canSeeShunting)
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[

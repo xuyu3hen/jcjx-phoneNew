@@ -217,10 +217,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
         TextButton.icon(
           onPressed: _showTrainSearchDialog,
           icon: const Icon(Icons.search, color: Colors.black),
-          label: const Text(
-            '车号搜索',
-            style: TextStyle(color: Colors.black),
-          ),
+          label: const Text('车号查询', style: TextStyle(color: Colors.black)),
         ),
       ],
       bottom: PreferredSize(
@@ -602,7 +599,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
                   _searchTrainByNum(trainNum);
                   Navigator.of(context).pop();
                 } else {
-                  showToast('请输入车号');
+                  showToast('车号查询为空');
                 }
               },
               child: const Text('查询'),
@@ -643,7 +640,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       });
       showToast('找到 ${foundTrains.length} 条记录');
     } else {
-      showToast('未找到相关车号');
+      showToast('车号查询为空');
     }
   }
 

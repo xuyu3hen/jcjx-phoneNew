@@ -1,3 +1,5 @@
+import 'package:jcjx_phone/routes/production/train_shunting_package_page.dart';
+
 import '../index.dart';
 import '../models/progress.dart';
 import 'production/investigateInfo.dart';
@@ -470,6 +472,13 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
             repairItem: RepairItem(),
             shuntingItem: {'shuntingCode': shuntingCode},
           ),
+        ),
+      );
+    }
+    if (st == 0) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => const TrainShuntingPackagePage(),
         ),
       );
     }

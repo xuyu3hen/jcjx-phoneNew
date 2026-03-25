@@ -203,6 +203,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 setState(() {
                   _searchText = value;
                 });
+                final kw = value.trim();
+                if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
+                  SmartDialog.showToast('车号查询为空');
+                }
               },
             ),
           ),
@@ -252,6 +256,17 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         return _buildRepairGroupCard(group, index);
       },
     );
+  }
+
+  bool _hasTrainNumMatch(String kw) {
+    for (final g in repairGroups) {
+      final children = g.children ?? const <RepairItem>[];
+      for (final it in children) {
+        final tn = (it.trainNum ?? '').toString();
+        if (tn.contains(kw)) return true;
+      }
+    }
+    return false;
   }
 
   // 构建维修组卡片

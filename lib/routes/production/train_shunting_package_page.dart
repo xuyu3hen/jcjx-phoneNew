@@ -258,15 +258,15 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   @override
   void initState() {
     super.initState();
-    if (!_canSeeShunting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        SmartDialog.showToast('无权限查看');
-        if (mounted && Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-      });
-      return;
-    }
+    // if (!_canSeeShunting) {
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //     SmartDialog.showToast('无权限查看');
+    //     if (mounted && Navigator.of(context).canPop()) {
+    //       Navigator.of(context).pop();
+    //     }
+    //   });
+    //   return;
+    // }
     _loadData();
   }
 
@@ -301,6 +301,9 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   Future<void> _loadData() async {
     try {
       setState(() => _isLoading = true);
+      Map<String, dynamic> query = {
+        'planData': ''
+      };
       var r = await ProductApi().getTrainShuntingPackage();
       List<Map<String, dynamic>> rows = (r as List)
           .whereType<Map>()
@@ -951,6 +954,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final remark = (p['remark'] ?? '').toString();
                 final startTime = _fmt(p['startTime']);
                 final completeTime = _fmt(p['completeTime']);
+                final ends = _fmt(p['ends']);
                 final st = p['status'];
                 final stInt =
                     st is int ? st : int.tryParse(st?.toString() ?? '');
@@ -980,7 +984,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                         ? trainNum
                                         : (trainNum.isEmpty
                                             ? typeName
-                                            : '$typeName-$trainNum')),
+                                            : '$typeName-$trainNum$ends')),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(

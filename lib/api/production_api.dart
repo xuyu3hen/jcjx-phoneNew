@@ -134,11 +134,11 @@ class ProductApi extends AppApi {
   }) async {
     try {
       var r = await AppApi.dio.get(
-        "/dispatch/trainShuntingPackage/selectAll",
+        "/dispatch/trainShuntingPackage/queryDailyPlan",
         queryParameters: queryParametrs,
       );
-      logger.i(((r.data["data"])["data"])['rows']);
-      return ((r.data["data"])["data"])['rows'];
+      logger.i((r.data["data"])["data"]);
+      return ((r.data["data"])["data"]);
     } catch (e) {
       _handleException(e);
       return [];
