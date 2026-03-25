@@ -1,4 +1,5 @@
 import '../../index.dart';
+import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
 
@@ -258,52 +259,12 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   @override
   void initState() {
     super.initState();
-    // if (!_canSeeShunting) {
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //     SmartDialog.showToast('无权限查看');
-    //     if (mounted && Navigator.of(context).canPop()) {
-    //       Navigator.of(context).pop();
-    //     }
-    //   });
-    //   return;
-    // }
     _loadData();
-  }
-
-  bool get _canSeeShunting {
-    final deptName =
-        Global.profile.permissions?.user.dept?.deptName?.toString() ?? '';
-    final parentDeptName = Global.parentDeptName?.toString() ?? '';
-    final roleKeys = (Global.profile.permissions?.roles ?? const <String>[])
-        .map((e) => e.toString())
-        .toList();
-    final roleObjs =
-        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
-            .map((e) => e)
-            .toList();
-
-    if (deptName.contains('接车组') || parentDeptName.contains('接车组')) {
-      return true;
-    }
-    if (roleKeys.any((r) => r.contains('jieche') || r.contains('接车'))) {
-      return true;
-    }
-    if (roleObjs.any((r) {
-      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
-      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      return rn.contains('接车组') || rk.contains('jieche') || rk.contains('接车');
-    })) {
-      return true;
-    }
-    return false;
   }
 
   Future<void> _loadData() async {
     try {
       setState(() => _isLoading = true);
-      Map<String, dynamic> query = {
-        'planData': ''
-      };
       var r = await ProductApi().getTrainShuntingPackage();
       List<Map<String, dynamic>> rows = (r as List)
           .whereType<Map>()
@@ -559,7 +520,6 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   final Map<String, XFile?> _slipRemoveImageByPlanCode = <String, XFile?>{};
   final Map<String, XFile?> _slipSetupImageByPlanCode = <String, XFile?>{};
   final Map<String, bool> _slipRemoveUploadedByPlanCode = <String, bool>{};
-  final ImagePicker _slipImagePicker = ImagePicker();
   @override
   void initState() {
     super.initState();
@@ -580,107 +540,113 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     );
   }
 
-  List<String> _extractUploadedImageUrls(Map<String, dynamic> plan) {
-    List<String> parseValue(dynamic v) {
-      final out = <String>[];
-      if (v == null) return out;
-      if (v is String) {
-        final s = v.trim();
-        if (s.isEmpty) return out;
-        if (s.contains(',')) {
-          out.addAll(s
-              .split(',')
-              .map((e) => e.trim())
-              .where((e) => e.isNotEmpty));
-          return out;
-        }
-        out.add(s);
-        return out;
+  ///
+
+  List<Map<String, dynamic>> _extractUploadedImageEntries(
+      Map<String, dynamic> plan) {
+    final out = <Map<String, dynamic>>[];
+    void add(dynamic e) {
+      if (e == null) return;
+      if (e is String) {
+        final s = e.trim();
+        if (s.isNotEmpty) out.add({'downloadUrl': s});
+        return;
       }
-      if (v is List) {
-        for (final e in v) {
-          if (e == null) continue;
-          if (e is String) {
-            final s = e.trim();
-            if (s.isNotEmpty) out.add(s);
-            continue;
-          }
-          if (e is Map) {
-            final m = Map<String, dynamic>.from(e);
-            final raw = m['downloadUrl'] ?? m['url'] ?? m['path'];
-            final s = (raw ?? '').toString().trim();
-            if (s.isNotEmpty) out.add(s);
-          }
-        }
+      if (e is Map) {
+        final m = Map<String, dynamic>.from(e);
+        final url = (m['downloadUrl'] ?? m['url'] ?? m['path'] ?? '').toString();
+        if (url.isEmpty) return;
+        final t = m['antiSlipType'] ?? m['type'] ?? m['anti_slip_type'];
+        out.add({'downloadUrl': url, if (t != null) 'antiSlipType': t});
       }
-      if (v is Map) {
-        final m = Map<String, dynamic>.from(v);
-        final raw = m['downloadUrl'] ?? m['url'] ?? m['path'];
-        final s = (raw ?? '').toString().trim();
-        if (s.isNotEmpty) out.add(s);
-      }
-      return out;
     }
 
     final candidates = <dynamic>[
-      plan['downLoadUrlList'],
-      plan['downloadUrlList'],
-      plan['downLoadUrls'],
-      plan['downloadUrls'],
-      plan['downLoadUrl'],
-      plan['downloadUrl'],
       plan['antiSlipFileList'],
       plan['fileList'],
       plan['files'],
+      plan['downLoadUrlList'],
+      plan['downloadUrlList'],
     ];
-    final urls = <String>[];
     for (final c in candidates) {
-      urls.addAll(parseValue(c));
-    }
-    if (urls.isEmpty) {
-      for (final entry in plan.entries) {
-        final k = entry.key.toString().toLowerCase();
-        if (!k.contains('download')) continue;
-        urls.addAll(parseValue(entry.value));
+      if (c is List) {
+        for (final e in c) {
+          add(e);
+        }
+      } else {
+        add(c);
       }
     }
     final seen = <String>{};
-    final result = <String>[];
-    for (final u in urls) {
-      final s = u.trim();
-      if (s.isEmpty) continue;
-      if (seen.add(s)) result.add(s);
+    final result = <Map<String, dynamic>>[];
+    for (final e in out) {
+      final url = (e['downloadUrl'] ?? '').toString().trim();
+      if (url.isEmpty) continue;
+      final t = e['antiSlipType']?.toString().trim() ?? '';
+      final key = '$t|$url';
+      if (seen.add(key)) result.add(e);
     }
     return result;
   }
 
+  Future<bool> _completeOnly(int index) async {
+    final item = _planList[index];
+    final code = item['code']?.toString();
+    if (code == null || code.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return false;
+    }
+    try {
+      final r = await ProductApi().completeTrainShuntingPackage(code: code);
+      if (r != null) {
+        SmartDialog.showToast('完成成功');
+        setState(() {
+          if (r is Map) {
+            _planList[index] = Map<String, dynamic>.from(r);
+          }
+        });
+        _changed = true;
+        await _refresh();
+        return true;
+      } else {
+        SmartDialog.showToast('完成失败');
+        return false;
+      }
+    } catch (e) {
+      SmartDialog.showToast('完成失败: $e');
+      return false;
+    }
+  }
+
   Future<bool> _uploadSlipImage({
     required Map<String, dynamic> plan,
-    required XFile image,
+    List<XFile>? images,
+    XFile? image,
     required int antiSlipType,
   }) async {
     try {
-      SmartDialog.showLoading(msg: '正在上传...');
+      final list = images ?? (image != null ? <XFile>[image] : const <XFile>[]);
+      if (list.isEmpty) return false;
       final r = await ProductApi().upShuntingImg(
         queryParametrs: {
           "trainEntryCode": plan['trainEntryCode'],
           "shuntingPlanCode": plan['code'],
           "antiSlipType": antiSlipType,
         },
-        imagedataList: [File(image.path)],
+        imagedataList: list.map((e) => File(e.path)).toList(),
       );
-      SmartDialog.dismiss();
       if (r != 200) {
         SmartDialog.showToast('图片上传失败，状态码: $r');
         return false;
       }
       return true;
     } catch (e) {
-      SmartDialog.dismiss();
       SmartDialog.showToast('图片上传失败: $e');
       return false;
     }
   }
+
+  ///
 
   Future<void> _pickSlipCamera(int index, {required bool isRemove}) async {
     final plan = _planList[index];
@@ -689,33 +655,77 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       SmartDialog.showToast('数据异常：缺少代码');
       return;
     }
-    final XFile? photo = await _slipImagePicker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-    if (photo == null || !mounted) return;
-    setState(() {
-      if (isRemove) {
-        _slipRemoveImageByPlanCode[planCode] = photo;
-        _slipRemoveUploadedByPlanCode[planCode] = false;
-      } else {
-        _slipSetupImageByPlanCode[planCode] = photo;
-      }
-    });
-
     if (isRemove) {
-      final ok = await _uploadSlipImage(
-        plan: plan,
-        image: photo,
-        antiSlipType: 1,
+      final photos = await Navigator.of(context).push<List<XFile>>(
+        MaterialPageRoute<List<XFile>>(
+          builder: (context) => const _BurstCameraPage(
+            title: '起防溜撤除图片',
+          ),
+        ),
       );
-      if (!mounted) return;
-      if (ok) {
-        setState(() {
-          _slipRemoveUploadedByPlanCode[planCode] = true;
-        });
-        await _start(index);
-      }
+      if (photos == null || photos.isEmpty || !mounted) return;
+      final ok = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => _SlipImagesReviewPage(
+            title: '起防溜撤除图片',
+            images: photos,
+            onUpload: (img) => _uploadSlipImage(
+              plan: plan,
+              image: img,
+              antiSlipType: 1,
+            ),
+            onUploadAll: (imgs) => _uploadSlipImage(
+              plan: plan,
+              images: imgs,
+              antiSlipType: 1,
+            ),
+          ),
+        ),
+      );
+      if (ok != true || !mounted) return;
+      setState(() {
+        _slipRemoveImageByPlanCode[planCode] = photos.first;
+        _slipRemoveUploadedByPlanCode[planCode] = true;
+      });
+      await _start(index);
+      return;
+    }
+    final photos = await Navigator.of(context).push<List<XFile>>(
+      MaterialPageRoute<List<XFile>>(
+        builder: (context) => const _BurstCameraPage(
+          title: '止防溜设置图片',
+        ),
+      ),
+    );
+    if (photos == null || photos.isEmpty || !mounted) return;
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (context) => _SlipImagesReviewPage(
+          title: '止防溜设置图片',
+          images: photos,
+          onUpload: (img) => _uploadSlipImage(
+            plan: plan,
+            image: img,
+            antiSlipType: 2,
+          ),
+          onUploadAll: (imgs) => _uploadSlipImage(
+            plan: plan,
+            images: imgs,
+            antiSlipType: 2,
+          ),
+        ),
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      _slipSetupImageByPlanCode[planCode] = photos.first;
+    });
+    final st = plan['status'];
+    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+    final isStarted = stInt == 4;
+    final isCompleted = stInt == 2;
+    if (isStarted && !isCompleted) {
+      await _completeOnly(index);
     }
   }
 
@@ -947,6 +957,8 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final executorName = (p['executorName'] ?? '').toString();
                 final typeName = (p['typeName'] ?? '').toString();
                 final trainNum = (p['trainNum'] ?? '').toString();
+                final scheduleNodeName =
+                    (p['scheduleNodeName'] ?? p['nodeName'] ?? '').toString();
                 final startAreaName = (p['startAreaName'] ?? '').toString();
                 final startTrackNum = (p['startTrackNum'] ?? '').toString();
                 final endAreaName = (p['endAreaName'] ?? '').toString();
@@ -966,7 +978,13 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final setupImage = planCode.isEmpty
                     ? null
                     : _slipSetupImageByPlanCode[planCode];
-                final remoteUrls = _extractUploadedImageUrls(p);
+                final remoteEntries = _extractUploadedImageEntries(p);
+                final typed1 = remoteEntries
+                    .where((e) => (e['antiSlipType']?.toString() ?? '') == '1')
+                    .toList();
+                final typed2 = remoteEntries
+                    .where((e) => (e['antiSlipType']?.toString() ?? '') == '2')
+                    .toList();
 
                 return Card(
                   child: Padding(
@@ -997,6 +1015,10 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                         ),
                         const SizedBox(height: 6),
                         Text('处理人: $executorName'),
+                        if (scheduleNodeName.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text('节点: $scheduleNodeName'),
+                        ],
                         const SizedBox(height: 6),
                         Row(
                           children: [
@@ -1015,22 +1037,49 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                         Text('开工时间: $startTime'),
                         const SizedBox(height: 6),
                         Text('完成时间: $completeTime'),
-                        if (remoteUrls.isNotEmpty)
+                        if (remoteEntries.isNotEmpty)
                           Align(
                             alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                PhotoPreviewDialog.show2(
-                                  context,
-                                  remoteUrls
-                                      .map((u) => <String, dynamic>{
-                                            'downloadUrl': u,
-                                          })
-                                      .toList(),
-                                  title: '防溜图片',
-                                );
-                              },
-                              child: Text('查看防溜图片(${remoteUrls.length})'),
+                            child: Wrap(
+                              spacing: 8,
+                              children: [
+                                if (typed1.isNotEmpty)
+                                  TextButton(
+                                    onPressed: () {
+                                      PhotoPreviewDialog.show2(
+                                        context,
+                                        typed1,
+                                        title: '起防溜撤除',
+                                      );
+                                    },
+                                    child:
+                                        Text('起防溜撤除(${typed1.length})'),
+                                  ),
+                                if (typed2.isNotEmpty)
+                                  TextButton(
+                                    onPressed: () {
+                                      PhotoPreviewDialog.show2(
+                                        context,
+                                        typed2,
+                                        title: '止防溜设置',
+                                      );
+                                    },
+                                    child:
+                                        Text('止防溜设置(${typed2.length})'),
+                                  ),
+                                if (typed1.isEmpty && typed2.isEmpty)
+                                  TextButton(
+                                    onPressed: () {
+                                      PhotoPreviewDialog.show2(
+                                        context,
+                                        remoteEntries,
+                                        title: '防溜图片',
+                                      );
+                                    },
+                                    child: Text(
+                                        '查看防溜图片(${remoteEntries.length})'),
+                                  ),
+                              ],
                             ),
                           ),
                         if (remark.isNotEmpty) ...[
@@ -1284,6 +1333,397 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 );
               },
             ),
+      ),
+    );
+  }
+}
+
+class _BurstCameraPage extends StatefulWidget {
+  final String title;
+  final List<XFile>? initialImages;
+
+  const _BurstCameraPage({required this.title, this.initialImages});
+
+  @override
+  State<_BurstCameraPage> createState() => _BurstCameraPageState();
+}
+
+class _BurstCameraPageState extends State<_BurstCameraPage> {
+  CameraController? _controller;
+  bool _initializing = true;
+  bool _capturing = false;
+  final List<XFile> _photos = <XFile>[];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialImages != null && widget.initialImages!.isNotEmpty) {
+      _photos.addAll(widget.initialImages!);
+    }
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      final back = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+      final ctrl = CameraController(
+        back,
+        ResolutionPreset.medium,
+        enableAudio: false,
+      );
+      await ctrl.initialize();
+      if (!mounted) return;
+      setState(() {
+        _controller = ctrl;
+        _initializing = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        SmartDialog.showToast('无法打开相机');
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _takePicture() async {
+    final ctrl = _controller;
+    if (ctrl == null || !ctrl.value.isInitialized) return;
+    if (_capturing) return;
+    try {
+      setState(() => _capturing = true);
+      final file = await ctrl.takePicture();
+      if (!mounted) return;
+      setState(() {
+        _photos.add(file);
+        _capturing = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _capturing = false);
+      SmartDialog.showToast('拍摄失败');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctrl = _controller;
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(widget.title),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        actions: const [],
+      ),
+      body: _initializing || ctrl == null
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                Expanded(child: CameraPreview(ctrl)),
+                Container(
+                  color: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _photos.isEmpty
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => _LocalGalleryPage(
+                                      images: _photos,
+                                      initialIndex: _photos.length - 1,
+                                    ),
+                                  ),
+                                );
+                              },
+                        child: SizedBox(
+                          width: 90,
+                          height: 56,
+                          child: _photos.isEmpty
+                              ? const SizedBox.shrink()
+                              : ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(_photos.last.path),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(36),
+                          onTap: _capturing ? null : _takePicture,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 4,
+                              ),
+                            ),
+                            child: Center(
+                              child: _capturing
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _photos.isEmpty
+                            ? null
+                            : () => Navigator.of(context).pop(_photos),
+                        child: Text(
+                          '完成',
+                          style: TextStyle(
+                            color: _photos.isEmpty ? Colors.white54 : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _SlipImagesReviewPage extends StatefulWidget {
+  final String title;
+  final List<XFile> images;
+  final Future<bool> Function(XFile image) onUpload;
+  final Future<bool> Function(List<XFile> images) onUploadAll;
+
+  const _SlipImagesReviewPage({
+    required this.title,
+    required this.images,
+    required this.onUpload,
+    required this.onUploadAll,
+  });
+
+  @override
+  State<_SlipImagesReviewPage> createState() => _SlipImagesReviewPageState();
+}
+
+class _SlipImagesReviewPageState extends State<_SlipImagesReviewPage> {
+  late List<int> _statuses;
+  late List<XFile> _images;
+  bool _processing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _images = List<XFile>.from(widget.images);
+    _statuses = List<int>.filled(_images.length, 0, growable: true);
+  }
+
+  ///
+
+  String _statusText(int s) {
+    if (s == 0) return '待上传';
+    if (s == 1) return '上传中';
+    if (s == 2) return '已完成';
+    return '失败';
+    }
+
+  Color _statusColor(int s) {
+    if (s == 1) return Colors.blue;
+    if (s == 2) return Colors.green;
+    if (s == -1) return Colors.red;
+    return Colors.grey;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canFinish = _statuses.isNotEmpty && _statuses.every((e) => e == 2);
+    return WillPopScope(
+      onWillPop: () async {
+        await Navigator.of(context).pushReplacement<List<XFile>, List<XFile>>(
+          MaterialPageRoute<List<XFile>>(
+            builder: (_) => _BurstCameraPage(
+              title: widget.title,
+              initialImages: _images,
+            ),
+          ),
+        );
+        return false;
+      },
+      child: Scaffold(
+      appBar: AppBar(
+        title: Text(widget.title),
+        actions: [
+          TextButton(
+            onPressed: canFinish ? () => Navigator.of(context).pop(true) : null,
+            child: Text(
+              '完成',
+              style: TextStyle(color: canFinish ? Colors.white : Colors.white54),
+            ),
+          ),
+        ],
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _images.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final img = _images[index];
+          final st = _statuses[index];
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => _LocalGalleryPage(
+                        images: _images,
+                        initialIndex: index,
+                      ),
+                    ),
+                  );
+                },
+                child: SizedBox(
+                  width: 74,
+                  height: 74,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(
+                      File(img.path),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _statusText(st),
+                  style: TextStyle(color: _statusColor(st)),
+                ),
+              ),
+              if (st == 0)
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: _processing
+                      ? null
+                      : () {
+                          setState(() {
+                            _images.removeAt(index);
+                            _statuses.removeAt(index);
+                          });
+                        },
+                ),
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          width: double.infinity,
+          height: 44,
+          child: ElevatedButton(
+            onPressed: _processing
+                ? null
+                : () async {
+                    if (_images.isEmpty) {
+                      SmartDialog.showToast('无可上传图片');
+                      return;
+                    }
+                    setState(() => _processing = true);
+                    final ok = await widget.onUploadAll(_images);
+                    setState(() {
+                      for (int i = 0; i < _statuses.length; i++) {
+                        _statuses[i] = ok ? 2 : -1;
+                      }
+                      _processing = false;
+                    });
+                    if (ok && mounted) Navigator.of(context).pop(true);
+                  },
+            child: const Text('上传'),
+          ),
+        ),
+      ),
+    ),
+    );
+  }
+}
+
+class _LocalGalleryPage extends StatefulWidget {
+  final List<XFile> images;
+  final int initialIndex;
+
+  const _LocalGalleryPage({required this.images, required this.initialIndex});
+
+  @override
+  State<_LocalGalleryPage> createState() => _LocalGalleryPageState();
+}
+
+class _LocalGalleryPageState extends State<_LocalGalleryPage> {
+  late final PageController _controller;
+  int _current = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _current = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text('预览 ${_current + 1}/${widget.images.length}'),
+      ),
+      body: PageView.builder(
+        controller: _controller,
+        onPageChanged: (i) => setState(() => _current = i),
+        itemCount: widget.images.length,
+        itemBuilder: (context, index) {
+          final img = widget.images[index];
+          return Center(
+            child: InteractiveViewer(
+              minScale: 1,
+              maxScale: 4,
+              child: Image.file(
+                File(img.path),
+                fit: BoxFit.contain,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -109,18 +109,20 @@ class PhotoPreviewDialog {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text(title),
-            content: photoList.isNotEmpty
-                ? SizedBox(
-                    width: double.maxFinite,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: photoList.map((photo) {
-                      return Card(
+            content: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              width: double.maxFinite,
+              child: photoList.isNotEmpty
+                  ? ListView.builder(
+                      itemCount: photoList.length,
+                      itemBuilder: (ctx, i) {
+                        final photo = photoList[i];
+                        return Card(
                           margin: const EdgeInsets.symmetric(
                               vertical: 4, horizontal: 8),
                           elevation: 2,
                           child: ListTile(
-                            title: Text('图片${photoList.indexOf(photo) + 1}点击查看'),
+                            title: Text('图片${i + 1}点击查看'),
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
@@ -133,10 +135,10 @@ class PhotoPreviewDialog {
                             ),
                           ),
                         );
-                      }).toList(),
-                    ),
-                  )
-                : const Text('暂无图片'),
+                      },
+                    )
+                  : const Center(child: Text('暂无图片')),
+            ),
             actions: [
               TextButton(
                 onPressed: () {
