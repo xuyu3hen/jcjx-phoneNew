@@ -62,13 +62,13 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
     }
   }
 
-  void _onTapMessage(Map<String, dynamic> message) {
+  Future<void> _onTapMessage(Map<String, dynamic> message) async {
     final st = message['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
     final shuntingCode = message['shuntingCode']?.toString() ?? message['code']?.toString();
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
       final shuntingItem = {'shuntingCode': shuntingCode};
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => PlanListPage(
             repairItem: RepairItem(),
@@ -76,13 +76,15 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
           ),
         ),
       );
+      await _fetchMessageData();
       return;
     }
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => MessageDetailPage(message: message),
       ),
     );
+    await _fetchMessageData();
   }
 
   @override
@@ -461,11 +463,25 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     return _shuntingNoticeCard(itemMap);
   }
 
+  Future<void> _markReadSilently(Map<String, dynamic> itemMap) async {
+    try {
+      final params = Map<String, dynamic>.from(itemMap);
+      params['status'] = 1;
+      final res = await ProductApi().updateShuntingNotice([params]);
+      if (mounted && res != null) {
+        _loadShuntingNotice();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
   void _onViewShunting(Map<String, dynamic> itemMap) {
     final st = itemMap['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
+      _markReadSilently(itemMap);
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => PlanListPage(
@@ -476,6 +492,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       );
     }
     if (st == 0) {
+      _markReadSilently(itemMap);
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => const TrainShuntingPackagePage(),
@@ -490,7 +507,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       params['status'] = 1;
       final res = await ProductApi().updateShuntingNotice([params]);
       if (mounted) {
-        showToast(res != null ? '已完成' : '操作失败');
+        showToast(res != null ? '已读' : '操作失败');
         if (res != null) _loadShuntingNotice();
       }
     } catch (e) {
@@ -636,7 +653,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => _confirmCompleteShunting(map),
-                    child: const Text('完成'),
+                    child: const Text('已读'),
                   ),
                 ],
               ),
@@ -722,7 +739,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () => _confirmCompleteShunting(map),
-                  child: const Text('完成'),
+                  child: const Text('已读'),
                 ),
               ],
             ),
@@ -736,8 +753,8 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     final confirmed = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('确认完成'),
-            content: const Text('是否确认将该通知单标记为完成？'),
+            title: const Text('确认已读'),
+            content: const Text('是否确认将该通知单标记为已读？'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),

@@ -584,6 +584,17 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
             decoration: const InputDecoration(
               hintText: "请输入车号",
             ),
+            onSubmitted: (v) {
+              final trainNum = v.trim();
+              if (trainNum.isEmpty) {
+                SmartDialog.showToast('车号查询为空');
+                return;
+              }
+              _searchTrainByNum(trainNum);
+              if (repairTrainInfo.isNotEmpty) {
+                Navigator.of(context).pop();
+              }
+            },
           ),
           actions: [
             TextButton(
@@ -597,9 +608,11 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
                 String trainNum = _controller.text.trim();
                 if (trainNum.isNotEmpty) {
                   _searchTrainByNum(trainNum);
-                  Navigator.of(context).pop();
+                  if (repairTrainInfo.isNotEmpty) {
+                    Navigator.of(context).pop();
+                  }
                 } else {
-                  showToast('车号查询为空');
+                  SmartDialog.showToast('车号查询为空');
                 }
               },
               child: const Text('查询'),
@@ -638,9 +651,9 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       setState(() {
         repairTrainInfo = foundTrains;
       });
-      showToast('找到 ${foundTrains.length} 条记录');
+      SmartDialog.showToast('找到 ${foundTrains.length} 条记录');
     } else {
-      showToast('车号查询为空');
+      SmartDialog.showToast('车号查询为空');
     }
   }
 
