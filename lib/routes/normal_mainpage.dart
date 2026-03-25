@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../index.dart';
+import 'production/train_shunting_package_page.dart';
 
 class NormalMainPage extends StatefulWidget {
   const NormalMainPage({super.key});
@@ -268,6 +269,18 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   () => Navigator.pushNamed(context, 'trainShuntingPackage'),
                   '调车',
                 ),
+                if (_canSeeShuntingQuery)
+                  _buildFeatureItem(
+                    Icon(Icons.search, color: Colors.blue[200]),
+                    () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const TrainShuntingPackagePage(readOnly: true),
+                        ),
+                      );
+                    },
+                    '调车计划查询',
+                  ),
               ],
             ),
           const Divider(height: 10, indent: 10, endIndent: 10),
@@ -305,6 +318,12 @@ class _NormalMainPageState extends State<NormalMainPage> {
       return true;
     }
     return false;
+  }
+
+  bool get _canSeeShuntingQuery {
+    final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString();
+    return name == '朱汉' || name == '封方方';
   }
 
   Widget _buildSection() {

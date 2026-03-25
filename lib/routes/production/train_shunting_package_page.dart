@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import 'dart:typed_data';
 
 class TrainShuntingPackagePage extends StatefulWidget {
-  const TrainShuntingPackagePage({super.key});
+  final bool readOnly;
+  const TrainShuntingPackagePage({super.key, this.readOnly = false});
 
   @override
   State<TrainShuntingPackagePage> createState() =>
@@ -17,6 +18,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   bool _isLoading = true;
   List<Map<String, dynamic>> _packages = [];
   String _searchText = '';
+  DateTime? _planDate;
   final Set<String> _receivedPackageCodes = <String>{};
   final Set<String> _receivingPackageCodes = <String>{};
 
@@ -39,6 +41,37 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
 
   bool _isReceivedPkg(Map<String, dynamic> pkg) {
     return !_isCompletedPkg(pkg) && !_isUnreceivedPkg(pkg);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  String _planDateText() {
+    final d = _planDate;
+    if (d == null) return '选择日期';
+    final now = DateTime.now();
+    if (_isSameDay(d, now)) return '今天';
+    final tomorrow = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    if (_isSameDay(d, tomorrow)) return '明天';
+    return DateFormat('yyyy-MM-dd').format(d);
+  }
+
+  Future<void> _pickPlanDate() async {
+    final picked = await showBoardDateTimePicker(
+      context: context,
+      pickerType: DateTimePickerType.date,
+      initialDate: _planDate ?? DateTime.now(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _planDate = picked);
+    await _loadData();
+  }
+
+  Future<void> _clearPlanDate() async {
+    if (_planDate == null) return;
+    setState(() => _planDate = null);
+    await _loadData();
   }
 
   Widget _buildPackageList(List<Map<String, dynamic>> list) {
@@ -158,20 +191,21 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
           margin: const EdgeInsets.only(bottom: 8),
           child: InkWell(
             onTap: () async {
-              if (!canEnter) {
+              if (!widget.readOnly && !canEnter) {
                 SmartDialog.showToast('请先启用');
                 return;
               }
-              final res = await Navigator.of(context).push(
+              await Navigator.of(context).push(
                 MaterialPageRoute<bool>(
                   builder: (context) => TrainShuntingPlanListPage(
                     title: name,
                     packageCode: code,
                     planList: plans,
+                    readOnly: widget.readOnly,
                   ),
                 ),
               );
-              if (res == true || res == null) {
+              if (!widget.readOnly) {
                 await _loadData();
               }
             },
@@ -211,40 +245,52 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                     flex: 2,
                     child: Align(
                       alignment: Alignment.centerRight,
-                      child: canEnable
-                          ? TextButton(
-                              onPressed: () async {
-                                if (isReceiving) return;
-                                _receive(code);
-                                final res = await Navigator.of(context).push(
-                                  MaterialPageRoute<bool>(
-                                    builder: (context) => TrainShuntingPlanListPage(
-                                      title: name,
-                                      packageCode: code,
-                                      planList: plans,
-                                    ),
-                                  ),
-                                );
-                                if (res == true || res == null) {
-                                  await _loadData();
-                                }
-                              },
-                              child: const Text('启用'),
-                            )
-                          : Text(
-                              isReceiving ? '启用中' : statusText,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isCompleted
-                                    ? Colors.green
-                                    : (isReceived
-                                        ? Colors.blue
-                                        : Colors.black54),
-                                fontWeight: isCompleted || isReceived
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
+          child: widget.readOnly
+              ? Text(
+                  statusText,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isCompleted
+                        ? Colors.green
+                        : (isReceived ? Colors.blue : Colors.black54),
+                    fontWeight:
+                        isCompleted || isReceived ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                )
+              : (canEnable
+                  ? TextButton(
+                      onPressed: () async {
+                        if (isReceiving) return;
+                        _receive(code);
+                        final res = await Navigator.of(context).push(
+                          MaterialPageRoute<bool>(
+                            builder: (context) => TrainShuntingPlanListPage(
+                              title: name,
+                              packageCode: code,
+                              planList: plans,
                             ),
+                          ),
+                        );
+                        if (res == true || res == null) {
+                          await _loadData();
+                        }
+                      },
+                      child: const Text('启用'),
+                    )
+                  : Text(
+                      isReceiving ? '启用中' : statusText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isCompleted
+                            ? Colors.green
+                            : (isReceived
+                                ? Colors.blue
+                                : Colors.black54),
+                        fontWeight: isCompleted || isReceived
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    )),
                     ),
                   ),
                 ],
@@ -265,7 +311,17 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
   Future<void> _loadData() async {
     try {
       setState(() => _isLoading = true);
-      var r = await ProductApi().getTrainShuntingPackage();
+      final queryParametrs = <String, dynamic>{};
+      if (_planDate != null && !widget.readOnly) {
+        queryParametrs['planDate'] = DateFormat('yyyy-MM-dd').format(_planDate!);
+      }
+      final r = widget.readOnly
+          ? await ProductApi().getTrainShuntingPackageAll(
+              queryParametrs: queryParametrs.isEmpty ? null : queryParametrs,
+            )
+          : await ProductApi().getTrainShuntingPackage(
+              queryParametrs: queryParametrs.isEmpty ? null : queryParametrs,
+            );
       List<Map<String, dynamic>> rows = (r as List)
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
@@ -450,6 +506,15 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
             ],
           ),
           actions: [
+            TextButton(
+              onPressed: _pickPlanDate,
+              child: Text(_planDateText()),
+            ),
+            if (_planDate != null)
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: _clearPlanDate,
+              ),
             IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
           ],
         ),
@@ -501,12 +566,14 @@ class TrainShuntingPlanListPage extends StatefulWidget {
   final String title;
   final String packageCode;
   final List<Map<String, dynamic>> planList;
+  final bool readOnly;
 
   const TrainShuntingPlanListPage({
     super.key,
     required this.title,
     required this.packageCode,
     required this.planList,
+    this.readOnly = false,
   });
 
   @override
@@ -1087,7 +1154,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                           Text('备注: $remark'),
                         ],
                         const SizedBox(height: 10),
-                        if (!isCompleted)
+                        if (!isCompleted && !widget.readOnly)
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1288,7 +1355,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                             ),
                           ),
                         ],
-                        Row(
+                        if (!widget.readOnly) Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             SizedBox(
