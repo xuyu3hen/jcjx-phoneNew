@@ -736,6 +736,15 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
           builder: (context) => _SlipImagesReviewPage(
             title: '起防溜撤除图片',
             images: photos,
+            onBeforeUpload: () async {
+              final st = _planList[index]['status'];
+              final stInt =
+                  st is int ? st : int.tryParse(st?.toString() ?? '');
+              final isStarted = stInt == 4;
+              final isCompleted = stInt == 2;
+              if (isStarted || isCompleted) return true;
+              return await _start(index);
+            },
             onUpload: (img) => _uploadSlipImage(
               plan: plan,
               image: img,
@@ -754,7 +763,6 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
         _slipRemoveImageByPlanCode[planCode] = photos.first;
         _slipRemoveUploadedByPlanCode[planCode] = true;
       });
-      await _start(index);
       return;
     }
     final photos = await Navigator.of(context).push<List<XFile>>(
@@ -877,12 +885,12 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     }
   }
 
-  Future<void> _start(int index) async {
+  Future<bool> _start(int index) async {
     final item = _planList[index];
     final code = item['code']?.toString();
     if (code == null || code.isEmpty) {
       SmartDialog.showToast('数据异常：缺少代码');
-      return;
+      return false;
     }
     try {
       SmartDialog.showLoading(msg: '正在开工...');
@@ -906,20 +914,23 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       if (msg != null && msg.isNotEmpty) {
         SmartDialog.dismiss();
         SmartDialog.showToast(msg);
-        return;
+        return false;
       }
       if (r != null) {
         _changed = true;
         await _refresh();
         SmartDialog.dismiss();
         SmartDialog.showToast('开工成功');
+        return true;
       } else {
         SmartDialog.dismiss();
         SmartDialog.showToast('开工失败');
+        return false;
       }
     } catch (e) {
       SmartDialog.dismiss();
       SmartDialog.showToast('开工失败: $e');
+      return false;
     }
   }
 
@@ -1588,12 +1599,14 @@ class _SlipImagesReviewPage extends StatefulWidget {
   final List<XFile> images;
   final Future<bool> Function(XFile image) onUpload;
   final Future<bool> Function(List<XFile> images) onUploadAll;
+  final Future<bool> Function()? onBeforeUpload;
 
   const _SlipImagesReviewPage({
     required this.title,
     required this.images,
     required this.onUpload,
     required this.onUploadAll,
+    this.onBeforeUpload,
   });
 
   @override
@@ -1726,6 +1739,13 @@ class _SlipImagesReviewPageState extends State<_SlipImagesReviewPage> {
                       return;
                     }
                     setState(() => _processing = true);
+                    if (widget.onBeforeUpload != null) {
+                      final okStart = await widget.onBeforeUpload!.call();
+                      if (!okStart) {
+                        if (mounted) setState(() => _processing = false);
+                        return;
+                      }
+                    }
                     final ok = await widget.onUploadAll(_images);
                     setState(() {
                       for (int i = 0; i < _statuses.length; i++) {

@@ -34,7 +34,7 @@ class F {
         return 'http://10.105.84.122:8080';
       case Flavor.env_release:
         // return 'https://10.102.81.15:30652';
-        return 'https://10.102.124.50/jcjx-prod-api/';
+        return 'https://10.102.124.50';
       // return 'https://10.105.84.122:8080';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';
@@ -49,7 +49,7 @@ class F {
         return 'http://10.105.84.122:8080';
       case Flavor.env_release:
         // return 'https://10.102.81.15:30652';
-        return 'https://10.102.124.50/jcjx-prod-api/';
+        return 'https://10.102.124.50';
       // return 'https://10.105.84.122:8080';
       case Flavor.env_test:
         return 'http://10.105.84.122:8080';

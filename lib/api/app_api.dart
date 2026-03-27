@@ -107,6 +107,28 @@ static Future<void> init() async {
   // #region agent log
   _agentLog('app_api.dart:before disableCert', 'before disableCertificateVerification', {'dioAdapter': dio.httpClientAdapter.runtimeType.toString()}, 'H5');
   // #endregion
+  if (F.appFlavor == Flavor.env_release) {
+    final prefix = '/jcjx-prod-api';
+    final addPrefix = InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final p = options.path;
+        if (p.startsWith('/') && !p.startsWith(prefix)) {
+          options.path = '$prefix$p';
+        }
+        return handler.next(options);
+      },
+    );
+    dio.interceptors.add(addPrefix);
+    dio2.interceptors.add(addPrefix);
+    final logUrl = InterceptorsWrapper(
+      onRequest: (options, handler) {
+        logger.i('REQ ${options.method} ${options.uri}');
+        return handler.next(options);
+      },
+    );
+    dio.interceptors.add(logUrl);
+    dio2.interceptors.add(logUrl);
+  }
   disableCertificateVerification(dio);
   disableCertificateVerification(dio2);
   // #region agent log
