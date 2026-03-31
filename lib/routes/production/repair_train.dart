@@ -695,7 +695,16 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${loco['typeName'] ?? ''}-${loco['trainNum'] ?? ''}',
+                        (() {
+                          final typeName = (loco['typeName'] ?? '').toString().trim();
+                          final trainNum = formatTrainNumWithEnds(
+                            loco['trainNum'],
+                            extractEnds(loco),
+                          );
+                          if (typeName.isEmpty) return trainNum;
+                          if (trainNum.isEmpty) return typeName;
+                          return '$typeName $trainNum';
+                        })(),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -1144,7 +1153,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], extractEnds(widget.locoInfo))}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1872,7 +1881,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], extractEnds(widget.locoInfo))}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -2996,7 +3005,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], extractEnds(widget.locoInfo))}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

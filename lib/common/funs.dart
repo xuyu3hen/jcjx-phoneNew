@@ -79,3 +79,49 @@ void showLoading(context, [String? text]) {
         );
       });
 }
+
+String formatEndsSuffix(dynamic ends) {
+  final raw = (ends ?? '').toString().trim();
+  if (raw.isEmpty) {
+    return '';
+  }
+  var v = raw.toUpperCase();
+  if (v.endsWith('端')) {
+    v = v.substring(0, v.length - 1).trim();
+  }
+  if (v == 'A' || v == 'B') {
+    return v;
+  }
+  if (v == 'AB' || v == 'A/B' || v == r'A\B') {
+    return 'A/B';
+  }
+  return raw;
+}
+
+String formatTrainNumWithEnds(dynamic trainNum, dynamic ends) {
+  final tn = (trainNum ?? '').toString().trim();
+  if (tn.isEmpty) {
+    return '';
+  }
+  final suffix = formatEndsSuffix(ends);
+  return suffix.isEmpty ? tn : '$tn$suffix';
+}
+
+dynamic extractEnds(dynamic obj) {
+  if (obj is Map) {
+    for (final entry in obj.entries) {
+      if (entry.key.toString().toLowerCase() == 'ends') {
+        return entry.value;
+      }
+    }
+    final nested = obj['c4c5ledger'];
+    if (nested is Map) {
+      for (final entry in nested.entries) {
+        if (entry.key.toString().toLowerCase() == 'ends') {
+          return entry.value;
+        }
+      }
+    }
+  }
+  return null;
+}

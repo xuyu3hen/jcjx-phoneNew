@@ -60,6 +60,59 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 搜索文本
   String _searchText = '';
 
+  void _showSearchDialog() {
+    final controller = TextEditingController(text: _searchText);
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('车号查询'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: '请输入车号进行搜索',
+            ),
+            autofocus: true,
+            onSubmitted: (_) {
+              final kw = controller.text.trim();
+              setState(() {
+                _searchText = kw;
+              });
+              if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
+                SmartDialog.showToast('车号查询为空');
+              }
+              Navigator.of(context).pop();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searchText = '';
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text('清空'),
+            ),
+            TextButton(
+              onPressed: () {
+                final kw = controller.text.trim();
+                setState(() {
+                  _searchText = kw;
+                });
+                if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
+                  SmartDialog.showToast('车号查询为空');
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('查询'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Map<int, dynamic> noticeMap = {
     0: '调车调令',
     1: '检修计划',
@@ -181,47 +234,28 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         elevation: 1,
         actions: [
           IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _showSearchDialog,
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshData,
           )
         ],
       ),
-      body: Column(
-        children: [
-          // 添加搜索框
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: const InputDecoration(
-                hintText: '请输入车号进行搜索',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-                final kw = value.trim();
-                if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
-                  SmartDialog.showToast('车号查询为空');
-                }
-              },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _refreshData,
+              child: repairGroups.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(height: 180),
+                        Center(child: Text('暂无数据')),
+                      ],
+                    )
+                  : _buildRepairList(),
             ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : RefreshIndicator(
-                    onRefresh: _refreshData,
-                    child: repairGroups.isEmpty
-                        ? const Center(child: Text('暂无数据'))
-                        : _buildRepairList(),
-                  ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -330,6 +364,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     int progress = 0;
     int completeCount = item.completePackageCount ?? 0;
     int totalCount = item.totalPackageCount ?? 0;
+    final trainNumWithEnds = formatTrainNumWithEnds(item.trainNum, item.ends);
+    final baseTrainNum = (item.trainNum ?? '').toString().trim();
+    final trainNumText =
+        trainNumWithEnds.isNotEmpty ? trainNumWithEnds : (baseTrainNum.isNotEmpty ? baseTrainNum : '未知车号');
+    final typeNameText = (item.typeName ?? '').toString().trim();
+    final headerText =
+        typeNameText.isEmpty ? trainNumText : '$typeNameText $trainNumText';
 
     if (totalCount > 0) {
       progress = (completeCount * 100) ~/ totalCount;
@@ -351,12 +392,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '车号：${item.trainNum ?? '未知车号'}',
+                headerText,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -389,14 +432,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text(
-                  '机型：${item.typeName ?? ''}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
                 Text(
                   '修程：${item.repairProcName ?? ''}',
                   style: const TextStyle(
@@ -1398,7 +1433,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     List<Map<String, dynamic>> parseScheduleRows(dynamic response) {
       dynamic raw = response;
       if (raw is Map) {
-        raw = raw['rows'] ?? raw['data'] ?? raw['list'] ?? raw;
+        raw = raw['rows'] ??
+            raw['records'] ??
+            raw['data'] ??
+            raw['list'] ??
+            raw['result'] ??
+            raw;
+        if (raw is Map) {
+          final lists = raw.values.whereType<List>().toList();
+          if (lists.length == 1) {
+            raw = lists.first;
+          }
+        }
       }
       final list = raw is List ? raw : const <dynamic>[];
       return list
@@ -1427,22 +1473,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       final state = row['state'];
       if (state != null) {
         if (state is bool) return state;
-        final s = state.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        final s = state.toString().trim().toLowerCase();
+        if (s == 'false') return false;
+        return true;
       }
       final status = row['status'];
       if (status != null) {
         if (status is bool) return status;
-        if (status is num) return status.toInt() == 1;
-        final s = status.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        if (status is num) return true;
+        final s = status.toString().trim().toLowerCase();
+        if (s == 'false') return false;
+        return true;
       }
       final enabled = row['enabled'] ?? row['enable'];
       if (enabled != null) {
         if (enabled is bool) return enabled;
-        if (enabled is num) return enabled.toInt() == 1;
-        final s = enabled.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        if (enabled is num) return enabled.toInt() != 0;
+        final s = enabled.toString().trim().toLowerCase();
+        if (s == 'false' || s == '0') return false;
+        return true;
       }
       return true;
     }
@@ -1915,7 +1964,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     List<Map<String, dynamic>> _parseScheduleRows(dynamic response) {
       dynamic raw = response;
       if (raw is Map) {
-        raw = raw['rows'] ?? raw['data'] ?? raw['list'] ?? raw;
+        raw = raw['rows'] ??
+            raw['records'] ??
+            raw['data'] ??
+            raw['list'] ??
+            raw['result'] ??
+            raw;
+        if (raw is Map) {
+          final lists = raw.values.whereType<List>().toList();
+          if (lists.length == 1) {
+            raw = lists.first;
+          }
+        }
       }
       final list = raw is List ? raw : const <dynamic>[];
       return list
@@ -1944,22 +2004,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       final state = row['state'];
       if (state != null) {
         if (state is bool) return state;
-        final s = state.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        final s = state.toString().trim().toLowerCase();
+        if (s == 'false') return false;
+        return true;
       }
       final status = row['status'];
       if (status != null) {
         if (status is bool) return status;
-        if (status is num) return status.toInt() == 1;
-        final s = status.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        if (status is num) return true;
+        final s = status.toString().trim().toLowerCase();
+        if (s == 'false') return false;
+        return true;
       }
       final enabled = row['enabled'] ?? row['enable'];
       if (enabled != null) {
         if (enabled is bool) return enabled;
-        if (enabled is num) return enabled.toInt() == 1;
-        final s = enabled.toString().trim();
-        return s == '1' || s.toLowerCase() == 'true';
+        if (enabled is num) return enabled.toInt() != 0;
+        final s = enabled.toString().trim().toLowerCase();
+        if (s == 'false' || s == '0') return false;
+        return true;
       }
       return true;
     }

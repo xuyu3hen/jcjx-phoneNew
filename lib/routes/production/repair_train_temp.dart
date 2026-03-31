@@ -4,6 +4,7 @@ import 'package:jcjx_phone/routes/production/jt_assign_team.dart';
 import 'package:jcjx_phone/routes/production/mutual_assign.dart';
 import 'package:jcjx_phone/routes/production/special_assign.dart';
 import '../../../index.dart';
+import 'jt28_search.dart';
 
 class TrainRepairTempManage extends StatefulWidget {
   const TrainRepairTempManage({super.key});
@@ -697,7 +698,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${loco['typeName'] ?? ''}-${loco['trainNum'] ?? ''}',
+                        '${loco['typeName'] ?? ''}-${formatTrainNumWithEnds(loco['trainNum'], extractEnds(loco))}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -1019,7 +1020,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => TrainRepairProgressPage(
-                                initialSearchText: widget.locoInfo?['trainNum'],
+                                initialSearchText:
+                                    widget.locoInfo?['trainNum']?.toString(),
                               )),
                     );
                   },
@@ -1041,7 +1043,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], extractEnds(widget.locoInfo))}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1331,6 +1333,197 @@ class InspectionPackagePage extends StatefulWidget {
   State<InspectionPackagePage> createState() => _InspectionPackagePageState();
 }
 
+class TrainRepairOrderPage extends StatefulWidget {
+  final Map<String, dynamic>? locoInfo;
+  const TrainRepairOrderPage({super.key, this.locoInfo});
+
+  @override
+  State<TrainRepairOrderPage> createState() => _TrainRepairOrderPageState();
+}
+
+class _TrainRepairOrderPageState extends State<TrainRepairOrderPage> {
+  final logger = AppLogger.logger;
+
+  bool _loading = true;
+  List<Map<String, dynamic>> _rows = [];
+
+  final Map<int, dynamic> _noticeMap = const {
+    0: '调车调令',
+    1: '检修计划',
+    2: '临修调令',
+    3: '机车配置签收',
+    4: '售后服务-调查清单',
+    5: '机车入段调令',
+    6: '机务段下发调令',
+    7: '作业人员修改调令',
+    8: '转序调令',
+    9: '轮径修改调令',
+    10: '轮径尺寸调令',
+    11: '轮径镟削调令',
+    12: '修改派工单',
+    13: '售后修程通知单',
+    14: '放行调令',
+    15: '放行申请',
+    16: '计划排产调令',
+    17: '售后通知单',
+    18: '工人工装变更通知单',
+    19: '材料工艺变更通知单',
+    20: 'jt28提报单',
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      final trainEntryCode = (widget.locoInfo?['code'] ?? '').toString().trim();
+      if (trainEntryCode.isEmpty) {
+        setState(() {
+          _rows = [];
+          _loading = false;
+        });
+        return;
+      }
+      final r = await ProductApi()
+          .getTrainRepairDynamics(queryParametrs: {'trainEntryCode': trainEntryCode});
+      final rows = (r is List)
+          ? r
+              .whereType<Map>()
+              .map((e) => e.map((k, v) => MapEntry(k.toString(), v)))
+              .toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _rows = rows;
+        _loading = false;
+      });
+    } catch (e) {
+      logger.e('加载检修调令失败: $e');
+      if (!mounted) return;
+      setState(() {
+        _rows = [];
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final typeName = (widget.locoInfo?['typeName'] ?? '').toString();
+    final trainNum = formatTrainNumWithEnds(
+        widget.locoInfo?['trainNum'], widget.locoInfo?['ends']);
+    final title = (typeName.isEmpty && trainNum.isEmpty)
+        ? '检修调令'
+        : '$typeName $trainNum';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.white,
+        elevation: 1,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh),
+          )
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: _rows.isEmpty
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 180),
+                        Center(child: Text('暂无数据')),
+                      ],
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16.0),
+                      itemCount: _rows.length,
+                      itemBuilder: (context, index) {
+                        final it = _rows[index];
+                        final st = it['shuntingType'];
+                        final stInt = st is int
+                            ? st
+                            : int.tryParse(st?.toString() ?? '');
+                        final typeText =
+                            _noticeMap[stInt] ?? (stInt?.toString() ?? '');
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16.0),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '流水号: ${it['shuntingEncode'] ?? ''}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '调令类型: $typeText',
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '修程（故障）内容: ${it['faultContent'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '检修进度内容及调令: ${it['repairProgressContent'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '发送人员: ${it['sendUserName'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '接受人员: ${it['receiveUserName'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '开始时间: ${it['startTime'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '结束时间: ${it['endTime'] ?? ''}',
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+    );
+  }
+}
+
 class _InspectionPackagePageState extends State<InspectionPackagePage> {
   List<Map<String, dynamic>> packageList = [];
   var logger = AppLogger.logger;
@@ -1424,7 +1617,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], extractEnds(widget.locoInfo))}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

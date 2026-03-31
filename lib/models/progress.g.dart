@@ -78,6 +78,7 @@ RepairItem _$RepairItemFromJson(Map<String, dynamic> json) => RepairItem(
       updatedTime: json['updatedTime'] as String?,
       userName: json['userName'] as String?,
       waitingDuration: (json['waitingDuration'] as num?)?.toInt(),
+      ends: json['ends'] as String?,
     );
 
 Map<String, dynamic> _$RepairItemToJson(RepairItem instance) =>
@@ -132,6 +133,7 @@ Map<String, dynamic> _$RepairItemToJson(RepairItem instance) =>
       'updatedTime': instance.updatedTime,
       'userName': instance.userName,
       'waitingDuration': instance.waitingDuration,
+      'ends': instance.ends,
     };
 
 C4c5ledger _$C4c5ledgerFromJson(Map<String, dynamic> json) => C4c5ledger(

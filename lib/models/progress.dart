@@ -73,6 +73,7 @@ class RepairItem {
   final String? updatedTime;
   final String? userName;
   final int? waitingDuration;
+  final String? ends;
 
   RepairItem({
     this.arrivePlatformTime,
@@ -124,6 +125,7 @@ class RepairItem {
     this.updatedTime,
     this.userName,
     this.waitingDuration,
+    this.ends,
   });
 
   factory RepairItem.fromJson(Map<String, dynamic> json) =>

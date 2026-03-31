@@ -18,6 +18,7 @@ MyApkVersion _$MyApkVersionFromJson(Map<String, dynamic> json) => MyApkVersion(
       fileSize: (json['fileSize'] as num?)?.toInt(),
       md5: json['md5'] as String?,
       updateType: json['updateType'] as String?,
+      downloadUrl: json['downloadUrl'] as String?,
     );
 
 Map<String, dynamic> _$MyApkVersionToJson(MyApkVersion instance) =>
@@ -33,6 +34,7 @@ Map<String, dynamic> _$MyApkVersionToJson(MyApkVersion instance) =>
       'fileSize': instance.fileSize,
       'md5': instance.md5,
       'updateType': instance.updateType,
+      'downloadUrl': instance.downloadUrl,
     };
 
 SysMessageVO _$SysMessageVOFromJson(Map<String, dynamic> json) => SysMessageVO(

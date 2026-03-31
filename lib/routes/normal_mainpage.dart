@@ -323,7 +323,39 @@ class _NormalMainPageState extends State<NormalMainPage> {
   bool get _canSeeShuntingQuery {
     final user = Global.profile.permissions?.user;
     final name = (user?.nickName ?? user?.userName ?? '').toString();
-    return name == '朱汉' || name == '封方方';
+    if (name == '朱汉' || name == '封方方') {
+      return true;
+    }
+
+    final deptName = (user?.dept?.deptName ?? '').toString();
+    final parentDeptName = (Global.parentDeptName ?? '').toString();
+    final combinedDept = '$deptName $parentDeptName';
+    if (combinedDept.contains('调度室') ||
+        combinedDept.contains('生产调度') ||
+        (combinedDept.contains('生产') && combinedDept.contains('调度'))) {
+      return true;
+    }
+
+    final roleKeys =
+        (Global.profile.permissions?.roles ?? const <String>[])
+            .map((e) => e.toString())
+            .toList();
+    if (roleKeys.any((r) => r.contains('diaodu') || r.contains('调度'))) {
+      return true;
+    }
+
+    final roleObjs =
+        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
+            .map((e) => e)
+            .toList();
+    if (roleObjs.any((r) {
+      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
+      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
+      return rn.contains('调度') || rk.contains('diaodu') || rk.contains('调度');
+    })) {
+      return true;
+    }
+    return false;
   }
 
   Widget _buildSection() {

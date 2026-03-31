@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:jcjx_phone/routes/production/jt28_search.dart';
 import 'package:jcjx_phone/routes/production/jt_assign.dart';
 import 'package:jcjx_phone/routes/production/jt_assign_team.dart';
 import 'package:jcjx_phone/routes/production/mutual_assign.dart';
@@ -698,7 +699,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${loco['typeName'] ?? ''}-${loco['trainNum'] ?? ''}',
+                        '${loco['typeName'] ?? ''}-${formatTrainNumWithEnds(loco['trainNum'], loco['ends'])}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -978,7 +979,9 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TrainRepairProgressPage(initialSearchText: widget.locoInfo?['trainNum'],),
+                      builder: (context) => TrainRepairProgressPage(
+                        initialSearchText: widget.locoInfo?['trainNum']?.toString(),
+                      ),
                     ),
                   );
                 },
@@ -1154,7 +1157,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], widget.locoInfo?['ends'])}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -1557,7 +1560,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.locoInfo?['typeName'] ?? ''} ${widget.locoInfo?['trainNum'] ?? ''}',
+              '${widget.locoInfo?['typeName'] ?? ''} ${formatTrainNumWithEnds(widget.locoInfo?['trainNum'], widget.locoInfo?['ends'])}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
