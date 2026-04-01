@@ -234,14 +234,69 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
   int _shuntingPageNum = 1;
   int? _shuntingTotal;
   List<dynamic> _shuntingRows = [];
+  int _shuntingStatus = 0;
+  int? _shuntingUnreadTotal;
+  int? _shuntingReadTotal;
 
   @override
   void initState() {
     super.initState();
     _loadShuntingNotice();
+    _loadShuntingCounts();
   }
 
   var logger = AppLogger.logger;
+
+  Future<void> _setShuntingStatus(int status) async {
+    if (_shuntingStatus == status) return;
+    setState(() {
+      _shuntingStatus = status;
+      _shuntingLoading = true;
+      _shuntingLoadingMore = false;
+      _shuntingPageNum = 1;
+      _shuntingTotal = null;
+      _shuntingRows = [];
+    });
+    await _loadShuntingNotice();
+  }
+
+  Future<void> _loadShuntingCounts() async {
+    try {
+      if (Global.profile.permissions == null) {
+        final p = await LoginApi().getpermissions();
+        if (p.code == 200 && mounted) {
+          Global.profile.permissions = p;
+        }
+      }
+      final user = Global.profile.permissions?.user;
+      final base = {
+        'auditUserName': user?.nickName ?? user?.userName ?? '',
+        'auditUserId': user?.userId ?? '',
+        'pageNum': 1,
+        'pageSize': 1,
+      };
+      final results = await Future.wait([
+        ProductApi().getShuntingNotice(
+          queryParametrs: {...base, 'status': 0},
+        ),
+        ProductApi().getShuntingNotice(
+          queryParametrs: {...base, 'status': 1},
+        ),
+      ]);
+      if (!mounted) return;
+      int? parseTotal(dynamic res) {
+        final data = res is Map ? res as Map : <String, dynamic>{};
+        final total = data['total'];
+        if (total is num) return total.toInt();
+        return int.tryParse(total?.toString() ?? '');
+      }
+
+      setState(() {
+        _shuntingUnreadTotal = parseTotal(results[0]);
+        _shuntingReadTotal = parseTotal(results[1]);
+      });
+    } catch (_) {}
+  }
 
   Future<void> _loadShuntingNotice() async {
     try {
@@ -255,7 +310,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       final queryParametrs = {
         'auditUserName': user?.nickName ?? user?.userName ?? '',
         'auditUserId': user?.userId ?? '',
-        'status': 0,
+        'status': _shuntingStatus,
         'pageNum': 1,
         'pageSize': _pageSize,
       };
@@ -272,6 +327,11 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
           _shuntingPageNum = 1;
           _shuntingRows = rows is List ? List<dynamic>.from(rows) : [];
           _shuntingTotal = total is num ? total.toInt() : int.tryParse(total?.toString() ?? '');
+          if (_shuntingStatus == 0) {
+            _shuntingUnreadTotal = _shuntingTotal;
+          } else if (_shuntingStatus == 1) {
+            _shuntingReadTotal = _shuntingTotal;
+          }
         });
       }
     } catch (e) {
@@ -297,7 +357,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       final queryParametrs = {
         'auditUserName': user?.nickName ?? user?.userName ?? '',
         'auditUserId': user?.userId ?? '',
-        'status': 0,
+        'status': _shuntingStatus,
         'pageNum': nextPage,
         'pageSize': _pageSize,
       };
@@ -396,16 +456,43 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     }
     final totalNum = _shuntingTotal ?? 0;
     final hasMore = totalNum > _shuntingRows.length;
+    final unreadText = _shuntingUnreadTotal == null
+        ? '未读'
+        : '未读(${_shuntingUnreadTotal ?? 0})';
+    final readText =
+        _shuntingReadTotal == null ? '已读' : '已读(${_shuntingReadTotal ?? 0})';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Card(
+          margin: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                ChoiceChip(
+                  label: Text(unreadText),
+                  selected: _shuntingStatus == 0,
+                  onSelected: (_) => _setShuntingStatus(0),
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: Text(readText),
+                  selected: _shuntingStatus == 1,
+                  onSelected: (_) => _setShuntingStatus(1),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
         if (_shuntingRows.isEmpty)
           Card(
             margin: EdgeInsets.zero,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                '暂无调车通知',
+                _shuntingStatus == 0 ? '暂无未读通知' : '暂无已读通知',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
             ),
@@ -463,25 +550,11 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     return _shuntingNoticeCard(itemMap);
   }
 
-  Future<void> _markReadSilently(Map<String, dynamic> itemMap) async {
-    try {
-      final params = Map<String, dynamic>.from(itemMap);
-      params['status'] = 1;
-      final res = await ProductApi().updateShuntingNotice([params]);
-      if (mounted && res != null) {
-        _loadShuntingNotice();
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
   void _onViewShunting(Map<String, dynamic> itemMap) {
     final st = itemMap['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
-      _markReadSilently(itemMap);
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => PlanListPage(
@@ -492,7 +565,6 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       );
     }
     if (st == 0) {
-      _markReadSilently(itemMap);
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => const TrainShuntingPackagePage(),
@@ -652,7 +724,9 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () => _confirmCompleteShunting(map),
+                    onPressed: _shuntingStatus == 0
+                        ? () => _confirmCompleteShunting(map)
+                        : null,
                     child: const Text('已读'),
                   ),
                 ],
@@ -738,7 +812,9 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () => _confirmCompleteShunting(map),
+                  onPressed: _shuntingStatus == 0
+                      ? () => _confirmCompleteShunting(map)
+                      : null,
                   child: const Text('已读'),
                 ),
               ],

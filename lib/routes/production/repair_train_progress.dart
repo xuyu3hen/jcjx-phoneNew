@@ -1928,6 +1928,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       showToast("请选择排程节点");
                       return;
                     }
+                    final endCode =
+                        (stopLocationSelectedEnd['code'] ?? '').toString().trim();
+                    if (endCode.isEmpty) {
+                      showToast("请选择终点位置");
+                      return;
+                    }
                     Navigator.pop(context);
                     savetrainShunting();
                     SmartDialog.showToast('调车作业申请已提交');
@@ -2599,6 +2605,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         (scheduleNodeSelected['code'] ?? '').toString().trim();
                     if (scheduleCode.isEmpty) {
                       showToast("请选择排程节点");
+                      return;
+                    }
+                    final endCode =
+                        (stopLocationSelectedEnd['code'] ?? '').toString().trim();
+                    if (endCode.isEmpty) {
+                      showToast("请选择终点位置");
                       return;
                     }
                     Navigator.pop(context);
