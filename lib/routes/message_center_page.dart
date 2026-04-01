@@ -4,6 +4,26 @@ import '../index.dart';
 import '../models/progress.dart';
 import 'production/investigateInfo.dart';
 
+abstract class ShuntingNoticeApi {
+  Future<dynamic> getShuntingNotice({Map<String, dynamic>? queryParametrs});
+  Future<dynamic> updateShuntingNotice(List<dynamic> queryParametrs);
+}
+
+class DefaultShuntingNoticeApi implements ShuntingNoticeApi {
+  final ProductApi _api;
+  DefaultShuntingNoticeApi([ProductApi? api]) : _api = api ?? ProductApi();
+
+  @override
+  Future<dynamic> getShuntingNotice({Map<String, dynamic>? queryParametrs}) {
+    return _api.getShuntingNotice(queryParametrs: queryParametrs);
+  }
+
+  @override
+  Future<dynamic> updateShuntingNotice(List<dynamic> queryParametrs) {
+    return _api.updateShuntingNotice(queryParametrs);
+  }
+}
+
 /// 消息中心页面
 class MessageCenterPage extends StatefulWidget {
   const MessageCenterPage({Key? key, this.onMessageCountChanged}) : super(key: key);
@@ -220,8 +240,13 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
 /// 消息详情页（点击卡片跳转），并展示调车通知 getShuntingNotice 结果
 class MessageDetailPage extends StatefulWidget {
   final Map<String, dynamic> message;
+  final ShuntingNoticeApi? shuntingNoticeApi;
 
-  const MessageDetailPage({Key? key, required this.message}) : super(key: key);
+  const MessageDetailPage({
+    Key? key,
+    required this.message,
+    this.shuntingNoticeApi,
+  }) : super(key: key);
 
   @override
   State<MessageDetailPage> createState() => _MessageDetailPageState();
@@ -237,10 +262,12 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
   int _shuntingStatus = 0;
   int? _shuntingUnreadTotal;
   int? _shuntingReadTotal;
+  late final ShuntingNoticeApi _shuntingApi;
 
   @override
   void initState() {
     super.initState();
+    _shuntingApi = widget.shuntingNoticeApi ?? DefaultShuntingNoticeApi();
     _loadShuntingNotice();
     _loadShuntingCounts();
   }
@@ -276,10 +303,10 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'pageSize': 1,
       };
       final results = await Future.wait([
-        ProductApi().getShuntingNotice(
+        _shuntingApi.getShuntingNotice(
           queryParametrs: {...base, 'status': 0},
         ),
-        ProductApi().getShuntingNotice(
+        _shuntingApi.getShuntingNotice(
           queryParametrs: {...base, 'status': 1},
         ),
       ]);
@@ -315,7 +342,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'pageSize': _pageSize,
       };
       logger.i(queryParametrs);
-      final res = await ProductApi().getShuntingNotice(
+      final res = await _shuntingApi.getShuntingNotice(
         queryParametrs: queryParametrs,
       );
       if (mounted) {
@@ -361,7 +388,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'pageNum': nextPage,
         'pageSize': _pageSize,
       };
-      final res = await ProductApi().getShuntingNotice(
+      final res = await _shuntingApi.getShuntingNotice(
         queryParametrs: queryParametrs,
       );
       if (mounted) {
@@ -577,7 +604,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     try {
       final params = Map<String, dynamic>.from(itemMap);
       params['status'] = 1;
-      final res = await ProductApi().updateShuntingNotice([params]);
+      final res = await _shuntingApi.updateShuntingNotice([params]);
       if (mounted) {
         showToast(res != null ? '已读' : '操作失败');
         if (res != null) _loadShuntingNotice();
