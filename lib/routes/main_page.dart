@@ -10,8 +10,6 @@ import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
 import '../index.dart';
 import 'production/train_shunting_package_page.dart';
-import 'message_center_page.dart';
-import 'production/repair_train_temp.dart';
 import 'vehicle28/submit28_manage.dart';
 
 class MainPage extends StatefulWidget {
@@ -234,8 +232,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         // 入段车辆查看
         "enter_list": (context) => const EnterList(),
         // 新增入段修改
-        // "sec_enter_modify": (context) => const SecEnterModify(),
-        "sec_enter_modify": (context) => const SecEnterModifyNew(),
+        "sec_enter_modify": (context) => const SecEnterModify(),
+        "sec_enter_modify_new": (context) => const SecEnterModifyNew(),
         // 机统28
         "submit28": (context) => const Vehicle28Form(),
         "dispatchlist": (context) => const DispatchList(),

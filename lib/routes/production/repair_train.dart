@@ -144,7 +144,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       var response = await ProductApi()
           .getRepairingTrainEntryByUserIdAndRepairProcCode(
               queryParametrs: params);
-
+      logger.i('response: $response');
       if (mounted) {
         setState(() {
           if (response is List) {

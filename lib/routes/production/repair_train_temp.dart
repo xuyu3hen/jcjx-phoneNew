@@ -82,20 +82,26 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       }
       
       // 如果没有缓存或缓存过期，则重新加载
-      await Future.wait([
-        getRepairingTrainInfo('C4'),
-        getRepairingTrainInfo('C5'),
-        getRepairingTrainInfo('临修'),
-      ]);
-
-      // 数据加载完成后，自动加载第一个标签的第一个工序节点
+      await getRepairingTrainInfo('C4');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
         }
       });
+      Future(() async {
+        await Future.wait([
+          getRepairingTrainInfo('C5'),
+          getRepairingTrainInfo('临修'),
+        ]);
+      });
+      return;
     } finally {
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() {
           _isLoading = false;
         });
@@ -128,63 +134,64 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
   Future<void> getRepairingTrainInfo(String repairMainNode) async {
     try {
       String repairProcCode1 = '';
-      Global.repairProcInfo.forEach((element) {
+      for (final element in Global.repairProcInfo) {
         if (element['name'] == repairMainNode) {
           repairProcCode1 = element['code'];
+          break;
         }
-      });
+      }
+      if (repairProcCode1.trim().isEmpty) {
+        if (!mounted) return;
+        setState(() {
+          if (repairMainNode == 'C4') {
+            repairMainNodeInfo = [];
+            count1 = 0;
+          } else if (repairMainNode == 'C5') {
+            repairMainNodeInfo1 = [];
+            count2 = 0;
+          } else if (repairMainNode == '临修') {
+            repairMainNodeInfo2 = [];
+            count3 = 0;
+          }
+        });
+        return;
+      }
       Map<String, dynamic> params = {
         // 'userId': Global.profile.permissions?.user.userId,
         'repairProcCode': repairProcCode1
       };
-      logger.i('params: $params');
       var response = await ProductApi()
           .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
 
-      if (mounted) {
-        setState(() {
-          if (response is List) {
-            List<Map<String, dynamic>> data = response
-                .map((e) => e is Map<String, dynamic>
-                    ? e
-                    : Map<String, dynamic>.from(e as Map))
-                .toList();
-            
-            if (repairMainNode == 'C4') {
-              repairMainNodeInfo = data;
-              Global.cachedRepairMainNodeInfoC4 = data;
-              count1 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo) {
-                count1 = count1 + (element['count'] as int? ?? 0);
-              }
-            }
-            if (repairMainNode == 'C5') {
-              repairMainNodeInfo1 = data;
-              Global.cachedRepairMainNodeInfoC5 = data;
-              count2 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo1) {
-                logger.i(element);
-                count2 = count2 + (element['count'] as int? ?? 0);
-              }
-            }
-            if (repairMainNode == '临修') {
-              repairMainNodeInfo2 = data;
-              Global.cachedRepairMainNodeInfoLinXiu = data;
-              count3 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo2) {
-                count3 = count3 + (element['count'] as int? ?? 0);
-              }
-            }
-            
-            // 更新缓存状态
-            Global.isRepairTrainDataLoaded = true;
-            Global.repairTrainDataLoadTime = DateTime.now();
-          } else {
-            repairMainNodeInfo = [];
-          }
-          logger.i('repairMainNodeInfo: $repairMainNodeInfo');
-        });
-      }
+      if (!mounted) return;
+      final data = response is List
+          ? response
+              .map((e) => e is Map<String, dynamic>
+                  ? e
+                  : Map<String, dynamic>.from(e as Map))
+              .toList()
+          : <Map<String, dynamic>>[];
+      final nextCount = data.fold<int>(
+        0,
+        (sum, e) => sum + ((e['count'] as int?) ?? 0),
+      );
+      setState(() {
+        if (repairMainNode == 'C4') {
+          repairMainNodeInfo = data;
+          Global.cachedRepairMainNodeInfoC4 = data;
+          count1 = nextCount;
+        } else if (repairMainNode == 'C5') {
+          repairMainNodeInfo1 = data;
+          Global.cachedRepairMainNodeInfoC5 = data;
+          count2 = nextCount;
+        } else if (repairMainNode == '临修') {
+          repairMainNodeInfo2 = data;
+          Global.cachedRepairMainNodeInfoLinXiu = data;
+          count3 = nextCount;
+        }
+        Global.isRepairTrainDataLoaded = true;
+        Global.repairTrainDataLoadTime = DateTime.now();
+      });
     } catch (e) {
       logger.i(e);
     }
@@ -1952,6 +1959,10 @@ class _RollCallPageState extends State<RollCallPage> {
     Map<String, dynamic> params = {
       "code": widget.packageCode,
     };
+    if (!_inspectionItems[0].isChecked && !_inspectionItems[1].isChecked) {
+      SmartDialog.showToast('请选择主修或辅修');
+      return;
+    }
     if (_inspectionItems[0].isChecked) {
       params['executorId'] = _selectedMember.id;
       params['executorName'] = _selectedMember.name;
@@ -1962,6 +1973,7 @@ class _RollCallPageState extends State<RollCallPage> {
     }
     try {
       logger.i(params);
+      SmartDialog.showLoading();
       var response = await ProductApi()
           .updateTaskInstructPackageRepairInfo(queryParametrs: params);
 
@@ -1969,11 +1981,20 @@ class _RollCallPageState extends State<RollCallPage> {
         // 将List<dynamic>转换为List<Map<String, dynamic>>
       }
       if (response['code'] == 200) {
-        showToast("确认成功");
+        SmartDialog.dismiss();
+        SmartDialog.showToast('人员确定成功');
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+        return;
       }
+      SmartDialog.dismiss();
+      SmartDialog.showToast('人员确定失败');
     } catch (e) {
+      SmartDialog.dismiss();
       // 错误处理
       print('获取用户列表失败: $e');
+      SmartDialog.showToast('人员确定失败');
     }
   }
 

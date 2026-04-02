@@ -358,6 +358,46 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return false;
   }
 
+  bool get _canSeeEnterDetailRecord {
+    final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString().trim();
+    final userId = (user?.userId ?? '').toString().trim();
+    final workNo = (user?.workNumber ?? '').toString().trim();
+    const allowedNos = <String>{
+      '60786',
+      '60671',
+      '60618',
+      '60118',
+      '60316',
+      '60571',
+      '60387',
+      '60502',
+      '60951',
+      '60195',
+      '60897',
+      '60121',
+      '60115',
+    };
+    const allowedNames = <String>{
+      '聂星',
+      '王志赢',
+      '罗晶',
+      '夏龙',
+      '李千通',
+      '张扬',
+      '李金飞',
+      '黄忆',
+      '曾志凌',
+      '邓波',
+      '白冰涛',
+      '潘松松',
+      '杨志国',
+    };
+    return allowedNos.contains(workNo) ||
+        allowedNos.contains(userId) ||
+        allowedNames.contains(name);
+  }
+
   Widget _buildSection() {
     return SingleChildScrollView(
       child: Column(
@@ -391,6 +431,18 @@ class _NormalMainPageState extends State<NormalMainPage> {
                   height: (MediaQuery.of(context).size.height),
                 ),
               ),
+              if (_canSeeEnterDetailRecord)
+                SizedBox(
+                  width: (MediaQuery.of(context).size.width) / 3,
+                  height: (MediaQuery.of(context).size.width) / 4,
+                  child: FeatureContainer(
+                    Icon(Icons.list_alt, color: Colors.blue[200]),
+                    () => Navigator.pushNamed(context, 'sec_enter_modify_new'),
+                    '入段细录',
+                    width: (MediaQuery.of(context).size.width),
+                    height: (MediaQuery.of(context).size.height),
+                  ),
+                ),
             ],
           ),
           const ListTile(
