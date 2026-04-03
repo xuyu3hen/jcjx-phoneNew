@@ -1,7 +1,12 @@
 import '../../index.dart';
 
 class SecEnterModify extends StatefulWidget {
-  const SecEnterModify({Key? key}) : super(key: key);
+  final String title;
+
+  const SecEnterModify({
+    Key? key,
+    this.title = '新增入段',
+  }) : super(key: key);
 
   @override
   State createState() => _SecEnterModifyState();
@@ -116,7 +121,7 @@ class _SecEnterModifyState extends State<SecEnterModify> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("新增入段"),
+        title: Text(widget.title),
       ),
       body: _buildBody(),
       bottomNavigationBar: _footer(),

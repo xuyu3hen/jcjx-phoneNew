@@ -1,10 +1,7 @@
 import 'package:dart_sm/dart_sm.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../index.dart';
 
-import 'package:jcjx_phone/zjc_common/utils/zjc_permission_utils.dart';
-import 'package:path_provider/path_provider.dart';
 // toast 统一使用 showToast 包装
 
 class LoginRoute extends StatefulWidget {
@@ -284,18 +281,27 @@ class _LoginRouteState extends State<LoginRoute> {
     // if(F.id == "com.jcjx_phone_dev"){
     if (true) {
       try {
+        final username = _unameController.text.trim();
+        final passwordPlain = _pwdController.text;
+        if (username.isEmpty) {
+          showToast("账号不能为空");
+          return;
+        }
+        if (passwordPlain.trim().isEmpty) {
+          showToast("密码不能为空");
+          return;
+        }
+        SmartDialog.showLoading();
         // 正确调用SM2加密：encrypt(明文, 公钥)
         String passwd =
-            SM2.encrypt(_pwdController.text, publicKey, cipherMode: 1);
-        logger.i("加密后的密码：$passwd");
-        logger.i(_unameController.text);
+            SM2.encrypt(passwordPlain, publicKey, cipherMode: 1);
         // 调用api接口函数
         var r = await LoginApi().getProfile(
           // 账号密码
 
           queryParametrs: {
             'password': passwd,
-            'username': _unameController.text,
+            'username': username,
           },
         );
         if (mounted) {
@@ -307,7 +313,7 @@ class _LoginRouteState extends State<LoginRoute> {
 
             // 保存凭据
             _saveCredentials(
-                _unameController.text, _pwdController.text, rememberPassword);
+                username, passwordPlain, rememberPassword);
 
             await AppApi.init();
 
@@ -317,17 +323,80 @@ class _LoginRouteState extends State<LoginRoute> {
             });
           } else {
             // 登录失败，显示错误信息
-            showToast("登录失败：${r.msg}");
+            final msg = (r.msg ?? '').toString().trim();
+            final text = msg.isEmpty ? "用户名或密码错误" : msg;
+            SmartDialog.dismiss(status: SmartStatus.loading);
+            if (text.contains('剩余重试次数') ||
+                text.contains('锁定') ||
+                text.contains('不在指定范围')) {
+              await _showLoginErrorDialog(text);
+            } else {
+              showToast("登录失败：$text");
+            }
           }
         }
       } on DioException catch (e) {
-        showToast("网络错误：${e.toString()}");
+        String? serverMsg;
+        final data = e.response?.data;
+        if (data is Map) {
+          serverMsg = (data["msg"] ??
+                  data["message"] ??
+                  data["error"] ??
+                  data["data"])
+              ?.toString();
+        } else if (data is String) {
+          serverMsg = data;
+        }
+        serverMsg = serverMsg?.trim();
+        final statusCode = e.response?.statusCode;
+        if (serverMsg != null && serverMsg.isNotEmpty) {
+          SmartDialog.dismiss(status: SmartStatus.loading);
+          if (mounted &&
+              (serverMsg.contains('剩余重试次数') ||
+                  serverMsg.contains('锁定') ||
+                  serverMsg.contains('不在指定范围'))) {
+            await _showLoginErrorDialog(serverMsg);
+          } else {
+            showToast(serverMsg);
+          }
+        } else if (statusCode == 401) {
+          SmartDialog.dismiss(status: SmartStatus.loading);
+          showToast("用户名或密码错误");
+        } else if (statusCode == 423 || statusCode == 429) {
+          SmartDialog.dismiss(status: SmartStatus.loading);
+          if (mounted) {
+            await _showLoginErrorDialog("密码错误次数过多，账号已锁定，请联系管理员");
+          } else {
+            showToast("密码错误次数过多，账号已锁定，请联系管理员");
+          }
+        } else {
+          SmartDialog.dismiss(status: SmartStatus.loading);
+          showToast("登录失败，请检查网络后重试");
+        }
       } finally {
-        SmartDialog.dismiss();
+        SmartDialog.dismiss(status: SmartStatus.loading);
       }
     }
 
     // 验证表单字符是否合法
+  }
+
+  Future<void> _showLoginErrorDialog(String message) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => AlertDialog(
+        title: const Text('登录失败'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('知道了'),
+          ),
+        ],
+      ),
+    );
   }
 
   void getLastUpdate() async {
@@ -335,9 +404,8 @@ class _LoginRouteState extends State<LoginRoute> {
       logger.i("检查更新，应用ID: ${F.id}");
 
       // 获取当前应用版本信息
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      String currentVersion = packageInfo.version;
-      int currentBuildNumber = int.tryParse(packageInfo.buildNumber) ?? 0;
+      String currentVersion = await F.getVersion();
+      int currentBuildNumber = await F.getBuildNumber();
 
       logger.i("当前版本: $currentVersion+$currentBuildNumber");
 
@@ -374,10 +442,6 @@ class _LoginRouteState extends State<LoginRoute> {
         final cmp = _compareVersion(version, currentVersion);
         if (cmp == -1) {
           // 发现新版本，开始手动下载流程
-          final force =
-              (r['isForceUpdate'] == true) || (r['force'] == true) || false;
-          final versionCode =
-              (r['buildNumber'] is int) ? r['buildNumber'] as int : 1;
           //使用 xupdate 进行更新
           FlutterXUpdate.updateByInfo(
             updateEntity: customJsonParse(r),
@@ -399,8 +463,12 @@ class _LoginRouteState extends State<LoginRoute> {
         version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
 
     // 补齐长度
-    while (v1Parts.length < v2Parts.length) v1Parts.add(0);
-    while (v2Parts.length < v1Parts.length) v2Parts.add(0);
+    while (v1Parts.length < v2Parts.length) {
+      v1Parts.add(0);
+    }
+    while (v2Parts.length < v1Parts.length) {
+      v2Parts.add(0);
+    }
 
     for (int i = 0; i < v1Parts.length; i++) {
       if (v1Parts[i] > v2Parts[i]) return -1; // version1 更新

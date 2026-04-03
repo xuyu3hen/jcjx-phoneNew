@@ -259,6 +259,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //     ),
           //   ],
           // ),
+          
           const SizedBox(height: 15),
           // if (_canSeeShunting)
             Row(
@@ -281,6 +282,12 @@ class _NormalMainPageState extends State<NormalMainPage> {
                     },
                     '调车计划查询',
                   ),
+                // if (_canSeeEnterDetailRecord)
+                //   _buildFeatureItem(
+                //     Icon(Icons.list_alt, color: Colors.blue[200]),
+                //     () => Navigator.pushNamed(context, 'enterDetailRecord'),
+                //     '入段细录',
+                //   ),
               ],
             ),
           const Divider(height: 10, indent: 10, endIndent: 10),
@@ -289,36 +296,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
-  bool get _canSeeShunting {
-    final deptName =
-        Global.profile.permissions?.user.dept?.deptName?.toString() ?? '';
-    final parentDeptName = Global.parentDeptName?.toString() ?? '';
-    final roleKeys =
-        (Global.profile.permissions?.roles ?? const <String>[])
-            .map((e) => e.toString())
-            .toList();
-    final roleObjs =
-        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
-            .map((e) => e)
-            .toList();
-
-    if (deptName.contains('接车组') || parentDeptName.contains('接车组')) {
-      return true;
-    }
-    if (roleKeys.any((r) => r.contains('jieche') || r.contains('接车'))) {
-      return true;
-    }
-    if (roleObjs.any((r) {
-      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
-      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      return rn.contains('接车组') ||
-          rk.contains('jieche') ||
-          rk.contains('接车');
-    })) {
-      return true;
-    }
-    return false;
-  }
 
   bool get _canSeeShuntingQuery {
     final user = Global.profile.permissions?.user;
@@ -398,206 +375,4 @@ class _NormalMainPageState extends State<NormalMainPage> {
         allowedNames.contains(name);
   }
 
-  Widget _buildSection() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          const ListTile(
-            title: Text("机车入段",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.directions_train, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'enter_list'),
-                  '入修车辆',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.add, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'sec_enter_modify'),
-                  '新增入修',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-              if (_canSeeEnterDetailRecord)
-                SizedBox(
-                  width: (MediaQuery.of(context).size.width) / 3,
-                  height: (MediaQuery.of(context).size.width) / 4,
-                  child: FeatureContainer(
-                    Icon(Icons.list_alt, color: Colors.blue[200]),
-                    () => Navigator.pushNamed(context, 'sec_enter_modify_new'),
-                    '入段细录',
-                    width: (MediaQuery.of(context).size.width),
-                    height: (MediaQuery.of(context).size.height),
-                  ),
-                ),
-            ],
-          ),
-          const ListTile(
-            title: Text("预派工",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              // SizedBox(
-              //   width: (MediaQuery.of(context).size.width) / 3,
-              //   height: (MediaQuery.of(context).size.width) / 4,
-              //   child: FeatureContainer(
-              //     Icon(Icons.post_add, color: Colors.blue[200]),
-              //     () => Navigator.pushNamed(context, 'submit28'),
-              //     '机统28提报',
-              //     width: (MediaQuery.of(context).size.width),
-              //     height: (MediaQuery.of(context).size.height),
-              //   ),
-              // ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.fact_check_outlined, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'preDispatchWork'),
-                  '预派工',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.assignment, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'preTrainWork'),
-                  '机车预派工',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-            ],
-          ),
-          // 增加间距
-          const SizedBox(height: 15),
-          const ListTile(
-            title: Text("作业包，机统28",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.post_add, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28submitManage'),
-                  '机统28提报',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-              // SizedBox(
-              //   width: (MediaQuery.of(context).size.width) / 3,
-              //   height: (MediaQuery.of(context).size.width) / 4,
-              //   child: FeatureContainer(
-              //     Icon(Icons.build, color: Colors.amber[300]),
-              //     () => Navigator.pushNamed(context, 'repairlist'),
-              //     '不合格项处置',
-              //     width: (MediaQuery.of(context).size.width),
-              //     height: (MediaQuery.of(context).size.height),
-              //   ),
-              // ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.folder, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'getWorkPackage'),
-                  '领取作业包',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.build, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'searchWorkPackage'),
-                  '查看作业包',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.group_rounded, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'mutuallist'),
-                  '互检',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                  num: mutualNum,
-                ),
-              ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.check_circle, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'speciallist'),
-                  '专检',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                  num: specialNum,
-                ),
-              ),
-              SizedBox(
-                width: (MediaQuery.of(context).size.width) / 3,
-                height: (MediaQuery.of(context).size.width) / 4,
-                child: FeatureContainer(
-                  Icon(Icons.assignment, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28'),
-                  '机统28施修',
-                  width: (MediaQuery.of(context).size.width),
-                  height: (MediaQuery.of(context).size.height),
-                ),
-              )
-            ],
-          ),
-          Row(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-            SizedBox(
-              width: (MediaQuery.of(context).size.width) / 3,
-              height: (MediaQuery.of(context).size.width) / 4,
-              child: FeatureContainer(
-                Icon(Icons.group_rounded, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28Show'),
-                '机统28展示',
-                width: (MediaQuery.of(context).size.width),
-                height: (MediaQuery.of(context).size.height),
-              ),
-            ),
-          ]),
-        ],
-      ),
-    );
-  }
 }

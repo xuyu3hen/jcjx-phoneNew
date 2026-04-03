@@ -24,13 +24,13 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   PageController? pageController;
   int page = 0;
   int _messageCount = 0;
-  bool _hasUpdate = false; // 新增：是否有更新的标识
+  final bool _hasUpdate = false;
   var logger = AppLogger.logger;
 
   @override
   void initState() {
     super.initState();
-    pageController = PageController(initialPage: this.page);
+    pageController = PageController(initialPage: page);
 
     // 获取是线上版本还是线下版版本
     // queryParameters = {
@@ -139,23 +139,6 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
 
   // 比较版本号（语义化版本号比较）
   // 返回值: >0 表示 version1 > version2, <0 表示 version1 < version2, 0 表示相等
-  int _compareVersion(String version1, String version2) {
-    List<int> v1Parts =
-        version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-    List<int> v2Parts =
-        version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-
-    // 补齐长度
-    while (v1Parts.length < v2Parts.length) v1Parts.add(0);
-    while (v2Parts.length < v1Parts.length) v2Parts.add(0);
-
-    for (int i = 0; i < v1Parts.length; i++) {
-      if (v1Parts[i] > v2Parts[i]) return -1; // version1 更新
-      if (v1Parts[i] < v2Parts[i]) return 1; // version2 更新
-    }
-    return 0; // 相等
-  }
-
   // 转义成UpdateEntity
   UpdateEntity customJsonParse(myapk) {
     // 构建完整的下载URL（如果是相对路径，需要添加服务器地址）
@@ -232,8 +215,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         // 入段车辆查看
         "enter_list": (context) => const EnterList(),
         // 新增入段修改
-        "sec_enter_modify": (context) => const SecEnterModify(),
-        "sec_enter_modify_new": (context) => const SecEnterModifyNew(),
+        "sec_enter_modify": (context) => const SecEnterModifyNew(),
+        "sec_enter_detail_record": (context) => const SecEnterModify(),
         // 机统28
         "submit28": (context) => const Vehicle28Form(),
         "dispatchlist": (context) => const DispatchList(),
@@ -265,6 +248,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'trainShuntingPackage':(context) => const TrainShuntingPackagePage(),
         'workProgress':(context) => const WorkProgressPage(),
         'repairTrainTempManage':(context) => const TrainRepairTempManage(),
+        'enterDetailRecord': (context) => const SecEnterModify(title: '入段细录'),
       },
       builder: FlutterSmartDialog.init(),
     );

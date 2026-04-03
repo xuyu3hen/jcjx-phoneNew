@@ -56,49 +56,106 @@ class _EnterList extends State<EnterList> {
     );
   }
 
+  bool get _canSeeEnterDetailRecord {
+    final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString().trim();
+    final userId = (user?.userId ?? '').toString().trim();
+    final workNo = (user?.workNumber ?? '').toString().trim();
+    const allowedNos = <String>{
+      '60786',
+      '60671',
+      '60618',
+      '60118',
+      '60316',
+      '60571',
+      '60387',
+      '60502',
+      '60951',
+      '60195',
+      '60897',
+      '60121',
+      '60115',
+    };
+    const allowedNames = <String>{
+      '聂星',
+      '王志赢',
+      '罗晶',
+      '夏龙',
+      '李千通',
+      '张扬',
+      '李金飞',
+      '黄忆',
+      '曾志凌',
+      '邓波',
+      '白冰涛',
+      '潘松松',
+      '杨志国',
+    };
+    return allowedNos.contains(workNo) ||
+        allowedNos.contains(userId) ||
+        allowedNames.contains(name);
+  }
+
   Widget _buildBody() {
-    return SingleChildScrollView(
-      child:
-          Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-        Container(
-            alignment: Alignment.topCenter,
-            height: (MediaQuery.of(context).size.height) * 0.9,
-            child: ListView.separated(
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                if (_items[index].code == loadingTag) {
-                  //单次加载容量
-                  if (hasMore) {
-                    // 请求请料表数据
-                    _queryEntryData();
-                    return Container(
-                      padding: const EdgeInsets.all(16.0),
-                      alignment: Alignment.center,
-                      child: const SizedBox(
-                          width: 24.0,
-                          height: 24.0,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.0,
-                          )),
-                    );
-                  } else {
-                    return Container(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.all(16),
-                      child: Text(
-                        "已经到头了",
-                        style: TextStyle(color: Colors.blue[700]),
-                      ),
-                    );
-                  }
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.separated(
+            itemCount: _items.length,
+            itemBuilder: (context, index) {
+              if (_items[index].code == loadingTag) {
+                if (hasMore) {
+                  _queryEntryData();
+                  return Container(
+                    padding: const EdgeInsets.all(16.0),
+                    alignment: Alignment.center,
+                    child: const SizedBox(
+                      width: 24.0,
+                      height: 24.0,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ),
+                  );
                 }
-                // return EntryTrainItem(_items[index], () => update());
-              },
-              separatorBuilder: (context, index) => const SizedBox(
-                height: .0,
+                return Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    "已经到头了",
+                    style: TextStyle(color: Colors.blue[700]),
+                  ),
+                );
+              }
+              final item = _items[index];
+              final title =
+                  '${item.typeName ?? ''}-${item.trainNum ?? ''}'.trim();
+              final sub =
+                  '${item.repairProcName ?? ''}-${item.repairTimes ?? ''}'.trim();
+              return ListTile(
+                title: Text(title.isEmpty ? '-' : title),
+                subtitle: Text(sub == '-' ? '' : sub),
+                trailing: Text((item.arrivePlatformTime ?? '').toString()),
+              );
+            },
+            separatorBuilder: (context, index) => const Divider(height: 0),
+          ),
+        ),
+        if (_canSeeEnterDetailRecord)
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, 'enterDetailRecord'),
+                  icon: const Icon(Icons.list_alt),
+                  label: const Text('入段细录'),
+                ),
               ),
-            ))
-      ]),
+            ),
+          ),
+      ],
     );
   }
 }
