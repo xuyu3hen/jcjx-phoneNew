@@ -18,7 +18,8 @@ class _AfterSaleTempRepairRegisterPageState
   final _logger = AppLogger.logger;
 
   static const _pagePadding = EdgeInsets.all(12);
-  static const _gap8 = SizedBox(height: 8);
+  static const _cardPadding = EdgeInsets.all(8);
+  static const _cardInnerGap = SizedBox(height: 6);
   static const _gap12 = SizedBox(height: 12);
   static const _denseContentPadding =
       EdgeInsets.symmetric(horizontal: 10, vertical: 10);
@@ -55,7 +56,6 @@ class _AfterSaleTempRepairRegisterPageState
   Map<String, dynamic>? _selectedJcType;
   List<Map<String, dynamic>> _faultCategories = [];
   Map<String, dynamic>? _selectedFaultCategory;
-  List<Map<String, dynamic>> _responsibilityDepts = [];
   Map<String, dynamic>? _selectedResponsibilityDept;
 
   final _trainNumController = TextEditingController();
@@ -65,10 +65,10 @@ class _AfterSaleTempRepairRegisterPageState
   final _phoneController = TextEditingController();
 
   final List<_FaultGroupControllers> _faultGroups = [];
+  int _expandedFaultGroupIndex = -1;
+  bool _submitting = false;
 
-  List<AssetEntity> _attachments = [];
   bool _jt9Loading = false;
-  List<Map<String, dynamic>> _jt9Options = [];
   Map<String, dynamic>? _jt9Selected;
 
   @override
@@ -77,6 +77,7 @@ class _AfterSaleTempRepairRegisterPageState
     _restoreDraft();
     if (_faultGroups.isEmpty) {
       _faultGroups.add(_FaultGroupControllers());
+      _expandedFaultGroupIndex = 0;
     }
     _contactController.text = _currentUserName;
     if (_phoneController.text.trim().isEmpty) {
@@ -104,6 +105,7 @@ class _AfterSaleTempRepairRegisterPageState
   void _addFaultGroup() {
     setState(() {
       _faultGroups.add(_FaultGroupControllers());
+      _expandedFaultGroupIndex = _faultGroups.length - 1;
     });
   }
 
@@ -112,7 +114,26 @@ class _AfterSaleTempRepairRegisterPageState
     if (_faultGroups.length <= 1) return;
     final g = _faultGroups.removeAt(index);
     g.dispose();
-    setState(() {});
+    setState(() {
+      if (_faultGroups.isEmpty) {
+        _expandedFaultGroupIndex = -1;
+        return;
+      }
+      if (_expandedFaultGroupIndex == index) {
+        _expandedFaultGroupIndex = index - 1;
+        if (_expandedFaultGroupIndex < 0) _expandedFaultGroupIndex = 0;
+        if (_expandedFaultGroupIndex >= _faultGroups.length) {
+          _expandedFaultGroupIndex = _faultGroups.length - 1;
+        }
+        return;
+      }
+      if (_expandedFaultGroupIndex > index) {
+        _expandedFaultGroupIndex -= 1;
+      }
+      if (_expandedFaultGroupIndex >= _faultGroups.length) {
+        _expandedFaultGroupIndex = _faultGroups.length - 1;
+      }
+    });
   }
 
   Future<void> _loadDynamicTypes() async {
@@ -243,7 +264,6 @@ class _AfterSaleTempRepairRegisterPageState
       }
       if (!mounted) return;
       setState(() {
-        _responsibilityDepts = list;
         if (_selectedResponsibilityDept == null && list.isNotEmpty) {
           final draftDeptId = _draft?.deptId;
           _selectedResponsibilityDept = draftDeptId == null || draftDeptId.isEmpty
@@ -355,8 +375,19 @@ class _AfterSaleTempRepairRegisterPageState
   }
 
   Future<void> _submit() async {
-    final ok = _formKey.currentState?.validate() == true;
-    if (!ok) return;
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    try {
+      FocusScope.of(context).unfocus();
+      if (_trainNumController.text.trim().isEmpty) {
+        showToast('请输入车号');
+        return;
+      }
+      final ok = _formKey.currentState?.validate() == true;
+      if (!ok) {
+        showToast('请完善必填项');
+        return;
+      }
     if (_faultDate == null) {
       showToast('请选择故障日期');
       return;
@@ -369,19 +400,13 @@ class _AfterSaleTempRepairRegisterPageState
       showToast('请选择机型');
       return;
     }
-    final groups = _faultGroups
-        .map(
-          (g) => {
-            'faultSituation': g.faultSituationController.text.trim(),
-            'faultPhenomenon': g.faultPhenomenonController.text.trim(),
-          },
-        )
-        .where((e) =>
-            (e['faultSituation'] ?? '').toString().isNotEmpty ||
-            (e['faultPhenomenon'] ?? '').toString().isNotEmpty)
-        .toList();
-    if (groups.isEmpty) {
-      showToast('请填写故障情况或故障现象');
+    final hasAnyGroup = _faultGroups.any((g) {
+      return g.faultSituationController.text.trim().isNotEmpty ||
+          g.faultPhenomenonController.text.trim().isNotEmpty ||
+          g.attachments.isNotEmpty;
+    });
+    if (!hasAnyGroup) {
+      showToast('请填写故障情况/故障现象或添加附件');
       return;
     }
     final basePayload = <String, dynamic>{
@@ -430,33 +455,47 @@ class _AfterSaleTempRepairRegisterPageState
       );
       if (confirm != true) return;
       SmartDialog.showLoading();
-      final files = <File>[];
-      for (final a in _attachments) {
-        final f = await a.file;
-        if (f != null) files.add(f);
-      }
-      final fileCode = files.isNotEmpty
-          ? _asJsonString(
-              _extractUploadData(
-                await ProductApi().uploadMasFile(uploadFileList: files),
-              ),
-            )
-          : '';
+      final payloadList = <Map<String, dynamic>>[];
+      for (int i = 0; i < _faultGroups.length; i++) {
+        final g = _faultGroups[i];
+        final situation = g.faultSituationController.text.trim();
+        final phenomenon = g.faultPhenomenonController.text.trim();
+        final hasFiles = g.attachments.isNotEmpty;
+        if (situation.isEmpty && phenomenon.isEmpty && !hasFiles) continue;
 
-      final payloadList = groups.map((g) {
-        final row = Map<String, dynamic>.from(basePayload);
-        row['faultSummary'] = (g['faultSituation'] ?? '').toString();
-        row['faultInformation'] = (g['faultPhenomenon'] ?? '').toString();
-        row['fileCode'] = fileCode;
-        return row;
-      }).toList();
-
-      if (files.isNotEmpty) {
-        if (fileCode.trim().isEmpty) {
-          SmartDialog.dismiss();
-          showToast('附件上传失败');
-          return;
+        String fileCode = '';
+        if (hasFiles) {
+          final files = <File>[];
+          for (final a in g.attachments) {
+            final f = await a.file;
+            if (f != null) files.add(f);
+          }
+          if (files.isEmpty) {
+            SmartDialog.dismiss();
+            showToast('第${i + 1}组附件读取失败');
+            return;
+          }
+          final uploadResp =
+              await ProductApi().uploadMasFile(uploadFileList: files);
+          final uploaded = _extractUploadData(uploadResp);
+          fileCode = _asJsonString(uploaded);
+          if (fileCode.trim().isEmpty) {
+            SmartDialog.dismiss();
+            showToast('第${i + 1}组附件上传失败');
+            return;
+          }
         }
+
+        final row = Map<String, dynamic>.from(basePayload);
+        row['faultSummary'] = situation;
+        row['faultInformation'] = phenomenon;
+        row['fileCode'] = fileCode;
+        payloadList.add(row);
+      }
+      if (payloadList.isEmpty) {
+        SmartDialog.dismiss();
+        showToast('请填写故障情况/故障现象或添加附件');
+        return;
       }
       final saveResp = await ProductApi().saveMasSaleInformationAll(
         data: payloadList,
@@ -495,6 +534,9 @@ class _AfterSaleTempRepairRegisterPageState
       _logger.e(e);
       showToast('提交失败');
     }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   void _saveDraft() {
@@ -514,9 +556,9 @@ class _AfterSaleTempRepairRegisterPageState
           .map((g) => _AfterSaleTempRepairFaultGroupDraft(
                 situation: g.faultSituationController.text,
                 phenomenon: g.faultPhenomenonController.text,
+                attachments: List<AssetEntity>.from(g.attachments),
               ))
           .toList(),
-      attachments: _attachments,
     );
   }
 
@@ -529,14 +571,16 @@ class _AfterSaleTempRepairRegisterPageState
     _locationController.text = d.trainLocation;
     _phoneController.text = d.phone;
     _jt9Selected = d.jt9Selected == null ? null : Map<String, dynamic>.from(d.jt9Selected!);
-    _attachments = List<AssetEntity>.from(d.attachments);
     _faultGroups.clear();
     for (final g in d.faultGroups) {
       final c = _FaultGroupControllers();
       c.faultSituationController.text = g.situation;
       c.faultPhenomenonController.text = g.phenomenon;
+      c.attachments = List<AssetEntity>.from(g.attachments);
       _faultGroups.add(c);
     }
+    _expandedFaultGroupIndex =
+        _faultGroups.isEmpty ? 0 : _faultGroups.length - 1;
   }
 
   String _pickText(Map<String, dynamic>? map, List<String> keys) {
@@ -614,105 +658,6 @@ class _AfterSaleTempRepairRegisterPageState
     return _fmtDate(raw);
   }
 
-  Future<void> _openJt9Selector() async {
-    if (_jt9Options.isEmpty) return;
-    if (_jt9Options.length == 1) {
-      setState(() => _jt9Selected = _jt9Options.first);
-      return;
-    }
-    final selected = await showDialog<Map<String, dynamic>>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        final options = List<Map<String, dynamic>>.from(_jt9Options);
-        options.sort((a, b) {
-          final sa = _pickText(a, ['assignSegmentName']);
-          final sb = _pickText(b, ['assignSegmentName']);
-          final pa = _pickText(a, ['repairProcName']);
-          final pb = _pickText(b, ['repairProcName']);
-          final ea = _pickText(a, ['repairEndTime']);
-          final eb = _pickText(b, ['repairEndTime']);
-          final c1 = sa.compareTo(sb);
-          if (c1 != 0) return c1;
-          final c2 = pa.compareTo(pb);
-          if (c2 != 0) return c2;
-          return ea.compareTo(eb);
-        });
-
-        String labelOf(Map<String, dynamic> e) {
-          final seg = _pickText(e, ['assignSegmentName']);
-          final proc = _beforeDash(_pickText(e, ['repairProcName']));
-          final end = _fmtDate(_pickText(e, ['repairEndTime']));
-          final left = [seg, proc].where((s) => s.trim().isNotEmpty).join('-');
-          final endText = end.trim().isEmpty ? '' : '交验日期$end';
-          if (left.isEmpty) return endText.isEmpty ? '-' : endText;
-          if (endText.isEmpty) return left;
-          return '$left-$endText';
-        }
-
-        final maxWidth = MediaQuery.of(context).size.width * 0.9;
-        final maxHeight = MediaQuery.of(context).size.height * 0.6;
-
-        return Dialog(
-          child: SizedBox(
-            width: maxWidth,
-            height: maxHeight,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          '选择信息',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 0),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: options.length,
-                    separatorBuilder: (_, __) => const Divider(height: 0),
-                    itemBuilder: (context, index) {
-                      final e = options[index];
-                      final text = labelOf(e);
-                      final isSelected = identical(e, _jt9Selected) ||
-                          (_jt9Selected != null &&
-                              _pickText(e, ['assignSegmentCode', 'assignSegmentName']) ==
-                                  _pickText(_jt9Selected, ['assignSegmentCode', 'assignSegmentName']) &&
-                              _pickText(e, ['repairProcName']) ==
-                                  _pickText(_jt9Selected, ['repairProcName']) &&
-                              _pickText(e, ['repairEndTime']) ==
-                                  _pickText(_jt9Selected, ['repairEndTime']));
-                      return ListTile(
-                        dense: true,
-                        title: Text(text),
-                        trailing: isSelected ? const Icon(Icons.check) : null,
-                        onTap: () => Navigator.of(context).pop(e),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    if (!mounted) return;
-    if (selected != null) {
-      setState(() => _jt9Selected = selected);
-    }
-  }
-
   Future<void> _loadJt9() async {
     final dynamicCode = _selectedDynamicType?['code']?.toString().trim();
     final typeCode = _selectedJcType?['code']?.toString().trim();
@@ -735,44 +680,21 @@ class _AfterSaleTempRepairRegisterPageState
         },
       );
       if (!mounted) return;
-      final options = <Map<String, dynamic>>[];
-      if (res is List) {
-        for (final e in res) {
-          if (e is Map) options.add(Map<String, dynamic>.from(e));
-        }
+      Map<String, dynamic>? selected;
+      if (res is List && res.isNotEmpty) {
+        final first = res.first;
+        if (first is Map) selected = Map<String, dynamic>.from(first);
       } else if (res is Map) {
-        options.add(Map<String, dynamic>.from(res));
+        selected = Map<String, dynamic>.from(res);
       }
       setState(() {
-        _jt9Options = options;
-        _jt9Selected = options.isNotEmpty ? options.first : null;
+        _jt9Selected = selected;
       });
     } catch (e) {
       _logger.e(e);
     } finally {
       if (mounted) setState(() => _jt9Loading = false);
     }
-  }
-
-  Future<void> _handleJt9Tap() async {
-    final dynamicCode = _selectedDynamicType?['code']?.toString().trim();
-    final typeCode = _selectedJcType?['code']?.toString().trim();
-    final trainNum = _trainNumController.text.trim();
-    if (dynamicCode == null ||
-        dynamicCode.isEmpty ||
-        typeCode == null ||
-        typeCode.isEmpty ||
-        trainNum.isEmpty) {
-      showToast('请先选择动力类型、机型并填写车号');
-      return;
-    }
-    await _loadJt9();
-    if (!mounted) return;
-    if (_jt9Options.isEmpty) {
-      showToast('未查询到信息');
-      return;
-    }
-    await _openJt9Selector();
   }
 
   @override
@@ -783,20 +705,33 @@ class _AfterSaleTempRepairRegisterPageState
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('机车登记')),
+        appBar: AppBar(title: const Text('售后临修机车登记')),
         body: Form(
           key: _formKey,
           child: ListView(
             padding: _pagePadding,
             children: [
-            _DateField(
-              label: '故障日期',
-              value: _faultDate,
-              required: true,
-              onTap: () => _pickDate(
-                initial: _faultDate,
-                onPicked: (d) => setState(() => _faultDate = d),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: _DateField(
+                    label: '故障日期',
+                    value: _faultDate,
+                    required: true,
+                    onTap: () => _pickDate(
+                      initial: _faultDate,
+                      onPicked: (d) => setState(() => _faultDate = d),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _locationController,
+                    decoration: _denseDecoration('机车所在地'),
+                  ),
+                ),
+              ],
             ),
             _gap12,
             Row(
@@ -822,7 +757,6 @@ class _AfterSaleTempRepairRegisterPageState
                         _selectedDynamicType = v;
                         _selectedJcType = null;
                         _jcTypes = [];
-                        _jt9Options = [];
                         _jt9Selected = null;
                       });
                       await _loadJcTypes(v?['code']?.toString());
@@ -849,7 +783,6 @@ class _AfterSaleTempRepairRegisterPageState
                     onChanged: (v) {
                       setState(() {
                         _selectedJcType = v;
-                        _jt9Options = [];
                         _jt9Selected = null;
                       });
                     },
@@ -880,38 +813,15 @@ class _AfterSaleTempRepairRegisterPageState
                             )
                           : null,
                     ),
+                    onEditingComplete: () {
+                      FocusScope.of(context).unfocus();
+                      _loadJt9();
+                    },
+                    onFieldSubmitted: (_) => _loadJt9(),
                     validator: (v) {
                       final t = (v ?? '').trim();
                       return t.isEmpty ? '车号不能为空' : null;
                     },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ReadonlyInfoField(
-                    label: '维修段',
-                    value: _repairDept,
-                    onTap: _handleJt9Tap,
-                  ),
-                ),
-              ],
-            ),
-            _gap8,
-            Row(
-              children: [
-                Expanded(
-                  child: _ReadonlyInfoField(
-                    label: '修程',
-                    value: _repairProcSituation,
-                    onTap: _jt9Options.isNotEmpty ? _openJt9Selector : null,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ReadonlyInfoField(
-                    label: '交验日期',
-                    value: _checkDate,
-                    onTap: _jt9Options.isNotEmpty ? _openJt9Selector : null,
                   ),
                 ),
               ],
@@ -940,14 +850,6 @@ class _AfterSaleTempRepairRegisterPageState
                         : (v) => setState(() => _selectedFaultCategory = v),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _mileageController,
-                    keyboardType: TextInputType.number,
-                    decoration: _denseDecoration('走行公里'),
-                  ),
-                ),
               ],
             ),
             _gap12,
@@ -970,65 +872,25 @@ class _AfterSaleTempRepairRegisterPageState
                 ),
               ],
             ),
-            _gap12,
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _locationController,
-                    decoration: _denseDecoration('机车所在地'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<Map<String, dynamic>>(
-                    isExpanded: true,
-                    value: _selectedResponsibilityDept,
-                    decoration: _denseDecoration('责任车间'),
-                    items: _responsibilityDepts
-                        .map(
-                          (e) => DropdownMenuItem<Map<String, dynamic>>(
-                            value: e,
-                            child: Text(
-                              (e['deptName'] ?? '').toString(),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _responsibilityDepts.isEmpty
-                        ? null
-                        : (v) =>
-                            setState(() => _selectedResponsibilityDept = v),
-                  ),
-                ),
-              ],
-            ),
-            _gap12,
+          
             _FaultGroupsSection(
               controllers: _faultGroups,
-              onAdd: _addFaultGroup,
+              expandedIndex: _expandedFaultGroupIndex,
+              onAddAt: (_) => _addFaultGroup(),
+              onToggle: (i) => setState(() {
+                _expandedFaultGroupIndex =
+                    _expandedFaultGroupIndex == i ? -1 : i;
+              }),
               onRemove: _removeFaultGroup,
-            ),
-            _gap12,
-            const Text('附件'),
-            const SizedBox(height: 4),
-            ZjcAssetPicker(
-              assetType: AssetType.imageAndVideo,
-              lineCount: 4,
-              itemSpace: 4,
-              selectedAssets: _attachments,
-              callBack: (assets) {
-                setState(() => _attachments = List<AssetEntity>.from(assets));
-              },
+              onChanged: () => setState(() {}),
             ),
             _gap12,
             SizedBox(
               width: double.infinity,
               height: 40,
               child: ElevatedButton(
-                onPressed: _submit,
-                child: const Text('提交'),
+                onPressed: _submitting ? null : _submit,
+                child: Text(_submitting ? '提交中…' : '提交'),
               ),
             ),
             ],
@@ -1042,6 +904,7 @@ class _AfterSaleTempRepairRegisterPageState
 class _FaultGroupControllers {
   final faultSituationController = TextEditingController();
   final faultPhenomenonController = TextEditingController();
+  List<AssetEntity> attachments = [];
 
   void dispose() {
     faultSituationController.dispose();
@@ -1051,13 +914,24 @@ class _FaultGroupControllers {
 
 class _FaultGroupsSection extends StatelessWidget {
   final List<_FaultGroupControllers> controllers;
-  final VoidCallback onAdd;
+  final int expandedIndex;
+  final void Function(int index) onAddAt;
+  final void Function(int index) onToggle;
   final void Function(int index) onRemove;
+  final VoidCallback onChanged;
+  static const _cardDecoration = InputDecoration(
+    border: OutlineInputBorder(),
+    isDense: true,
+    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+  );
 
   const _FaultGroupsSection({
     required this.controllers,
-    required this.onAdd,
+    required this.expandedIndex,
+    required this.onAddAt,
+    required this.onToggle,
     required this.onRemove,
+    required this.onChanged,
   });
 
   @override
@@ -1065,12 +939,12 @@ class _FaultGroupsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 2),
+      
         for (int i = 0; i < controllers.length; i++) ...[
           Stack(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: _AfterSaleTempRepairRegisterPageState._cardPadding,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.black12),
                   borderRadius: BorderRadius.circular(8),
@@ -1079,54 +953,98 @@ class _FaultGroupsSection extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Expanded(child: Text('故障情况')),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => onToggle(i),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                                vertical: 6,
+                              ),
+                              child: Text(
+                                i == expandedIndex
+                                    ? '故障情况/故障现象'
+                                    : (controllers[i]
+                                            .faultPhenomenonController
+                                            .text
+                                            .trim()
+                                            .isEmpty
+                                        ? '故障现象：-'
+                                        : '故障现象：${controllers[i].faultPhenomenonController.text.trim()}'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
                         IconButton(
-                          onPressed: onAdd,
-                          icon: const Icon(Icons.add),
-                          tooltip: '新增一条',
+                          onPressed: () => onToggle(i),
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                          tooltip: i == expandedIndex ? '折叠' : '展开',
+                        ),
+                        if (controllers[i].attachments.isNotEmpty &&
+                            i != expandedIndex)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: Text('附件${controllers[i].attachments.length}'),
+                          ),
+                        TextButton(
+                          onPressed: () => onAddAt(i),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 30),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          child: const Text('新增'),
+                        ),
+                        const SizedBox(width: 4),
+                        TextButton(
+                          onPressed: controllers.length > 1
+                              ? () => onRemove(i)
+                              : null,
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 30),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                          ),
+                          child: const Text('删除'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: controllers[i].faultSituationController,
-                      maxLines: 3,
-                      maxLength: 500,
-                      textInputAction: TextInputAction.next,
-                      onEditingComplete: () => FocusScope.of(context).nextFocus(),
-                      decoration: const InputDecoration(
-                        labelText: '故障情况',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    if (i == expandedIndex) ...[
+                      TextFormField(
+                        controller: controllers[i].faultSituationController,
+                        maxLines: 2,
+                        maxLength: 500,
+                        textInputAction: TextInputAction.next,
+                        onEditingComplete: () =>
+                            FocusScope.of(context).nextFocus(),
+                        decoration:
+                            _cardDecoration.copyWith(labelText: '故障情况'),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: controllers[i].faultPhenomenonController,
-                      maxLines: 3,
-                      maxLength: 500,
-                      textInputAction: TextInputAction.done,
-                      onEditingComplete: () => FocusScope.of(context).unfocus(),
-                      decoration: const InputDecoration(
-                        labelText: '故障现象',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      _AfterSaleTempRepairRegisterPageState._cardInnerGap,
+                      TextFormField(
+                        controller: controllers[i].faultPhenomenonController,
+                        maxLines: 2,
+                        maxLength: 500,
+                        textInputAction: TextInputAction.done,
+                        onEditingComplete: () =>
+                            FocusScope.of(context).unfocus(),
+                        decoration:
+                            _cardDecoration.copyWith(labelText: '故障现象'),
                       ),
-                    ),
+                      _AfterSaleTempRepairRegisterPageState._cardInnerGap,
+                      ZjcAssetPicker(
+                        assetType: AssetType.imageAndVideo,
+                        lineCount: 4,
+                        itemSpace: 4,
+                        selectedAssets: controllers[i].attachments,
+                        callBack: (assets) {
+                          controllers[i].attachments =
+                              List<AssetEntity>.from(assets);
+                          onChanged();
+                        },
+                      ),
+                    ],
                   ],
-                ),
-              ),
-              Positioned(
-                right: 4,
-                top: 4,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: controllers.length > 1 ? () => onRemove(i) : null,
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  tooltip: '删除这一组',
                 ),
               ),
             ],
@@ -1135,39 +1053,6 @@ class _FaultGroupsSection extends StatelessWidget {
         ],
       ],
     );
-  }
-}
-
-class _ReadonlyInfoField extends StatelessWidget {
-  final String label;
-  final String value;
-  final VoidCallback? onTap;
-
-  const _ReadonlyInfoField({
-    required this.label,
-    required this.value,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final text = value.trim().isEmpty ? '-' : value.trim();
-    final child = InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        suffixIcon: onTap == null ? null : const Icon(Icons.arrow_drop_down),
-      ),
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-    if (onTap == null) return child;
-    return InkWell(onTap: onTap, child: child);
   }
 }
 
@@ -1207,10 +1092,12 @@ class _DateField extends StatelessWidget {
 class _AfterSaleTempRepairFaultGroupDraft {
   final String situation;
   final String phenomenon;
+  final List<AssetEntity> attachments;
 
   const _AfterSaleTempRepairFaultGroupDraft({
     required this.situation,
     required this.phenomenon,
+    required this.attachments,
   });
 }
 
@@ -1227,7 +1114,6 @@ class _AfterSaleTempRepairDraft {
   final String deptName;
   final Map<String, dynamic>? jt9Selected;
   final List<_AfterSaleTempRepairFaultGroupDraft> faultGroups;
-  final List<AssetEntity> attachments;
 
   const _AfterSaleTempRepairDraft({
     required this.faultDate,
@@ -1242,6 +1128,5 @@ class _AfterSaleTempRepairDraft {
     required this.deptName,
     required this.jt9Selected,
     required this.faultGroups,
-    required this.attachments,
   });
 }
