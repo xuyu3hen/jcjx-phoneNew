@@ -39,8 +39,6 @@ class _NormalMainPageState extends State<NormalMainPage> {
     try {
       //获取动力类型
       var r = await ProductApi().getDynamicType();
-      //获取用户信息
-      var permissionResponse = await LoginApi().getpermissions();
       if (mounted) {
         setState(() {
           dynamicTypeList = r.toMapList();
@@ -105,8 +103,14 @@ class _NormalMainPageState extends State<NormalMainPage> {
         logger.i(r);
         Global.parentDeptName = r.isNotEmpty ? r[0]['deptName'] : null;
       }
+      if (mounted) {
+        setState(() {});
+      }
     } catch (e, stackTrace) {
       logger.e('initPermissions 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -288,9 +292,19 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 //     () => Navigator.pushNamed(context, 'enterDetailRecord'),
                 //     '入段细录',
                 //   ),
+                if (_canSeeAfterSaleRegister)
+                  _buildFeatureItem(
+                    Icon(Icons.assignment_outlined, color: Colors.blue[200]),
+                    () => Navigator.pushNamed(
+                      context,
+                      'afterSaleTempRepairRegister',
+                    ),
+                    '售后登记',
+                  ),
               ],
             ),
           const Divider(height: 10, indent: 10, endIndent: 10),
+          
         ],
       ),
     );
@@ -335,44 +349,12 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return false;
   }
 
-  bool get _canSeeEnterDetailRecord {
+  bool get _canSeeAfterSaleRegister {
     final user = Global.profile.permissions?.user;
-    final name = (user?.nickName ?? user?.userName ?? '').toString().trim();
-    final userId = (user?.userId ?? '').toString().trim();
-    final workNo = (user?.workNumber ?? '').toString().trim();
-    const allowedNos = <String>{
-      '60786',
-      '60671',
-      '60618',
-      '60118',
-      '60316',
-      '60571',
-      '60387',
-      '60502',
-      '60951',
-      '60195',
-      '60897',
-      '60121',
-      '60115',
-    };
-    const allowedNames = <String>{
-      '聂星',
-      '王志赢',
-      '罗晶',
-      '夏龙',
-      '李千通',
-      '张扬',
-      '李金飞',
-      '黄忆',
-      '曾志凌',
-      '邓波',
-      '白冰涛',
-      '潘松松',
-      '杨志国',
-    };
-    return allowedNos.contains(workNo) ||
-        allowedNos.contains(userId) ||
-        allowedNames.contains(name);
+    final deptName = (user?.dept?.deptName ?? '').toString();
+    final parentDeptName = (Global.parentDeptName ?? '').toString();
+    final combinedDept = '$deptName $parentDeptName';
+    return combinedDept.contains('技术科');
   }
 
 }

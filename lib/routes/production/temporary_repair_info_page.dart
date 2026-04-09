@@ -2,7 +2,12 @@ import 'package:intl/intl.dart';
 import '../../index.dart';
 
 class TemporaryRepairInfoPage extends StatefulWidget {
-  const TemporaryRepairInfoPage({super.key});
+  final String title;
+
+  const TemporaryRepairInfoPage({
+    super.key,
+    this.title = '临修信息页面',
+  });
 
   @override
   State createState() => _TemporaryRepairInfoPageState();
@@ -376,6 +381,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
     queryParameters['repairProcCode'] = _selectedRepairProcessKey;
     queryParameters['repairSegmentCode'] = _selectedRepairSegmentKey;
     queryParameters['repairTimes'] = _selectedRepairTime;
+    queryParameters['repairTimesCode'] = _selectedRepairTimeKey;
     queryParameters['sort'] = _sort;
     queryParameters['status'] = 0;
     queryParameters['trainNum'] = _carNumberController.text;
@@ -436,7 +442,7 @@ class _TemporaryRepairInfoPageState extends State<TemporaryRepairInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('临修信息页面'),
+        title: Text(widget.title),
       ),
       body: Column(
         children: [

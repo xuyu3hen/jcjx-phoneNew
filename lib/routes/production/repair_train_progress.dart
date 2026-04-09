@@ -149,26 +149,22 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 加载检修进度数据
   Future<void> _loadRepairProgressData() async {
     try {
+      final cacheValid = Global.isRepairProgressDataLoaded &&
+          Global.repairProgressDataLoadTime != null &&
+          DateTime.now().difference(Global.repairProgressDataLoadTime!).inMinutes < 5 &&
+          Global.cachedRepairProgressData.isNotEmpty;
+
+      if (cacheValid) {
+        setState(() {
+          repairGroups = Global.cachedRepairProgressData;
+          _isLoading = false;
+        });
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
-      
-      // 优先使用缓存数据
-      if (Global.isRepairProgressDataLoaded && 
-          Global.repairProgressDataLoadTime != null &&
-          DateTime.now().difference(Global.repairProgressDataLoadTime!).inMinutes < 5) {
-        // 使用缓存数据（5分钟内有效）
-        if (Global.cachedRepairProgressData.isNotEmpty) {
-          setState(() {
-            repairGroups = Global.cachedRepairProgressData;
-            _isLoading = false;
-          });
-          
-          // 后台刷新数据
-          _refreshDataInBackground();
-          return;
-        }
-      }
       
       // 如果没有缓存或缓存过期，则重新加载
       Map<String, dynamic> queryParametrs = {};
@@ -197,29 +193,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
   }
-  
-  // 后台刷新数据（不阻塞UI）
-  void _refreshDataInBackground() async {
-    try {
-      Map<String, dynamic> queryParametrs = {};
-      List<RepairGroup> r =
-          await ProductApi().getTrainEntryAndDynamics(queryParametrs);
-      
-      // 更新缓存
-      Global.cachedRepairProgressData = r;
-      Global.isRepairProgressDataLoaded = true;
-      Global.repairProgressDataLoadTime = DateTime.now();
-      
-      if (mounted) {
-        setState(() {
-          repairGroups = r;
-        });
-      }
-    } catch (e) {
-      logger.e('后台刷新检修进度数据失败: $e');
-    }
-  }
-
   // 刷新数据
   Future<void> _refreshData() async {
     await _loadRepairProgressData();
@@ -1955,6 +1928,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     String? _selectedType;
     DateTime? _planDateSelected;
     DateTime? _planDateSelectedEnd;
+    bool deptMove = false;
     List<Map<String, dynamic>> repairMainNodeList = [];
     Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
     bool repairMainNodeRequested = false;
@@ -2138,6 +2112,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'sort': 0,
           'startStopPositionCode': stopLocationSelected['code'],
           'ends': directionSelected['value'],
+          'deptMove': deptMove,
           'trainEntryCode': item.code,
           'trainNum': item.trainNum,
           'typeCode': item.typeCode,
@@ -2479,6 +2454,17 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           },
                         );
                       }
+                    },
+                  ),
+                  CheckboxListTile(
+                    value: deptMove,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('库内移车'),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    onChanged: (v) {
+                      setState(() {
+                        deptMove = v == true;
+                      });
                     },
                   ),
                   TextField(

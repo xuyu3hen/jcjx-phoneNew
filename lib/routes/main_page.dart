@@ -5,6 +5,7 @@ import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
 
 import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
+import 'package:jcjx_phone/routes/production/after_sale_temp_repair_register_page.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 
@@ -249,6 +250,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'workProgress':(context) => const WorkProgressPage(),
         'repairTrainTempManage':(context) => const TrainRepairTempManage(),
         'enterDetailRecord': (context) => const SecEnterModify(title: '入段细录'),
+        'afterSaleTempRepairRegister': (context) =>
+            const AfterSaleTempRepairRegisterPage(),
       },
       builder: FlutterSmartDialog.init(),
     );

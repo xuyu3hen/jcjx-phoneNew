@@ -1720,6 +1720,98 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/trainEntry/getJT9 post
+  Future<dynamic> getJT9({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/trainEntry/getJT9",
+        data: queryParametrs,
+      );
+      logger.i({
+        'api': '/dispatch/trainEntry/getJT9',
+        'method': r.requestOptions.method,
+        'url': r.requestOptions.uri.toString(),
+        'request': queryParametrs,
+        'statusCode': r.statusCode,
+        'response': r.data,
+      });
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      if (outer is Map && outer.containsKey("data")) {
+        return outer["data"];
+      }
+      return outer;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  Future<dynamic> getJtTypeSelectAll({Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/jtType/selectAll",
+        queryParameters: queryParametrs,
+      );
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      if (outer is Map && outer.containsKey("data")) {
+        final inner = outer["data"];
+        if (inner is Map && inner.containsKey("rows")) {
+          final rows = inner["rows"];
+          if (rows is List) {
+            return rows
+                .whereType<Map>()
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
+          }
+        }
+        return inner;
+      }
+      return outer;
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  Future<dynamic> uploadMasFile({required List<File> uploadFileList}) async {
+    try {
+      final files = <MultipartFile>[];
+      for (final f in uploadFileList) {
+        files.add(await MultipartFile.fromFile(f.path));
+      }
+      final formData = FormData.fromMap({
+        'uploadFileList': files,
+      });
+      final r = await AppApi.dio.post(
+        "/fileserver/masFile/uploadFile",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  Future<dynamic> saveMasSaleInformationAll({required List<dynamic> data}) async {
+    try {
+      final r = await AppApi.dio.post(
+        "/dispatch/masSaleInformation/saveAll",
+        data: data,
+        options: Options(contentType: Headers.jsonContentType),
+      );
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+
+
   // 获取工序节点
   Future<List<Map<String, dynamic>>> getRepairMainNode({
     Map<String, dynamic>? queryParameters,
