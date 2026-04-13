@@ -161,6 +161,10 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
       versionName: myapk.version ?? '未知版本',
       updateContent: myapk.dec ?? '新版本更新',
       downloadUrl: downloadUrl,
+      apkSize: (myapk.fileSize ?? 0) >= 1024 * 1024
+          ? ((myapk.fileSize ?? 0) / 1024).ceil()
+          : myapk.fileSize,
+      apkMd5: (myapk.md5 ?? '').toString().trim().isEmpty ? null : myapk.md5,
     );
   }
 

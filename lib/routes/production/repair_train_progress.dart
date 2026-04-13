@@ -1927,7 +1927,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     final TextEditingController _locationController = TextEditingController();
     String? _selectedType;
     DateTime? _planDateSelected;
-    DateTime? _planDateSelectedEnd;
     bool deptMove = false;
     List<Map<String, dynamic>> repairMainNodeList = [];
     Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
@@ -2097,17 +2096,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
     void saveShuntingAnswer() async {
       try {
-        logger
-            .i('_planDateSelected.toString(): ${_planDateSelected.toString()}');
-        logger.i(
-            '_planDateSelectedEnd.toString(): ${_planDateSelectedEnd.toString()}');
         final planStart = _planDateSelected ?? DateTime.now();
-        final planEnd = _planDateSelectedEnd ?? planStart;
         final row = <String, dynamic>{
           'endStopPositionCode': stopLocationSelectedEnd['code'],
           'planDate': planStart.millisecondsSinceEpoch,
           'planStartTime': planStart.toString(),
-          'planEndTime': planEnd.toString(),
           'remark': _reasonController.text,
           'sort': 0,
           'startStopPositionCode': stopLocationSelected['code'],
@@ -2467,99 +2460,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       });
                     },
                   ),
-                  TextField(
-                    readOnly: true,
-                    onTap: () => pickDateTime(
-                      current: _planDateSelected,
-                      onPicked: (dateTime) {
-                        _planDateSelected = dateTime;
-                      },
-                    ),
-                    controller: TextEditingController(
-                      text: _planDateSelected != null
-                          ? DateFormat('yyyy-MM-dd HH:mm:ss')
-                              .format(_planDateSelected!)
-                          : '请选择计划开始时间',
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: '计划开始时间',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton(
-                          child: const Text('此刻'),
-                          onPressed: () {
-                            setState(() {
-                              _planDateSelected = DateTime.now();
-                            });
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          onPressed: () async {
-                            await pickDateTime(
-                              current: _planDateSelected,
-                              onPicked: (dateTime) {
-                                _planDateSelected = dateTime;
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 10),
-                  TextField(
-                    readOnly: true,
-                    onTap: () => pickDateTime(
-                      current: _planDateSelectedEnd,
-                      onPicked: (dateTime) {
-                        _planDateSelectedEnd = dateTime;
-                      },
-                    ),
-                    controller: TextEditingController(
-                      text: _planDateSelectedEnd != null
-                          ? DateFormat('yyyy-MM-dd HH:mm:ss')
-                              .format(_planDateSelectedEnd!)
-                          : '请选择计划结束时间',
-                    ),
-                    decoration: const InputDecoration(
-                      labelText: '计划结束时间',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton(
-                          child: const Text('此刻'),
-                          onPressed: () {
-                            setState(() {
-                              _planDateSelectedEnd = DateTime.now();
-                            });
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          onPressed: () async {
-                            await pickDateTime(
-                              current: _planDateSelectedEnd,
-                              onPicked: (dateTime) {
-                                _planDateSelectedEnd = dateTime;
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
                   TextFormField(
                     controller: _reasonController,
                     decoration: const InputDecoration(

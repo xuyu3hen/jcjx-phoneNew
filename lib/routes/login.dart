@@ -435,8 +435,13 @@ class _LoginRouteState extends State<LoginRoute> {
       String version = (r['version'] ?? r['versionName'] ?? '').toString();
       String description =
           (r['description'] ?? r['dec'] ?? r['updateContent'] ?? '').toString();
+      final fileSize = (r['fileSize'] ?? '').toString();
+      final fileSizeKb = _parseApkSizeKb(r['fileSize']);
+      final fileSizeMb = fileSizeKb == null
+          ? ''
+          : (fileSizeKb / 1024).toStringAsFixed(2);
       logger.i(
-          "更新信息: version=$version, url=$downloadUrl, description=$description");
+          "更新信息: version=$version, url=$downloadUrl, description=$description, fileSize=$fileSize, fileSizeKb=$fileSizeKb, fileSizeMb=$fileSizeMb");
       // 比较版本并使用 XUpdate 下载与安装
       if (version.isNotEmpty && downloadUrl.isNotEmpty) {
         final cmp = _compareVersion(version, currentVersion);
@@ -477,6 +482,36 @@ class _LoginRouteState extends State<LoginRoute> {
     return 0; // 相等
   }
 
+  int? _parseApkSizeKb(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) {
+      final v = raw.toInt();
+      if (v <= 0) return null;
+      return v >= 1024 * 1024 ? (v / 1024).ceil() : v;
+    }
+    final s = raw.toString().trim();
+    if (s.isEmpty) return null;
+    final asInt = int.tryParse(s);
+    if (asInt != null) {
+      if (asInt <= 0) return null;
+      return asInt >= 1024 * 1024 ? (asInt / 1024).ceil() : asInt;
+    }
+    final normalized = s.toLowerCase().replaceAll(' ', '');
+    final m = RegExp(r'^(\d+(\.\d+)?)(b|kb|mb|gb)?$').firstMatch(normalized);
+    if (m == null) return null;
+    final value = double.tryParse(m.group(1) ?? '');
+    if (value == null) return null;
+    final unit = (m.group(3) ?? 'b').toLowerCase();
+    final bytes = switch (unit) {
+      'gb' => value * 1024 * 1024 * 1024,
+      'mb' => value * 1024 * 1024,
+      'kb' => value * 1024,
+      _ => value,
+    };
+    if (bytes <= 0) return null;
+    return (bytes / 1024).ceil();
+  }
+
   // 转义成UpdateEntity
   UpdateEntity customJsonParse(Map<dynamic, dynamic> apk) {
     String downloadUrl = (apk['downloadUrl'] ?? apk['url'] ?? '').toString();
@@ -487,11 +522,9 @@ class _LoginRouteState extends State<LoginRoute> {
         baseUrl = 'http://10.102.124.50/xc-prod-api';
       }
 
-      //将downloadUrl第一个/去掉
-    
-     
+      final encoded = Uri.encodeComponent(downloadUrl);
       downloadUrl =
-          '$baseUrl/fileserver/FileOperation/generalDownloadFile?url=$downloadUrl';
+          '$baseUrl/fileserver/FileOperation/generalDownloadFile?url=$encoded';
     }
     logger.d('downloadUrl: $downloadUrl');
 
@@ -506,6 +539,8 @@ class _LoginRouteState extends State<LoginRoute> {
     final updateContent =
         (apk['dec'] ?? apk['description'] ?? apk['updateContent'] ?? '新版本更新')
             .toString();
+    final apkSize = _parseApkSizeKb(apk['fileSize']);
+    final apkMd5 = (apk['md5'] ?? '').toString().trim();
 
     return UpdateEntity(
       hasUpdate: true,
@@ -515,6 +550,8 @@ class _LoginRouteState extends State<LoginRoute> {
       versionName: versionName,
       updateContent: updateContent,
       downloadUrl: downloadUrl,
+      apkSize: apkSize,
+      apkMd5: apkMd5.isEmpty ? null : apkMd5,
     );
   }
 
