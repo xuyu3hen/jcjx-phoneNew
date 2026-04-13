@@ -179,12 +179,12 @@ class ProductApi extends AppApi {
   }
   // /dispatch/trainShuntingPackage/startWork
   Future<dynamic> startTrainShuntingPackage({
-    required String code,
+    required List<String> shuntingPlanCodeList,
   }) async {
     try {
       var r = await AppApi.dio.get(
         "/dispatch/trainShuntingPlan/startWork",
-        queryParameters: {'code': code},
+        queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
       );
       logger.i((r.data["data"]));
       return (r.data["data"]);
@@ -194,22 +194,22 @@ class ProductApi extends AppApi {
     }
   }
 
-    // /dispatch/trainShuntingPackage/completeShuntingPlan
-    Future<dynamic> completeTrainShuntingPackage({
-      required String code,
-    }) async {
-      try {
-        var r = await AppApi.dio.get(
-          "/dispatch/trainShuntingPlan/completeShuntingPlan",
-          queryParameters: {'shuntingPlanCode': code},
-        );
-        logger.i((r.data["data"]));
-        return (r.data["data"]);
-      } catch (e) {
-        _handleException(e);
-        return null;
-      }
+  // /dispatch/trainShuntingPackage/completeShuntingPlan
+  Future<dynamic> completeTrainShuntingPackage({
+    required List<String> shuntingPlanCodeList,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShuntingPlan/completeShuntingPlan",
+        queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
+      );
+      logger.i((r.data["data"]));
+      return (r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return null;
     }
+  }
 
   Future<dynamic> uploadTrainShuntingPlanFile({
     required String code,

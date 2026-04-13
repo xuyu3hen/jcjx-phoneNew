@@ -2261,21 +2261,23 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
                   // 展示车号和停留地点信息
                   Container(
+                    width: double.infinity,
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '车号: ${item.trainNum ?? "未知"}',
+                          '车号: ${formatTrainNumWithEnds(item.trainNum, item.ends).isNotEmpty ? formatTrainNumWithEnds(item.trainNum, item.ends) : (item.trainNum ?? "未知")}',
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        const SizedBox(height: 6),
                         Text(
                           '停留地点: ${item.stoppingPlace ?? "未知"}',
                           style: const TextStyle(

@@ -514,6 +514,32 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
     }
   }
 
+  int _colorIndexFromCode(String code) {
+    if (code.isEmpty) return 0;
+    int hash = 0;
+    for (int i = 0; i < code.length; i++) {
+      hash = 31 * hash + code.codeUnitAt(i);
+    }
+    return hash.abs();
+  }
+
+  Color _getGroupColor(String code) {
+    if (code.isEmpty) return Colors.transparent;
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.purple,
+      Colors.orange,
+      Colors.teal,
+      Colors.pink,
+      Colors.indigo,
+      Colors.brown,
+      Colors.cyan,
+      Colors.deepOrange,
+    ];
+    return colors[_colorIndexFromCode(code) % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtered = _searchText.isEmpty
@@ -665,6 +691,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   final ScrollController _scrollController = ScrollController();
   final Map<String, XFile?> _slipRemoveImageByPlanCode = <String, XFile?>{};
   final Map<String, XFile?> _slipSetupImageByPlanCode = <String, XFile?>{};
+  final Map<String, XFile?> _slipHookImageByPlanCode = <String, XFile?>{};
   final Map<String, bool> _slipRemoveUploadedByPlanCode = <String, bool>{};
   final Map<String, Future<Image?>> _previewFutureByUrl = <String, Future<Image?>>{};
   String _trainNumKeyword = '';
@@ -679,6 +706,32 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  int _colorIndexFromCode(String code) {
+    if (code.isEmpty) return 0;
+    int hash = 0;
+    for (int i = 0; i < code.length; i++) {
+      hash = 31 * hash + code.codeUnitAt(i);
+    }
+    return hash.abs();
+  }
+
+  Color _getGroupColor(String code) {
+    if (code.isEmpty) return Colors.transparent;
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.purple,
+      Colors.orange,
+      Colors.teal,
+      Colors.pink,
+      Colors.indigo,
+      Colors.brown,
+      Colors.cyan,
+      Colors.deepOrange,
+    ];
+    return colors[_colorIndexFromCode(code) % colors.length];
   }
 
   Widget _buildXFilePreview(XFile f) {
@@ -909,11 +962,17 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       return false;
     }
     try {
-      final r = await ProductApi().completeTrainShuntingPackage(code: code);
+      final r = await ProductApi().completeTrainShuntingPackage(shuntingPlanCodeList: [code]);
       if (r != null) {
         SmartDialog.showToast('完成成功');
         setState(() {
-          if (r is Map) {
+          if (r is List && r.isNotEmpty && r.first is Map) {
+            final next = Map<String, dynamic>.from(r.first);
+            final old = _planList[index];
+            old
+              ..clear()
+              ..addAll(next);
+          } else if (r is Map) {
             final next = Map<String, dynamic>.from(r);
             final old = _planList[index];
             old
@@ -980,18 +1039,89 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
 
   ///
 
-  Future<bool> _pickSlipCamera(int index, {required bool isRemove}) async {
-    final plan = _planList[index];
+  List<Map<String, dynamic>> _extractUploadedImageEntriesFromPlan(Map<String, dynamic> plan) {
+    final out = <Map<String, dynamic>>[];
+    void add(dynamic e) {
+      if (e == null) return;
+      if (e is String) {
+        final s = e.trim();
+        if (s.isNotEmpty) out.add({'downloadUrl': s});
+        return;
+      }
+      if (e is Map) {
+        final m = Map<String, dynamic>.from(e);
+        final url = (m['downloadUrl'] ?? m['url'] ?? m['path'] ?? '').toString();
+        if (url.isEmpty) return;
+        final t = m['antiSlipType'] ?? m['type'] ?? m['anti_slip_type'];
+        out.add({'downloadUrl': url, if (t != null) 'antiSlipType': t});
+      }
+    }
+
+    final candidates = <dynamic>[
+      plan['antiSlipFileList'],
+      plan['fileList'],
+      plan['files'],
+      plan['downLoadUrlList'],
+      plan['downloadUrlList'],
+    ];
+    for (final c in candidates) {
+      if (c is List) {
+        for (final e in c) {
+          add(e);
+        }
+      } else {
+        add(c);
+      }
+    }
+    final seen = <String>{};
+    final result = <Map<String, dynamic>>[];
+    for (final e in out) {
+      final url = (e['downloadUrl'] ?? '').toString().trim();
+      if (url.isEmpty) continue;
+      final t = e['antiSlipType']?.toString().trim() ?? '';
+      final key = '$t|$url';
+      if (seen.add(key)) result.add(e);
+    }
+    return result;
+  }
+
+  Future<bool> _pickSlipCamera(List<int> indices, {required int antiSlipType}) async {
+    if (indices.isEmpty) return false;
+    final primaryIndex = indices.first;
+    final plan = _planList[primaryIndex];
     final planCode = (plan['code'] ?? '').toString();
     if (planCode.isEmpty) {
       SmartDialog.showToast('数据异常：缺少代码');
       return false;
     }
-    if (isRemove) {
+    
+    // Check if both hook image and remove image are captured before allowing setup image
+    if (antiSlipType == 0) {
+      final serverImgs = _extractUploadedImageEntries(plan);
+      
+      // Check hook image
+      final hasHookImage = _slipHookImageByPlanCode.containsKey(planCode);
+      final hasServerHookImage = serverImgs.any((e) => (e['antiSlipType']?.toString() ?? '') == '2');
+      if (!hasHookImage && !hasServerHookImage) {
+        SmartDialog.showToast('需要先拍摄连挂状态检查图片');
+        return false;
+      }
+      
+      // Check remove image
+      final hasRemoveImage = _slipRemoveImageByPlanCode.containsKey(planCode) || 
+                             _slipRemoveUploadedByPlanCode.containsKey(planCode);
+      final hasServerRemoveImage = serverImgs.any((e) => (e['antiSlipType']?.toString() ?? '') == '1');
+      if (!hasRemoveImage && !hasServerRemoveImage) {
+        SmartDialog.showToast('需要先拍摄起防溜撤除图片');
+        return false;
+      }
+    }
+
+    if (antiSlipType == 1) {
       final photos = await Navigator.of(context).push<List<XFile>>(
         MaterialPageRoute<List<XFile>>(
           builder: (context) => const _BurstCameraPage(
-            title: '起防溜撤除图片',
+            title: '起防溜撤除图'
           ),
         ),
       );
@@ -1002,94 +1132,222 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
             title: '起防溜撤除图片',
             images: photos,
             onBeforeUpload: () async {
-              final st = _planList[index]['status'];
-              final stInt =
-                  st is int ? st : int.tryParse(st?.toString() ?? '');
-              final isStarted = stInt == 4;
-              final isCompleted = stInt == 2;
-              if (isStarted || isCompleted) return true;
-              return await _start(index);
+              bool allReady = true;
+              for (final idx in indices) {
+                final st = _planList[idx]['status'];
+                final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+                final isStarted = stInt == 4;
+                final isCompleted = stInt == 2;
+                if (!isStarted && !isCompleted) {
+                  final startOk = await _start(idx);
+                  if (!startOk) allReady = false;
+                }
+              }
+              return allReady;
             },
-            onUpload: (img) => _uploadSlipImage(
-              plan: plan,
-              image: img,
-              antiSlipType: 1,
-            ),
-            onUploadAll: (imgs) => _uploadSlipImage(
-              plan: plan,
-              images: imgs,
-              antiSlipType: 1,
-            ),
+            onUpload: (img) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  image: img,
+                  antiSlipType: 1,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
+            onUploadAll: (imgs) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  images: imgs,
+                  antiSlipType: 1,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
           ),
         ),
       );
       if (ok != true || !mounted) return false;
       setState(() {
-        _slipRemoveImageByPlanCode[planCode] = photos.first;
-        _slipRemoveUploadedByPlanCode[planCode] = true;
+        for (final idx in indices) {
+          final c = (_planList[idx]['code'] ?? '').toString();
+          if (c.isNotEmpty) {
+            _slipRemoveImageByPlanCode[c] = photos.first;
+            _slipRemoveUploadedByPlanCode[c] = true;
+          }
+        }
       });
       await _refresh();
       return false;
-    }
-    final photos = await Navigator.of(context).push<List<XFile>>(
-      MaterialPageRoute<List<XFile>>(
-        builder: (context) => const _BurstCameraPage(
-          title: '止防溜设置图片',
-        ),
-      ),
-    );
-    if (photos == null || photos.isEmpty || !mounted) return false;
-    final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (context) => _SlipImagesReviewPage(
-          title: '止防溜设置图片',
-          images: photos,
-          onBeforeUpload: () async {
-            final st = _planList[index]['status'];
-            final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
-            final isStarted = stInt == 4;
-            final completeTimeFlag =
-                (_planList[index]['completeTime'] ?? '').toString().trim();
-            final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
-            if (isStarted || isCompleted) return true;
-            return await _start(index);
-          },
-          onUpload: (img) => _uploadSlipImage(
-            plan: plan,
-            image: img,
-            antiSlipType: 0,
-          ),
-          onUploadAll: (imgs) => _uploadSlipImage(
-            plan: plan,
-            images: imgs,
-            antiSlipType: 0,
+    } else if (antiSlipType == 0) {
+      final photos = await Navigator.of(context).push<List<XFile>>(
+        MaterialPageRoute<List<XFile>>(
+          builder: (context) => const _BurstCameraPage(
+            title: '止防溜设置图片',
           ),
         ),
-      ),
-    );
-    if (ok != true || !mounted) return false;
-    setState(() {
-      _slipSetupImageByPlanCode[planCode] = photos.first;
-    });
-    await _refresh();
-    final st = plan['status'];
-    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
-    final completeTimeFlag = (plan['completeTime'] ?? '').toString().trim();
-    final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
-    if (isCompleted) {
-      return true;
+      );
+      if (photos == null || photos.isEmpty || !mounted) return false;
+      final ok = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => _SlipImagesReviewPage(
+            title: '止防溜设置图片',
+            images: photos,
+            onBeforeUpload: () async {
+              bool allReady = true;
+              for (final idx in indices) {
+                final st = _planList[idx]['status'];
+                final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+                final isStarted = stInt == 4;
+                final completeTimeFlag = (_planList[idx]['completeTime'] ?? '').toString().trim();
+                final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
+                if (!isStarted && !isCompleted) {
+                  final startOk = await _start(idx);
+                  if (!startOk) allReady = false;
+                }
+              }
+              return allReady;
+            },
+            onUpload: (img) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  image: img,
+                  antiSlipType: 0,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
+            onUploadAll: (imgs) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  images: imgs,
+                  antiSlipType: 0,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
+          ),
+        ),
+      );
+      if (ok != true || !mounted) return false;
+      setState(() {
+        for (final idx in indices) {
+          final c = (_planList[idx]['code'] ?? '').toString();
+          if (c.isNotEmpty) {
+            _slipSetupImageByPlanCode[c] = photos.first;
+          }
+        }
+      });
+      await _refresh();
+    } else if (antiSlipType == 2) {
+      final photos = await Navigator.of(context).push<List<XFile>>(
+        MaterialPageRoute<List<XFile>>(
+          builder: (context) => const _BurstCameraPage(
+            title: '连挂状态检查图片',
+          ),
+        ),
+      );
+      if (photos == null || photos.isEmpty || !mounted) return false;
+      final ok = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => _SlipImagesReviewPage(
+            title: '连挂状态检查图片',
+            images: photos,
+            onBeforeUpload: () async {
+              bool allReady = true;
+              for (final idx in indices) {
+                final st = _planList[idx]['status'];
+                final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+                final isStarted = stInt == 4;
+                final completeTimeFlag = (_planList[idx]['completeTime'] ?? '').toString().trim();
+                final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
+                if (!isStarted && !isCompleted) {
+                  final startOk = await _start(idx);
+                  if (!startOk) allReady = false;
+                }
+              }
+              return allReady;
+            },
+            onUpload: (img) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  image: img,
+                  antiSlipType: 2,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
+            onUploadAll: (imgs) async {
+              bool allOk = true;
+              for (final idx in indices) {
+                final uploadOk = await _uploadSlipImage(
+                  plan: _planList[idx],
+                  images: imgs,
+                  antiSlipType: 2,
+                );
+                if (!uploadOk) allOk = false;
+              }
+              return allOk;
+            },
+          ),
+        ),
+      );
+      if (ok != true || !mounted) return false;
+      setState(() {
+        for (final idx in indices) {
+          final c = (_planList[idx]['code'] ?? '').toString();
+          if (c.isNotEmpty) {
+            _slipHookImageByPlanCode[c] = photos.first;
+          }
+        }
+      });
+      await _refresh();
+      return false; // Not checking completion immediately for hook image
     }
-    final completeOk = await _completeOnly(index);
-    return completeOk || _isPlanCompleted(_planList[index]);
+    
+    if (antiSlipType == 0) {
+      bool allCompleted = true;
+      for (final idx in indices) {
+        final p = _planList[idx];
+        final st = p['status'];
+        final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+        final completeTimeFlag = (p['completeTime'] ?? '').toString().trim();
+        final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
+        if (!isCompleted) {
+          final completeOk = await _completeOnly(idx);
+          if (!completeOk && !_isPlanCompleted(_planList[idx])) {
+            allCompleted = false;
+          }
+        }
+      }
+      return allCompleted;
+    }
+    return false;
   }
 
-  void _removeSlipImage(String planCode, {required bool isRemove}) {
+  void _removeSlipImage(String planCode, {required int antiSlipType}) {
     setState(() {
-      if (isRemove) {
+      if (antiSlipType == 1) {
         _slipRemoveImageByPlanCode.remove(planCode);
         _slipRemoveUploadedByPlanCode.remove(planCode);
-      } else {
+      } else if (antiSlipType == 0) {
         _slipSetupImageByPlanCode.remove(planCode);
+      } else if (antiSlipType == 2) {
+        _slipHookImageByPlanCode.remove(planCode);
       }
     });
   }
@@ -1191,7 +1449,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     }
     try {
       SmartDialog.showLoading(msg: '正在开工...');
-      final r = await ProductApi().startTrainShuntingPackage(code: code);
+      final r = await ProductApi().startTrainShuntingPackage(shuntingPlanCodeList: [code]);
       String? errMsg;
       if (r is Map) {
         final inner = r['data'];
@@ -1284,12 +1542,14 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
     // 再调用完成接口
     SmartDialog.showLoading(msg: '正在完成...');
     try {
-      final r = await ProductApi().completeTrainShuntingPackage(code: code);
+      final r = await ProductApi().completeTrainShuntingPackage(shuntingPlanCodeList: [code]);
       SmartDialog.dismiss();
       if (r != null) {
         SmartDialog.showToast('完成成功');
         setState(() {
-          if (r is Map) {
+          if (r is List && r.isNotEmpty && r.first is Map) {
+            _planList[index] = Map<String, dynamic>.from(r.first);
+          } else if (r is Map) {
             _planList[index] = Map<String, dynamic>.from(r);
           }
         });
@@ -1305,6 +1565,19 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       SmartDialog.showToast('完成失败: $e');
       return false;
     }
+  }
+
+  String _getHeaderText(Map<String, dynamic> p) {
+    final typeName = (p['typeName'] ?? '').toString();
+    final trainNum = (p['trainNum'] ?? '').toString();
+    final ends = formatEndsSuffix(p['ends']);
+    return (typeName.isEmpty && trainNum.isEmpty)
+        ? '-'
+        : (typeName.isEmpty
+            ? '$trainNum$ends'
+            : (trainNum.isEmpty
+                ? typeName
+                : '$typeName $trainNum$ends'));
   }
 
   @override
@@ -1325,86 +1598,97 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
             }
             return out;
           })();
+
+    final groupedIndices = <List<int>>[];
+    final secondPkgMap = <String, List<int>>{};
+    for (final idx in visibleIndices) {
+      final p = _planList[idx];
+      final spc = (p['secondPackageCode'] ?? '').toString();
+      if (spc.isEmpty) {
+        groupedIndices.add([idx]);
+      } else {
+        if (!secondPkgMap.containsKey(spc)) {
+          final list = <int>[];
+          secondPkgMap[spc] = list;
+          groupedIndices.add(list);
+        }
+        secondPkgMap[spc]!.add(idx);
+      }
+    }
+
     final bodyWidget = _planList.isEmpty
         ? const Center(child: Text('暂无计划'))
-        : (visibleIndices.isEmpty
+        : (groupedIndices.isEmpty
             ? const Center(child: Text('暂无数据'))
             : ListView.separated(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16.0),
-                itemCount: visibleIndices.length,
+                itemCount: groupedIndices.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
-                  final actualIndex = visibleIndices[index];
+                  final group = groupedIndices[index];
+                  final actualIndex = group.first;
                   final p = _planList[actualIndex];
-                  final planCode = (p['code'] ?? '').toString();
-                  final typeName = (p['typeName'] ?? '').toString();
-                  final trainNum = (p['trainNum'] ?? '').toString();
-                  final startAreaName = (p['startAreaName'] ?? '').toString();
-                  final startTrackNum = (p['startTrackNum'] ?? '').toString();
-                  final endAreaName = (p['endAreaName'] ?? '').toString();
-                  final endTrackNum = (p['endTrackNum'] ?? '').toString();
-                  final ends = formatEndsSuffix(p['ends']);
+                  final secondPackageCode = (p['secondPackageCode'] ?? '').toString();
                   final st = p['status'];
                   final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
                   final isStarted = stInt == 4;
                   final isCompleted = stInt == 2;
-                  final headerText = (typeName.isEmpty && trainNum.isEmpty)
-                      ? '-'
-                      : (typeName.isEmpty
-                          ? '$trainNum$ends'
-                          : (trainNum.isEmpty
-                              ? typeName
-                              : '$typeName $trainNum$ends'));
-                  final startText = '$startAreaName-$startTrackNum';
-                  final endText = '$endAreaName-$endTrackNum';
+                  
+                  final headerText = group.map((idx) => _getHeaderText(_planList[idx])).join(' + ');
+
+                  void navigateToDetail() async {
+                    final primaryPlan = _planList[group.first];
+                    final primaryPlanCode = (primaryPlan['code'] ?? '').toString();
+                    final plansInGroup = group.map((idx) => _planList[idx]).toList();
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => _TrainShuntingPlanDetailPage(
+                          plans: plansInGroup,
+                          title: headerText,
+                          readOnly: widget.readOnly,
+                          buildRemoteThumb: _buildRemoteThumb,
+                          previewRemoteUrl: _previewRemoteUrl,
+                          previewLocalXFile: _previewLocalXFile,
+                          buildXFilePreview: _buildXFilePreview,
+                          pickRemove: () async {
+                            return await _pickSlipCamera(group, antiSlipType: 1);
+                          },
+                          pickSetup: () async {
+                            return await _pickSlipCamera(group, antiSlipType: 0);
+                          },
+                          pickHook: () async {
+                            return await _pickSlipCamera(group, antiSlipType: 2);
+                          },
+                          removeLocal: (antiSlipType) {
+                            for (final idx in group) {
+                              final c = (_planList[idx]['code'] ?? '').toString();
+                              if (c.isNotEmpty) {
+                                _removeSlipImage(c, antiSlipType: antiSlipType);
+                              }
+                            }
+                          },
+                          getLocalRemove: () => primaryPlanCode.isEmpty
+                              ? null
+                              : _slipRemoveImageByPlanCode[primaryPlanCode],
+                          getLocalSetup: () => primaryPlanCode.isEmpty
+                              ? null
+                              : _slipSetupImageByPlanCode[primaryPlanCode],
+                          getLocalHook: () => primaryPlanCode.isEmpty
+                              ? null
+                              : _slipHookImageByPlanCode[primaryPlanCode],
+                          getRemoveUploaded: () =>
+                              _slipRemoveUploadedByPlanCode[primaryPlanCode] ==
+                              true,
+                        ),
+                      ),
+                    );
+                  }
 
                   return Card(
                     child: InkWell(
                       onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (context) => _TrainShuntingPlanDetailPage(
-                              plan: p,
-                              title: headerText,
-                              readOnly: widget.readOnly,
-                              buildRemoteThumb: _buildRemoteThumb,
-                              previewRemoteUrl: _previewRemoteUrl,
-                              previewLocalXFile: _previewLocalXFile,
-                              buildXFilePreview: _buildXFilePreview,
-                            pickRemove: () async {
-                              final idx = _indexByPlanCode(planCode);
-                              if (idx < 0) {
-                                SmartDialog.showToast('数据异常：未找到作业记录');
-                                return false;
-                              }
-                              await _pickSlipCamera(idx, isRemove: true);
-                              return false;
-                            },
-                            pickSetup: () async {
-                              final idx = _indexByPlanCode(planCode);
-                              if (idx < 0) {
-                                SmartDialog.showToast('数据异常：未找到作业记录');
-                                return false;
-                              }
-                              return await _pickSlipCamera(idx, isRemove: false);
-                            },
-                              removeLocal: (isRemove) => _removeSlipImage(
-                                planCode,
-                                isRemove: isRemove,
-                              ),
-                              getLocalRemove: () => planCode.isEmpty
-                                  ? null
-                                  : _slipRemoveImageByPlanCode[planCode],
-                              getLocalSetup: () => planCode.isEmpty
-                                  ? null
-                                  : _slipSetupImageByPlanCode[planCode],
-                              getRemoveUploaded: () =>
-                                  _slipRemoveUploadedByPlanCode[planCode] ==
-                                  true,
-                            ),
-                          ),
-                        );
+                        navigateToDetail();
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(12.0),
@@ -1414,14 +1698,31 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                             Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    headerText,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          headerText,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      if (secondPackageCode.isNotEmpty) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: _getGroupColor(secondPackageCode),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -1465,25 +1766,62 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                               ],
                             ),
                             const SizedBox(height: 10),
-                            Text(
-                              '起: $startText',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              '止: $endText',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            ...group.map((idx) {
+                              final planItem = _planList[idx];
+                              final startAreaName = (planItem['startAreaName'] ?? '').toString();
+                              final startTrackNum = (planItem['startTrackNum'] ?? '').toString();
+                              final endAreaName = (planItem['endAreaName'] ?? '').toString();
+                              final endTrackNum = (planItem['endTrackNum'] ?? '').toString();
+                              final hText = _getHeaderText(planItem);
+                              
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (group.length > 1)
+                                      Text(
+                                        hText,
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    if (group.length > 1) const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 4),
+                                        const Text('起: ', style: TextStyle(fontSize: 15, color: Colors.black54)),
+                                        Expanded(
+                                          child: Text(
+                                            '$startAreaName-$startTrackNum',
+                                            style: const TextStyle(fontSize: 15),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const SizedBox(width: 4),
+                                        const Text('止: ', style: TextStyle(fontSize: 15, color: Colors.black54)),
+                                        Expanded(
+                                          child: Text(
+                                            '$endAreaName-$endTrackNum',
+                                            style: const TextStyle(fontSize: 15),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ],
                         ),
                       ),
@@ -1520,7 +1858,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
 }
 
 class _TrainShuntingPlanDetailPage extends StatefulWidget {
-  final Map<String, dynamic> plan;
+  final List<Map<String, dynamic>> plans;
   final String title;
   final bool readOnly;
   final Widget Function(String url) buildRemoteThumb;
@@ -1529,13 +1867,16 @@ class _TrainShuntingPlanDetailPage extends StatefulWidget {
   final Widget Function(XFile f) buildXFilePreview;
   final Future<bool> Function() pickRemove;
   final Future<bool> Function() pickSetup;
-  final void Function(bool isRemove) removeLocal;
+  final Future<bool> Function() pickHook;
+  final void Function(int antiSlipType) removeLocal;
   final XFile? Function() getLocalRemove;
   final XFile? Function() getLocalSetup;
+  final XFile? Function() getLocalHook;
   final bool Function() getRemoveUploaded;
 
   const _TrainShuntingPlanDetailPage({
-    required this.plan,
+    Key? key,
+    required this.plans,
     required this.title,
     required this.readOnly,
     required this.buildRemoteThumb,
@@ -1544,11 +1885,13 @@ class _TrainShuntingPlanDetailPage extends StatefulWidget {
     required this.buildXFilePreview,
     required this.pickRemove,
     required this.pickSetup,
+    required this.pickHook,
     required this.removeLocal,
     required this.getLocalRemove,
     required this.getLocalSetup,
+    required this.getLocalHook,
     required this.getRemoveUploaded,
-  });
+  }) : super(key: key);
 
   @override
   State<_TrainShuntingPlanDetailPage> createState() =>
@@ -1628,19 +1971,15 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
     }
   }
 
+  Future<void> _pickHookAndRefresh() async {
+    await widget.pickHook();
+    if (!mounted) return;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final plan = widget.plan;
-    final executorName = (plan['executorName'] ?? '').toString();
-    final scheduleNodeName =
-        (plan['scheduleNodeName'] ?? plan['nodeName'] ?? '').toString();
-    final startAreaName = (plan['startAreaName'] ?? '').toString();
-    final startTrackNum = (plan['startTrackNum'] ?? '').toString();
-    final endAreaName = (plan['endAreaName'] ?? '').toString();
-    final endTrackNum = (plan['endTrackNum'] ?? '').toString();
-    final remark = (plan['remark'] ?? '').toString();
-    final startTime = _fmt(plan['startTime']);
-    final completeTime = _fmt(plan['completeTime']);
+    final plan = widget.plans.first;
     final st = plan['status'];
     final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
     final isStarted = stInt == 4;
@@ -1653,9 +1992,13 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
     final typed0 = remoteEntries
         .where((e) => (e['antiSlipType']?.toString() ?? '') == '0')
         .toList();
+    final typed2 = remoteEntries
+        .where((e) => (e['antiSlipType']?.toString() ?? '') == '2')
+        .toList();
 
     final localRemove = widget.getLocalRemove();
     final localSetup = widget.getLocalSetup();
+    final localHook = widget.getLocalHook();
     final removeUploaded = widget.getRemoveUploaded();
 
     Widget buildRemoteGrid(String gridTitle, List<Map<String, dynamic>> list) {
@@ -1698,13 +2041,96 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
       if (isCompleted) {
         return const SizedBox.shrink();
       }
+
+      // Check if remote has these images uploaded
+      final hasRemoteHook = typed2.isNotEmpty;
+      final hasRemoteRemove = typed1.isNotEmpty;
+      final hasRemoteSetup = typed0.isNotEmpty;
+
+      // Determine which section to show:
+      // Show hook section if hook not uploaded remotely and not captured locally yet
+      // Or show it if it's currently captured locally and we want to allow them to replace/remove it
+      final showHookSection = !hasRemoteHook;
+      
+      // Show remove section if remove is not uploaded remotely and not captured locally yet
+      final showRemoveSection = !hasRemoteRemove;
+
+      // Show setup section if BOTH hook and remove are uploaded (remotely or locally) AND setup is not yet uploaded remotely
+      final hookIsDone = hasRemoteHook || localHook != null;
+      final removeIsDone = hasRemoteRemove || removeUploaded || localRemove != null;
+      final showSetupSection = hookIsDone && removeIsDone && !hasRemoteSetup;
+
+      if (!showHookSection && !showRemoveSection && !showSetupSection) {
+        return const SizedBox.shrink();
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
           const Text('上传防溜资源', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
-          if (!isStarted && !isCompleted) ...[
+          if (showHookSection) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _pickHookAndRefresh,
+                icon: const Icon(Icons.camera_alt, size: 18),
+                label: const Text('拍摄连挂状态检查图片'),
+              ),
+            ),
+            Row(
+              children: [
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: localHook == null
+                      ? const DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF0F0F0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '未上传',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () => widget.previewLocalXFile(
+                            '连挂状态检查图片',
+                            localHook,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: widget.buildXFilePreview(localHook),
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    localHook == null ? '未上传连挂状态检查图片' : '已上传连挂状态检查图片',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: localHook == null ? Colors.red : Colors.green,
+                    ),
+                  ),
+                ),
+                if (localHook != null)
+                  IconButton(
+                    onPressed: () {
+                      widget.removeLocal(2);
+                      setState(() {});
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (showRemoveSection) ...[
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
@@ -1755,7 +2181,7 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
                 if (localRemove != null)
                   IconButton(
                     onPressed: () {
-                      widget.removeLocal(true);
+                      widget.removeLocal(1);
                       setState(() {});
                     },
                     icon: const Icon(Icons.close),
@@ -1764,63 +2190,65 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
             ),
             const SizedBox(height: 10),
           ],
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _pickSetupAndRefresh,
-              icon: const Icon(Icons.camera_alt, size: 18),
-              label: const Text('拍摄止防溜设置图片'),
+          if (showSetupSection) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _pickSetupAndRefresh,
+                icon: const Icon(Icons.camera_alt, size: 18),
+                label: const Text('拍摄止防溜设置图片'),
+              ),
             ),
-          ),
-          Row(
-            children: [
-              SizedBox(
-                width: 96,
-                height: 96,
-                child: localSetup == null
-                    ? const DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF0F0F0),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '未上传',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+            Row(
+              children: [
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: localSetup == null
+                      ? const DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF0F0F0),
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '未上传',
+                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: () => widget.previewLocalXFile(
+                            '止防溜设置图片',
+                            localSetup,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: widget.buildXFilePreview(localSetup),
                           ),
                         ),
-                      )
-                    : GestureDetector(
-                        onTap: () => widget.previewLocalXFile(
-                          '止防溜设置图片',
-                          localSetup,
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: widget.buildXFilePreview(localSetup),
-                        ),
-                      ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  localSetup == null ? '未上传止防溜设置图片' : '已上传止防溜设置图片',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: localSetup == null ? Colors.red : Colors.green,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    localSetup == null ? '未上传止防溜设置图片' : '已上传止防溜设置图片',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: localSetup == null ? Colors.red : Colors.green,
+                    ),
                   ),
                 ),
-              ),
-              if (localSetup != null)
-                IconButton(
-                  onPressed: () {
-                    widget.removeLocal(false);
-                    setState(() {});
-                  },
-                  icon: const Icon(Icons.close),
-                ),
-            ],
-          ),
+                if (localSetup != null)
+                    IconButton(
+                      onPressed: () {
+                        widget.removeLocal(0);
+                        setState(() {});
+                      },
+                      icon: const Icon(Icons.close),
+                    ),
+              ],
+            ),
+          ],
         ],
       );
     }
@@ -1868,34 +2296,88 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
             ],
           ),
           const SizedBox(height: 12),
-          Text('处理人: $executorName'),
-          if (scheduleNodeName.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('节点: $scheduleNodeName'),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: Text('起始区域: $startAreaName')),
-              Expanded(child: Text('起始股道: $startTrackNum')),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(child: Text('结束区域: $endAreaName')),
-              Expanded(child: Text('结束股道: $endTrackNum')),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text('开工时间: $startTime'),
-          const SizedBox(height: 6),
-          Text('完成时间: $completeTime'),
-          if (remark.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text('备注: $remark'),
-          ],
+          ...widget.plans.map((p) {
+            final executorName = (p['executorName'] ?? '').toString();
+            final scheduleNodeName = (p['scheduleNodeName'] ?? p['nodeName'] ?? '').toString();
+            final startAreaName = (p['startAreaName'] ?? '').toString();
+            final startTrackNum = (p['startTrackNum'] ?? '').toString();
+            final endAreaName = (p['endAreaName'] ?? '').toString();
+            final endTrackNum = (p['endTrackNum'] ?? '').toString();
+            final remark = (p['remark'] ?? '').toString();
+            final startTime = _fmt(p['startTime']);
+            final completeTime = _fmt(p['completeTime']);
+            
+            final typeName = (p['typeName'] ?? '').toString();
+            final trainNum = (p['trainNum'] ?? '').toString();
+            final ends = formatEndsSuffix(p['ends']);
+            final hText = (typeName.isEmpty && trainNum.isEmpty)
+                ? '-'
+                : (typeName.isEmpty
+                    ? '$trainNum$ends'
+                    : (trainNum.isEmpty
+                        ? typeName
+                        : '$typeName $trainNum$ends'));
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12.0),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.plans.length > 1) ...[
+                      Text(
+                        hText,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
+                    ],
+                    Text('处理人: $executorName'),
+                    if (scheduleNodeName.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text('节点: $scheduleNodeName'),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(child: Text('起始区域: $startAreaName')),
+                        Expanded(child: Text('起始股道: $startTrackNum')),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(child: Text('结束区域: $endAreaName')),
+                        Expanded(child: Text('结束股道: $endTrackNum')),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text('开工时间: $startTime'),
+                    const SizedBox(height: 6),
+                    Text('完成时间: $completeTime'),
+                    if (remark.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text('备注: $remark'),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
           const SizedBox(height: 14),
+          buildRemoteGrid('连挂状态检查图片', typed2),
+          const SizedBox(height: 12),
           buildRemoteGrid('起防溜撤除图片', typed1),
           const SizedBox(height: 12),
           buildRemoteGrid('止防溜设置图片', typed0),
@@ -2237,13 +2719,15 @@ class _SlipImagesReviewPageState extends State<_SlipImagesReviewPage> {
                       }
                     }
                     final ok = await widget.onUploadAll(_images);
-                    setState(() {
-                      for (int i = 0; i < _statuses.length; i++) {
-                        _statuses[i] = ok ? 2 : -1;
-                      }
-                      _processing = false;
-                    });
-                    if (ok && mounted) Navigator.of(context).pop(true);
+                    if (mounted) {
+                      setState(() {
+                        for (int i = 0; i < _statuses.length; i++) {
+                          _statuses[i] = ok ? 2 : -1;
+                        }
+                        _processing = false;
+                      });
+                      if (ok) Navigator.of(context).pop(true);
+                    }
                   },
             child: const Text('上传'),
           ),
