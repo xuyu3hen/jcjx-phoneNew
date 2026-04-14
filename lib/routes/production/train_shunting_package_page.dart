@@ -1137,7 +1137,8 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 final st = _planList[idx]['status'];
                 final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
                 final isStarted = stInt == 4;
-                final isCompleted = stInt == 2;
+                final completeTimeFlag = (_planList[idx]['completeTime'] ?? '').toString().trim();
+                final isCompleted = stInt == 2 || completeTimeFlag.isNotEmpty;
                 if (!isStarted && !isCompleted) {
                   final startOk = await _start(idx);
                   if (!startOk) allReady = false;
@@ -2001,254 +2002,129 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
     final localHook = widget.getLocalHook();
     final removeUploaded = widget.getRemoveUploaded();
 
-    Widget buildRemoteGrid(String gridTitle, List<Map<String, dynamic>> list) {
+    Widget buildImageSection({
+      required String title,
+      required List<Map<String, dynamic>> remoteImages,
+      required XFile? localImage,
+      required bool canPick,
+      required VoidCallback onPick,
+      required VoidCallback onRemoveLocal,
+      required bool isUploadedOverride,
+    }) {
+      final hasRemote = remoteImages.isNotEmpty;
+      final hasLocal = localImage != null;
+      final isUploaded = hasRemote || hasLocal || isUploadedOverride;
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(gridTitle, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          if (list.isEmpty)
-            const Text(
-              '暂无',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: list.map((e) {
-                final url = (e['downloadUrl'] ?? '').toString();
-                if (url.isEmpty) return const SizedBox.shrink();
-                return GestureDetector(
-                  onTap: () => widget.previewRemoteUrl(gridTitle, url),
-                  child: SizedBox(
-                    width: 96,
-                    height: 96,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+              if (canPick && !hasRemote && !widget.readOnly && !isCompleted)
+                TextButton.icon(
+                  onPressed: onPick,
+                  icon: const Icon(Icons.camera_alt, size: 18),
+                  label: const Text('拍摄'),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Image preview
+              if (!hasRemote && !hasLocal)
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF0F0F0),
+                      borderRadius: BorderRadius.all(Radius.circular(8)),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '未上传',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                )
+              else if (hasLocal && !hasRemote)
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: GestureDetector(
+                    onTap: () => widget.previewLocalXFile(title, localImage),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: widget.buildRemoteThumb(url),
+                      child: widget.buildXFilePreview(localImage),
                     ),
                   ),
-                );
-              }).whereType<Widget>().toList(),
-            ),
-        ],
-      );
-    }
-
-    Widget buildLocalSection() {
-      if (widget.readOnly) return const SizedBox.shrink();
-      if (isCompleted) {
-        return const SizedBox.shrink();
-      }
-
-      // Check if remote has these images uploaded
-      final hasRemoteHook = typed2.isNotEmpty;
-      final hasRemoteRemove = typed1.isNotEmpty;
-      final hasRemoteSetup = typed0.isNotEmpty;
-
-      // Determine which section to show:
-      // Show hook section if hook not uploaded remotely and not captured locally yet
-      // Or show it if it's currently captured locally and we want to allow them to replace/remove it
-      final showHookSection = !hasRemoteHook;
-      
-      // Show remove section if remove is not uploaded remotely and not captured locally yet
-      final showRemoveSection = !hasRemoteRemove;
-
-      // Show setup section if BOTH hook and remove are uploaded (remotely or locally) AND setup is not yet uploaded remotely
-      final hookIsDone = hasRemoteHook || localHook != null;
-      final removeIsDone = hasRemoteRemove || removeUploaded || localRemove != null;
-      final showSetupSection = hookIsDone && removeIsDone && !hasRemoteSetup;
-
-      if (!showHookSection && !showRemoveSection && !showSetupSection) {
-        return const SizedBox.shrink();
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 12),
-          const Text('上传防溜资源', style: TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          if (showHookSection) ...[
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _pickHookAndRefresh,
-                icon: const Icon(Icons.camera_alt, size: 18),
-                label: const Text('拍摄连挂状态检查图片'),
-              ),
-            ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: localHook == null
-                      ? const DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '未上传',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                )
+              else
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: remoteImages.map((e) {
+                        final url = (e['downloadUrl'] ?? '').toString();
+                        if (url.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: GestureDetector(
+                            onTap: () => widget.previewRemoteUrl(title, url),
+                            child: SizedBox(
+                              width: 96,
+                              height: 96,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: widget.buildRemoteThumb(url),
+                              ),
                             ),
                           ),
-                        )
-                      : GestureDetector(
-                          onTap: () => widget.previewLocalXFile(
-                            '连挂状态检查图片',
-                            localHook,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: widget.buildXFilePreview(localHook),
-                          ),
-                        ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 10),
+              if (!hasRemote) const SizedBox(width: 10),
+              // Status text
+              if (!hasRemote)
                 Expanded(
                   child: Text(
-                    localHook == null ? '未上传连挂状态检查图片' : '已上传连挂状态检查图片',
+                    isUploaded ? '已上传$title' : '未上传$title',
                     style: TextStyle(
                       fontSize: 12,
-                      color: localHook == null ? Colors.red : Colors.green,
+                      color: isUploaded ? Colors.green : Colors.red,
                     ),
                   ),
-                ),
-                if (localHook != null)
-                  IconButton(
-                    onPressed: () {
-                      widget.removeLocal(2);
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (showRemoveSection) ...[
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _pickRemoveAndRefresh,
-                icon: const Icon(Icons.camera_alt, size: 18),
-                label: const Text('拍摄起防溜撤除图片'),
-              ),
-            ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: localRemove == null
-                      ? const DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '未上传',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () => widget.previewLocalXFile(
-                            '起防溜撤除图片',
-                            localRemove,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: widget.buildXFilePreview(localRemove),
-                          ),
-                        ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
                   child: Text(
-                    removeUploaded ? '已上传起防溜撤除图片' : '未上传起防溜撤除图片',
-                    style: TextStyle(
+                    '已上传$title',
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: removeUploaded ? Colors.green : Colors.red,
+                      color: Colors.green,
                     ),
                   ),
                 ),
-                if (localRemove != null)
-                  IconButton(
-                    onPressed: () {
-                      widget.removeLocal(1);
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.close),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-          ],
-          if (showSetupSection) ...[
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: _pickSetupAndRefresh,
-                icon: const Icon(Icons.camera_alt, size: 18),
-                label: const Text('拍摄止防溜设置图片'),
-              ),
-            ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 96,
-                  height: 96,
-                  child: localSetup == null
-                      ? const DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Color(0xFFF0F0F0),
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '未上传',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () => widget.previewLocalXFile(
-                            '止防溜设置图片',
-                            localSetup,
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: widget.buildXFilePreview(localSetup),
-                          ),
-                        ),
+              // Delete local button
+              if (hasLocal && !hasRemote)
+                IconButton(
+                  onPressed: () {
+                    onRemoveLocal();
+                    setState(() {});
+                  },
+                  icon: const Icon(Icons.close),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    localSetup == null ? '未上传止防溜设置图片' : '已上传止防溜设置图片',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: localSetup == null ? Colors.red : Colors.green,
-                    ),
-                  ),
-                ),
-                if (localSetup != null)
-                    IconButton(
-                      onPressed: () {
-                        widget.removeLocal(0);
-                        setState(() {});
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-              ],
-            ),
-          ],
+            ],
+          ),
+          const SizedBox(height: 16),
         ],
       );
     }
@@ -2376,12 +2252,36 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
             );
           }).toList(),
           const SizedBox(height: 14),
-          buildRemoteGrid('连挂状态检查图片', typed2),
-          const SizedBox(height: 12),
-          buildRemoteGrid('起防溜撤除图片', typed1),
-          const SizedBox(height: 12),
-          buildRemoteGrid('止防溜设置图片', typed0),
-          buildLocalSection(),
+          const Text('防溜资源', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          buildImageSection(
+            title: '连挂状态检查图片',
+            remoteImages: typed2,
+            localImage: localHook,
+            canPick: true,
+            onPick: _pickHookAndRefresh,
+            onRemoveLocal: () => widget.removeLocal(2),
+            isUploadedOverride: false,
+          ),
+          buildImageSection(
+            title: '起防溜撤除图片',
+            remoteImages: typed1,
+            localImage: localRemove,
+            canPick: true,
+            onPick: _pickRemoveAndRefresh,
+            onRemoveLocal: () => widget.removeLocal(1),
+            isUploadedOverride: removeUploaded,
+          ),
+          buildImageSection(
+            title: '止防溜设置图片',
+            remoteImages: typed0,
+            localImage: localSetup,
+            canPick: (typed2.isNotEmpty || localHook != null) && 
+                     (typed1.isNotEmpty || localRemove != null || removeUploaded),
+            onPick: _pickSetupAndRefresh,
+            onRemoveLocal: () => widget.removeLocal(0),
+            isUploadedOverride: false,
+          ),
         ],
       ),
     );

@@ -12,6 +12,18 @@ class TrainRepairProgressPage extends StatefulWidget {
       _TrainRepairProgressPageState();
 }
 
+class _ShuntingFormData {
+  Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
+  List<Map<String, dynamic>> scheduleNodePickerList = [];
+  Map<String, dynamic> scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+  bool scheduleNodeLoading = false;
+  Map<String, dynamic> directionSelected = {};
+  Map<String, dynamic> stopLocationSelected = {};
+  Map<String, dynamic> stopLocationSelectedEnd = {};
+  bool deptMove = false;
+  final TextEditingController reasonController = TextEditingController();
+}
+
 class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   var logger = AppLogger.logger;
 
@@ -1923,22 +1935,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   // 显示调车作业通知单
   void _showShuntingAnswerDialog(BuildContext context, RepairItem item) {
-    final TextEditingController _reasonController = TextEditingController();
-    final TextEditingController _locationController = TextEditingController();
-    String? _selectedType;
+    final List<_ShuntingFormData> formDataList = [_ShuntingFormData()];
     DateTime? _planDateSelected;
-    bool deptMove = false;
     List<Map<String, dynamic>> repairMainNodeList = [];
-    Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
     bool repairMainNodeRequested = false;
     bool repairMainNodeLoading = false;
-    List<Map<String, dynamic>> scheduleNodePickerList = [];
-    Map<String, dynamic> scheduleNodeSelected = {
-      'name': '',
-      'code': '',
-      'scheduleNodeName': '',
-    };
-    bool scheduleNodeLoading = false;
 
     List<Map<String, dynamic>> _parseScheduleRows(dynamic response) {
       dynamic raw = response;
@@ -2025,21 +2026,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       return '$start ~ $end';
     }
 
-    Future<void> _loadScheduleNodes(StateSetter setState) async {
+    Future<void> _loadScheduleNodes(StateSetter setState, _ShuntingFormData fd) async {
       final repairMainNodeCode =
-          (repairMainNodeSelected['code'] ?? '').toString().trim();
+          (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
       if (repairMainNodeCode.isEmpty) {
         setState(() {
-          scheduleNodePickerList = [];
-          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
-          scheduleNodeLoading = false;
+          fd.scheduleNodePickerList = [];
+          fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          fd.scheduleNodeLoading = false;
         });
         return;
       }
       setState(() {
-        scheduleNodeLoading = true;
-        scheduleNodePickerList = [];
-        scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+        fd.scheduleNodeLoading = true;
+        fd.scheduleNodePickerList = [];
+        fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
       });
       try {
         final r = await ProductApi().getMainNodeSchedleNodeAll(
@@ -2075,21 +2076,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           };
         }).where((m) => (m['code'] ?? '').toString().trim().isNotEmpty).toList();
         setState(() {
-          scheduleNodePickerList = pickerList;
+          fd.scheduleNodePickerList = pickerList;
           if (pickerList.length == 1) {
-            scheduleNodeSelected = {
+            fd.scheduleNodeSelected = {
               'name': pickerList.first['name'],
               'code': pickerList.first['code'],
               'scheduleNodeName': pickerList.first['scheduleNodeName'],
             };
           }
-          scheduleNodeLoading = false;
+          fd.scheduleNodeLoading = false;
         });
       } catch (_) {
         setState(() {
-          scheduleNodePickerList = [];
-          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
-          scheduleNodeLoading = false;
+          fd.scheduleNodePickerList = [];
+          fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          fd.scheduleNodeLoading = false;
         });
       }
     }
@@ -2097,50 +2098,58 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     void saveShuntingAnswer() async {
       try {
         final planStart = _planDateSelected ?? DateTime.now();
-        final row = <String, dynamic>{
-          'endStopPositionCode': stopLocationSelectedEnd['code'],
-          'planDate': planStart.millisecondsSinceEpoch,
-          'planStartTime': planStart.toString(),
-          'remark': _reasonController.text,
-          'sort': 0,
-          'startStopPositionCode': stopLocationSelected['code'],
-          'ends': directionSelected['value'],
-          'deptMove': deptMove,
-          'trainEntryCode': item.code,
-          'trainNum': item.trainNum,
-          'typeCode': item.typeCode,
-        };
-        final nodeCode = (repairMainNodeSelected['code'] ?? '').toString().trim();
-        if (nodeCode.isNotEmpty) {
-          row['repairMainNodeCode'] = nodeCode;
-          row['repairMainNodeName'] =
-              (repairMainNodeSelected['name'] ?? '').toString();
+        List<Map<String, dynamic>> queryParametrs = [];
+
+        for (final fd in formDataList) {
+          final row = <String, dynamic>{
+            'endStopPositionCode': fd.stopLocationSelectedEnd['code'],
+            'planDate': planStart.millisecondsSinceEpoch,
+            'planStartTime': planStart.toString(),
+            'remark': fd.reasonController.text,
+            'sort': 0,
+            'startStopPositionCode': fd.stopLocationSelected['code'],
+            'ends': fd.directionSelected['value'],
+            'deptMove': fd.deptMove,
+            'trainEntryCode': item.code,
+            'trainNum': item.trainNum,
+            'typeCode': item.typeCode,
+          };
+          final nodeCode = (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
+          if (nodeCode.isNotEmpty) {
+            row['repairMainNodeCode'] = nodeCode;
+            row['repairMainNodeName'] =
+                (fd.repairMainNodeSelected['name'] ?? '').toString();
+          }
+          final scheduleCode =
+              (fd.scheduleNodeSelected['code'] ?? '').toString().trim();
+          if (scheduleCode.isNotEmpty) {
+            row['scheduleNodeCode'] = scheduleCode;
+            row['scheduleNodeName'] = (fd.scheduleNodeSelected['scheduleNodeName'] ??
+                    fd.scheduleNodeSelected['name'] ??
+                    '')
+                .toString();
+          }
+          if (item.doubleCarriage == true) {
+            row['ends'] = fd.directionSelected['value'] ?? fd.directionSelected['name'];
+          }
+          queryParametrs.add(row);
         }
-        final scheduleCode =
-            (scheduleNodeSelected['code'] ?? '').toString().trim();
-        if (scheduleCode.isNotEmpty) {
-          row['scheduleNodeCode'] = scheduleCode;
-          row['scheduleNodeName'] = (scheduleNodeSelected['scheduleNodeName'] ??
-                  scheduleNodeSelected['name'] ??
-                  '')
-              .toString();
-        }
-        if (item.doubleCarriage == true) {
-          row['ends'] = directionSelected['value'] ?? directionSelected['name'];
-        }
-        List<Map<String, dynamic>> queryParametrs = [row];
+
         var r = await ProductApi()
-            .directPublishShuntingPlan(queryParametrs: row);
+            .directPublishShuntingPlan(queryParametrs: queryParametrs);
       } catch (e) {
         logger.e('saveShuntingAnswer 方法中发生异常: $e');
       }
     }
-    if (item.doubleCarriage != true) {
-      directionSelected = {};
+
+    for (final fd in formDataList) {
+      if (item.doubleCarriage != true) {
+        fd.directionSelected = {};
+      }
+      fd.stopLocationSelectedEnd = {};
+      fd.stopLocationSelected =
+          _computeDefaultStartStopLocation(item, fd.directionSelected['value']?.toString());
     }
-    stopLocationSelectedEnd = {};
-    stopLocationSelected =
-        _computeDefaultStartStopLocation(item, directionSelected['value']?.toString());
 
     showDialog(
       context: context,
@@ -2181,25 +2190,29 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   if (!context.mounted) return;
                   setState(() {
                     repairMainNodeList = list;
-                    if (((repairMainNodeSelected['code'] ?? '')
-                            .toString()
-                            .trim())
-                        .isEmpty) {
-                      if (list.length == 1) {
-                        repairMainNodeSelected = {
-                          'name': list.first['name'],
-                          'code': list.first['code'],
-                        };
+                    for (var fd in formDataList) {
+                      if (((fd.repairMainNodeSelected['code'] ?? '')
+                              .toString()
+                              .trim())
+                          .isEmpty) {
+                        if (list.length == 1) {
+                          fd.repairMainNodeSelected = {
+                            'name': list.first['name'],
+                            'code': list.first['code'],
+                          };
+                        }
                       }
                     }
                     repairMainNodeLoading = false;
                   });
                   if (!context.mounted) return;
-                  if (((repairMainNodeSelected['code'] ?? '')
-                          .toString()
-                          .trim())
-                      .isNotEmpty) {
-                    await _loadScheduleNodes(setState);
+                  for (var fd in formDataList) {
+                    if (((fd.repairMainNodeSelected['code'] ?? '')
+                            .toString()
+                            .trim())
+                        .isNotEmpty) {
+                      await _loadScheduleNodes(setState, fd);
+                    }
                   }
                 } catch (_) {
                   if (!context.mounted) return;
@@ -2254,12 +2267,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             }
 
             return AlertDialog(
-              title: const Text('调车作业通知单'),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('调车作业通知单'),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
+                    onPressed: () {
+                      setState(() {
+                        formDataList.add(_ShuntingFormData());
+                      });
+                    },
+                  ),
+                ],
+              ),
               content: SizedBox(
                 width: double.maxFinite,
                 child: SingleChildScrollView(
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  // 展示车号和停留地点信息
+                  // 展示车号信息
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(8),
@@ -2277,201 +2303,233 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '停留地点: ${item.stoppingPlace ?? "未知"}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  //增加朝向
-                  ZjcFormSelectCell(
-                    title: "工序节点",
-                    text: repairMainNodeSelected['name'] ?? '',
-                    hintText: repairMainNodeLoading ? "加载中..." : "请选择",
-                    clickCallBack: () {
-                      if (repairMainNodeLoading) return;
-                      if (repairMainNodeList.isEmpty) {
-                        showToast("无工序节点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: repairMainNodeList,
-                          labelKey: 'name',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择工序节点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              repairMainNodeSelected = {
-                                'name': selectItem['name'],
-                                'code': selectItem['code'],
-                              };
-                              scheduleNodePickerList = [];
-                              scheduleNodeSelected = {
-                                'name': '',
-                                'code': '',
-                                'scheduleNodeName': '',
-                              };
-                              scheduleNodeLoading = true;
-                            });
-                            _loadScheduleNodes(setState);
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                    title: "排程节点",
-                    text: scheduleNodeSelected['name'] ?? '',
-                    hintText: scheduleNodeLoading ? "加载中..." : "请选择",
-                    clickCallBack: () {
-                      if (scheduleNodeLoading) return;
-                      if (scheduleNodePickerList.isEmpty) {
-                        showToast("无排程节点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: scheduleNodePickerList,
-                          labelKey: 'name',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择排程节点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              scheduleNodeSelected = {
-                                'name': selectItem['name'],
-                                'code': selectItem['code'],
-                                'scheduleNodeName': selectItem['scheduleNodeName'],
-                              };
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                      title: "端",
-                      text: directionSelected["name"] ?? '',
-                      hintText: item.doubleCarriage == true ? "请选择" : "无需选择",
-                      clickCallBack: () {
-                        if (item.doubleCarriage != true) {
-                          showToast("非重联无需选择端");
-                          return;
-                        }
-                        if (directionList.isEmpty) {
-                          showToast("无端可选择");
-                        } else {
-                          ZjcCascadeTreePicker.show(
-                            context,
-                            data: directionList,
-                            labelKey: 'name',
-                            valueKey: 'value',
-                            childrenKey: 'children',
-                            title: "选择端",
-                            clickCallBack: (selectItem, selectArr) {
-                              final selectedEnd =
-                                  (selectItem['value'] ?? selectItem['name'])
-                                      ?.toString();
-                              setState(() {
-                                logger.i(selectArr);
-                                directionSelected['name'] = selectItem['name'];
-                                directionSelected['value'] = selectedEnd;
-                                stopLocationSelected =
-                                    _computeDefaultStartStopLocation(item, selectedEnd);
-                              });
-                            },
-                          );
-                        }
-                      }),
                   const SizedBox(height: 10),
-                  ZjcFormSelectCell(
-                    title: "起始位置",
-                    text: stopLocationSelected["realLocation"],
-                    hintText: "请选择",
-                    clickCallBack: () {
-                      if (stopLocationList.isEmpty) {
-                        showToast("无检修地点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: stopLocationList,
-                          labelKey: 'realLocation',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择检修地点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              stopLocationSelected["code"] = selectItem["code"];
-                              stopLocationSelected["realLocation"] =
-                                  selectItem["realLocation"];
-                              stopLocationSelected["areaName"] =
-                                  selectItem["areaName"];
-                              stopLocationSelected["trackNum"] =
-                                  selectItem["trackNum"];
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  ZjcFormSelectCell(
-                    title: "终点位置",
-                    text: stopLocationSelectedEnd["realLocation"],
-                    hintText: "请选择",
-                    clickCallBack: () {
-                      if (stopLocationList.isEmpty) {
-                        showToast("无检修地点可选择");
-                      } else {
-                        ZjcCascadeTreePicker.show(
-                          context,
-                          data: stopLocationList,
-                          labelKey: 'realLocation',
-                          valueKey: 'code',
-                          childrenKey: 'children',
-                          title: "选择检修地点",
-                          clickCallBack: (selectItem, selectArr) {
-                            setState(() {
-                              logger.i(selectArr);
-                              stopLocationSelectedEnd["code"] =
-                                  selectItem["code"];
-                              stopLocationSelectedEnd["realLocation"] =
-                                  selectItem["realLocation"];
-                              stopLocationSelectedEnd["areaName"] =
-                                  selectItem["areaName"];
-                              stopLocationSelectedEnd["trackNum"] =
-                                  selectItem["trackNum"];
-                            });
-                          },
-                        );
-                      }
-                    },
-                  ),
-                  CheckboxListTile(
-                    value: deptMove,
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('库内移车'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (v) {
-                      setState(() {
-                        deptMove = v == true;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _reasonController,
-                    decoration: const InputDecoration(
-                      labelText: '备注',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 10),
+                  ...(formDataList).asMap().entries.map((entry) {
+                    final int idx = entry.key;
+                    final _ShuntingFormData fd = entry.value;
+                    
+                    return Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (formDataList.length > 1)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('作业单 ${idx + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                    onPressed: () {
+                                      if (formDataList.length > 1) {
+                                        setState(() {
+                                          formDataList.removeAt(idx);
+                                        });
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            //增加朝向
+                            ZjcFormSelectCell(
+                              title: "工序节点",
+                              text: fd.repairMainNodeSelected['name'] ?? '',
+                              hintText: repairMainNodeLoading ? "加载中..." : "请选择",
+                              clickCallBack: () {
+                                if (repairMainNodeLoading) return;
+                                if (repairMainNodeList.isEmpty) {
+                                  showToast("无工序节点可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: repairMainNodeList,
+                                    labelKey: 'name',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择工序节点",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        fd.repairMainNodeSelected = {
+                                          'name': selectItem['name'],
+                                          'code': selectItem['code'],
+                                        };
+                                        fd.scheduleNodePickerList = [];
+                                        fd.scheduleNodeSelected = {
+                                          'name': '',
+                                          'code': '',
+                                          'scheduleNodeName': '',
+                                        };
+                                        fd.scheduleNodeLoading = true;
+                                      });
+                                      _loadScheduleNodes(setState, fd);
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            ZjcFormSelectCell(
+                              title: "排程节点",
+                              text: fd.scheduleNodeSelected['name'] ?? '',
+                              hintText: fd.scheduleNodeLoading ? "加载中..." : "请选择",
+                              clickCallBack: () {
+                                if (fd.scheduleNodeLoading) return;
+                                if (fd.scheduleNodePickerList.isEmpty) {
+                                  showToast("无排程节点可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: fd.scheduleNodePickerList,
+                                    labelKey: 'name',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择排程节点",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        fd.scheduleNodeSelected = {
+                                          'name': selectItem['name'],
+                                          'code': selectItem['code'],
+                                          'scheduleNodeName': selectItem['scheduleNodeName'],
+                                        };
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            ZjcFormSelectCell(
+                                title: "端",
+                                text: fd.directionSelected["name"] ?? '',
+                                hintText: item.doubleCarriage == true ? "请选择" : "无需选择",
+                                clickCallBack: () {
+                                  if (item.doubleCarriage != true) {
+                                    showToast("非重联无需选择端");
+                                    return;
+                                  }
+                                  if (directionList.isEmpty) {
+                                    showToast("无端可选择");
+                                  } else {
+                                    ZjcCascadeTreePicker.show(
+                                      context,
+                                      data: directionList,
+                                      labelKey: 'name',
+                                      valueKey: 'value',
+                                      childrenKey: 'children',
+                                      title: "选择端",
+                                      clickCallBack: (selectItem, selectArr) {
+                                        final selectedEnd =
+                                            (selectItem['value'] ?? selectItem['name'])
+                                                ?.toString();
+                                        setState(() {
+                                          logger.i(selectArr);
+                                          fd.directionSelected['name'] = selectItem['name'];
+                                          fd.directionSelected['value'] = selectedEnd;
+                                          fd.stopLocationSelected =
+                                              _computeDefaultStartStopLocation(item, selectedEnd);
+                                        });
+                                      },
+                                    );
+                                  }
+                                }),
+                            const SizedBox(height: 10),
+                            ZjcFormSelectCell(
+                              title: "起始位置",
+                              text: fd.stopLocationSelected["realLocation"],
+                              hintText: "请选择",
+                              clickCallBack: () {
+                                if (stopLocationList.isEmpty) {
+                                  showToast("无检修地点可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: stopLocationList,
+                                    labelKey: 'realLocation',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择检修地点",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        logger.i(selectArr);
+                                        fd.stopLocationSelected["code"] = selectItem["code"];
+                                        fd.stopLocationSelected["realLocation"] =
+                                            selectItem["realLocation"];
+                                        fd.stopLocationSelected["areaName"] =
+                                            selectItem["areaName"];
+                                        fd.stopLocationSelected["trackNum"] =
+                                            selectItem["trackNum"];
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            ZjcFormSelectCell(
+                              title: "终点位置",
+                              text: fd.stopLocationSelectedEnd["realLocation"],
+                              hintText: "请选择",
+                              clickCallBack: () {
+                                if (stopLocationList.isEmpty) {
+                                  showToast("无检修地点可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: stopLocationList,
+                                    labelKey: 'realLocation',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择检修地点",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        logger.i(selectArr);
+                                        fd.stopLocationSelectedEnd["code"] =
+                                            selectItem["code"];
+                                        fd.stopLocationSelectedEnd["realLocation"] =
+                                            selectItem["realLocation"];
+                                        fd.stopLocationSelectedEnd["areaName"] =
+                                            selectItem["areaName"];
+                                        fd.stopLocationSelectedEnd["trackNum"] =
+                                            selectItem["trackNum"];
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            CheckboxListTile(
+                              value: fd.deptMove,
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('库内移车'),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              onChanged: (v) {
+                                setState(() {
+                                  fd.deptMove = v == true;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            TextFormField(
+                              controller: fd.reasonController,
+                              decoration: const InputDecoration(
+                                labelText: '备注',
+                                border: OutlineInputBorder(),
+                              ),
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ])),
               ),
               actions: [
@@ -2484,23 +2542,26 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    final nodeCode =
-                        (repairMainNodeSelected['code'] ?? '').toString().trim();
-                    if (nodeCode.isEmpty) {
-                      showToast("请选择工序节点");
-                      return;
-                    }
-                    final scheduleCode =
-                        (scheduleNodeSelected['code'] ?? '').toString().trim();
-                    if (scheduleCode.isEmpty) {
-                      showToast("请选择排程节点");
-                      return;
-                    }
-                    final endCode =
-                        (stopLocationSelectedEnd['code'] ?? '').toString().trim();
-                    if (endCode.isEmpty) {
-                      showToast("请选择终点位置");
-                      return;
+                    for (int i = 0; i < formDataList.length; i++) {
+                      final fd = formDataList[i];
+                      final nodeCode =
+                          (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
+                      if (nodeCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择工序节点");
+                        return;
+                      }
+                      final scheduleCode =
+                          (fd.scheduleNodeSelected['code'] ?? '').toString().trim();
+                      if (scheduleCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择排程节点");
+                        return;
+                      }
+                      final endCode =
+                          (fd.stopLocationSelectedEnd['code'] ?? '').toString().trim();
+                      if (endCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择终点位置");
+                        return;
+                      }
                     }
                     Navigator.pop(context);
                     saveShuntingAnswer();

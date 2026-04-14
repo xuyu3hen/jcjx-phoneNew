@@ -254,9 +254,9 @@ class ProductApi extends AppApi {
     }
   }
 
-  // /dispatch/trainShuntingPlan/addToPlan
+  // /dispatch/trainShuntingPlan/directPublishShuntingPlan
   Future<dynamic> directPublishShuntingPlan({
-    Map<String, dynamic>? queryParametrs,
+    List<Map<String, dynamic>>? queryParametrs,
   }) async {
     try {
       var r = await AppApi.dio.post(
