@@ -430,7 +430,9 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                   typeName: widget.typeName,
                                   trainEntryCode: widget.trainEntryCode,
                                   trainNum: widget.trainNum,
-                                  repairScheme: item['repairScheme'] ?? "",
+                                  repairScheme: item['maintenanceNotice'] ??
+                                      item['repairScheme'] ??
+                                      "",
                                   trainNumCode: widget.trainNumCode,
                                   typeCode: widget.typeCode,
                                   code: item['code'],

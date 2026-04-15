@@ -22,6 +22,15 @@ class _ShuntingFormData {
   Map<String, dynamic> stopLocationSelectedEnd = {};
   bool deptMove = false;
   final TextEditingController reasonController = TextEditingController();
+
+  // 动力类型、机型、车号
+  Map<String, dynamic> dynamicTypeSelected = {'name': '', 'code': ''};
+  List<Map<String, dynamic>> jcTypeList = [];
+  Map<String, dynamic> jcTypeSelected = {'name': '', 'code': ''};
+  List<Map<String, dynamic>> trainNumList = [];
+  Map<String, dynamic> trainNumSelected = {'trainNum': '', 'code': ''};
+  bool jcTypeLoading = false;
+  bool trainNumLoading = false;
 }
 
 class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
@@ -1941,6 +1950,102 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     bool repairMainNodeRequested = false;
     bool repairMainNodeLoading = false;
 
+    bool dynamicTypeRequested = false;
+    bool dynamicTypeLoading = false;
+    List<Map<String, dynamic>> globalDynamicTypeList = [];
+
+    Future<void> _loadJcType(StateSetter setState, _ShuntingFormData fd) async {
+      final dynamicCode = (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
+      if (dynamicCode.isEmpty) {
+        setState(() {
+          fd.jcTypeList = [];
+          fd.jcTypeSelected = {'name': '', 'code': ''};
+          fd.jcTypeLoading = false;
+          fd.trainNumList = [];
+          fd.trainNumSelected = {'trainNum': '', 'code': ''};
+        });
+        return;
+      }
+      setState(() {
+        fd.jcTypeLoading = true;
+        fd.jcTypeList = [];
+        fd.jcTypeSelected = {'name': '', 'code': ''};
+        fd.trainNumList = [];
+        fd.trainNumSelected = {'trainNum': '', 'code': ''};
+      });
+      try {
+        var r = await ProductApi().getJcType(queryParametrs: {
+          'dynamicCode': dynamicCode,
+          'pageNum': 0,
+          'pageSize': 0
+        });
+        setState(() {
+          fd.jcTypeList = r.toMapList();
+          fd.jcTypeLoading = false;
+        });
+      } catch (_) {
+        setState(() {
+          fd.jcTypeList = [];
+          fd.jcTypeLoading = false;
+        });
+      }
+    }
+
+    Future<void> _loadTrainNum(StateSetter setState, _ShuntingFormData fd) async {
+      final typeCode = (fd.jcTypeSelected['code'] ?? '').toString().trim();
+      if (typeCode.isEmpty) {
+        setState(() {
+          fd.trainNumList = [];
+          fd.trainNumSelected = {'trainNum': '', 'code': ''};
+          fd.trainNumLoading = false;
+        });
+        return;
+      }
+      setState(() {
+        fd.trainNumLoading = true;
+        fd.trainNumList = [];
+        fd.trainNumSelected = {'trainNum': '', 'code': ''};
+      });
+      try {
+        final r = await ProductApi().getTrainEntryDynamic({
+          'typeCode': typeCode,
+          'complete': 0,
+          'tempFalse': false,
+        });
+        dynamic raw = r;
+        if (raw is Map) {
+          raw = raw['rows'] ??
+              raw['records'] ??
+              raw['data'] ??
+              raw['list'] ??
+              raw['result'] ??
+              raw;
+          if (raw is Map) {
+            final lists = raw.values.whereType<List>().toList();
+            if (lists.length == 1) {
+              raw = lists.first;
+            }
+          }
+        }
+        final List<Map<String, dynamic>> list = (raw is List ? raw : const <dynamic>[])
+            .where((e) => e is Map)
+            .map((e) {
+          final m = Map<String, dynamic>.from(e as Map);
+          m['displayTrainNum'] = formatTrainNumWithEnds(m['trainNum'], m['ends']);
+          return m;
+        }).toList();
+        setState(() {
+          fd.trainNumList = list;
+          fd.trainNumLoading = false;
+        });
+      } catch (_) {
+        setState(() {
+          fd.trainNumList = [];
+          fd.trainNumLoading = false;
+        });
+      }
+    }
+
     List<Map<String, dynamic>> _parseScheduleRows(dynamic response) {
       dynamic raw = response;
       if (raw is Map) {
@@ -2110,9 +2215,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             'startStopPositionCode': fd.stopLocationSelected['code'],
             'ends': fd.directionSelected['value'],
             'deptMove': fd.deptMove,
-            'trainEntryCode': item.code,
-            'trainNum': item.trainNum,
-            'typeCode': item.typeCode,
+            'trainEntryCode': fd.trainNumSelected['code'],
+            'trainNum': fd.trainNumSelected['trainNum'],
+            'typeCode': fd.jcTypeSelected['code'],
           };
           final nodeCode = (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
           if (nodeCode.isNotEmpty) {
@@ -2266,6 +2371,87 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               });
             }
 
+            if (!dynamicTypeRequested) {
+              dynamicTypeRequested = true;
+              dynamicTypeLoading = true;
+              Future(() async {
+                try {
+                  var r = await ProductApi().getDynamicType();
+                  if (!context.mounted) return;
+                  setState(() {
+                    globalDynamicTypeList = r.toMapList();
+                    for (var fd in formDataList) {
+                      var match = globalDynamicTypeList.firstWhere(
+                        (e) => e['code'] == item.dynamicCode,
+                        orElse: () => globalDynamicTypeList.isNotEmpty
+                            ? globalDynamicTypeList.first
+                            : {'name': '', 'code': ''},
+                      );
+                      if ((fd.dynamicTypeSelected['code'] ?? '')
+                          .toString()
+                          .isEmpty) {
+                        fd.dynamicTypeSelected = Map<String, dynamic>.from(match);
+                      }
+                    }
+                    dynamicTypeLoading = false;
+                  });
+
+                  if (!context.mounted) return;
+                  for (var fd in formDataList) {
+                    if ((fd.dynamicTypeSelected['code'] ?? '')
+                        .toString()
+                        .isNotEmpty) {
+                      await _loadJcType(setState, fd);
+                      if (!context.mounted) return;
+                      var jcMatch = fd.jcTypeList.firstWhere(
+                        (e) => e['code'] == item.typeCode,
+                        orElse: () => fd.jcTypeList.isNotEmpty
+                            ? fd.jcTypeList.first
+                            : {'name': '', 'code': ''},
+                      );
+                      if ((fd.jcTypeSelected['code'] ?? '')
+                          .toString()
+                          .isEmpty) {
+                        setState(() {
+                          fd.jcTypeSelected = Map<String, dynamic>.from(jcMatch);
+                        });
+                        await _loadTrainNum(setState, fd);
+                        if (!context.mounted) return;
+                        final desiredTrainNum =
+                            (item.trainNum ?? '').toString().trim();
+                        final desiredEnds = formatEndsSuffix(item.ends);
+                        var trainMatch = fd.trainNumList.firstWhere(
+                          (e) {
+                            final tn = (e['trainNum'] ?? '').toString().trim();
+                            if (tn != desiredTrainNum) return false;
+                            if (desiredEnds.isEmpty) return true;
+                            return formatEndsSuffix(e['ends']) == desiredEnds;
+                          },
+                          orElse: () => fd.trainNumList.isNotEmpty
+                              ? fd.trainNumList.first
+                              : {'trainNum': '', 'code': ''},
+                        );
+                        if ((fd.trainNumSelected['code'] ?? '')
+                            .toString()
+                            .isEmpty) {
+                          setState(() {
+                            fd.trainNumSelected =
+                                Map<String, dynamic>.from(trainMatch);
+                          });
+                        }
+                      }
+                    }
+                  }
+                } catch (_) {
+                  if (!context.mounted) return;
+                  setState(() {
+                    globalDynamicTypeList = [];
+                    dynamicTypeLoading = false;
+                  });
+                }
+              });
+            }
+
             return AlertDialog(
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2285,27 +2471,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 width: double.maxFinite,
                 child: SingleChildScrollView(
                     child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  // 展示车号信息
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '车号: ${formatTrainNumWithEnds(item.trainNum, item.ends).isNotEmpty ? formatTrainNumWithEnds(item.trainNum, item.ends) : (item.trainNum ?? "未知")}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 10),
                   ...(formDataList).asMap().entries.map((entry) {
                     final int idx = entry.key;
@@ -2340,6 +2505,101 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                   ),
                                 ],
                               ),
+                            // 新增: 动力类型
+                            ZjcFormSelectCell(
+                              title: "动力类型",
+                              text: fd.dynamicTypeSelected['name'] ?? '',
+                              hintText: dynamicTypeLoading ? "加载中..." : "请选择",
+                              clickCallBack: () {
+                                if (dynamicTypeLoading) return;
+                                if (globalDynamicTypeList.isEmpty) {
+                                  showToast("无动力类型可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: globalDynamicTypeList,
+                                    labelKey: 'name',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择动力类型",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        fd.dynamicTypeSelected = {
+                                          'name': selectItem['name'],
+                                          'code': selectItem['code'],
+                                        };
+                                      });
+                                      _loadJcType(setState, fd);
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            // 新增: 机型
+                            ZjcFormSelectCell(
+                              title: "机型",
+                              text: fd.jcTypeSelected['name'] ?? '',
+                              hintText: fd.jcTypeLoading ? "加载中..." : "请选择",
+                              clickCallBack: () {
+                                if (fd.jcTypeLoading) return;
+                                if (fd.jcTypeList.isEmpty) {
+                                  showToast("无机型可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: fd.jcTypeList,
+                                    labelKey: 'name',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择机型",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        fd.jcTypeSelected = {
+                                          'name': selectItem['name'],
+                                          'code': selectItem['code'],
+                                        };
+                                      });
+                                      _loadTrainNum(setState, fd);
+                                    },
+                                  );
+                                }
+                              },
+                            ),
+                            // 新增: 车号
+                            ZjcFormSelectCell(
+                              title: "车号",
+                              text: (fd.trainNumSelected['displayTrainNum'] ??
+                                      fd.trainNumSelected['trainNum'] ??
+                                      '')
+                                  .toString(),
+                              hintText: fd.trainNumLoading ? "加载中..." : "请选择",
+                              clickCallBack: () {
+                                if (fd.trainNumLoading) return;
+                                if (fd.trainNumList.isEmpty) {
+                                  showToast("无车号可选择");
+                                } else {
+                                  ZjcCascadeTreePicker.show(
+                                    context,
+                                    data: fd.trainNumList,
+                                    labelKey: 'displayTrainNum',
+                                    valueKey: 'code',
+                                    childrenKey: 'children',
+                                    title: "选择车号",
+                                    clickCallBack: (selectItem, selectArr) {
+                                      setState(() {
+                                        fd.trainNumSelected = {
+                                          'trainNum': selectItem['trainNum'],
+                                          'code': selectItem['code'],
+                                          'displayTrainNum':
+                                              selectItem['displayTrainNum'],
+                                          'ends': selectItem['ends'],
+                                        };
+                                      });
+                                    },
+                                  );
+                                }
+                              },
+                            ),
                             //增加朝向
                             ZjcFormSelectCell(
                               title: "工序节点",
@@ -2544,6 +2804,25 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   onPressed: () {
                     for (int i = 0; i < formDataList.length; i++) {
                       final fd = formDataList[i];
+                      
+                      final dynamicCode = (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
+                      if (dynamicCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择动力类型");
+                        return;
+                      }
+                      
+                      final typeCode = (fd.jcTypeSelected['code'] ?? '').toString().trim();
+                      if (typeCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择机型");
+                        return;
+                      }
+                      
+                      final trainCode = (fd.trainNumSelected['code'] ?? '').toString().trim();
+                      if (trainCode.isEmpty) {
+                        showToast("作业单 ${i + 1}: 请选择车号");
+                        return;
+                      }
+
                       final nodeCode =
                           (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
                       if (nodeCode.isEmpty) {

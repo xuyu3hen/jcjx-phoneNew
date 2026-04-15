@@ -150,8 +150,8 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
               data['faultDesc'] ??
               widget.faultDescription;
 
-          // 设置施修方案
-          _repairPlan = data['repairScheme'] ??
+          _repairPlan = data['maintenanceNotice'] ??
+              data['repairScheme'] ??
               data['repairProgram'] ??
               widget.repairScheme;
 
@@ -244,7 +244,7 @@ class _MutualDisposalPageState extends State<MutualDisposalPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildLabeledTextBlock(
-                    label: '施修方案',
+                    label: '建议施修方案',
                     text: _repairPlan,
                     height: 60,
                   ),

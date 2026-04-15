@@ -489,13 +489,13 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                     },
                   ),
                   ZjcFormInputCell(
-                    title: "施修方案",
-                    text: repairPlan,
+                    title: "建议施修方案",
+                    text: maintenanceNotice,
                     maxLines: 7,
                     maxLength: 300,
                     showRedStar: true,
                     inputCallBack: (value) {
-                      repairPlan = value;
+                      maintenanceNotice = value;
                     },
                   ),
                   Column(
@@ -752,13 +752,13 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
               "faultDescription": faultDesc,
               // "faultyComponent": componentName['configCode'],
               "machineModel": jcTypeListSelected['code'],
-              // "maintenanceNotice": maintenanceNotice,
+              
               "trainEntryCode": trainNumSelected["code"],
               "repairWorkResource": repairWorkResource["code"],
               "riskLevel": riskLevel,
               "requiredProcessingMethod": requiredProcessingMethod["code"],
               "completeStatus": completeStatus,
-              "repairScheme": repairPlan,
+              "repairScheme": maintenanceNotice,
               "faultAssumption": selectedAssumeType, 
               "status": 0
             };

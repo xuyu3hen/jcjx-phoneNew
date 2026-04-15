@@ -601,11 +601,17 @@ class Jt28StartWorkListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 故障现象和施修方案
+                // 故障现象和建议施修方案
                 _buildInfoRow(
                   [
                     _buildInfoItem('故障现象', _getSafeText('faultDescription')),
-                    _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+                    _buildInfoItem(
+                      '建议施修方案',
+                      _getSafeText(
+                        'maintenanceNotice',
+                        defaultValue: _getSafeText('repairScheme'),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -1446,11 +1452,17 @@ class Jt28ListItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 故障现象和施修方案
+          // 故障现象和建议施修方案
           _buildInfoRow(
             [
               _buildInfoItem('故障现象', _getSafeText('faultDescription')),
-              _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+              _buildInfoItem(
+                '建议施修方案',
+                _getSafeText(
+                  'maintenanceNotice',
+                  defaultValue: _getSafeText('repairScheme'),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1602,11 +1614,17 @@ class Jt28AssignListItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 故障现象和施修方案
+                // 故障现象和建议施修方案
                 _buildInfoRow(
                   [
                     _buildInfoItem('故障现象', _getSafeText('faultDescription')),
-                    _buildInfoItem('施修方案', _getSafeText('repairScheme')),
+                    _buildInfoItem(
+                      '建议施修方案',
+                      _getSafeText(
+                        'maintenanceNotice',
+                        defaultValue: _getSafeText('repairScheme'),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

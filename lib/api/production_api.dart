@@ -194,6 +194,23 @@ class ProductApi extends AppApi {
     }
   }
 
+    // /dispatch/trainShuntingPackage/invalidPlan
+    Future<dynamic> invalidTrainShuntingPackage({
+      required List<String> shuntingPlanCodeList,
+    }) async {
+      try {
+        var r = await AppApi.dio.get(
+          "/dispatch/trainShuntingPlan/invalidPlan",
+          queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
+        );
+        logger.i((r.data["data"]));
+        return (r.data["data"]);
+      } catch (e) {
+        _handleException(e);
+        return null;
+      }
+    }
+
   // /dispatch/trainShuntingPackage/completeShuntingPlan
   Future<dynamic> completeTrainShuntingPackage({
     required List<String> shuntingPlanCodeList,
@@ -1089,7 +1106,7 @@ class ProductApi extends AppApi {
       Map<String, dynamic>? queryParametrs) async {
     var r = await AppApi.dio.get(
       "/dispatch/trainEntry/selectAll",
-      data: queryParametrs,
+      queryParameters: queryParametrs,
     );
     logger.i((r.data["data"])['data']);
 

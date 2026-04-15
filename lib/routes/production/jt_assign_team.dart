@@ -520,7 +520,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                           ),
                                           Expanded(
                                             child: Text(
-                                                "施修方案: ${item['repairScheme'] ?? ''}"),
+                                                "建议施修方案: ${item['maintenanceNotice'] ?? item['repairScheme'] ?? ''}"),
                                           ),
                                         ],
                                       ),

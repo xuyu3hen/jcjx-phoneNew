@@ -159,8 +159,8 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
               data['faultDesc'] ??
               widget.faultDescription;
 
-          // 设置施修方案
-          _repairPlan = data['repairScheme'] ??
+          _repairPlan = data['maintenanceNotice'] ??
+              data['repairScheme'] ??
               data['repairProgram'] ??
               widget.repairScheme;
 

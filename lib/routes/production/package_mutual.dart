@@ -584,7 +584,9 @@ class _JtShowPageState extends State<MutualPackageList> {
                                                     widget.trainEntryCode,
                                                 trainNum: widget.trainNum,
                                                 repairScheme:
-                                                    item['repairScheme'] ?? "",
+                                                    item['maintenanceNotice'] ??
+                                                        item['repairScheme'] ??
+                                                        "",
                                                 trainNumCode:
                                                     widget.trainNumCode,
                                                 typeCode: widget.typeCode,

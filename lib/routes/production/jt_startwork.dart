@@ -219,9 +219,9 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                   showRedStar: false,
                 ),
                 
-                // 3. 施修方案 文本域
+                
                 ZjcFormInputCell(
-                  title: "施修方案",
+                  title: "建议施修方案",
                   text: _repairPlan,
                   maxLines: 3,
                   enabled: false,

@@ -578,7 +578,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
       initialIndex: 0,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('调车作业计划'),
+          title: Text(widget.readOnly ? '调车计划查询' : '调车作业计划'),
           backgroundColor: Colors.white,
           elevation: 1,
           bottom: const TabBar(
@@ -1581,6 +1581,56 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 : '$typeName $trainNum$ends'));
   }
 
+  Future<bool> _revokePlans(List<Map<String, dynamic>> plans) async {
+    if (!widget.readOnly) return false;
+    final codeList = plans
+        .map((e) => (e['code'] ?? '').toString().trim())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+    if (codeList.isEmpty) {
+      SmartDialog.showToast('数据异常：缺少代码');
+      return false;
+    }
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('撤销确认'),
+        content: Text('确认撤销这${codeList.length}条勾计划吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('确认'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return false;
+    SmartDialog.showLoading(msg: '正在撤销...');
+    try {
+      final r = await ProductApi().invalidTrainShuntingPackage(
+        shuntingPlanCodeList: codeList,
+      );
+      SmartDialog.dismiss();
+      if (r == null) {
+        SmartDialog.showToast('撤销失败');
+        return false;
+      }
+      SmartDialog.showToast('撤销成功');
+      _changed = true;
+      await _refresh();
+      return true;
+    } catch (e) {
+      SmartDialog.dismiss();
+      SmartDialog.showToast('撤销失败: $e');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final kw = _trainNumKeyword.trim();
@@ -1681,6 +1731,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                           getRemoveUploaded: () =>
                               _slipRemoveUploadedByPlanCode[primaryPlanCode] ==
                               true,
+                          revokePlans: () => _revokePlans(plansInGroup),
                         ),
                       ),
                     );
@@ -1837,7 +1888,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       },
       child: Scaffold(
       appBar: AppBar(
-        title: const Text('调车作业记录'),
+        title: Text(widget.readOnly ? '调车计划查询' : '调车作业记录'),
         backgroundColor: Colors.white,
         elevation: 1,
         actions: [
@@ -1874,6 +1925,7 @@ class _TrainShuntingPlanDetailPage extends StatefulWidget {
   final XFile? Function() getLocalSetup;
   final XFile? Function() getLocalHook;
   final bool Function() getRemoveUploaded;
+  final Future<bool> Function() revokePlans;
 
   const _TrainShuntingPlanDetailPage({
     Key? key,
@@ -1892,6 +1944,7 @@ class _TrainShuntingPlanDetailPage extends StatefulWidget {
     required this.getLocalSetup,
     required this.getLocalHook,
     required this.getRemoveUploaded,
+    required this.revokePlans,
   }) : super(key: key);
 
   @override
@@ -1980,13 +2033,29 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
 
   @override
   Widget build(BuildContext context) {
-    final plan = widget.plans.first;
-    final st = plan['status'];
-    final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
-    final isStarted = stInt == 4;
-    final isCompleted = stInt == 2;
+    bool allCompleted = widget.plans.isNotEmpty;
+    bool anyStarted = false;
+    final remoteEntries = <Map<String, dynamic>>[];
+    final seenRemote = <String>{};
+    for (final plan in widget.plans) {
+      final st = plan['status'];
+      final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
+      if (stInt == 4) anyStarted = true;
+      if (stInt != 2) allCompleted = false;
+      final entries = _extractUploadedImageEntries(plan);
+      for (final e in entries) {
+        final url = (e['downloadUrl'] ?? '').toString().trim();
+        final t = (e['antiSlipType'] ?? '').toString().trim();
+        if (url.isEmpty) continue;
+        final key = '$t|$url';
+        if (seenRemote.add(key)) {
+          remoteEntries.add(e);
+        }
+      }
+    }
+    final isCompleted = allCompleted;
+    final isStarted = !isCompleted && anyStarted;
 
-    final remoteEntries = _extractUploadedImageEntries(plan);
     final typed1 = remoteEntries
         .where((e) => (e['antiSlipType']?.toString() ?? '') == '1')
         .toList();
@@ -2134,6 +2203,19 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
         title: Text(widget.title),
         backgroundColor: Colors.white,
         elevation: 1,
+        actions: widget.readOnly
+            ? [
+                TextButton(
+                  onPressed: () async {
+                    final ok = await widget.revokePlans();
+                    if (ok && mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  },
+                  child: const Text('一并撤销'),
+                ),
+              ]
+            : const [],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -2209,6 +2291,8 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
                     if (widget.plans.length > 1) ...[
                       Text(
                         hText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
