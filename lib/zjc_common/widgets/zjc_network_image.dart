@@ -67,8 +67,9 @@ class ZjcNetworkImage extends StatelessWidget {
           height: height,
           fit: fit,
           color: color,
-          memCacheWidth: cacheWidth,
-          memCacheHeight: cacheHeight,
+          // 优化点：自动将 width/height 转换为 cacheWidth/cacheHeight 避免 OOM
+          memCacheWidth: cacheWidth ?? (width != null ? (width! * 3).toInt() : null),
+          memCacheHeight: cacheHeight ?? (height != null ? (height! * 3).toInt() : null),
         ),
       );
     }
