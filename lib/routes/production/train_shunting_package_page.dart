@@ -2,6 +2,7 @@ import '../../index.dart';
 import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class TrainShuntingPackagePage extends StatefulWidget {
   final bool readOnly;
@@ -252,6 +253,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                 SmartDialog.showToast('请先启用');
                 return;
               }
+              logger.i('进入调车作业记录界面: title=$name, packageCode=$code, planList=${jsonEncode(plans)}');
               await Navigator.of(context).push(
                 MaterialPageRoute<bool>(
                   builder: (context) => TrainShuntingPlanListPage(
@@ -262,9 +264,7 @@ class _TrainShuntingPackagePageState extends State<TrainShuntingPackagePage> {
                   ),
                 ),
               );
-              if (!widget.readOnly) {
-                await _loadData();
-              }
+              await _loadData();
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1581,7 +1581,7 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                 : '$typeName $trainNum$ends'));
   }
 
-  Future<bool> _revokePlans(List<Map<String, dynamic>> plans) async {
+  Future<bool> _revokePlans(List<Map<String, dynamic>> plans, {bool popAfter = false}) async {
     if (!widget.readOnly) return false;
     final codeList = plans
         .map((e) => (e['code'] ?? '').toString().trim())
@@ -1622,7 +1622,13 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       }
       SmartDialog.showToast('撤销成功');
       _changed = true;
-      await _refresh();
+      if (popAfter) {
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      } else {
+        await _refresh();
+      }
       return true;
     } catch (e) {
       SmartDialog.dismiss();
@@ -1685,10 +1691,15 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                   final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
                   final isStarted = stInt == 4;
                   final isCompleted = stInt == 2;
+                  final isDiscarded = stInt == 3;
                   
                   final headerText = group.map((idx) => _getHeaderText(_planList[idx])).join(' + ');
 
                   void navigateToDetail() async {
+                    if (isDiscarded) {
+                      SmartDialog.showToast('已废弃，无法操作');
+                      return;
+                    }
                     final primaryPlan = _planList[group.first];
                     final primaryPlanCode = (primaryPlan['code'] ?? '').toString();
                     final plansInGroup = group.map((idx) => _planList[idx]).toList();
@@ -1780,18 +1791,22 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                 const SizedBox(width: 8),
                                 DecoratedBox(
                                   decoration: BoxDecoration(
-                                    color: isCompleted
-                                        ? Colors.green.withOpacity(0.1)
-                                        : (isStarted
-                                            ? Colors.orange.withOpacity(0.1)
-                                            : Colors.grey.withOpacity(0.1)),
+                                    color: isDiscarded
+                                        ? Colors.red.withOpacity(0.1)
+                                        : isCompleted
+                                            ? Colors.green.withOpacity(0.1)
+                                            : (isStarted
+                                                ? Colors.orange.withOpacity(0.1)
+                                                : Colors.grey.withOpacity(0.1)),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isCompleted
-                                          ? Colors.green
-                                          : (isStarted
-                                              ? Colors.orange
-                                              : Colors.grey),
+                                      color: isDiscarded
+                                          ? Colors.red
+                                          : isCompleted
+                                              ? Colors.green
+                                              : (isStarted
+                                                  ? Colors.orange
+                                                  : Colors.grey),
                                     ),
                                   ),
                                   child: Padding(
@@ -1800,17 +1815,21 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                       vertical: 4,
                                     ),
                                     child: Text(
-                                      isCompleted
-                                          ? '已完成'
-                                          : (isStarted ? '作业中' : '未开工'),
+                                      isDiscarded
+                                          ? '已废弃'
+                                          : isCompleted
+                                              ? '已完成'
+                                              : (isStarted ? '作业中' : '未开工'),
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: isCompleted
-                                            ? Colors.green
-                                            : (isStarted
-                                                ? Colors.orange
-                                                : Colors.grey),
+                                        color: isDiscarded
+                                            ? Colors.red
+                                            : isCompleted
+                                                ? Colors.green
+                                                : (isStarted
+                                                    ? Colors.orange
+                                                    : Colors.grey),
                                       ),
                                     ),
                                   ),
@@ -1874,6 +1893,24 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
                                 ),
                               );
                             }).toList(),
+                            if (widget.readOnly && !isStarted && !isCompleted && !isDiscarded) ...[
+                              const Divider(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  TextButton(
+                                    onPressed: () {
+                                      final plansInGroup = group.map((idx) => _planList[idx]).toList();
+                                      _revokePlans(plansInGroup, popAfter: true);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('撤销'),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -2042,7 +2079,9 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
       final stInt = st is int ? st : int.tryParse(st?.toString() ?? '');
       if (stInt == 4) anyStarted = true;
       if (stInt != 2) allCompleted = false;
-      final entries = _extractUploadedImageEntries(plan);
+    }
+    if (widget.plans.isNotEmpty) {
+      final entries = _extractUploadedImageEntries(widget.plans.first);
       for (final e in entries) {
         final url = (e['downloadUrl'] ?? '').toString().trim();
         final t = (e['antiSlipType'] ?? '').toString().trim();
