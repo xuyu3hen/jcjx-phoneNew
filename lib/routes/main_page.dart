@@ -8,6 +8,11 @@ import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/production/after_sale_temp_repair_register_page.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
+import 'package:flutter_app_badger/flutter_app_badger.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:async';
+import 'dart:typed_data'; // 引入 Int64List 所需的包
 
 import '../index.dart';
 import 'production/train_shunting_package_page.dart';
@@ -28,10 +33,22 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   final bool _hasUpdate = false;
   var logger = AppLogger.logger;
 
+  // 通知插件实例
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  Timer? _pollingTimer;
+
   @override
   void initState() {
     super.initState();
     pageController = PageController(initialPage: page);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        pageController?.jumpToPage(page);
+      }
+      _startPolling();
+    });
 
     // 获取是线上版本还是线下版版本
     // queryParameters = {
@@ -42,9 +59,31 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     // };
     logger.i('当前环境: ${F.appFlavor}');
     // ProductApi().getLatestOne(env: 'release');
+    _initLocalNotifications();
     // 初始化更新组件
     initXUpdate();
-    
+  }
+
+  void _startPolling() {
+    _pollingTimer?.cancel();
+    // 立即执行一次
+    if (mounted) {
+      _loadMessageCount();
+    }
+    // 每隔 15 秒主动去服务端拉取一次最新数量
+    _pollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (mounted) {
+        _loadMessageCount();
+      }
+    });
+  }
+
+  Future<void> _initLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   // 更新组件初始化
@@ -173,24 +212,126 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     FlutterXUpdate.updateByInfo(updateEntity: customJsonParse(myapk));
   }
 
+  int _lastNotificationCount = -1;
+
+  Future<void> _updateAppBadge(int count) async {
+    try {
+      // Android 13 及以上，如果不授予通知权限，桌面角标功能将直接被系统屏蔽。
+      // 因此在更新角标前，主动申请一次通知权限。
+      var status = await Permission.notification.status;
+      if (!status.isGranted) {
+        await Permission.notification.request();
+      }
+
+      bool isSupported = await FlutterAppBadger.isAppBadgeSupported();
+      AppLogger.logger.i('角标支持状态: $isSupported, 当前数量: $count');
+      
+      if (isSupported || Platform.isAndroid) {
+        if (count > 0) {
+          FlutterAppBadger.updateBadgeCount(count);
+          // 只有数量发生变化时，才触发新的通知（避免每15秒震动一次）
+          if (count != _lastNotificationCount) {
+             _showNotification(count);
+             _lastNotificationCount = count;
+          }
+        } else {
+          FlutterAppBadger.removeBadge();
+          flutterLocalNotificationsPlugin.cancel(888);
+          _lastNotificationCount = 0;
+        }
+      }
+    } catch (e) {
+      AppLogger.logger.e('更新角标失败: $e');
+    }
+  }
+
+  Future<void> _showNotification(int count) async {
+    try {
+      final AndroidNotificationDetails androidNotificationDetails =
+          AndroidNotificationDetails(
+        'jcjx_message_channel',
+        '系统消息通知',
+        channelDescription: '用于显示机车检修系统的未读消息和调令数量',
+        importance: Importance.max, // 修改为最高重要性
+        priority: Priority.high,    // 修改为高优先级
+        ticker: 'ticker',
+        ongoing: true, // 设置为正在进行，使其常驻
+        autoCancel: false,
+        enableVibration: true,
+        vibrationPattern: Int64List.fromList([0, 500, 200, 500]), // 震动模式：延迟0ms，震动500ms，停200ms，震动500ms
+        playSound: true, // 确保声音也被触发
+        number: count, // Android 8.0+ 的系统桌面角标长按数字显示，并用于更新图标上的未读消息数量
+        channelShowBadge: true, // 确保渠道本身允许展示角标
+      );
+      final NotificationDetails notificationDetails =
+          NotificationDetails(android: androidNotificationDetails);
+      
+      await flutterLocalNotificationsPlugin.show(
+        888, // 固定的通知ID
+        '机车检修消息中心',
+        '您有 $count 条未读消息待处理', // 纯粹展示未读消息
+        notificationDetails,
+        payload: 'item x',
+      );
+    } catch (e) {
+      AppLogger.logger.e('发送常驻通知失败: $e');
+    }
+  }
+
   Future<void> _loadMessageCount() async {
     try {
-      final res = await ProductApi().getMessageInfo(
+      // 1. 获取消息中心的数量 (包含类型 8 和类型 21: 售后故障录入通知)
+      final resMessage = await ProductApi().getMessageInfo(
         queryParametrs: {
-          'type': [8],
+          'type': [8, 21],
           'auditDTO': {},
         },
       );
-      final data = res is Map ? res : <String, dynamic>{};
-      final count = (data['count'] as num?)?.toInt() ?? 0;
-      if (mounted) {
-        setState(() => _messageCount = count);
+      final dataMessage = resMessage is Map ? resMessage : <String, dynamic>{};
+      final messageCount = (dataMessage['count'] as num?)?.toInt() ?? 0;
+
+      // 2. 获取未读调车通知的数量 (status: 0 代表未读)
+      int shuntingUnreadCount = 0;
+      if (Global.profile.permissions == null) {
+        final p = await LoginApi().getpermissions();
+        if (p.code == 200 && mounted) {
+          Global.profile.permissions = p;
+        }
       }
+      final user = Global.profile.permissions?.user;
+      final resShunting = await DefaultShuntingNoticeApi().getShuntingNotice(
+        queryParametrs: {
+          'auditUserName': user?.nickName ?? user?.userName ?? '',
+          'auditUserId': user?.userId ?? '',
+          'status': 0,
+          'pageNum': 1,
+          'pageSize': 1, // 只需要 total，不需要拉取具体列表
+        },
+      );
+      final dataShunting = resShunting is Map ? resShunting : <String, dynamic>{};
+      final shuntingTotal = dataShunting['total'];
+      if (shuntingTotal is num) {
+        shuntingUnreadCount = shuntingTotal.toInt();
+      } else {
+        shuntingUnreadCount = int.tryParse(shuntingTotal?.toString() ?? '') ?? 0;
+      }
+
+      // 我们发现调车通知详情里的通知也属于消息的一种。这里为了不重复叠加数量，
+      // 因为之前的逻辑 messageCount 已经包含了总的调车通知消息（卡片）数量。
+      // 如果您希望直接使用 `messageCount` 作为唯一数字，可以直接把下面的 `totalCount` 改成 `messageCount`。
+      // 这里根据您的反馈“翻倍了”，说明 messageCount 实际上可能已经涵盖了或者不需要额外再加上去。
+      final totalCount = shuntingUnreadCount > 0 ? shuntingUnreadCount : messageCount; 
+
+      if (mounted) {
+        setState(() => _messageCount = totalCount);
+      }
+      _updateAppBadge(totalCount);
     } catch (_) {}
   }
 
   @override
   void dispose() {
+    _pollingTimer?.cancel();
     pageController?.dispose();
     super.dispose();
   }
@@ -274,6 +415,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
               MessageCenterPage(
                 onMessageCountChanged: (count) {
                   if (mounted) setState(() => _messageCount = count);
+                  _updateAppBadge(count);
                 },
               ),
               const NormalMainPage(),

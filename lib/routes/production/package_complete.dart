@@ -24,7 +24,9 @@ class _PackagePartInfoState extends State<PackagePartInfo> {
 
   List<Map<String, dynamic>> packageList = [];
 
+  @override
   void initState() {
+    super.initState();
     print(widget.taskInstructContentList);
   }
 
@@ -85,7 +87,9 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   List<Map<String, dynamic>> packageListUse = [];
   var logger = AppLogger.logger;
 
+  @override
   void initState() {
+    super.initState();
     packageListUse = widget.packageList;
     getCertainPackage();
   }
@@ -425,6 +429,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
   @override
   void initState() {
+    super.initState();
     List<Map<String, dynamic>> list = [];
     if (widget.packageInfo != null) {
       list.add(widget.packageInfo!);

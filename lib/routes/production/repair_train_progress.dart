@@ -2010,7 +2010,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         final r = await ProductApi().getTrainEntryDynamic({
           'typeCode': typeCode,
           'complete': 0,
-          'tempFalse': false,
+          'tempRepair': false,
+          'pageNum':0,
+          'pageSize':0
         });
         dynamic raw = r;
         if (raw is Map) {

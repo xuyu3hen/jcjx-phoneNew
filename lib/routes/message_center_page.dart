@@ -56,7 +56,7 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
     try {
       final res = await ProductApi().getMessageInfo(
         queryParametrs: {
-          'type': [8],
+          'type': [8, 21], // 包含调令与售后故障录入通知
           'auditDTO': {},
         },
       );
@@ -64,13 +64,42 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
       final list = data['sysMessageVO'] is List
           ? List<dynamic>.from(data['sysMessageVO'] as List)
           : <dynamic>[];
-      final count = (data['count'] as num?)?.toInt() ?? list.length;
+      final messageCount = (data['count'] as num?)?.toInt() ?? list.length;
+      
+      // 获取未读调车通知的数量 (status: 0 代表未读)
+      int shuntingUnreadCount = 0;
+      if (Global.profile.permissions == null) {
+        final p = await LoginApi().getpermissions();
+        if (p.code == 200 && mounted) {
+          Global.profile.permissions = p;
+        }
+      }
+      final user = Global.profile.permissions?.user;
+      final resShunting = await DefaultShuntingNoticeApi().getShuntingNotice(
+        queryParametrs: {
+          'auditUserName': user?.nickName ?? user?.userName ?? '',
+          'auditUserId': user?.userId ?? '',
+          'status': 0,
+          'pageNum': 1,
+          'pageSize': 1, // 只需要 total，不需要拉取具体列表
+        },
+      );
+      final dataShunting = resShunting is Map ? resShunting as Map : <String, dynamic>{};
+      final shuntingTotal = dataShunting['total'];
+      if (shuntingTotal is num) {
+        shuntingUnreadCount = shuntingTotal.toInt();
+      } else {
+        shuntingUnreadCount = int.tryParse(shuntingTotal?.toString() ?? '') ?? 0;
+      }
+
+      final totalCount = shuntingUnreadCount > 0 ? shuntingUnreadCount : messageCount;
+
       if (mounted) {
         setState(() {
           _loading = false;
           _list = list;
         });
-        widget.onMessageCountChanged?.call(count);
+        widget.onMessageCountChanged?.call(totalCount);
       }
     } catch (e) {
       logger.e(e);
@@ -304,10 +333,10 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       };
       final results = await Future.wait([
         _shuntingApi.getShuntingNotice(
-          queryParametrs: {...base, 'status': 0},
+          queryParametrs: {...base, 'status': 0, 'type': [21]},
         ),
         _shuntingApi.getShuntingNotice(
-          queryParametrs: {...base, 'status': 1},
+          queryParametrs: {...base, 'status': 1, 'type': [21]},
         ),
       ]);
       if (!mounted) return;
@@ -338,6 +367,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'auditUserName': user?.nickName ?? user?.userName ?? '',
         'auditUserId': user?.userId ?? '',
         'status': _shuntingStatus,
+        'type': [21],
         'pageNum': 1,
         'pageSize': _pageSize,
       };
@@ -385,6 +415,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'auditUserName': user?.nickName ?? user?.userName ?? '',
         'auditUserId': user?.userId ?? '',
         'status': _shuntingStatus,
+        'type': [21],
         'pageNum': nextPage,
         'pageSize': _pageSize,
       };
@@ -607,7 +638,18 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       final res = await _shuntingApi.updateShuntingNotice([params]);
       if (mounted) {
         showToast(res != null ? '已读' : '操作失败');
-        if (res != null) _loadShuntingNotice();
+        if (res != null) {
+          await _loadShuntingNotice();
+          await _loadShuntingCounts(); // 更新详情页内部数字
+          
+          // 通知外层重新计算并更新总消息数量（含桌面角标）
+          if (mounted) {
+            final state = context.findAncestorStateOfType<_MessageCenterPageState>();
+            if (state != null) {
+              state._fetchMessageData();
+            }
+          }
+        }
       }
     } catch (e) {
       logger.e(e);
@@ -626,12 +668,19 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'trainNum': '车号',
     'typeName': '机型',
     'auditResult': '评审意见',
+    // 新增售后故障录入通知专属字段
+    'faultPhenomenon': '故障现象',
+    'reportUser': '提报人',
+    'reportTime': '提报时间',
   };
 
   static const List<String> _shuntingFieldOrder = [
     'content',
+    'faultPhenomenon', // 故障现象
     'applyTime',
+    'reportTime', // 提报时间
     'applyUserName',
+    'reportUser', // 提报人
     'auditUserName',
     'auditDeptName',
     'trainNum',
@@ -652,6 +701,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'createdTime',
     'updatedTime',
     'applyTime',
+    'reportTime', // 将新增的提报时间也加入时间格式化列表
   };
 
   /// 调车类型数字与中文对应（与后台通知单类型一致）
@@ -677,6 +727,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     '18': '人员变更',
     '19': '物料变更',
     '20': '机统28提报',
+    '21': '售后故障录入通知',
   };
 
   String _formatShuntingValue(String key, dynamic v) {

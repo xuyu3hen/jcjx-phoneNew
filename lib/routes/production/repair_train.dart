@@ -1391,7 +1391,9 @@ class _PackageInfoState extends State<PackageInfo> {
 
   List<Map<String, dynamic>> packageList = [];
 
+  @override
   void initState() {
+    super.initState();
     // getWorkPackage();
   }
 
@@ -1798,7 +1800,9 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
     );
   }
 
+  @override
   void initState() {
+    super.initState();
     getWorkPackage();
     _loadPendingUploadData();
   }
@@ -2171,6 +2175,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   @override
   void initState() {
+    super.initState();
     if (widget.packageInfo?["taskCertainPackageList"] is List) {
       packagePoints = (widget.packageInfo?["taskCertainPackageList"] as List)
           .map((item) => item is Map<String, dynamic>
