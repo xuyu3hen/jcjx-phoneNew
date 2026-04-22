@@ -983,12 +983,12 @@ class ProductApi extends AppApi {
 
   //dispatch/masAfterSaleShunting/Update
   Future<dynamic> update({
-    Map<String, dynamic>? queryParametrs,
+    dynamic data,
   }) async {
     try {
       var r = await AppApi.dio.post(
-        "/dispatch/masAfterSaleShunting/Update",
-        queryParameters: queryParametrs,
+        "/dispatch/masAfterSaleShunting/update",
+        data: data,
       );
       logger.i(r.data);
       return r.data;

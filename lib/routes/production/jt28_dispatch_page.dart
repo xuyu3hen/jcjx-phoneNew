@@ -323,8 +323,15 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
     final workshopName = work['deptName'] ?? work['responsibleDeptName'] ?? '';
     final deptList =
         work['masAfterSaleWorkDeptList'] as List<Map<String, dynamic>>;
+        
+    // Generate a temporary unique code if missing, to maintain structure parity
+    final shuntingCode = work['afterSaleShuntingCode'] ?? '';
+    final workCode = work['afterSaleWorkCode'] ?? '';
+    
     setState(() {
       deptList.add({
+        'afterSaleShuntingCode': shuntingCode,
+        'afterSaleWorkCode': workCode,
         'deptId': workshopId,
         'deptName': workshopName,
         'teamId': null,
@@ -376,6 +383,54 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
     if (shuntingNoticeList.isEmpty) {
       shuntingNoticeList.add({});
     }
+
+    final existingUserIds = _personnelList.map((e) => e['userId'].toString()).toSet();
+    for (var work in _workList) {
+      final deptList = work['masAfterSaleWorkDeptList'] ?? [];
+      if (deptList is List) {
+        for (var dept in deptList) {
+          if (dept is Map) {
+            final uIdList = dept['userIdList'];
+            final uNameList = dept['userNameList'];
+            
+            List<dynamic> ids = [];
+            List<dynamic> names = [];
+            
+            if (uIdList is String) {
+              ids = uIdList.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            } else if (uIdList is List) {
+              ids = List<dynamic>.from(uIdList);
+            }
+            
+            if (uNameList is String) {
+              names = uNameList.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+            } else if (uNameList is List) {
+              names = List<dynamic>.from(uNameList);
+            }
+
+            for (int i = 0; i < ids.length; i++) {
+              final uId = ids[i].toString();
+              if (uId.isNotEmpty && !existingUserIds.contains(uId)) {
+                _personnelList.add({
+                  'deptId': dept['deptId'],
+                  'deptName': dept['deptName'],
+                  'workshop': dept['deptName'],
+                  'teamId': dept['teamId'],
+                  'teamName': dept['teamName'],
+                  'team': dept['teamName'],
+                  'userId': int.tryParse(uId) ?? uId,
+                  'userName': i < names.length ? names[i] : '',
+                  'nickName': i < names.length ? names[i] : '',
+                  'identity': '0',
+                  'personTypeDisplay': '队员',
+                });
+                existingUserIds.add(uId);
+              }
+            }
+          }
+        }
+      }
+    }
     
     if (_signeeList.isNotEmpty) {
       for (var s in shuntingNoticeList) {
@@ -404,13 +459,42 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
       'code': code,
       'createdTime': createdTime,
       'jt28Code': jt28Code,
-      'masAfterSaleUserList': _personnelList,
-      'masAfterSaleWorkList': _workList,
+      'masAfterSaleUserList': _personnelList.map((person) {
+        final clonePerson = Map<String, dynamic>.from(person);
+        // 如果没有身份信息或者选了“请选择”，给个默认的队员 (0) 
+        if (clonePerson['identity'] == null || clonePerson['identity'].toString().isEmpty) {
+          clonePerson['identity'] = '0'; 
+        }
+        return clonePerson;
+      }).toList(),
+      'masAfterSaleWorkList': _workList.map((work) {
+        final cloneWork = Map<String, dynamic>.from(work);
+        if (cloneWork['masAfterSaleWorkDeptList'] is List) {
+          final deptList = List<dynamic>.from(cloneWork['masAfterSaleWorkDeptList']);
+          cloneWork['masAfterSaleWorkDeptList'] = deptList.map((dept) {
+            final cloneDept = Map<String, dynamic>.from(dept as Map);
+            
+            // Ensure userIdList is properly joined as string if it's a list
+            if (cloneDept['userIdList'] is List) {
+              cloneDept['userIdList'] = (cloneDept['userIdList'] as List).join(', ');
+            }
+            
+            // Ensure userNameList is properly joined as string if it's a list
+            if (cloneDept['userNameList'] is List) {
+              cloneDept['userNameList'] = (cloneDept['userNameList'] as List).join(', ');
+            }
+            
+            return cloneDept;
+          }).toList();
+        }
+        return cloneWork;
+      }).toList(),
       'shuntingNoticeList': shuntingNoticeList,
+      'masAfterSalesSubpartList': noticeItem['masAfterSalesSubpartList'] ?? [],
     };
     
     try {
-      final res = await ProductApi().update(queryParametrs: payload);
+      final res = await ProductApi().update(data: payload);
       if (res != null && res['code'] == 200) {
         if (mounted) {
           showToast('保存成功');
@@ -443,9 +527,10 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
           .split(',')
           .map((e) => e.trim())
           .where((e) => e.isNotEmpty)
+          .map((e) => int.tryParse(e) ?? e) // Convert string IDs back to integer if possible to match types
           .toList();
     } else if (rawUserIdList is List) {
-      currentSelectedIds = List<dynamic>.from(rawUserIdList);
+      currentSelectedIds = rawUserIdList.map((e) => e is String ? (int.tryParse(e) ?? e) : e).toList();
     }
 
     final result = await showDialog<List<Map<String, dynamic>>>(
@@ -463,6 +548,32 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
         assignment['userIdList'] = result.map((e) => e['userId']).toList();
         assignment['userNameList'] =
             result.map((e) => e['nickName'] ?? e['userName']).toList();
+            
+        // 自动向顶部人员列表中新增所选人员（如果不存在的话）
+        final existingUserIds = _personnelList.map((e) => e['userId'].toString()).toSet();
+        for (int i = 0; i < result.length; i++) {
+          final u = result[i];
+          final uId = u['userId'].toString();
+          if (uId.isNotEmpty && !existingUserIds.contains(uId)) {
+            _personnelList.add({
+              'deptId': assignment['deptId'],
+              'deptName': assignment['deptName'],
+              'workshop': assignment['deptName'],
+              'teamId': assignment['teamId'],
+              'teamName': assignment['teamName'],
+              'team': assignment['teamName'],
+              'userId': int.tryParse(uId) ?? uId,
+              'userName': u['nickName'] ?? u['userName'] ?? '',
+              'nickName': u['nickName'] ?? u['userName'] ?? '',
+              'personName': u['nickName'] ?? u['userName'] ?? '',
+              'identity': '0',
+              'personTypeDisplay': '队员',
+              'phone': u['phonenumber'] ?? u['phoneNumber'] ?? u['phone'] ?? u['tel'] ?? '',
+            });
+            existingUserIds.add(uId);
+            _peopleCount = _personnelList.length;
+          }
+        }
       });
     }
   }
@@ -475,7 +586,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
         actions: [
           TextButton(
             onPressed: _submit,
-            child: const Text('确认', style: TextStyle(color: Colors.white)),
+            child: const Text('确认', style: TextStyle(color: Colors.black87)),
           )
         ],
       ),
@@ -498,12 +609,12 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                   ..._workList.map((work) => _buildWorkCard(work)).toList(),
                   const SizedBox(height: 16),
 
-                  // Parts Section
-                  _buildPartsSection(),
-                  const SizedBox(height: 16),
-
                   // Personnel Section
                   _buildPersonnelSection(),
+                  const SizedBox(height: 16),
+
+                  // Parts Section
+                  _buildPartsSection(),
                   const SizedBox(height: 16),
 
                   // Safety Section
@@ -706,7 +817,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('新增派工'),
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.orange,
+                        foregroundColor: Colors.black87,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         minimumSize: Size.zero,
@@ -913,7 +1024,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                                   child: Text('车间',
                                       style: TextStyle(fontWeight: FontWeight.bold))),
                               Expanded(
-                                  flex: 2,
+                                  flex: 3,
                                   child: Text('班组',
                                       style: TextStyle(fontWeight: FontWeight.bold))),
                               Expanded(
@@ -979,7 +1090,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                           ),
                         ),
                                 Expanded(
-                                  flex: 2,
+                                  flex: 3,
                                   child: InkWell(
                                     onTap: () async {
                               final deptId = _parseId(person['deptId']);
@@ -1011,7 +1122,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                               decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!)),
-                              child: Text(_pickText(person, ['teamName', 'team', 'groupName']).isEmpty ? '请选择' : _pickText(person, ['teamName', 'team', 'groupName']), maxLines: 1, overflow: TextOverflow.ellipsis),
+                              child: Text(_pickText(person, ['teamName', 'team', 'groupName']).isEmpty ? '请选择' : _pickText(person, ['teamName', 'team', 'groupName']), maxLines: 2, overflow: TextOverflow.ellipsis),
                             ),
                           ),
                         ),
@@ -1020,11 +1131,34 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                                   child: InkWell(
                                     onTap: () async {
                               final teamId = _parseId(person['teamId']);
-                              if (teamId == null) {
-                                showToast('请先选择班组');
+                              final deptId = _parseId(person['deptId']);
+                              
+                              if (teamId == null && deptId == null) {
+                                showToast('请先选择班组或车间');
                                 return;
                               }
-                              final users = _usersByTeamId[teamId] ?? [];
+                              
+                              List<Map<String, dynamic>> users = [];
+                              if (teamId != null) {
+                                users = _usersByTeamId[teamId] ?? [];
+                              } else if (deptId != null) {
+                                // 如果只选了车间，则拉取车间下的人员
+                                SmartDialog.showLoading(msg: '正在获取人员列表...');
+                                final res = await ProductApi().getUserListByDeptId(
+                                  queryParametrs: {'deptId': deptId},
+                                );
+                                SmartDialog.dismiss();
+                                if (res is Map && res['rows'] is List) {
+                                  for (var u in res['rows']) {
+                                    if (u is Map) users.add(Map<String, dynamic>.from(u));
+                                  }
+                                } else if (res is List) {
+                                  for (var u in res) {
+                                    if (u is Map) users.add(Map<String, dynamic>.from(u));
+                                  }
+                                }
+                              }
+                              
                               final selected = await _showSearchableListDialog(
                                 title: '选择人员',
                                 items: users,
@@ -1230,36 +1364,51 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: InkWell(
-                    onTap: () async {
+                  child: Builder(
+                    builder: (context) {
                       final deptId = signee['signDept'] != null ? _parseId(signee['signDept']['deptId']) : null;
-                      if (deptId == null) {
-                        showToast('请先选择部门');
-                        return;
-                      }
-                      final teams = _teamsByWorkshopId[deptId] ?? [];
-                      final selected = await _showSearchableListDialog(
-                        title: '选择班组',
-                        items: teams,
-                        labelKey: 'deptName',
-                        valueKey: 'deptId',
+                      final teams = deptId != null ? (_teamsByWorkshopId[deptId] ?? <Map<String, dynamic>>[]) : <Map<String, dynamic>>[];
+                      final bool disabled = deptId != null && teams.isEmpty;
+                      
+                      return InkWell(
+                        onTap: disabled ? null : () async {
+                          if (deptId == null) {
+                            showToast('请先选择部门');
+                            return;
+                          }
+                          final selected = await _showSearchableListDialog(
+                            title: '选择班组',
+                            items: teams,
+                            labelKey: 'deptName',
+                            valueKey: 'deptId',
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              signee['signTeam'] = selected;
+                              signee['signUsers'] = <Map<String, dynamic>>[];
+                            });
+                            final teamId = _parseId(selected['deptId']);
+                            if (teamId != null) {
+                              await _loadUsersForTeam(teamId);
+                            }
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!), 
+                            borderRadius: BorderRadius.circular(4),
+                            color: disabled ? Colors.grey[200] : Colors.transparent,
+                          ),
+                          child: Text(
+                            disabled ? '无班组' : (signee['signTeam'] != null ? (signee['signTeam']['deptName'] ?? '请选择班组') : '请选择班组'), 
+                            style: TextStyle(color: (signee['signTeam'] != null && !disabled) ? Colors.black87 : Colors.grey), 
+                            maxLines: 1, 
+                            overflow: TextOverflow.ellipsis
+                          ),
+                        ),
                       );
-                      if (selected != null) {
-                        setState(() {
-                          signee['signTeam'] = selected;
-                          signee['signUsers'] = <Map<String, dynamic>>[];
-                        });
-                        final teamId = _parseId(selected['deptId']);
-                        if (teamId != null) {
-                          await _loadUsersForTeam(teamId);
-                        }
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      decoration: BoxDecoration(border: Border.all(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(4)),
-                      child: Text(signee['signTeam'] != null ? (signee['signTeam']['deptName'] ?? '请选择班组') : '请选择班组', style: TextStyle(color: signee['signTeam'] != null ? Colors.black87 : Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ),
+                    }
                   ),
                 ),
                 const SizedBox(width: 4),
