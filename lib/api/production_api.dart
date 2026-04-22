@@ -340,6 +340,23 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/masSaleInformation/getMasInformationByJt28Code
+  Future<dynamic> getMasSaleInformation(
+    Map<String, dynamic> queryParametrs,
+  ) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/masSaleInformation/getMasInformationByJt28Code",
+        queryParameters: queryParametrs,
+      );
+      logger.i('getMasSaleInformation: ${(r.data)['data']}');
+      return (r.data)['data'];
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
   //jcjxsystem/message/getMessageInfo  响应格式: { code, message, data: { sysMessageVO: [...], count } }
   Future<dynamic> getMessageInfo({
     Map<String, dynamic>? queryParametrs,
@@ -962,6 +979,22 @@ class ProductApi extends AppApi {
     );
     logger.i((r.data["data"])["data"]);
     return (r.data["data"])["data"];
+  }
+
+  //dispatch/masAfterSaleShunting/Update
+  Future<dynamic> update({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.post(
+        "/dispatch/masAfterSaleShunting/Update",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data);
+      return r.data;
+    } catch (e) {
+      _handleException(e);
+    }
   }
 
   // 获取 /dispatch/releaseShunting/save

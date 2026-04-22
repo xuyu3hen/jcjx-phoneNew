@@ -43,6 +43,7 @@ class _PlanListPageState extends State<PlanListPage> {
         }
       }
       
+      if (!mounted) return;
       setState(() {
         repairProcList = rows;
       });
@@ -70,13 +71,14 @@ class _PlanListPageState extends State<PlanListPage> {
         rows = r.map((item) => item as Map<String, dynamic>).toList();
       }
 
+      if (!mounted) return;
       setState(() {
         investigateList = rows;
         logger.i(investigateList);
       });
     } catch (e) {
       logger.e('获取调查清单失败: $e');
-      showToast('获取数据失败');
+      if (mounted) showToast('获取数据失败');
     }
   }
 

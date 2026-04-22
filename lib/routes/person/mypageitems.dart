@@ -9,6 +9,26 @@ class MyPageItems extends StatefulWidget {
 }
 
 class _MyPageItems extends State<MyPageItems> {
+  static const String _prefMessageVibrationEnabled =
+      'pref_message_vibration_enabled';
+
+  bool _messageVibrationEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getBool(_prefMessageVibrationEnabled);
+    if (!mounted) return;
+    setState(() {
+      _messageVibrationEnabled = v ?? true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return ScrollConfiguration(
@@ -35,6 +55,17 @@ class _MyPageItems extends State<MyPageItems> {
                   },
                 ),
               ],
+            ),
+            SwitchListTile(
+              secondary:
+                  Icon(Icons.vibration, color: Theme.of(context).primaryColor),
+              title: const Text('消息中心震动', style: TextStyle(fontSize: 18)),
+              value: _messageVibrationEnabled,
+              onChanged: (v) async {
+                setState(() => _messageVibrationEnabled = v);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool(_prefMessageVibrationEnabled, v);
+              },
             ),
             _loginTitle(context),
           ],

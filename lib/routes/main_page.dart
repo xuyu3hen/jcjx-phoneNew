@@ -27,11 +27,16 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
+  static const String _prefMessageVibrationEnabled =
+      'pref_message_vibration_enabled';
+
   PageController? pageController;
   int page = 0;
   int _messageCount = 0;
   final bool _hasUpdate = false;
   var logger = AppLogger.logger;
+  bool _isPageSwiping = false;
+  int? _pendingMessageCount;
 
   // 通知插件实例
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -43,6 +48,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
     pageController = PageController(initialPage: page);
+    pageController?.addListener(_handlePageScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         pageController?.jumpToPage(page);
@@ -73,9 +79,24 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     // 每隔 15 秒主动去服务端拉取一次最新数量
     _pollingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       if (mounted) {
+        if (_isPageSwiping) return;
         _loadMessageCount();
       }
     });
+  }
+
+  void _handlePageScroll() {
+    final p = pageController?.page;
+    if (p == null) return;
+    final isSwiping = (p - p.round()).abs() > 0.001;
+    if (_isPageSwiping == isSwiping) return;
+    _isPageSwiping = isSwiping;
+    if (!isSwiping && _pendingMessageCount != null && mounted) {
+      final next = _pendingMessageCount!;
+      _pendingMessageCount = null;
+      setState(() => _messageCount = next);
+      _updateAppBadge(next);
+    }
   }
 
   Future<void> _initLocalNotifications() async {
@@ -217,10 +238,16 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   Future<void> _updateAppBadge(int count) async {
     try {
       // Android 13 及以上，如果不授予通知权限，桌面角标功能将直接被系统屏蔽。
-      // 因此在更新角标前，主动申请一次通知权限。
+      // 避免重复请求权限导致异常
       var status = await Permission.notification.status;
       if (!status.isGranted) {
-        await Permission.notification.request();
+        // We do not await here if it throws "already running" error, 
+        // we can safely catch it or just try to request without breaking the whole flow.
+        try {
+          await Permission.notification.request();
+        } catch (e) {
+          AppLogger.logger.w('请求通知权限忽略异常: $e');
+        }
       }
 
       bool isSupported = await FlutterAppBadger.isAppBadgeSupported();
@@ -247,6 +274,8 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
 
   Future<void> _showNotification(int count) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final vibrationEnabled = prefs.getBool(_prefMessageVibrationEnabled) ?? true;
       final AndroidNotificationDetails androidNotificationDetails =
           AndroidNotificationDetails(
         'jcjx_message_channel',
@@ -257,8 +286,10 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         ticker: 'ticker',
         ongoing: true, // 设置为正在进行，使其常驻
         autoCancel: false,
-        enableVibration: true,
-        vibrationPattern: Int64List.fromList([0, 500, 200, 500]), // 震动模式：延迟0ms，震动500ms，停200ms，震动500ms
+        enableVibration: vibrationEnabled,
+        vibrationPattern: vibrationEnabled
+            ? Int64List.fromList([0, 500, 200, 500])
+            : null,
         playSound: true, // 确保声音也被触发
         number: count, // Android 8.0+ 的系统桌面角标长按数字显示，并用于更新图标上的未读消息数量
         channelShowBadge: true, // 确保渠道本身允许展示角标
@@ -322,6 +353,10 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
       // 这里根据您的反馈“翻倍了”，说明 messageCount 实际上可能已经涵盖了或者不需要额外再加上去。
       final totalCount = shuntingUnreadCount > 0 ? shuntingUnreadCount : messageCount; 
 
+      if (_isPageSwiping) {
+        _pendingMessageCount = totalCount;
+        return;
+      }
       if (mounted) {
         setState(() => _messageCount = totalCount);
       }
@@ -332,6 +367,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    pageController?.removeListener(_handlePageScroll);
     pageController?.dispose();
     super.dispose();
   }
@@ -408,12 +444,16 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         Scaffold(
           resizeToAvoidBottomInset: false,
           body: PageView(
-            physics: const NeverScrollableScrollPhysics(),
+            physics: const PageScrollPhysics(),
             controller: pageController,
             onPageChanged: onPageChanged,
             children: <Widget>[
               MessageCenterPage(
                 onMessageCountChanged: (count) {
+                  if (_isPageSwiping) {
+                    _pendingMessageCount = count;
+                    return;
+                  }
                   if (mounted) setState(() => _messageCount = count);
                   _updateAppBadge(count);
                 },

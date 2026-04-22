@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:jcjx_phone/routes/production/jt28_dispatch_page.dart';
 import 'package:jcjx_phone/routes/production/train_shunting_package_page.dart';
 
 import '../index.dart';
@@ -114,6 +118,8 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
   Future<void> _onTapMessage(Map<String, dynamic> message) async {
     final st = message['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
+    final isAfterSaleService = st == 17 || st == '17';
+    final isRepairProc = st == 13 || st == '13';
     final shuntingCode = message['shuntingCode']?.toString() ?? message['code']?.toString();
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
       final shuntingItem = {'shuntingCode': shuntingCode};
@@ -123,6 +129,28 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
             repairItem: RepairItem(),
             shuntingItem: shuntingItem,
           ),
+        ),
+      );
+      await _fetchMessageData();
+      return;
+    }
+    if (isAfterSaleService && shuntingCode != null && shuntingCode.isNotEmpty) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => AfterSaleServiceNoticePage(shuntingCode: shuntingCode),
+        ),
+      );
+      await _fetchMessageData();
+      return;
+    }
+    if (isRepairProc) {
+      // 修程通知单不响应跳转
+      return;
+    }
+    if (st == 0 || st == '0') {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => const TrainShuntingPackagePage(),
         ),
       );
       await _fetchMessageData();
@@ -593,25 +621,35 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
 
   Widget _buildShuntingCardWithTap(Map<String, dynamic> itemMap) {
     final st = itemMap['shuntingType'];
-    final isInvestigate = st == 4 || st == '4';
-    final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
-    if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _onViewShunting(itemMap),
-          borderRadius: BorderRadius.circular(12),
-          child: _shuntingNoticeCard(itemMap),
-        ),
-      );
+    final isRepairProc = st == 13 || st == '13';
+    
+    // 修程通知单不响应点击事件
+    if (isRepairProc) {
+      return _shuntingNoticeCard(itemMap);
     }
-    return _shuntingNoticeCard(itemMap);
+    
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onViewShunting(itemMap),
+        borderRadius: BorderRadius.circular(12),
+        child: _shuntingNoticeCard(itemMap),
+      ),
+    );
   }
 
   void _onViewShunting(Map<String, dynamic> itemMap) {
     final st = itemMap['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
+    final isAfterSaleService = st == 17 || st == '17';
+    final isRepairProc = st == 13 || st == '13';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
+    
+    // 双重保险，点击时直接返回
+    if (isRepairProc) {
+      return;
+    }
+    
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -621,8 +659,17 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
           ),
         ),
       );
+      return;
     }
-    if (st == 0) {
+    if (isAfterSaleService && shuntingCode != null && shuntingCode.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => AfterSaleServiceNoticePage(shuntingCode: shuntingCode),
+        ),
+      );
+      return;
+    }
+    if (st == 0 || st == '0') {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => const TrainShuntingPackagePage(),
@@ -924,5 +971,805 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         false;
     if (!confirmed) return;
     await _onCompleteShunting(itemMap);
+  }
+}
+
+class AfterSaleServiceNoticePage extends StatefulWidget {
+  final String shuntingCode;
+
+  const AfterSaleServiceNoticePage({super.key, required this.shuntingCode});
+
+  @override
+  State<AfterSaleServiceNoticePage> createState() => _AfterSaleServiceNoticePageState();
+}
+
+class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage> {
+  final _logger = AppLogger.logger;
+  bool _loading = true;
+  List<Map<String, dynamic>> _rows = [];
+  int _selectedIndex = 0;
+  final Map<int, Map<String, dynamic>> _masSaleInfoByIndex = {};
+  final Set<int> _masSaleInfoLoading = {};
+  final Set<int> _masSaleInfoAttempted = {};
+  final _jsonEncoder = const JsonEncoder.withIndent('  ');
+  static const String _jt28AndPeopleHint =
+      '第一个班组中的第一位自动成为主修，第一个班组中的其他人自动为辅修。后续班组及人员仅记录。';
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  String _prettyJson(dynamic v) {
+    try {
+      if (v == null) return 'null';
+      if (v is String) return v;
+      return _jsonEncoder.convert(v);
+    } catch (_) {
+      return v?.toString() ?? 'null';
+    }
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _rows = [];
+      _selectedIndex = 0;
+      _masSaleInfoByIndex.clear();
+      _masSaleInfoLoading.clear();
+      _masSaleInfoAttempted.clear();
+    });
+    try {
+      final queryParametrs = {
+        'code': widget.shuntingCode,
+        'pageNum': 0,
+        'pageSize': 0,
+      };
+      if (kDebugMode) {
+        _logger.i('getMasAfterSaleShunting query: ${_prettyJson(queryParametrs)}');
+      }
+      final res = await ProductApi().getMasAfterSaleShunting(
+        queryParametrs: queryParametrs,
+      );
+      if (kDebugMode) {
+        _logger.i('getMasAfterSaleShunting resp: ${_prettyJson(res)}');
+      }
+      final rows = res is List
+          ? res.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      setState(() {
+        _rows = rows;
+        _loading = false;
+        _selectedIndex = 0;
+      });
+      if (rows.isNotEmpty) {
+        Future(() => _ensureMasSaleInfoLoaded(0));
+      }
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _rows = [];
+        _selectedIndex = 0;
+        _masSaleInfoByIndex.clear();
+        _masSaleInfoLoading.clear();
+        _masSaleInfoAttempted.clear();
+      });
+      showToast('获取数据失败');
+    }
+  }
+
+  String _asText(dynamic v) {
+    if (v == null) return '';
+    final s = v.toString().trim();
+    return s;
+  }
+
+  String _pickText(Map<String, dynamic> map, List<String> keys) {
+    for (final k in keys) {
+      final v = map[k];
+      final t = _asText(v);
+      if (t.isNotEmpty) return t;
+    }
+    for (final v in map.values) {
+      if (v is Map) {
+        final t = _pickText(Map<String, dynamic>.from(v), keys);
+        if (t.isNotEmpty) return t;
+      } else if (v is List) {
+        for (final item in v) {
+          if (item is Map) {
+            final t = _pickText(Map<String, dynamic>.from(item), keys);
+            if (t.isNotEmpty) return t;
+          }
+        }
+      }
+    }
+    return '';
+  }
+
+  List<Map<String, dynamic>> _pickList(Map<String, dynamic> map, List<String> keys) {
+    for (final k in keys) {
+      final v = map[k];
+      final parsed = _parseList(v);
+      if (parsed.isNotEmpty) return parsed;
+    }
+    for (final v in map.values) {
+      if (v is Map) {
+        final parsed = _pickList(Map<String, dynamic>.from(v), keys);
+        if (parsed.isNotEmpty) return parsed;
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  List<Map<String, dynamic>> _parseList(dynamic v) {
+    dynamic raw = v;
+    if (raw is Map) {
+      raw = raw['rows'] ?? raw['records'] ?? raw['data'] ?? raw['list'] ?? raw['result'] ?? raw;
+      if (raw is Map) {
+        final lists = raw.values.whereType<List>().toList();
+        if (lists.length == 1) raw = lists.first;
+      }
+    }
+    if (raw is List) {
+      return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  Future<void> _ensureMasSaleInfoLoaded(int index) async {
+    if (index < 0 || index >= _rows.length) return;
+    if (_masSaleInfoAttempted.contains(index)) return;
+    _masSaleInfoAttempted.add(index);
+
+    final row = _rows[index];
+    final jt28Code = _pickText(row, [
+      'jt28Code',
+      'jt28CodeList',
+      'sys28Code',
+      'repairSys28Code',
+      'masSaleInformationCode',
+      'jt28',
+      'sys28',
+    ]);
+    if (jt28Code.trim().isEmpty) return;
+
+    if (mounted) {
+      setState(() => _masSaleInfoLoading.add(index));
+    }
+    try {
+      final queryParametrs = {'jt28Code': jt28Code};
+      if (kDebugMode) {
+        _logger.i('getMasSaleInformation query: ${_prettyJson(queryParametrs)}');
+      }
+      final res = await ProductApi().getMasSaleInformation(queryParametrs);
+      if (kDebugMode) {
+        _logger.i('getMasSaleInformation resp: ${_prettyJson(res)}');
+      }
+      Map<String, dynamic> info = {};
+      dynamic raw = res;
+      if (raw is Map && raw['data'] is Map) {
+        raw = raw['data'];
+      }
+      if (raw is Map) {
+        info = Map<String, dynamic>.from(raw);
+      }
+      if (!mounted) return;
+      setState(() {
+        if (info.isNotEmpty) {
+          _masSaleInfoByIndex[index] = info;
+        }
+        _masSaleInfoLoading.remove(index);
+      });
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() => _masSaleInfoLoading.remove(index));
+    }
+  }
+
+  String _requiredText(String s) => s.trim().isEmpty ? '-' : s.trim();
+
+  String _joinUniqueLines(Iterable<String> values) {
+    final seen = <String>{};
+    final out = <String>[];
+    for (final v in values) {
+      final t = v.trim();
+      if (t.isEmpty) continue;
+      if (seen.add(t)) out.add(t);
+    }
+    return out.join('\n');
+  }
+
+  String _formatAsLines(dynamic v) {
+    if (v == null) return '';
+    if (v is List) {
+      final parts = <String>[];
+      for (final e in v) {
+        final t = _asText(e);
+        if (t.isNotEmpty) parts.add(t);
+      }
+      return _joinUniqueLines(parts);
+    }
+    final s = _asText(v);
+    if (s.isEmpty) return '';
+    if (s.contains('\n')) return s;
+    final normalized = s.replaceAll('，', ',');
+    if (normalized.contains(',')) {
+      final parts = normalized
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (parts.length > 1) return _joinUniqueLines(parts);
+    }
+    return s;
+  }
+
+  Widget _sectionTitle(String text, {Widget? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.blue,
+            ),
+          ),
+          if (trailing != null) trailing,
+        ],
+      ),
+    );
+  }
+
+  Widget _infoGrid(Map<String, dynamic> item) {
+    final noticeNo = _pickText(item, [
+      'encode',
+      'noticeCode',
+      'noticeNo',
+      'shuntingEncode',
+      'afterSaleShuntingCode',
+      'code',
+    ]);
+    final model = _pickText(item, ['typeName', 'trainType', 'model', 'machineModel']);
+    final trainNum = _pickText(item, ['trainNum', 'serialNumber']);
+    final depot = _pickText(item, ['assignSegmentName', 'maintenanceSection', 'depotName']);
+    final repairStatus = _pickText(item, ['repairStatus', 'repairProcName', 'repairTimes']);
+    final contact = _pickText(item, ['customerContact', 'contactPerson']);
+    final phone = _pickText(item, ['tel', 'customerPhone', 'contactPhone', 'phone', 'phoneNumber']);
+    final location = _pickText(item, ['trainLocation', 'parkingLocation', 'stopLocation']);
+    final faultCategory = _pickText(item, ['failureCategory', 'faultCategory', 'faultType']);
+    final faultTime = _pickText(item, ['faultTime', 'reportTime', 'createdTime', 'applyTime']);
+    final faultDesc = _pickText(item, ['faultInformation', 'faultDesc', 'faultPhenomenon']);
+    final faultSituation = _pickText(item, ['faultSituation', 'faultSummary']);
+
+    TableRow row3(String l1, String v1, String l2, String v2, String l3, String v3) {
+      final headerStyle = TextStyle(color: Colors.grey[700], fontSize: 13);
+      final valueStyle = const TextStyle(fontSize: 13);
+      Widget cell(String text, TextStyle? style, {bool header = false}) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          color: header ? Colors.grey[100] : null,
+          child: Text(text, style: style),
+        );
+      }
+
+      return TableRow(
+        children: [
+          cell(l1, headerStyle, header: true),
+          cell(_requiredText(v1), valueStyle),
+          cell(l2, headerStyle, header: true),
+          cell(_requiredText(v2), valueStyle),
+          cell(l3, headerStyle, header: true),
+          cell(_requiredText(v3), valueStyle),
+        ],
+      );
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '通知单编号：${_requiredText(noticeNo.isEmpty ? widget.shuntingCode : noticeNo)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 980),
+                child: Table(
+                  border: TableBorder.all(color: Colors.grey.shade300, width: 0.8),
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  columnWidths: const {
+                    0: FixedColumnWidth(110),
+                    1: FixedColumnWidth(220),
+                    2: FixedColumnWidth(110),
+                    3: FixedColumnWidth(220),
+                    4: FixedColumnWidth(110),
+                    5: FixedColumnWidth(220),
+                  },
+                  children: [
+                    row3('故障机型', model, '故障车号', trainNum, '配属段', depot),
+                    row3('客户联系人', contact, '联系电话', phone, '修程/修次', repairStatus),
+                    row3('机车停留地点', location, '故障类别', faultCategory, '故障时间', faultTime),
+                    row3('故障现象', faultDesc, '故障概况', faultSituation, '处置方案', _pickText(item, ['disposalPlan', 'repairScheme'])),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dataTable({
+    required List<Map<String, dynamic>> rows,
+    required List<MapEntry<String, List<String>>> columns,
+    double headingRowHeight = 38,
+    double dataRowMinHeight = 40,
+    double dataRowMaxHeight = 80,
+  }) {
+    if (rows.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text('暂无数据'),
+      );
+    }
+
+    String cellValue(Map<String, dynamic> row, List<String> keys) {
+      for (final k in keys) {
+        final t = _asText(row[k]);
+        if (t.isNotEmpty) return t;
+      }
+      return '';
+    }
+
+    final dataColumns = columns
+        .map(
+          (c) => DataColumn(
+            label: Text(
+              c.key,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        )
+        .toList();
+
+    final dataRows = rows.map((r) {
+      return DataRow(
+        cells: columns.map((c) {
+          return DataCell(Text(_requiredText(cellValue(r, c.value))));
+        }).toList(),
+      );
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowHeight: headingRowHeight,
+          dataRowMinHeight: dataRowMinHeight,
+          dataRowMaxHeight: dataRowMaxHeight,
+          columns: dataColumns,
+          rows: dataRows,
+        ),
+      ),
+    );
+  }
+
+  Widget _jt28Section(Map<String, dynamic> item) {
+    final rows = _pickList(item, [
+      'masAfterSaleWorkList',
+    ]);
+    final displayRows = rows.map((r) {
+      final mapped = Map<String, dynamic>.from(r);
+      final deptRows = _pickList(r, [
+        'masAfterSaleWorkDeptList',
+        'workDeptList',
+        'deptList',
+      ]);
+
+      String deptDisplay = '';
+      String teamDisplay = '';
+      String peopleDisplay = '';
+
+      if (deptRows.isNotEmpty) {
+        deptDisplay = _joinUniqueLines(
+          deptRows.map(
+            (e) => _pickText(
+              e,
+              ['deptName', 'responsibleDeptName', 'workshop', 'workDeptName'],
+            ),
+          ),
+        );
+
+        teamDisplay = _joinUniqueLines(
+          deptRows.map(
+            (e) => _pickText(
+              e,
+              ['teamName', 'responsibleTeamName', 'team', 'responsibilityTeamName'],
+            ),
+          ),
+        );
+
+        final peopleLines = <String>[];
+        for (final d in deptRows) {
+          final rawPeople = d['userNameList'] ??
+              d['userNameListStr'] ??
+              d['repairPersonnelNameList'] ??
+              d['userList'] ??
+              d['users'];
+          final formatted = _formatAsLines(rawPeople);
+          if (formatted.isEmpty) continue;
+          peopleLines.addAll(
+            formatted
+                .split('\n')
+                .map((e) => e.trim())
+                .where((e) => e.isNotEmpty),
+          );
+        }
+        peopleDisplay = _joinUniqueLines(peopleLines);
+      }
+
+      mapped['responsibleDeptNameDisplay'] = deptDisplay;
+      mapped['responsibleTeamNameDisplay'] = teamDisplay;
+      mapped['repairPersonnelDisplay'] = peopleDisplay;
+      return mapped;
+    }).toList();
+    final hasTeam = displayRows.any((r) => _pickText(r, ['responsibleTeamNameDisplay']).isNotEmpty);
+    final hasPeople = displayRows.any((r) => _pickText(r, ['repairPersonnelDisplay']).isNotEmpty);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(
+          'JT28信息',
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            _jt28AndPeopleHint,
+            style: const TextStyle(fontSize: 12, color: Colors.green),
+          ),
+        ),
+        _dataTable(
+          rows: displayRows,
+          dataRowMaxHeight: 120,
+          columns: [
+            MapEntry('构型', ['configNodeName', 'structure', 'configName', 'componentName', 'nodeName', 'config']),
+            MapEntry('加工方法', ['jtDictName', 'jtDictCode', 'processingMethod', 'processingMethodName', 'requiredProcessingMethodName', 'requiredProcessingMethod']),
+            MapEntry('施修方案', ['repairProcContent', 'repairScheme', 'repairProgram', 'repairPlan', 'repairStatus', 'maintenanceNotice']),
+            MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
+            MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
+            MapEntry('责任车间', ['responsibleDeptNameDisplay']),
+            if (hasTeam) MapEntry('责任班组', ['responsibleTeamNameDisplay']),
+            if (hasPeople) MapEntry('施修人', ['repairPersonnelDisplay']),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _partsSection(Map<String, dynamic> item) {
+    final rows = _pickList(item, [
+      'masAfterSaleSubpartList',
+    ]);
+    final displayRows = rows.map((r) {
+      final mapped = Map<String, dynamic>.from(r);
+      final raw = _pickText(r, ['recycleType', 'disposalType', 'disposalWay']).trim();
+      String label;
+      if (raw == '0') {
+        label = '配送';
+      } else if (raw == '1') {
+        label = '回收';
+      } else {
+        label = raw;
+      }
+      mapped['disposalTypeDisplay'] = label.isEmpty ? '-' : label;
+      return mapped;
+    }).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('配件信息'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            '配件周转要求：${_pickText(item, ['subpartTurnoverRequirements', 'subpartTurnoverReqirements', 'turnoverRequirements'])}',
+            style: const TextStyle(fontSize: 13, color: Colors.green),
+          ),
+        ),
+        _dataTable(
+          rows: displayRows,
+          columns: [
+            MapEntry('配件名称', ['configName', 'configNodeName', 'materialName', 'partsName', 'accessoryName', 'name']),
+            MapEntry('规格型号', ['modelInfoName', 'modelInfoCode', 'spec', 'specification', 'model', 'materialModel']),
+            MapEntry('发货时间', ['deliveryTime', 'sendTime', 'materialDeliveryTime']),
+            MapEntry('数量', ['quantity', 'count', 'num']),
+            MapEntry('发货方式', ['deliveryMethod', 'sendWay', 'deliveryWay', 'sendType']),
+            MapEntry('处置方式', ['disposalTypeDisplay', 'recycleType', 'disposalWay', 'disposalType', 'disposalPlan']),
+            MapEntry('责任车间', ['responsibleDeptName', 'deptName', 'workshop', 'responsibilityDeptName']),
+            MapEntry('责任班组', ['responsibleTeamName', 'teamName', 'team', 'responsibilityTeamName']),
+            MapEntry('责任人', ['responsibleUserName', 'responsibilityUserName', 'userName', 'nickName', 'responsibilityUser']),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _peopleSection(Map<String, dynamic> item) {
+    final rows = _pickList(item, [
+      'peopleList',
+      'personList',
+      'staffList',
+      'memberList',
+      'personnelList',
+      'userList',
+      'masAfterSaleUserList',
+    ]);
+    final peopleCount = _pickText(item, ['personnelNumber', 'peopleCount', 'personCount', 'count']);
+    final startTime = _pickText(item, ['personnelDepartureTime', 'departureTime', 'startTime', 'outTime']);
+    final remark = _pickText(item, ['personnelRemark', 'remark']);
+    
+    final displayRows = rows.map((r) {
+      final mapped = Map<String, dynamic>.from(r);
+      final identityRaw = _pickText(
+        r,
+        ['identity', 'userType', 'roleName', 'typeName', 'postName', 'dutyName'],
+      ).trim();
+      if (identityRaw == '1') {
+        mapped['personTypeDisplay'] = '队长';
+      } else if (identityRaw == '2') {
+        mapped['personTypeDisplay'] = '带队干部';
+      } else if (identityRaw == '0') {
+        mapped['personTypeDisplay'] = '队员';
+      } else if (identityRaw.isNotEmpty &&
+          (identityRaw.contains('队长') || identityRaw.contains('队员') || identityRaw.contains('带队干部'))) {
+        mapped['personTypeDisplay'] = identityRaw;
+      } else {
+        mapped['personTypeDisplay'] = '-';
+      }
+      final tel = _pickText(r, ['tel', 'phoneNumber', 'phone', 'mobile']);
+      mapped['phoneDisplay'] = tel.isEmpty ? '-' : tel;
+      return mapped;
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('人员信息'),
+        if (peopleCount.isNotEmpty || startTime.isNotEmpty || remark.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.start,
+              spacing: 16,
+              runSpacing: 4,
+              children: [
+                if (peopleCount.isNotEmpty)
+                  Text('人数：$peopleCount', style: const TextStyle(fontSize: 13, color: Colors.blue)),
+                if (startTime.isNotEmpty)
+                  Text('出发时间：$startTime', style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                if (remark.isNotEmpty)
+                  Text('备注：$remark', style: const TextStyle(fontSize: 13, color: Colors.green)),
+              ],
+            ),
+          ),
+        _dataTable(
+          rows: displayRows,
+          columns: [
+            MapEntry('车间', ['deptName', 'workshop', 'teamDeptName']),
+            MapEntry('班组', ['teamName', 'team', 'groupName']),
+            MapEntry('人员', ['userName', 'nickName', 'name', 'personName']),
+            MapEntry('人员类型', ['personTypeDisplay']),
+            MapEntry('电话', ['phoneDisplay']),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _safetySection(Map<String, dynamic> item) {
+    const common =
+        '1.服务人员经安全培训合格，熟知电气化区段作业安全注意事项。'
+        '2.作业过程穿戴合格劳动防护用品，用品符合放蚀处置标准。'
+        '3.禁止单岗作业，必须两人及以上同行，一人做好安全防护工作。'
+        '4.必须严格人身安全“十不准”的要求。'
+        '5.禁止做与本工作无关的其它事项。';
+    final otherSafetyTips = _pickText(item, ['safetyTips', 'saftyTips', 'otherSafetyTips']);
+    if (otherSafetyTips.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sectionTitle('安全提示'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text('常规安全提示：${_requiredText(common)}'),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text('其他安全提示：-'),
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('安全提示'),
+        if (common.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Text('常规安全提示：${_requiredText(common)}'),
+          ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Text('其他安全提示：${_requiredText(otherSafetyTips)}'),
+        ),
+      ],
+    );
+  }
+
+  Widget _signSection(Map<String, dynamic> item) {
+    final rows = _pickList(item, [
+      'signList',
+      'auditList',
+      'receiptList',
+      'acceptList',
+      'shuntingNoticeList',
+      'masAfterSaleAuditList',
+    ]);
+    final normalized = rows.isEmpty ? <Map<String, dynamic>>[item] : rows;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('签收情况'),
+        _dataTable(
+          rows: normalized,
+          columns: [
+            MapEntry('调令发布人', ['applyUserName', 'sendUserName', 'createdByName']),
+            MapEntry('发布时间', ['applyTime', 'createdTime', 'publishTime']),
+            MapEntry('签收部门', ['auditDeptName', 'deptName']),
+            MapEntry('签收人', ['auditUserName', 'receiveUserName']),
+            MapEntry('签收时间', ['auditTime']),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _detailBody(Map<String, dynamic> item) {
+    final idx = _rows.indexOf(item);
+    final extra = idx >= 0 ? _masSaleInfoByIndex[idx] : null;
+    final merged = Map<String, dynamic>.from(item);
+    if (extra != null && extra.isNotEmpty) {
+      merged['masSaleInformation'] = extra;
+      final extraRows = _parseList(extra);
+      if (extraRows.isNotEmpty) {
+        for (final k in extraRows.first.keys) {
+          if (!merged.containsKey(k) || merged[k] == null) {
+            merged[k] = extraRows.first[k];
+          }
+        }
+      }
+    }
+    return ListView(
+      children: [
+        if (idx >= 0 && _masSaleInfoLoading.contains(idx))
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+        _infoGrid(merged),
+        _jt28Section(merged),
+        _partsSection(merged),
+        _peopleSection(merged),
+        _safetySection(merged),
+        _signSection(merged),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Map<String, dynamic>? debugItem;
+    if (_rows.isNotEmpty && _selectedIndex >= 0 && _selectedIndex < _rows.length) {
+      final base = _rows[_selectedIndex];
+      final extra = _masSaleInfoByIndex[_selectedIndex];
+      final merged = Map<String, dynamic>.from(base);
+      if (extra != null && extra.isNotEmpty) {
+        merged['masSaleInformation'] = extra;
+        final extraRows = _parseList(extra);
+        if (extraRows.isNotEmpty) {
+          for (final k in extraRows.first.keys) {
+            if (!merged.containsKey(k) || merged[k] == null) {
+              merged[k] = extraRows.first[k];
+            }
+          }
+        }
+      }
+      debugItem = merged;
+    }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('售后服务通知单'),
+        actions: [
+          if (debugItem != null && _pickList(debugItem!, ['masAfterSaleWorkList']).isNotEmpty)
+            TextButton(
+              onPressed: () async {
+                final rows = _pickList(debugItem!, ['masAfterSaleWorkList']);
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Jt28DispatchPage(
+                      noticeItem: debugItem!,
+                      workList: rows,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  _load();
+                }
+              },
+              child: const Text('派工', style: TextStyle(color: Colors.white, fontSize: 16)),
+            ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _rows.isEmpty
+              ? const Center(child: Text('暂无数据'))
+              : _rows.length == 1
+                  ? _detailBody(_rows.first)
+                  : Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                          alignment: Alignment.centerLeft,
+                          child: DropdownButton<int>(
+                            value: _selectedIndex,
+                            isExpanded: true,
+                            items: List.generate(_rows.length, (i) {
+                              final item = _rows[i];
+                              final code = _pickText(item, [
+                                'encode',
+                                'noticeCode',
+                                'noticeNo',
+                                'shuntingEncode',
+                                'afterSaleShuntingCode',
+                                'code',
+                              ]);
+                              final title = code.isEmpty ? '记录 ${i + 1}' : code;
+                              return DropdownMenuItem<int>(
+                                value: i,
+                                child: Text(title),
+                              );
+                            }),
+                            onChanged: (v) {
+                              if (v == null) return;
+                              setState(() => _selectedIndex = v);
+                              _ensureMasSaleInfoLoaded(v);
+                            },
+                          ),
+                        ),
+                        Expanded(child: _detailBody(_rows[_selectedIndex])),
+                      ],
+                    ),
+    );
   }
 }
