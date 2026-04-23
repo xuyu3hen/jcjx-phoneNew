@@ -168,9 +168,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 加载检修进度数据
-  Future<void> _loadRepairProgressData() async {
+  Future<void> _loadRepairProgressData({bool forceRefresh = false}) async {
     try {
-      final cacheValid = Global.isRepairProgressDataLoaded &&
+      final cacheValid = !forceRefresh &&
+          Global.isRepairProgressDataLoaded &&
           Global.repairProgressDataLoadTime != null &&
           DateTime.now().difference(Global.repairProgressDataLoadTime!).inMinutes < 5 &&
           Global.cachedRepairProgressData.isNotEmpty;
@@ -214,9 +215,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
   }
+
   // 刷新数据
   Future<void> _refreshData() async {
-    await _loadRepairProgressData();
+    await _loadRepairProgressData(forceRefresh: true);
   }
 
   @override
