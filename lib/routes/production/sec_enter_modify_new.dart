@@ -413,8 +413,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'repairLocation': stopLocationSelected["code"],
         'trackNum': stopLocationSelected['trackNum'],
         'stoppingPlace': stopLocationSelected['areaName'],
+        'trackNumB': stopLocationSelected['trackNum'],
+        'stoppingPlaceB': stopLocationSelected['areaName'],
         'attachSegmentCode': assignSegmentSelected['code'],
         'attachDept': assignSegmentSelected['assignSegment'],
+        'repairLocationB': stopLocationSelected["code"]
       };
       logger.i(queryParameter);
       try {
