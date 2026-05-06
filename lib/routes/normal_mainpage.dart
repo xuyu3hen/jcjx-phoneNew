@@ -351,10 +351,22 @@ class _NormalMainPageState extends State<NormalMainPage> {
 
   bool get _canSeeAfterSaleRegister {
     final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString();
+    if (name == '田凯') {
+      return true;
+    }
     final deptName = (user?.dept?.deptName ?? '').toString();
     final parentDeptName = (Global.parentDeptName ?? '').toString();
     final combinedDept = '$deptName $parentDeptName';
-    return combinedDept.contains('技术科');
+    if (combinedDept.contains('安全生产指挥中心')) {
+      return true;
+    }
+    if (!combinedDept.contains('技术科')) {
+      return false;
+    }
+    return combinedDept.contains('江岸机务段') ||
+        combinedDept.contains('襄阳机务段') ||
+        combinedDept.contains('武昌南机务段');
   }
 
 }
