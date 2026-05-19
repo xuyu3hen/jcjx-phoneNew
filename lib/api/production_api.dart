@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -134,11 +135,25 @@ class ProductApi extends AppApi {
   }) async {
     try {
       var r = await AppApi.dio.get(
-        "/dispatch/trainShuntingPackage/queryDailyPlan",
+        "/dispatch/trainShuntingPackage/selectAllByDeptId",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])["data"]);
-      return ((r.data["data"])["data"]);
+      final body = r.data;
+      dynamic rows;
+      if (body is Map) {
+        final data = body["data"];
+        final inner = data is Map ? data["data"] : null;
+        if (inner is Map && inner["rows"] is List) {
+          rows = inner["rows"];
+        } else if (inner is List) {
+          rows = inner;
+        } else if (data is Map && data["rows"] is List) {
+          rows = data["rows"];
+        }
+      }
+      final list = rows is List ? rows : const <dynamic>[];
+      logger.i(list);
+      return list;
     } catch (e) {
       _handleException(e);
       return [];
@@ -1860,6 +1875,50 @@ class ProductApi extends AppApi {
     }
   }
 
+  Future<List<Map<String, dynamic>>> uploadViolationFiles({
+    required List<File> files,
+  }) async {
+    try {
+      final multipartFiles = <MultipartFile>[];
+      for (final f in files) {
+        multipartFiles.add(await MultipartFile.fromFile(f.path));
+      }
+      final formData = FormData.fromMap({
+        'file': multipartFiles,
+      });
+      final r = await AppApi.dio.post(
+        "/file/upload",
+        data: formData,
+        options: Options(contentType: "multipart/form-data"),
+      );
+      final body = r.data;
+      final data = body is Map ? body['data'] : null;
+      final list = <Map<String, dynamic>>[];
+      if (data is List) {
+        for (final e in data) {
+          if (e is Map) list.add(Map<String, dynamic>.from(e));
+        }
+      } else if (data is Map) {
+        list.add(Map<String, dynamic>.from(data));
+      }
+      return list;
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  String buildAttachmentString(List<Map<String, dynamic>> uploaded) {
+    final list = <Map<String, dynamic>>[];
+    for (final e in uploaded) {
+      final name = (e['fileName'] ?? e['name'] ?? '').toString();
+      final url = (e['url'] ?? '').toString();
+      final fileId = (e['fileId'] ?? e['id'] ?? '').toString();
+      list.add({'name': name, 'url': url, 'fileId': fileId});
+    }
+    return jsonEncode(list);
+  }
+
 
 
   // 获取工序节点
@@ -1970,16 +2029,34 @@ class ProductApi extends AppApi {
   }
 
   //保存机车入段信息
-  Future<dynamic> trainEntrySave(Map<String, dynamic> queryParametrs) async {
+  Future<Map<String, dynamic>> trainEntrySave(
+      Map<String, dynamic> queryParameters) async {
     try {
       var r = await AppApi.dio2.post(
         "/dispatch/trainEntry/save",
-        data: queryParametrs,
+        data: queryParameters,
       );
-      logger.i(r.data["data"]);
-      return r.data["data"];
+      final body = r.data;
+      if (body is Map) {
+        final inner = body["data"];
+        if (inner is Map && inner["code"] != null) {
+          final data = Map<String, dynamic>.from(inner);
+          logger.i(data);
+          return data;
+        }
+        if (body["code"] != null || body["message"] != null) {
+          final data = Map<String, dynamic>.from(body);
+          logger.i(data);
+          return data;
+        }
+        logger.i(body);
+      } else {
+        logger.i(body);
+      }
+      return {};
     } catch (e) {
       _handleException(e);
+      return {};
     }
   }
 

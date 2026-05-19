@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import '../../index.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
@@ -400,6 +402,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       setState(() {
         isSubmitting = true; // 开始提报，设置状态为正在提报
       });
+      SmartDialog.showLoading(msg: '正在提交入段');
       Map<String, dynamic> queryParameter = {
         'dynamicCode': dynamicTypeSelected["code"],
         'dynamicName': dynamicTypeSelected["name"],
@@ -421,17 +424,50 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       };
       logger.i(queryParameter);
       try {
-        var r = await ProductApi().trainEntrySave(queryParameter);
+        final raw = await ProductApi()
+            .trainEntrySave(queryParameter)
+            .timeout(const Duration(seconds: 25));
+        if (raw is! Map) {
+          showToast("入段失败：返回数据异常");
+          return "";
+        }
+        final r = Map<String, dynamic>.from(raw);
         final topCode = r["code"]?.toString();
         final data = r["data"];
-        final dataCode = data is Map ? data["code"] : null;
-        final isBusinessError = dataCode == 500 || dataCode?.toString() == "500";
+        if (topCode != "S_F_S000") {
+          showToast((r["message"] ?? "入段失败").toString());
+          return "";
+        }
+        bool isBusinessError = false;
+        String? msg;
+        dynamic entryCode;
+        if (data is Map) {
+          final dataCode = data["code"];
+          isBusinessError = dataCode == 500 || dataCode?.toString() == "500";
+          msg = (data["msg"] ?? "").toString();
+          if (!isBusinessError) {
+            entryCode = data["code"];
+          }
+        } else if (data is List) {
+          Map? first;
+          for (final e in data) {
+            if (e is Map) {
+              first = e;
+              break;
+            }
+          }
+          entryCode = first?["code"];
+        } else {
+          showToast((r["message"] ?? "入段失败").toString());
+          return "";
+        }
 
-        if (topCode == "S_F_S000" && !isBusinessError) {
-          logger.i("trainEntrySave success: ${r['data']['code']}");
+        if (!isBusinessError) {
+          final entryCodeStr = entryCode?.toString().trim() ?? '';
+          logger.i("trainEntrySave success: $entryCodeStr");
 
-          if (data is! Map || data["code"] == null) {
-            logger.e('trainEntrySave data or code is null');
+          if (entryCodeStr.isEmpty) {
+            logger.e('trainEntrySave data.code is null/empty');
             showToast("基础信息保存成功，但缺少必要数据无法上传图片");
             return "";
           }
@@ -443,34 +479,85 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           }
 
           try {
-            SmartDialog.showLoading(msg: '正在入段');
-            await uploadSlip(data["code"]);
-            return r["code"];
+            await uploadSlip(entryCodeStr)
+                .timeout(const Duration(seconds: 60));
+            return topCode ?? "";
           } catch (e, stackTrace) {
             logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
-
+            showToast("基础信息已保存，图片上传失败");
             return "";
-          } finally {
-            SmartDialog.dismiss();
           }
         } else {
-          final msg = (data is Map ? data["msg"] : null)?.toString();
-          if (msg != null && msg.trim().isNotEmpty && msg != "null") {
-            showToast(msg);
+          final m = (msg ?? '').trim();
+          if (m.isNotEmpty && m != "null") {
+            _showMessageDialog(m);
           } else {
             showToast((r["message"] ?? "入段失败").toString());
           }
           return "";
         }
       } finally {
-        setState(() {
-          isSubmitting = false; // 提报结束，设置状态为未提报
-        });
+        SmartDialog.dismiss();
+        if (mounted) {
+          setState(() {
+            isSubmitting = false; // 提报结束，设置状态为未提报
+          });
+        }
       }
+    } on TimeoutException catch (e, stackTrace) {
+      logger.e('newEntry 超时: $e\n堆栈信息: $stackTrace');
+      showToast("网络超时，请检查信号后重试");
+      return "";
     } catch (e, stackTrace) {
-      logger.e('initSelectInfo 方法中发生异常: $e\n堆栈信息: $stackTrace');
-      return "错误";
+      logger.e('newEntry 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      if (e is TypeError) {
+        showToast("入段失败：返回数据异常");
+      } else {
+        showToast("入段失败");
+      }
+      return "";
     }
+  }
+
+  void _showMessageDialog(String message) {
+    if (!mounted) return;
+    SmartDialog.show(
+      clickMaskDismiss: true,
+      builder: (con) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "提示",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: const BoxConstraints.expand(height: 36, width: 160),
+                child: ElevatedButton(
+                  onPressed: () {
+                    SmartDialog.dismiss();
+                  },
+                  child: const Text('确定'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildBody() {
@@ -802,11 +889,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
 
             return;
           } // 如果正在提报，不处理点击事件
-          newEntry().then((code) {
-            if (code != "") {
-              exitDialog();
-            }
-          });
+          final code = await newEntry();
+          if (!mounted) return;
+          if (code.isNotEmpty) {
+            exitDialog();
+          }
         },
         child: Container(
           alignment: Alignment.center,
@@ -884,7 +971,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const Text(
-                "机车入段提报成功",
+                "入段成功",
                 style: TextStyle(fontSize: 18),
               ),
               ConstrainedBox(
@@ -893,7 +980,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                 child: ElevatedButton.icon(
                   onPressed: () {
                     SmartDialog.dismiss()
-                        .then((value) => Navigator.of(context).pop());
+                        .then((value) => Navigator.of(context).pop(true));
                   },
                   label: const Text('确定'),
                   icon: const Icon(Icons.system_security_update_good_sharp),
