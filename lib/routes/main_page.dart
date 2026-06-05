@@ -7,6 +7,7 @@ import 'package:jcjx_phone/routes/production/repair_train.dart';
 import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/production/after_sale_temp_repair_register_page.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
+import 'package:jcjx_phone/routes/production/train_departure_confirm_page.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -433,6 +434,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'enterDetailRecord': (context) => const SecEnterModify(title: '入段细录'),
         'afterSaleTempRepairRegister': (context) =>
             const AfterSaleTempRepairRegisterPage(),
+        'trainDepartureConfirm': (context) => const TrainDepartureConfirmPage(),
       },
       builder: FlutterSmartDialog.init(),
     );

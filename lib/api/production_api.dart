@@ -1889,7 +1889,11 @@ class ProductApi extends AppApi {
       final r = await AppApi.dio.post(
         "/file/upload",
         data: formData,
-        options: Options(contentType: "multipart/form-data"),
+        options: Options(
+          contentType: "multipart/form-data",
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 90),
+        ),
       );
       final body = r.data;
       final data = body is Map ? body['data'] : null;
@@ -1917,6 +1921,185 @@ class ProductApi extends AppApi {
       list.add({'name': name, 'url': url, 'fileId': fileId});
     }
     return jsonEncode(list);
+  }
+
+  Future<List<Map<String, dynamic>>> getAssemblyPendingDepartureTrainList({
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    return getReadyToLeaveTrainList(queryParameters: queryParameters);
+  }
+
+  Future<List<Map<String, dynamic>>> getReadyToLeaveTrainList({
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      logger.i({
+        'api': '/dispatch/trainEntry/getReadyToLeaveTrainList',
+        'query': queryParameters ?? {},
+      });
+      final r = await AppApi.dio.get(
+        "/dispatch/trainEntry/getReadyToLeaveTrainList",
+        queryParameters: queryParameters,
+      );
+      final body = r.data;
+      logger.i({
+        'api': '/dispatch/trainEntry/getReadyToLeaveTrainList',
+        'response': body,
+      });
+      dynamic rows;
+      if (body is Map) {
+        final data = body["data"];
+        final inner = data is Map ? data["data"] : null;
+        if (inner is Map && inner["rows"] is List) {
+          rows = inner["rows"];
+        } else if (inner is List) {
+          rows = inner;
+        } else if (data is Map && data["rows"] is List) {
+          rows = data["rows"];
+        } else if (data is List) {
+          rows = data;
+        }
+      } else if (body is List) {
+        rows = body;
+      }
+      final list = rows is List ? rows : const <dynamic>[];
+      final mapped = list
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+
+      final seen = <String>{};
+      final filtered = <Map<String, dynamic>>[];
+      for (final m in mapped) {
+        final trainEntryCode =
+            (m['trainEntryCode'] ?? m['code'] ?? m['id'] ?? '').toString().trim();
+        if (trainEntryCode.isEmpty || trainEntryCode == 'null') continue;
+
+        final trainNum = (m['trainNum'] ??
+                m['trainNo'] ??
+                m['trainNumber'] ??
+                '')
+            .toString()
+            .trim();
+        if (trainNum.isEmpty || trainNum == 'null') continue;
+
+        final ends = (m['ends'] ?? '').toString().trim();
+        final bindingKey = '$trainNum|$ends';
+        if (seen.contains(bindingKey)) continue;
+
+        final leaveTime = (m['leavePlatformTime'] ??
+                m['leaveDeptTime'] ??
+                m['leaveTime'] ??
+                '')
+            .toString()
+            .trim();
+        if (leaveTime.isNotEmpty && leaveTime != 'null') continue;
+
+        seen.add(bindingKey);
+        filtered.add(m);
+      }
+      logger.i({
+        'api': '/dispatch/trainEntry/getReadyToLeaveTrainList',
+        'rawCount': mapped.length,
+        'filteredCount': filtered.length,
+      });
+      return filtered;
+    } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>?> saveTrainDepartureConfirm({
+    required Map<String, dynamic> data,
+  }) async {
+    final trainEntryCode =
+        (data['trainEntryCode'] ?? data['code'] ?? '').toString().trim();
+    final repairEndTime = (data['repairEndTime'] ?? '').toString().trim();
+    return simulateCompleteTrainEntry(
+      trainEntryCode: trainEntryCode,
+      repairEndTime: repairEndTime,
+    );
+  }
+
+  Future<Map<String, dynamic>?> simulateCompleteTrainEntry({
+    required String trainEntryCode,
+    required String repairEndTime,
+  }) async {
+    try {
+      logger.i({
+        'api': '/dispatch/trainEntry/simulateCompleteTrainEntry',
+        'trainEntryCode': trainEntryCode,
+        'repairEndTime': repairEndTime,
+      });
+      final r = await AppApi.dio2.get(
+        '/dispatch/trainEntry/simulateCompleteTrainEntry',
+        queryParameters: {
+          'trainEntryCode': trainEntryCode,
+          'repairEndTime': repairEndTime,
+        },
+        options: Options(
+          sendTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 45),
+        ),
+      );
+      final body = r.data;
+      logger.i({
+        'api': '/dispatch/trainEntry/simulateCompleteTrainEntry',
+        'response': body,
+      });
+      if (body is Map) {
+        return Map<String, dynamic>.from(body);
+      }
+      return {"data": body};
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> uploadTrainLeavePlatformFile({
+    required String trainEntryCode,
+    required List<File> uploadFileList,
+  }) async {
+    try {
+      logger.i({
+        'api': '/fileserver/trainLeavePlatformFile/uploadFile',
+        'trainEntryCode': trainEntryCode,
+        'fileCount': uploadFileList.length,
+      });
+      final files = <MultipartFile>[];
+      for (final f in uploadFileList) {
+        files.add(await MultipartFile.fromFile(f.path));
+      }
+      final formData = FormData.fromMap({
+        'uploadFileList': files,
+      });
+      final r = await AppApi.dio.post(
+        '/fileserver/trainLeavePlatformFile/uploadFile',
+        queryParameters: {
+          'trainEntryCode': trainEntryCode,
+        },
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+          sendTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 90),
+        ),
+      );
+      final body = r.data;
+      logger.i({
+        'api': '/fileserver/trainLeavePlatformFile/uploadFile',
+        'response': body,
+      });
+      if (body is Map) {
+        return Map<String, dynamic>.from(body);
+      }
+      return {'data': body};
+    } catch (e) {
+      _handleException(e);
+      return null;
+    }
   }
 
 

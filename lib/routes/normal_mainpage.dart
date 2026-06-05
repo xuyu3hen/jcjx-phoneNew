@@ -87,6 +87,15 @@ class _NormalMainPageState extends State<NormalMainPage> {
       if (p.code == 200) {
         Global.profile.permissions = p;
 
+        final deptParentName = (p.user.dept?.parentName ?? '').toString().trim();
+        if (deptParentName.isNotEmpty && deptParentName != 'null') {
+          Global.parentDeptName = deptParentName;
+        }
+
+        if (mounted) {
+          setState(() {});
+        }
+
         if (!Global.isUserRepairTrainDataLoaded) {
           Global.preloadUserRepairTrainData().catchError((e) {
             logger.e('预加载用户个人机车作业数据失败: $e');
@@ -96,7 +105,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
         showToast("获取用户账号信息失败");
       }
       Map<String, dynamic> queryParameters = {};
-      if (Global.profile.permissions?.user.dept?.parentId != null) {
+      if ((Global.parentDeptName == null || Global.parentDeptName!.isEmpty) &&
+          Global.profile.permissions?.user.dept?.parentId != null) {
         queryParameters['idList'] =
             Global.profile.permissions?.user.dept?.parentId;
         var r = await ProductApi().getDeptByDeptIdList(queryParameters);
@@ -148,17 +158,26 @@ class _NormalMainPageState extends State<NormalMainPage> {
 
   Widget _buildFeatureItem(Icon icon, VoidCallback onTap, String title,
       {int? num}) {
-    return SizedBox(
-      width: (MediaQuery.of(context).size.width) / 3,
-      height: (MediaQuery.of(context).size.width) / 4,
-      child: FeatureContainer(
-        icon,
-        onTap,
-        title,
-        width: (MediaQuery.of(context).size.width),
-        height: (MediaQuery.of(context).size.height),
-        num: num,
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Expanded(
+      child: SizedBox(
+        height: screenWidth / 4,
+        child: FeatureContainer(
+          icon,
+          onTap,
+          title,
+          width: screenWidth,
+          height: MediaQuery.of(context).size.height,
+          num: num,
+        ),
       ),
+    );
+  }
+
+  Widget _buildFeaturePlaceholder() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Expanded(
+      child: SizedBox(height: screenWidth / 4),
     );
   }
 
@@ -266,41 +285,58 @@ class _NormalMainPageState extends State<NormalMainPage> {
           
           const SizedBox(height: 15),
           // if (_canSeeShunting)
+            Builder(
+              builder: (_) {
+                final children = <Widget>[
+                  _buildFeatureItem(
+                    Icon(Icons.assignment, color: Colors.blue[200]),
+                    () => Navigator.pushNamed(context, 'trainShuntingPackage'),
+                    '调车',
+                  ),
+                  if (_canSeeShuntingQuery)
+                    _buildFeatureItem(
+                      Icon(Icons.search, color: Colors.blue[200]),
+                      () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                const TrainShuntingPackagePage(readOnly: true),
+                          ),
+                        );
+                      },
+                      '调车计划查询',
+                    ),
+                  if (_canSeeTrainDepartureConfirm)
+                    _buildFeatureItem(
+                      Icon(Icons.photo_camera_back, color: Colors.blue[200]),
+                      () =>
+                          Navigator.pushNamed(context, 'trainDepartureConfirm'),
+                      '离段确认',
+                    ),
+                ];
+                while (children.length < 3) {
+                  children.add(_buildFeaturePlaceholder());
+                }
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: children,
+                );
+              },
+            ),
+          if (_canSeeAfterSaleRegister)
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 _buildFeatureItem(
-                  Icon(Icons.assignment, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'trainShuntingPackage'),
-                  '调车',
+                  Icon(Icons.assignment_outlined, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(
+                    context,
+                    'afterSaleTempRepairRegister',
+                  ),
+                  '售后登记',
                 ),
-                if (_canSeeShuntingQuery)
-                  _buildFeatureItem(
-                    Icon(Icons.search, color: Colors.blue[200]),
-                    () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const TrainShuntingPackagePage(readOnly: true),
-                        ),
-                      );
-                    },
-                    '调车计划查询',
-                  ),
-                // if (_canSeeEnterDetailRecord)
-                //   _buildFeatureItem(
-                //     Icon(Icons.list_alt, color: Colors.blue[200]),
-                //     () => Navigator.pushNamed(context, 'enterDetailRecord'),
-                //     '入段细录',
-                //   ),
-                if (_canSeeAfterSaleRegister)
-                  _buildFeatureItem(
-                    Icon(Icons.assignment_outlined, color: Colors.blue[200]),
-                    () => Navigator.pushNamed(
-                      context,
-                      'afterSaleTempRepairRegister',
-                    ),
-                    '售后登记',
-                  ),
+                _buildFeaturePlaceholder(),
+                _buildFeaturePlaceholder(),
               ],
             ),
           const Divider(height: 10, indent: 10, endIndent: 10),
@@ -367,6 +403,39 @@ class _NormalMainPageState extends State<NormalMainPage> {
     return combinedDept.contains('江岸机务段') ||
         combinedDept.contains('襄阳机务段') ||
         combinedDept.contains('武昌南机务段');
+  }
+
+  bool get _canSeeTrainDepartureConfirm {
+    final user = Global.profile.permissions?.user;
+    final deptName = (user?.dept?.deptName ?? '').toString();
+    final parentDeptName = (Global.parentDeptName ?? '').toString();
+    final combinedDept = '$deptName $parentDeptName';
+    if (combinedDept.contains('总成车间') && combinedDept.contains('接车')) {
+      return true;
+    }
+
+    final roleKeys =
+        (Global.profile.permissions?.roles ?? const <String>[])
+            .map((e) => e.toString())
+            .toList();
+    if (roleKeys.any((r) => r.contains('总成') && r.contains('接车'))) {
+      return true;
+    }
+
+    final roleObjs =
+        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
+            .map((e) => e)
+            .toList();
+    if (roleObjs.any((r) {
+      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
+      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
+      final s = '$rn $rk';
+      return s.contains('总成') && s.contains('接车');
+    })) {
+      return true;
+    }
+
+    return false;
   }
 
 }
