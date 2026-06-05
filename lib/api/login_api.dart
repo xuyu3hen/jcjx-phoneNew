@@ -27,6 +27,14 @@ class LoginApi extends AppApi{
     return Permissions.fromJson(r.data);
   }
 
+  Future<dynamic> getRouters() async {
+    var r = await AppApi.dio.get(
+      "/system/menu/getRouters",
+    );
+    logger.i({'api': '/system/menu/getRouters', 'data': r.data});
+    return r.data;
+  }
+
   // 获取信息中心消息
   Future<SysMessageVO> getMessageInfo({
     Map<String,dynamic>? queryParameters

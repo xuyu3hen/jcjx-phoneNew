@@ -92,6 +92,12 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Global.parentDeptName = deptParentName;
         }
 
+        try {
+          await LoginApi().getRouters();
+        } catch (e) {
+          logger.e(e);
+        }
+
         if (mounted) {
           setState(() {});
         }
