@@ -28,11 +28,6 @@ class _TrainDepartureConfirmPageState extends State<TrainDepartureConfirmPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!_canOperate) {
-        showToast('无权限');
-        if (mounted) Navigator.of(context).pop();
-        return;
-      }
       await _loadPendingTrainList();
     });
   }
@@ -41,36 +36,6 @@ class _TrainDepartureConfirmPageState extends State<TrainDepartureConfirmPage> {
   void dispose() {
     _keywordController.dispose();
     super.dispose();
-  }
-
-  bool get _canOperate {
-    final user = Global.profile.permissions?.user;
-    final deptName = (user?.dept?.deptName ?? '').toString();
-    final parentDeptName = (Global.parentDeptName ?? '').toString();
-    final combinedDept = '$deptName $parentDeptName';
-    if (combinedDept.contains('总成车间') && combinedDept.contains('接车')) {
-      return true;
-    }
-    final roleKeys =
-        (Global.profile.permissions?.roles ?? const <String>[])
-            .map((e) => e.toString())
-            .toList();
-    if (roleKeys.any((r) => r.contains('总成') && r.contains('接车'))) {
-      return true;
-    }
-    final roleObjs =
-        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
-            .map((e) => e)
-            .toList();
-    if (roleObjs.any((r) {
-      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
-      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      final s = '$rn $rk';
-      return s.contains('总成') && s.contains('接车');
-    })) {
-      return true;
-    }
-    return false;
   }
 
   String _pickText(Map<String, dynamic>? map, List<String> keys) {

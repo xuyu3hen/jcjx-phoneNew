@@ -201,72 +201,82 @@ class _LoginRouteState extends State<LoginRoute> {
           // 登录表单
           Padding(
             padding: const EdgeInsets.only(top: 100.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TextFormField(
-                    controller: _unameController,
-                    decoration: InputDecoration(
-                      labelText: "请输入用户名",
-                      hintText: "请输入用户名",
-                      prefixIcon: const Icon(Icons.person),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        TextFormField(
+                          controller: _unameController,
+                          decoration: InputDecoration(
+                            labelText: "请输入用户名",
+                            hintText: "请输入用户名",
+                            prefixIcon: const Icon(Icons.person),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.8),
+                          ),
+                          validator: (v) {
+                            return v == null || v.trim().isNotEmpty
+                                ? null
+                                : "用户名不能为空";
+                          },
+                          autofocus: _nameAutoFouce,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _pwdController,
+                          autofocus: !_nameAutoFouce,
+                          decoration: InputDecoration(
+                            labelText: "密码",
+                            hintText: "密码",
+                            prefixIcon: const Icon(Icons.lock),
+                            suffixIcon: IconButton(
+                              icon: Icon(pwdShow
+                                  ? Icons.visibility_off
+                                  : Icons.visibility),
+                              onPressed: () {
+                                setState(() {
+                                  pwdShow = !pwdShow;
+                                });
+                              },
+                            ),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.8),
+                          ),
+                          obscureText: !pwdShow,
+                          validator: (v) {
+                            return v == null || v.trim().isNotEmpty
+                                ? null
+                                : "密码不能为空！";
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: TextButton(
+                            onPressed: _showHistoryLoginSheet,
+                            child: const Text("历史账号"),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 25),
+                          child: ConstrainedBox(
+                            constraints:
+                                const BoxConstraints.expand(height: 55.0),
+                            child: ElevatedButton(
+                              onPressed: _loginIn,
+                              child: const Text("登录"),
+                            ),
+                          ),
+                        )
+                      ],
                     ),
-                    validator: (v) {
-                      return v == null || v.trim().isNotEmpty
-                          ? null
-                          : "用户名不能为空";
-                    },
-                    autofocus: _nameAutoFouce,
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _pwdController,
-                    autofocus: !_nameAutoFouce,
-                    decoration: InputDecoration(
-                      labelText: "密码",
-                      hintText: "密码",
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                            pwdShow ? Icons.visibility_off : Icons.visibility),
-                        onPressed: () {
-                          setState(() {
-                            pwdShow = !pwdShow;
-                          });
-                        },
-                      ),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.8),
-                    ),
-                    obscureText: !pwdShow,
-                    validator: (v) {
-                      return v == null || v.trim().isNotEmpty
-                          ? null
-                          : "密码不能为空！";
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: TextButton(
-                      onPressed: _showHistoryLoginSheet,
-                      child: const Text("历史账号"),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 25),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints.expand(height: 55.0),
-                      child: ElevatedButton(
-                        onPressed: _loginIn,
-                        child: const Text("登录"),
-                      ),
-                    ),
-                  )
-                ],
+                ),
               ),
             ),
           ),
@@ -316,6 +326,11 @@ class _LoginRouteState extends State<LoginRoute> {
                 username, passwordPlain, rememberPassword);
 
             await AppApi.init();
+            try {
+              await LoginApi().getRouters();
+            } catch (e) {
+              logger.e(e);
+            }
 
             // 登录成功后，后台预加载数据（不阻塞UI）
             Global.preloadRepairData().catchError((e) {

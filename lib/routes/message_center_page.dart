@@ -638,10 +638,11 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     );
   }
 
-  void _onViewShunting(Map<String, dynamic> itemMap) {
+  Future<void> _onViewShunting(Map<String, dynamic> itemMap) async {
     final st = itemMap['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
     final isAfterSaleService = st == 17 || st == '17';
+    final isChangeMainNode = st == 8 || st == '8';
     final isRepairProc = st == 13 || st == '13';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
     
@@ -667,6 +668,27 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
           builder: (context) => AfterSaleServiceNoticePage(shuntingCode: shuntingCode),
         ),
       );
+      return;
+    }
+    if (isChangeMainNode && shuntingCode != null && shuntingCode.isNotEmpty) {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => ChangeMainNodeShuntingPage(
+            shuntingCode: shuntingCode,
+            noticeItem: itemMap,
+          ),
+        ),
+      );
+      if (changed == true) {
+        await _loadShuntingNotice();
+        await _loadShuntingCounts();
+        if (mounted) {
+          final state = context.findAncestorStateOfType<_MessageCenterPageState>();
+          if (state != null) {
+            state._fetchMessageData();
+          }
+        }
+      }
       return;
     }
     if (st == 0 || st == '0') {
@@ -971,6 +993,239 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         false;
     if (!confirmed) return;
     await _onCompleteShunting(itemMap);
+  }
+}
+
+class ChangeMainNodeShuntingPage extends StatefulWidget {
+  final String shuntingCode;
+  final Map<String, dynamic> noticeItem;
+
+  const ChangeMainNodeShuntingPage({
+    super.key,
+    this.shuntingCode = '',
+    this.noticeItem = const <String, dynamic>{},
+  });
+
+  @override
+  State<ChangeMainNodeShuntingPage> createState() => _ChangeMainNodeShuntingPageState();
+}
+
+class _ChangeMainNodeShuntingPageState extends State<ChangeMainNodeShuntingPage> {
+  final _logger = AppLogger.logger;
+  bool _loading = true;
+  bool _markingRead = false;
+  List<Map<String, dynamic>> _rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _rows = [];
+    });
+    try {
+      final rows = await ProductApi().getChangeMainNodeShunting(
+        queryParametrs: {'code': widget.shuntingCode},
+      );
+      if (!mounted) return;
+      setState(() {
+        _rows = rows;
+        _loading = false;
+      });
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _rows = [];
+      });
+      showToast('获取转序通知单失败');
+    }
+  }
+
+  String _text(dynamic value) {
+    if (value == null) return '';
+    return value.toString().trim();
+  }
+
+  String _pickText(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final v = _text(map[key]);
+      if (v.isNotEmpty) return v;
+    }
+    return '';
+  }
+
+  String _requiredText(String value) => value.trim().isEmpty ? '-' : value.trim();
+
+  String _trainDisplay(Map<String, dynamic> row) {
+    final trainName = _pickText(row, ['trainName', 'trainNum', 'trainNo', 'serialNumber']);
+    final ends = _pickText(row, ['ends', 'end', 'trainEnd']);
+    return _requiredText('$trainName$ends');
+  }
+
+  String _statusText(Map<String, dynamic> row) {
+    final raw = _pickText(row, ['statusName', 'statusLabel', 'status']);
+    switch (raw) {
+      case '0':
+        return '未下发';
+      case '1':
+        return '已下发';
+      case '2':
+        return '已签收';
+      default:
+        return raw;
+    }
+  }
+
+  Future<void> _markAsRead() async {
+    if (_markingRead) return;
+    try {
+      setState(() => _markingRead = true);
+      final params = Map<String, dynamic>.from(widget.noticeItem);
+      params['status'] = 1;
+      final res = await ProductApi().updateShuntingNotice([params]);
+      if (!mounted) return;
+      if (res != null) {
+        showToast('已读');
+        Navigator.of(context).pop(true);
+      } else {
+        showToast('操作失败');
+        setState(() => _markingRead = false);
+      }
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() => _markingRead = false);
+      showToast('操作失败');
+    }
+  }
+
+  Widget _infoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              '$label：',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              _requiredText(value),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    if (_rows.isEmpty) {
+      return const Center(child: Text('暂无转序通知单数据'));
+    }
+
+    return Column(
+      children: _rows.asMap().entries.map((entry) {
+        final row = entry.value;
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoItem('车号', _trainDisplay(row)),
+                _infoItem('机型', _pickText(row, ['typeName', 'trainType', 'model'])),
+                _infoItem(
+                  '初始工序节点',
+                  _pickText(row, [
+                    'currentRepairMainNodeName',
+                    'currentMainNodeName',
+                    'beforeMainNodeName',
+                    'mainNodeName',
+                  ]),
+                ),
+                _infoItem(
+                  '初始排程节点',
+                  _pickText(row, [
+                    'currentScheduleNodeName',
+                    'currentMainNodeScheduleNodeName',
+                    'beforeScheduleNodeName',
+                  ]),
+                ),
+                _infoItem(
+                  '转入工序节点',
+                  _pickText(row, [
+                    'changeRepairMainNodeName',
+                    'nextMainNodeName',
+                    'targetMainNodeName',
+                    'transferMainNodeName',
+                  ]),
+                ),
+                _infoItem(
+                  '转入排程节点',
+                  _pickText(row, ['scheduleNodeName']),
+                ),
+                _infoItem(
+                  '计划转入时间',
+                  _pickText(row, ['planStartTime']),
+                ),
+                _infoItem(
+                  '发布时间',
+                  _pickText(row, ['applyTime', 'publishTime', 'createdTime']),
+                ),
+                _infoItem('状态', _statusText(row)),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('转序通知单'),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  _buildList(),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _markingRead ? null : _markAsRead,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(_markingRead ? '处理中...' : '已读'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
   }
 }
 

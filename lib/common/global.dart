@@ -34,6 +34,7 @@ class Global {
   static Profile profile = Profile(theme: 0);
 
   static String? parentDeptName;
+  static Set<String> phoneChildrenMetaTitles = <String>{};
 
   //修程信息
   static List<Map<String, dynamic>> repairProcInfo = [];

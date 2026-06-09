@@ -355,6 +355,41 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/changeMainNodeShunting/selectAll
+  Future<List<Map<String, dynamic>>> getChangeMainNodeShunting({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      final r = await AppApi.dio.get(
+        "/dispatch/changeMainNodeShunting/selectAll",
+        queryParameters: queryParametrs,
+      );
+      dynamic raw = r.data;
+      if (raw is Map) {
+        raw = raw['data'] ?? raw;
+      }
+      if (raw is Map) {
+        raw = raw['data'] ?? raw['rows'] ?? raw['list'] ?? raw;
+      }
+      if (raw is Map) {
+        raw = raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
+      }
+      if (raw is List) {
+        return raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      if (raw is Map) {
+        return [Map<String, dynamic>.from(raw)];
+      }
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      _handleException(e);
+      return <Map<String, dynamic>>[];
+    }
+  }
+
   // /dispatch/masSaleInformation/getMasInformationByJt28Code
   Future<dynamic> getMasSaleInformation(
     Map<String, dynamic> queryParametrs,

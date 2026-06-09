@@ -28,11 +28,63 @@ class LoginApi extends AppApi{
   }
 
   Future<dynamic> getRouters() async {
-    var r = await AppApi.dio.get(
-      "/system/menu/getRouters",
-    );
-    logger.i({'api': '/system/menu/getRouters', 'data': r.data});
-    return r.data;
+   
+    try {
+      var r = await AppApi.dio.get(
+        "/system/menu/getRouters",
+      );
+      final raw = r.data;
+      final body = raw is Map ? raw['data'] : null;
+      dynamic phoneChildren;
+      final List<dynamic> phoneChildrenMetaList = [];
+      final Set<String> phoneChildrenMetaTitles = <String>{};
+      if (body is List) {
+        for (final item in body) {
+          if (item is Map && item['name'] == 'Phone') {
+            phoneChildren = item['children'];
+            break;
+          }
+        }
+      }
+      if (phoneChildren is List) {
+        for (final child in phoneChildren) {
+          if (child is Map && child['meta'] != null) {
+            phoneChildrenMetaList.add(child['meta']);
+            final title = (child['meta'] is Map
+                    ? child['meta']['title']
+                    : null)
+                ?.toString()
+                .trim();
+            if (title != null && title.isNotEmpty) {
+              phoneChildrenMetaTitles.add(title);
+            }
+          }
+        }
+      }
+      Global.phoneChildrenMetaTitles = phoneChildrenMetaTitles;
+      logger.i({
+        'api': '/system/menu/getRouters',
+        'phoneChildrenMetaList': phoneChildrenMetaList,
+        'phoneChildrenMetaTitles': phoneChildrenMetaTitles.toList(),
+      });
+      try {
+        print(
+          'ROUTERS /system/menu/getRouters Phone.children.metaTitles=${jsonEncode(phoneChildrenMetaTitles.toList())}',
+        );
+      } catch (e) {
+        print(
+          'ROUTERS /system/menu/getRouters Phone.children.metaTitles raw=${phoneChildrenMetaTitles.toList()}',
+        );
+        print('ROUTERS /system/menu/getRouters encode failed: $e');
+      }
+      return body;
+    } catch (e, stackTrace) {
+      logger.e(
+        'getRouters 方法中发生异常: $e\n堆栈信息: $stackTrace',
+      );
+      print('ROUTERS /system/menu/getRouters error=$e');
+      return null;
+    }
   }
 
   // 获取信息中心消息

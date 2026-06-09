@@ -187,6 +187,14 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
+  bool _canShowByRouterTitle(String title) {
+    final routerTitles = Global.phoneChildrenMetaTitles;
+    if (routerTitles.isEmpty) {
+      return false;
+    }
+    return routerTitles.contains(title);
+  }
+
   Widget _buildSectionNew() {
     return SingleChildScrollView(
       child: Column(
@@ -199,42 +207,60 @@ class _NormalMainPageState extends State<NormalMainPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.people, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainManage'),
-                '开工点名',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.train, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'sec_enter_modify'),
-                '机车入段',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.build, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'trainRepairInfo'),
-                '检修作业',
-              ),
+              if (_canShowByRouterTitle('开工点名'))
+                _buildFeatureItem(
+                  Icon(Icons.people, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'repairTrainManage'),
+                  '开工点名',
+                )
+              else
+                _buildFeaturePlaceholder(),
+              if (_canShowByRouterTitle('机车入段'))
+                _buildFeatureItem(
+                  Icon(Icons.train, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'sec_enter_modify'),
+                  '机车入段',
+                )
+              else
+                _buildFeaturePlaceholder(),
+              if (_canShowByRouterTitle('检修作业'))
+                _buildFeatureItem(
+                  Icon(Icons.build, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'trainRepairInfo'),
+                  '检修作业',
+                )
+              else
+                _buildFeaturePlaceholder(),
             ],
           ),
           const SizedBox(height: 15),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
-              _buildFeatureItem(
-                Icon(Icons.post_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28submitManage'),
-                '报机统28（管理）',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.next_plan, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainProgress'),
-                '检修调令',
-              ),
-              _buildFeatureItem(
-                Icon(Icons.manage_search, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainTempManage'),
-                '检修进度',
-              ),
+              if (_canShowByRouterTitle('报机统28（管理）'))
+                _buildFeatureItem(
+                  Icon(Icons.post_add, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'jt28submitManage'),
+                  '报机统28（管理）',
+                )
+              else
+                _buildFeaturePlaceholder(),
+              if (_canShowByRouterTitle('检修调令'))
+                _buildFeatureItem(
+                  Icon(Icons.next_plan, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'repairTrainProgress'),
+                  '检修调令',
+                )
+              else
+                _buildFeaturePlaceholder(),
+              if (_canShowByRouterTitle('检修进度'))
+                _buildFeatureItem(
+                  Icon(Icons.manage_search, color: Colors.blue[200]),
+                  () => Navigator.pushNamed(context, 'repairTrainTempManage'),
+                  '检修进度',
+                )
+              else
+                _buildFeaturePlaceholder(),
               // Expanded(
               //   child: ElevatedButton(
               //     onPressed: () {
@@ -294,12 +320,13 @@ class _NormalMainPageState extends State<NormalMainPage> {
             Builder(
               builder: (_) {
                 final children = <Widget>[
-                  _buildFeatureItem(
-                    Icon(Icons.assignment, color: Colors.blue[200]),
-                    () => Navigator.pushNamed(context, 'trainShuntingPackage'),
-                    '调车',
-                  ),
-                  if (_canSeeShuntingQuery)
+                  if (_canShowByRouterTitle('调车'))
+                    _buildFeatureItem(
+                      Icon(Icons.assignment, color: Colors.blue[200]),
+                      () => Navigator.pushNamed(context, 'trainShuntingPackage'),
+                      '调车',
+                    ),
+                  if (_canShowByRouterTitle('调车计划查询'))
                     _buildFeatureItem(
                       Icon(Icons.search, color: Colors.blue[200]),
                       () {
@@ -312,7 +339,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                       },
                       '调车计划查询',
                     ),
-                  if (_canSeeTrainDepartureConfirm)
+                  if (_canShowByRouterTitle('离段确认'))
                     _buildFeatureItem(
                       Icon(Icons.photo_camera_back, color: Colors.blue[200]),
                       () =>
@@ -329,7 +356,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
                 );
               },
             ),
-          if (_canSeeAfterSaleRegister)
+          if (_canShowByRouterTitle('售后登记'))
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
@@ -352,96 +379,5 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
-
-  bool get _canSeeShuntingQuery {
-    final user = Global.profile.permissions?.user;
-    final name = (user?.nickName ?? user?.userName ?? '').toString();
-    if (name == '朱汉' || name == '封方方') {
-      return true;
-    }
-
-    final deptName = (user?.dept?.deptName ?? '').toString();
-    final parentDeptName = (Global.parentDeptName ?? '').toString();
-    final combinedDept = '$deptName $parentDeptName';
-    if (combinedDept.contains('调度室') ||
-        combinedDept.contains('生产调度') ||
-        (combinedDept.contains('生产') && combinedDept.contains('调度'))) {
-      return true;
-    }
-
-    final roleKeys =
-        (Global.profile.permissions?.roles ?? const <String>[])
-            .map((e) => e.toString())
-            .toList();
-    if (roleKeys.any((r) => r.contains('diaodu') || r.contains('调度'))) {
-      return true;
-    }
-
-    final roleObjs =
-        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
-            .map((e) => e)
-            .toList();
-    if (roleObjs.any((r) {
-      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
-      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      return rn.contains('调度') || rk.contains('diaodu') || rk.contains('调度');
-    })) {
-      return true;
-    }
-    return false;
-  }
-
-  bool get _canSeeAfterSaleRegister {
-    final user = Global.profile.permissions?.user;
-    final name = (user?.nickName ?? user?.userName ?? '').toString();
-    if (name == '田凯') {
-      return true;
-    }
-    final deptName = (user?.dept?.deptName ?? '').toString();
-    final parentDeptName = (Global.parentDeptName ?? '').toString();
-    final combinedDept = '$deptName $parentDeptName';
-    if (combinedDept.contains('安全生产指挥中心')) {
-      return true;
-    }
-    if (!combinedDept.contains('技术科')) {
-      return false;
-    }
-    return combinedDept.contains('江岸机务段') ||
-        combinedDept.contains('襄阳机务段') ||
-        combinedDept.contains('武昌南机务段');
-  }
-
-  bool get _canSeeTrainDepartureConfirm {
-    final user = Global.profile.permissions?.user;
-    final deptName = (user?.dept?.deptName ?? '').toString();
-    final parentDeptName = (Global.parentDeptName ?? '').toString();
-    final combinedDept = '$deptName $parentDeptName';
-    if (combinedDept.contains('总成车间') && combinedDept.contains('接车')) {
-      return true;
-    }
-
-    final roleKeys =
-        (Global.profile.permissions?.roles ?? const <String>[])
-            .map((e) => e.toString())
-            .toList();
-    if (roleKeys.any((r) => r.contains('总成') && r.contains('接车'))) {
-      return true;
-    }
-
-    final roleObjs =
-        (Global.profile.permissions?.user.roles ?? const <dynamic>[])
-            .map((e) => e)
-            .toList();
-    if (roleObjs.any((r) {
-      final rn = (r?.roleName ?? r?['roleName'] ?? '').toString();
-      final rk = (r?.roleKey ?? r?['roleKey'] ?? '').toString();
-      final s = '$rn $rk';
-      return s.contains('总成') && s.contains('接车');
-    })) {
-      return true;
-    }
-
-    return false;
-  }
 
 }
