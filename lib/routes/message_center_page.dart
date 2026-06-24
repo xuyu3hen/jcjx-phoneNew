@@ -395,7 +395,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         'auditUserName': user?.nickName ?? user?.userName ?? '',
         'auditUserId': user?.userId ?? '',
         'status': _shuntingStatus,
-        'type': [21],
+        // 'type': [21],
         'pageNum': 1,
         'pageSize': _pageSize,
       };
@@ -642,6 +642,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     final st = itemMap['shuntingType'];
     final isInvestigate = st == 4 || st == '4';
     final isAfterSaleService = st == 17 || st == '17';
+    final isAfterSaleFault = st == 21 || st == '21';
     final isChangeMainNode = st == 8 || st == '8';
     final isRepairProc = st == 13 || st == '13';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
@@ -668,6 +669,27 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
           builder: (context) => AfterSaleServiceNoticePage(shuntingCode: shuntingCode),
         ),
       );
+      return;
+    }
+    if (isAfterSaleFault && shuntingCode?.isNotEmpty == true) {
+      final changed = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => AfterSaleFaultNoticePage(
+            shuntingCode: shuntingCode ?? '',
+            noticeItem: itemMap,
+          ),
+        ),
+      );
+      if (changed == true) {
+        await _loadShuntingNotice();
+        await _loadShuntingCounts();
+        if (mounted) {
+          final state = context.findAncestorStateOfType<_MessageCenterPageState>();
+          if (state != null) {
+            state._fetchMessageData();
+          }
+        }
+      }
       return;
     }
     if (isChangeMainNode && shuntingCode != null && shuntingCode.isNotEmpty) {
@@ -732,6 +754,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'applyUserName': '调令发布人',
     'auditUserName': '签收人',
     'auditDeptName': '签收部门',
+    'auditTime': '签收时间',
     'status': '状态',
     'shuntingType': '通知单类型',
     'trainNum': '车号',
@@ -752,6 +775,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'reportUser', // 提报人
     'auditUserName',
     'auditDeptName',
+    'auditTime',
     'trainNum',
     'typeName',
     'status',
@@ -770,6 +794,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'createdTime',
     'updatedTime',
     'applyTime',
+    'auditTime',
     'reportTime', // 将新增的提报时间也加入时间格式化列表
   };
 
@@ -1062,6 +1087,13 @@ class _ChangeMainNodeShuntingPageState extends State<ChangeMainNodeShuntingPage>
 
   String _requiredText(String value) => value.trim().isEmpty ? '-' : value.trim();
 
+  String _binaryStatusText(String value) {
+    final v = value.trim();
+    if (v == '1') return '已下发';
+    if (v == '0') return '未下发';
+    return v;
+  }
+
   String _trainDisplay(Map<String, dynamic> row) {
     final trainName = _pickText(row, ['trainName', 'trainNum', 'trainNo', 'serialNumber']);
     final ends = _pickText(row, ['ends', 'end', 'trainEnd']);
@@ -1202,6 +1234,224 @@ class _ChangeMainNodeShuntingPageState extends State<ChangeMainNodeShuntingPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('转序通知单'),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  _buildList(),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _markingRead ? null : _markAsRead,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(_markingRead ? '处理中...' : '已读'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class AfterSaleFaultNoticePage extends StatefulWidget {
+  final String shuntingCode;
+  final Map<String, dynamic> noticeItem;
+
+  const AfterSaleFaultNoticePage({
+    super.key,
+    required this.shuntingCode,
+    required this.noticeItem,
+  });
+
+  @override
+  State<AfterSaleFaultNoticePage> createState() => _AfterSaleFaultNoticePageState();
+}
+
+class _AfterSaleFaultNoticePageState extends State<AfterSaleFaultNoticePage> {
+  final _logger = AppLogger.logger;
+  bool _loading = true;
+  bool _markingRead = false;
+  List<Map<String, dynamic>> _rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _rows = [];
+    });
+    try {
+      final rows = await ProductApi().getMasSaleInformationList(
+        queryParametrs: {
+          'code': widget.shuntingCode,
+          'pageNum': 0,
+          'pageSize': 0,
+        },
+      );
+      if (!mounted) return;
+      setState(() {
+        _rows = rows;
+        _loading = false;
+      });
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() {
+        _rows = [];
+        _loading = false;
+      });
+      showToast('获取售后故障录入通知失败');
+    }
+  }
+
+  String _text(dynamic value) {
+    if (value == null) return '';
+    return value.toString().trim();
+  }
+
+  String _pickText(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final v = _text(map[key]);
+      if (v.isNotEmpty && v != 'null') return v;
+    }
+    return '';
+  }
+
+  String _requiredText(String value) => value.trim().isEmpty ? '-' : value.trim();
+
+  String _binaryStatusText(String value) {
+    final v = value.trim();
+    if (v == '1') return '已下发';
+    if (v == '0') return '未下发';
+    return v;
+  }
+
+  Future<void> _markAsRead() async {
+    if (_markingRead) return;
+    try {
+      setState(() => _markingRead = true);
+      final params = Map<String, dynamic>.from(widget.noticeItem);
+      params['status'] = 1;
+      final res = await ProductApi().updateShuntingNotice([params]);
+      if (!mounted) return;
+      if (res != null) {
+        showToast('已读');
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() => _markingRead = false);
+        showToast('操作失败');
+      }
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() => _markingRead = false);
+      showToast('操作失败');
+    }
+  }
+
+  Widget _infoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              '$label：',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              _requiredText(value),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    if (_rows.isEmpty) {
+      return const Center(child: Text('暂无售后故障录入通知数据'));
+    }
+
+    return Column(
+      children: _rows.map((row) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoItem('故障日期', _pickText(row, ['faultDate'])),
+                _infoItem('填报日期', _pickText(row, ['createdTime', 'reportTime'])),
+                _infoItem('机型', _pickText(row, ['model', 'typeName', 'trainType'])),
+                _infoItem('车号', _pickText(row, ['serialNumber', 'trainNum', 'trainName'])),
+                _infoItem('交验日期', _pickText(row, ['inspectionDate'])),
+                _infoItem('维修段', _pickText(row, ['maintenanceSection', 'deptName', 'deptNmeString'])),
+                _infoItem('修程情况', _pickText(row, ['repairStatus'])),
+                _infoItem('故障类别', _pickText(row, ['failureCategory', 'failureCategoryName'])),
+                _infoItem('走行公里', _pickText(row, ['kilometersTravelled', 'kilometer', 'mileage'])),
+                _infoItem('故障现象', _pickText(row, ['faultInformation', 'faultPhenomenon'])),
+                _infoItem('故障情况', _pickText(row, ['faultSummary', 'faultSituation'])),
+                _infoItem('责任车间', _pickText(row, ['deptNmeString', 'deptName', 'responsibleDeptName', 'workshop'])),
+                _infoItem('联系人', _pickText(row, ['contactPerson'])),
+                _infoItem('联系电话', _pickText(row, ['tel'])),
+                _infoItem('机车所在地', _pickText(row, ['trainLocation', 'parkingLocation', 'stopLocation'])),
+                _infoItem('附件', _pickText(row, ['fileCode', 'attachment', 'fileList'])),
+                _infoItem('填报人', _pickText(row, ['createdBy'])),
+                _infoItem('故障状态', _binaryStatusText(_pickText(row, ['status']))),
+                _infoItem(
+                  '调查清单',
+                  _binaryStatusText(
+                    _pickText(row, ['investigateStatus']),
+                  ),
+                ),
+                _infoItem(
+                  '修程通知单',
+                  _binaryStatusText(
+                    _pickText(row, ['masNoticeStatus']),
+                  ),
+                ),
+                _infoItem(
+                  '售后服务通知单',
+                  _binaryStatusText(
+                    _pickText(row, ['afterSaleStatus']),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('售后故障录入通知'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

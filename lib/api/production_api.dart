@@ -407,6 +407,41 @@ class ProductApi extends AppApi {
     }
   }
 
+  // /dispatch/masSaleInformation/selectAll
+  Future<List<Map<String, dynamic>>> getMasSaleInformationList({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      final r = await AppApi.dio.get(
+        "/dispatch/masSaleInformation/selectAll",
+        queryParameters: queryParametrs,
+      );
+      dynamic raw = r.data;
+      if (raw is Map) {
+        raw = raw['data'] ?? raw;
+      }
+      if (raw is Map) {
+        raw = raw['data'] ?? raw['rows'] ?? raw['list'] ?? raw;
+      }
+      if (raw is Map) {
+        raw = raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
+      }
+      if (raw is List) {
+        return raw
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      if (raw is Map) {
+        return [Map<String, dynamic>.from(raw)];
+      }
+      return <Map<String, dynamic>>[];
+    } catch (e) {
+      _handleException(e);
+      return <Map<String, dynamic>>[];
+    }
+  }
+
   //jcjxsystem/message/getMessageInfo  响应格式: { code, message, data: { sysMessageVO: [...], count } }
   Future<dynamic> getMessageInfo({
     Map<String, dynamic>? queryParametrs,
@@ -2407,6 +2442,13 @@ class ProductApi extends AppApi {
   // 获取tasks/taskInstructPackage/getPackageAndInspectionStatistics
   Future<dynamic> getPackageAndInspectionStatistics(
       {Map<String, dynamic>? queryParametrs}) async {
+    final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString().trim();
+    if (name == '田凯') {
+      return getAllPackageAndInspectionStatistics(
+        queryParametrs: queryParametrs,
+      );
+    }
     try {
       var r = await AppApi.dio.get(
         "/tasks/taskInstructPackage/getPackageAndInspectionStatistics",
@@ -2419,9 +2461,30 @@ class ProductApi extends AppApi {
     }
   }
 
+    Future<dynamic> getAllPackageAndInspectionStatistics(
+      {Map<String, dynamic>? queryParametrs}) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/tasks/taskInstructPackage/getAllPackageAndInspectionStatistics",
+        queryParameters: queryParametrs,
+      );
+      logger.i((r.data["data"])["data"]);
+      return (r.data["data"])["data"];
+    } catch (e) {
+      return [];
+    }
+  }
+
   // 获取tasks/locomotiveMaintenanceLogDO/getTaskDistributionStatus
   Future<dynamic> getTaskDistributionStatus(
       {Map<String, dynamic>? queryParametrs}) async {
+    final user = Global.profile.permissions?.user;
+    final name = (user?.nickName ?? user?.userName ?? '').toString().trim();
+    if (name == '田凯') {
+      return getAllPackageAndInspectionStatistics(
+        queryParametrs: queryParametrs,
+      );
+    }
     try {
       var r = await AppApi.dio.get(
         "/tasks/locomotiveMaintenanceLogDO/getTaskDistributionStatus",
