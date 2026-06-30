@@ -4,9 +4,9 @@
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
 
-import 'package:jcjx_phone/routes/production/sec_enter_modify.dart';
 import 'package:jcjx_phone/routes/production/after_sale_temp_repair_register_page.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
+import 'package:jcjx_phone/routes/production/sec_enter_modify_new.dart';
 import 'package:jcjx_phone/routes/production/train_departure_confirm_page.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
@@ -399,7 +399,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         "enter_list": (context) => const EnterList(),
         // 新增入段修改
         "sec_enter_modify": (context) => const SecEnterModifyNew(),
-        "sec_enter_detail_record": (context) => const SecEnterModify(),
+        "sec_enter_detail_record": (context) => const SecEnterModifyNew(),
         // 机统28
         "submit28": (context) => const Vehicle28Form(),
         "dispatchlist": (context) => const DispatchList(),
@@ -431,7 +431,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
         'trainShuntingPackage':(context) => const TrainShuntingPackagePage(),
         'workProgress':(context) => const WorkProgressPage(),
         'repairTrainTempManage':(context) => const TrainRepairTempManage(),
-        'enterDetailRecord': (context) => const SecEnterModify(title: '入段细录'),
+        'enterDetailRecord': (context) => const SecEnterModifyNew(),
         'afterSaleTempRepairRegister': (context) =>
             const AfterSaleTempRepairRegisterPage(),
         'trainDepartureConfirm': (context) => const TrainDepartureConfirmPage(),

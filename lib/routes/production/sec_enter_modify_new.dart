@@ -318,6 +318,15 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       // 如果数据存在但缺少必要字段，给出提示但继续填充可用数据
       if (mounted) {
         setState(() {
+          trainNumSelected["trainNum"] = r['trainNum'] ?? trainNumSelected["trainNum"];
+          trainNumSelected["code"] = r['trainNumCode'] ??
+              r['locoCode'] ??
+              r['locomotiveCode'] ??
+              trainNumSelected["code"];
+          trainNumSelected["repairPlanCode"] = r['repairPlanCode'] ??
+              r['planCode'] ??
+              r['code'] ??
+              trainNumSelected["repairPlanCode"];
           // 安全地设置机型信息
           if (r['trainType'] != null) {
             jcTypeListSelected["name"] = r['trainType'];
@@ -410,6 +419,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         'typeName': jcTypeListSelected["name"],
         'trainNum': trainNumSelected['trainNum'],
         'trainNumCode': trainNumSelected['code'],
+        'repairPlanCode': trainNumSelected['repairPlanCode'],
         'repairTimes': repairTimesSelected["name"],
         'repairProcName': repairSelected['name'],
         'repairProcCode': repairSelected['code'],
@@ -663,9 +673,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                      },
                      inputCallBack: (value) {
                        setState(() {
-                        trainNumSelected["trainNum"] = value;
-                      });
-                    },
+                         trainNumSelected["trainNum"] = value;
+                         // 手工修改车号后，清空上一次查到的计划标识，避免串数据
+                         trainNumSelected["code"] = null;
+                         trainNumSelected["repairPlanCode"] = null;
+                       });
+                     },
                   ),
                 ),
               ),

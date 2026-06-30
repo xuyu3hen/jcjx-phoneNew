@@ -15,6 +15,34 @@ class ProductApi extends AppApi {
     printer: PrettyPrinter(), // 漂亮的日志格式化
   );
 
+  void _logLargeTagged(String tag, dynamic value) {
+    String text;
+    try {
+      if (value is String) {
+        text = value;
+      } else {
+        text = const JsonEncoder.withIndent('  ').convert(value);
+      }
+    } catch (_) {
+      text = value?.toString() ?? 'null';
+    }
+    debugPrintSynchronously('$tag ===== BEGIN =====');
+    const chunkSize = 700;
+    final lines = const LineSplitter().convert(text);
+    for (final line in lines) {
+      if (line.isEmpty) {
+        debugPrintSynchronously(tag);
+        continue;
+      }
+      for (var i = 0; i < line.length; i += chunkSize) {
+        final end = (i + chunkSize < line.length) ? i + chunkSize : line.length;
+        final prefix = i == 0 ? '$tag ' : '$tag > ';
+        debugPrintSynchronously('$prefix${line.substring(i, end)}');
+      }
+    }
+    debugPrintSynchronously('$tag ===== END =====');
+  }
+
   // 统一异常处理方法
   void _handleException(dynamic e) {
     String errorMessage = "";
@@ -477,6 +505,50 @@ class ProductApi extends AppApi {
       logger.i(((r.data)['data'])['data']);
       return ((r.data)['data'])['data'];
     } catch (e) {
+      _handleException(e);
+      return [];
+    }
+  }
+
+  // /dispatch/shuntingReceiveGroup/selectAll
+  Future<dynamic> getShuntingReceiveGroup({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      debugPrintSynchronously(
+        '[修程通知单签收组] 请求开始 query=$queryParametrs',
+      );
+      _logLargeTagged('[修程通知单签收组][QUERY]', queryParametrs ?? {});
+      var r = await AppApi.dio.get(
+        "/dispatch/shuntingReceiveGroup/selectAll",
+        queryParameters: queryParametrs,
+      );
+      _logLargeTagged('[修程通知单签收组][RAW_RESPONSE]', r.data);
+      final outer = r.data;
+      final data = outer is Map ? outer['data'] : null;
+      final inner = data is Map ? data['data'] : null;
+      if (inner is Map && inner['rows'] is List) {
+        debugPrintSynchronously(
+          '[修程通知单签收组] 请求完成 rows=${(inner['rows'] as List).length}',
+        );
+        return inner['rows'];
+      }
+      if (inner is List) {
+        debugPrintSynchronously(
+          '[修程通知单签收组] 请求完成 rows=${inner.length}',
+        );
+        return inner;
+      }
+      if (data is Map && data['rows'] is List) {
+        debugPrintSynchronously(
+          '[修程通知单签收组] 请求完成 rows=${(data['rows'] as List).length}',
+        );
+        return data['rows'];
+      }
+      debugPrintSynchronously('[修程通知单签收组] 请求完成 rows=0');
+      return [];
+    } catch (e) {
+      debugPrintSynchronously('[修程通知单签收组] 请求失败 error=$e');
       _handleException(e);
       return [];
     }
@@ -1057,13 +1129,56 @@ class ProductApi extends AppApi {
   Future<dynamic> getUserListByDeptId({
     Map<String, dynamic>? queryParametrs,
   }) async {
-    // try {
-    var r = await AppApi.dio.get(
-      "/subparts/jcRoleConfigNode/getUserListByDeptId",
-      queryParameters: queryParametrs,
-    );
-    logger.i((r.data["data"])["data"]);
-    return (r.data["data"])["data"];
+    try {
+      debugPrintSynchronously(
+        '[修程通知单签收人] 请求开始 query=$queryParametrs',
+      );
+      _logLargeTagged('[修程通知单签收人][QUERY]', queryParametrs ?? {});
+      var r = await AppApi.dio.get(
+        "/subparts/jcRoleConfigNode/getUserListByDeptId",
+        queryParameters: queryParametrs,
+      );
+      _logLargeTagged('[修程通知单签收人][RAW_RESPONSE]', r.data);
+      final data = (r.data["data"])["data"];
+      final rows = data is Map && data['rows'] is List
+          ? data['rows'] as List
+          : (data is List ? data : const []);
+      debugPrintSynchronously(
+        '[修程通知单签收人] 请求完成 rows=${rows.length}',
+      );
+      return data;
+    } catch (e) {
+      debugPrintSynchronously('[修程通知单签收人] 请求失败 error=$e');
+      _handleException(e);
+      return [];
+    }
+  }
+
+  Future<dynamic> getVUserRolePostDetailListByRoleIdList(
+    List<int> roleIdList,
+  ) async {
+    try {
+      debugPrintSynchronously(
+        '[修程通知单签收角色] 请求开始 roleIdList=$roleIdList',
+      );
+      _logLargeTagged('[修程通知单签收角色][QUERY]', roleIdList);
+      final r = await AppApi.dio2.post(
+        "/jcjxsystem/sysUser/getVUserRolePostDetailListByRoleIdList",
+        data: roleIdList,
+      );
+      _logLargeTagged('[修程通知单签收角色][RAW_RESPONSE]', r.data);
+      final outer = r.data is Map ? r.data['data'] : null;
+      final data = outer is Map ? outer['data'] : null;
+      final rows = data is Map ? data.keys.toList() : const [];
+      debugPrintSynchronously(
+        '[修程通知单签收角色] 请求完成 rows=${rows.length}',
+      );
+      return data ?? [];
+    } catch (e) {
+      debugPrintSynchronously('[修程通知单签收角色] 请求失败 error=$e');
+      _handleException(e);
+      return [];
+    }
   }
 
   //dispatch/masAfterSaleShunting/Update
@@ -1078,6 +1193,52 @@ class ProductApi extends AppApi {
       logger.i(r.data);
       return r.data;
     } catch (e) {
+      _handleException(e);
+    }
+  }
+
+  Future<dynamic> saveMasNotice({
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      debugPrintSynchronously('[修程通知单保存] 请求开始');
+      _logLargeTagged('[修程通知单保存][QUERY]', data);
+      final r = await AppApi.dio.post(
+        "/dispatch/masNotice/save",
+        data: data,
+      );
+      _logLargeTagged('[修程通知单保存][RAW_RESPONSE]', r.data);
+      final code = r.data is Map ? r.data['code'] : null;
+      debugPrintSynchronously('[修程通知单保存] 请求完成 code=$code');
+      return r.data;
+    } catch (e) {
+      debugPrintSynchronously('[修程通知单保存] 请求失败 error=$e');
+      _handleException(e);
+    }
+  }
+
+  Future<dynamic> getMasNoticeSelectAll({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      debugPrintSynchronously('[修程通知单回写] 请求开始 query=$queryParametrs');
+      _logLargeTagged('[修程通知单回写][QUERY]', queryParametrs ?? {});
+      final r = await AppApi.dio.get(
+        "/dispatch/masNotice/selectAll",
+        queryParameters: queryParametrs,
+      );
+      _logLargeTagged('[修程通知单回写][RAW_RESPONSE]', r.data);
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data['data'];
+      final inner = outer is Map ? outer['data'] : null;
+      final rows = inner is Map
+          ? inner['rows']
+          : (outer is Map ? outer['rows'] : (data['rows'] ?? inner ?? outer));
+      final rowsCount = rows is List ? rows.length : 0;
+      debugPrintSynchronously('[修程通知单回写] 请求完成 rows=$rowsCount');
+      return inner ?? outer ?? data;
+    } catch (e) {
+      debugPrintSynchronously('[修程通知单回写] 请求失败 error=$e');
       _handleException(e);
     }
   }
@@ -1877,6 +2038,46 @@ class ProductApi extends AppApi {
       }
       return outer;
     } catch (e) {
+      _handleException(e);
+      return null;
+    }
+  }
+
+  // 机统28查询 tasks/locomotiveMaintenanceLogDO/selectAll
+  Future<dynamic> getJt28SelectAll({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      logger.i('[修程通知单JT28] 请求开始 query=$queryParametrs');
+      _logLargeTagged('[修程通知单JT28][QUERY]', queryParametrs ?? {});
+      var r = await AppApi.dio.get(
+        "/tasks/locomotiveMaintenanceLogDO/selectAll",
+        queryParameters: queryParametrs,
+      );
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      final inner = outer is Map ? outer["data"] : null;
+      final rows = inner is Map ? inner["rows"] : null;
+      final rowsCount =
+          rows is List ? rows.length : (inner is List ? inner.length : (outer is List ? outer.length : 0));
+      logger.i(
+        '[修程通知单JT28] 请求完成 status=${r.statusCode} rows=$rowsCount url=${r.requestOptions.uri}',
+      );
+      _logLargeTagged('[修程通知单JT28][RAW_RESPONSE]', r.data);
+      logger.i({
+        'api': '/tasks/locomotiveMaintenanceLogDO/selectAll',
+        'method': r.requestOptions.method,
+        'url': r.requestOptions.uri.toString(),
+        'request': queryParametrs,
+        'statusCode': r.statusCode,
+        'response': r.data,
+      });
+      if (outer is Map && outer.containsKey("data")) {
+        return outer["data"];
+      }
+      return outer;
+    } catch (e) {
+      logger.e('[修程通知单JT28] 请求失败 error=$e');
       _handleException(e);
       return null;
     }

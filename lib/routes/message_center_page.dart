@@ -620,14 +620,6 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
   }
 
   Widget _buildShuntingCardWithTap(Map<String, dynamic> itemMap) {
-    final st = itemMap['shuntingType'];
-    final isRepairProc = st == 13 || st == '13';
-    
-    // 修程通知单不响应点击事件
-    if (isRepairProc) {
-      return _shuntingNoticeCard(itemMap);
-    }
-    
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -646,12 +638,29 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     final isChangeMainNode = st == 8 || st == '8';
     final isRepairProc = st == 13 || st == '13';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
-    
-    // 双重保险，点击时直接返回
-    if (isRepairProc) {
+
+    if (isRepairProc && shuntingCode?.isNotEmpty == true) {
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => RepairProcessNoticeDetailPage(
+            shuntingCode: shuntingCode ?? '',
+            noticeItem: itemMap,
+          ),
+        ),
+      );
+      if (changed == true) {
+        await _loadShuntingNotice();
+        await _loadShuntingCounts();
+        if (mounted) {
+          final state = context.findAncestorStateOfType<_MessageCenterPageState>();
+          if (state != null) {
+            state._fetchMessageData();
+          }
+        }
+      }
       return;
     }
-    
+
     if (isInvestigate && shuntingCode != null && shuntingCode.isNotEmpty) {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -1486,6 +1495,319 @@ class AfterSaleServiceNoticePage extends StatefulWidget {
 
   @override
   State<AfterSaleServiceNoticePage> createState() => _AfterSaleServiceNoticePageState();
+}
+
+class RepairProcessNoticeDetailPage extends StatefulWidget {
+  final String shuntingCode;
+  final Map<String, dynamic> noticeItem;
+
+  const RepairProcessNoticeDetailPage({
+    super.key,
+    required this.shuntingCode,
+    required this.noticeItem,
+  });
+
+  @override
+  State<RepairProcessNoticeDetailPage> createState() =>
+      _RepairProcessNoticeDetailPageState();
+}
+
+class _RepairProcessNoticeDetailPageState
+    extends State<RepairProcessNoticeDetailPage> {
+  final _logger = AppLogger.logger;
+  bool _loading = true;
+  bool _markingRead = false;
+  List<Map<String, dynamic>> _rows = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _rows = [];
+    });
+    try {
+      final res = await ProductApi().getMasNoticeSelectAll(
+        queryParametrs: {
+          'code': widget.shuntingCode,
+          'pageNum': 0,
+          'pageSize': 0,
+        },
+      );
+      final rows = _parseList(res);
+      if (!mounted) return;
+      setState(() {
+        _rows = rows;
+        _loading = false;
+      });
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() {
+        _rows = [];
+        _loading = false;
+      });
+      showToast('获取修程通知单失败');
+    }
+  }
+
+  String _text(dynamic value) {
+    if (value == null) return '';
+    final text = value.toString().trim();
+    return text == 'null' ? '' : text;
+  }
+
+  String _pickText(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final value = _text(map[key]);
+      if (value.isNotEmpty) return value;
+    }
+    for (final value in map.values) {
+      if (value is Map) {
+        final text = _pickText(Map<String, dynamic>.from(value), keys);
+        if (text.isNotEmpty) return text;
+      } else if (value is List) {
+        for (final item in value) {
+          if (item is Map) {
+            final text = _pickText(Map<String, dynamic>.from(item), keys);
+            if (text.isNotEmpty) return text;
+          }
+        }
+      }
+    }
+    return '';
+  }
+
+  List<Map<String, dynamic>> _parseList(dynamic value) {
+    dynamic raw = value;
+    if (raw is Map) {
+      raw = raw['rows'] ?? raw['records'] ?? raw['data'] ?? raw['list'] ?? raw;
+      if (raw is Map) {
+        final lists = raw.values.whereType<List>().toList();
+        if (lists.length == 1) raw = lists.first;
+      }
+    }
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  List<Map<String, dynamic>> _pickList(
+    Map<String, dynamic> map,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final parsed = _parseList(map[key]);
+      if (parsed.isNotEmpty) return parsed;
+    }
+    for (final value in map.values) {
+      if (value is Map) {
+        final parsed = _pickList(Map<String, dynamic>.from(value), keys);
+        if (parsed.isNotEmpty) return parsed;
+      }
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  String _requiredText(String value) => value.trim().isEmpty ? '-' : value.trim();
+
+  Future<void> _markAsRead() async {
+    if (_markingRead) return;
+    try {
+      setState(() => _markingRead = true);
+      final params = Map<String, dynamic>.from(widget.noticeItem);
+      params['status'] = 1;
+      final res = await ProductApi().updateShuntingNotice([params]);
+      if (!mounted) return;
+      if (res != null) {
+        showToast('已读');
+        Navigator.of(context).pop(true);
+      } else {
+        setState(() => _markingRead = false);
+        showToast('操作失败');
+      }
+    } catch (e) {
+      _logger.e(e);
+      if (!mounted) return;
+      setState(() => _markingRead = false);
+      showToast('操作失败');
+    }
+  }
+
+  Widget _infoItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Text(
+              '$label：',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              _requiredText(value),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dataTable({
+    required List<Map<String, dynamic>> rows,
+    required List<MapEntry<String, List<String>>> columns,
+  }) {
+    if (rows.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Text('暂无数据'),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columns: columns
+              .map(
+                (c) => DataColumn(
+                  label: Text(
+                    c.key,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              )
+              .toList(),
+          rows: rows
+              .map(
+                (row) => DataRow(
+                  cells: columns
+                      .map(
+                        (c) => DataCell(
+                          Text(
+                            _requiredText(_pickText(row, c.value)),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList() {
+    if (_rows.isEmpty) {
+      return const Center(child: Text('暂无修程通知单数据'));
+    }
+    return Column(
+      children: _rows.map((row) {
+        final workRows = _pickList(row, ['masNoticeDeptList', 'masAfterSaleWorkList']);
+        final signRows = _pickList(row, ['shuntingNoticeList', 'masAfterSaleAuditList']);
+        return Card(
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _infoItem('通知单编码', _pickText(row, ['encode', 'noticeCode', 'code'])),
+                _infoItem('故障现象', _pickText(row, ['faultDescription', 'faultInformation'])),
+                _infoItem('工序节点', _pickText(row, ['repairMainNodeName'])),
+                _infoItem('停留位置', _pickText(row, ['stoppingPlace', 'trainLocation', 'parkingLocation', 'stopLocation'])),
+                _infoItem('车号', _pickText(row, ['trainNum', 'trainName'])),
+                _infoItem('机型', _pickText(row, ['typeName', 'model'])),
+                _infoItem('填报人', _pickText(row, ['reportUserName', 'applyUserName'])),
+                _infoItem('填报部门', _pickText(row, ['reportDeptName'])),
+                _infoItem('发布时间', _pickText(row, ['createdTime', 'applyTime'])),
+                const SizedBox(height: 8),
+                const Text(
+                  '工艺信息',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.blue),
+                ),
+                _dataTable(
+                  rows: workRows.isEmpty ? <Map<String, dynamic>>[row] : workRows,
+                  columns: [
+                    MapEntry('关联构型', ['configNodeName', 'configName', 'nodeName']),
+                    MapEntry('加工方法', ['jtDictName', 'processingMethodName', 'requiredProcessingMethodName']),
+                    MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
+                    MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
+                    MapEntry('施修方案', ['repairProcContent', 'maintenanceNotice', 'repairScheme', 'repairPlan']),
+                    MapEntry('技术指导', ['techGuideName', 'technicalGuidance', 'guide', 'techGuide']),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '签收情况',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.blue),
+                ),
+                _dataTable(
+                  rows: signRows.isEmpty ? <Map<String, dynamic>>[row] : signRows,
+                  columns: [
+                    MapEntry('发布人', ['applyUserName']),
+                    MapEntry('签收部门', ['auditDeptName']),
+                    MapEntry('签收班组', ['auditTeamName']),
+                    MapEntry('签收人', ['auditUserName']),
+                    MapEntry('签收时间', ['auditTime']),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('修程通知单'),
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  _buildList(),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: _markingRead ? null : _markAsRead,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(_markingRead ? '处理中...' : '已读'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
 }
 
 class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage> {
