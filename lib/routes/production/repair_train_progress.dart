@@ -3314,6 +3314,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       'repairScheme',
       'repairProgram',
       'repairPlan',
+      'repairPlanContent',
+      'repairContent',
+      'workContent',
+      'content',
     ]);
   }
 
@@ -3339,7 +3343,50 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   String get _currentProcessNodeName {
     final fromNotice = _pickText(_selectedNotice, ['repairMainNodeName']);
     if (fromNotice.isNotEmpty) return fromNotice;
+    final fromJt28 = _pickText(_selectedJt28, ['processMainNode']);
+    if (fromJt28.isNotEmpty) return fromJt28;
     return (_activeStateDetail?.repairMainNodeName ?? '').trim();
+  }
+
+  void _applyDefaultProcessNodeFromActive() {
+    final jt28Name = _pickText(_selectedJt28, ['processMainNode']);
+    final jt28Code = _pickText(_selectedJt28, ['mainProcessPoint']);
+    final active = _activeStateDetail;
+    final activeName = (active?.repairMainNodeName ?? '').trim();
+    final activeCode = (active?.repairMainNodeCode ?? '').trim();
+    final defaultName = jt28Name.isNotEmpty ? jt28Name : activeName;
+    final defaultCode = jt28Code.isNotEmpty ? jt28Code : activeCode;
+    if (defaultName.isEmpty && defaultCode.isEmpty) return;
+    _selectedNotice = Map<String, dynamic>.from(_selectedNotice);
+    if (_pickText(_selectedNotice, ['repairMainNodeName']).isEmpty &&
+        defaultName.isNotEmpty) {
+      _selectedNotice['repairMainNodeName'] = defaultName;
+    }
+    if (_pickText(_selectedNotice, ['repairMainNodeCode']).isEmpty &&
+        defaultCode.isNotEmpty) {
+      _selectedNotice['repairMainNodeCode'] = defaultCode;
+    }
+    _logger.i(
+      '[修程通知单回写] 机统28选中后先默认回写工序节点 '
+      'repairMainNodeName=${_pickText(_selectedNotice, ['repairMainNodeName'])} '
+      'repairMainNodeCode=${_pickText(_selectedNotice, ['repairMainNodeCode'])}',
+    );
+  }
+
+  void _applyDefaultRepairPlanFromJt28() {
+    final repairPlan = _defaultRepairPlanText();
+    if (repairPlan.isEmpty) return;
+    _selectedNotice = Map<String, dynamic>.from(_selectedNotice);
+    if (_pickText(_selectedNotice, ['repairProcContent']).isEmpty) {
+      _selectedNotice['repairProcContent'] = repairPlan;
+    }
+    if (_pickText(_selectedNotice, ['maintenanceNotice']).isEmpty) {
+      _selectedNotice['maintenanceNotice'] = repairPlan;
+    }
+    _logger.i(
+      '[修程通知单回写] 机统28选中后先默认回写施修方案 '
+      'repairProcContent=${_pickText(_selectedNotice, ['repairProcContent'])}',
+    );
   }
 
   String _noticeStopLocationText(Map<String, dynamic>? source) {
@@ -4862,8 +4909,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
           res != null && (res['code'] == 200 || res['code'] == 'S_T_S003');
       if (!mounted) return;
       if (success) {
-        showToast('修程通知单下发成功');
-        Navigator.pop(context, true);
+        _showRepairProcessSuccessDialog();
       } else {
         showToast('下发失败: ${res?['msg'] ?? '未知错误'}');
       }
@@ -4876,6 +4922,45 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         setState(() => _submitting = false);
       }
     }
+  }
+
+  void _showRepairProcessSuccessDialog() {
+    SmartDialog.show(
+      clickMaskDismiss: false,
+      builder: (_) {
+        return Container(
+          height: 150,
+          width: 220,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                '修程通知单提报成功',
+                style: TextStyle(fontSize: 18),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints.expand(height: 30, width: 160),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    SmartDialog.dismiss().then(
+                      (_) => Navigator.of(context).pop(true),
+                    );
+                  },
+                  icon: const Icon(Icons.system_security_update_good_sharp),
+                  label: const Text('确定'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -4927,10 +5012,14 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                   if (selected == null || !mounted) return;
                   setState(() {
                     _selectedJt28 = Map<String, dynamic>.from(selected);
+                    _applyDefaultProcessNodeFromActive();
+                    _applyDefaultRepairPlanFromJt28();
                     if (_workBlocks.isEmpty) {
                       _workBlocks.add(_createWorkBlock());
                     } else {
-                      _applyDefaultsToWorkBlock(_workBlocks.first, overwrite: true);
+                      for (final block in _workBlocks) {
+                        _applyDefaultsToWorkBlock(block, overwrite: true);
+                      }
                     }
                   });
                   await _loadNoticeDetailByJt28(Map<String, dynamic>.from(selected));

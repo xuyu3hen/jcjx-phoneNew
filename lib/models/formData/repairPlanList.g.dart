@@ -56,6 +56,7 @@ RepairPlan _$RepairPlanFromJson(Map<String, dynamic> json) => RepairPlan(
       antiSlipImage: json['antiSlipImage'] as String?,
       oilInfoImage: json['oilInfoImage'] as String?,
       complete: json['complete'] as String?,
+      ends: json['ends'] as String?,
     );
 
 Map<String, dynamic> _$RepairPlanToJson(RepairPlan instance) =>
@@ -85,4 +86,5 @@ Map<String, dynamic> _$RepairPlanToJson(RepairPlan instance) =>
       'antiSlipImage': instance.antiSlipImage,
       'oilInfoImage': instance.oilInfoImage,
       'complete': instance.complete,
+      'ends': instance.ends,
     };

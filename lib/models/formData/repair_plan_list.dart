@@ -52,6 +52,7 @@ class RepairPlan {
     String? antiSlipImage;
     String? oilInfoImage;
     String? complete;
+    String? ends;
 
   RepairPlan({
     this.createdBy,
@@ -79,6 +80,7 @@ class RepairPlan {
     this.antiSlipImage,
     this.oilInfoImage,
     this.complete,
+    this.ends,
   });
 
   factory RepairPlan.fromJson(Map<String,dynamic> json) => _$RepairPlanFromJson(json);

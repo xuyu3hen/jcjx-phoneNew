@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
@@ -92,7 +93,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     getJtType();
     getJt28Dict();
     setState(() {
-      trainNumSelected["trainNum"] = widget.locoInfo?["trainNum"] ?? "";
+      trainNumSelected["trainNum"] = formatTrainNumWithEnds(
+        widget.locoInfo?["trainNum"],
+        extractEnds(widget.locoInfo),
+      );
       trainNumSelected['code'] = widget.locoInfo?["trainNumCode"] ?? "";
       jcTypeListSelected['name'] = widget.locoInfo?["typeName"] ?? "";
       jcTypeListSelected['code'] = widget.locoInfo?["typeCode"] ?? "";
@@ -140,6 +144,95 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   int pageSize = 0;
   bool isLoading = false;
   bool hasMore = true;
+  bool _submitting = false;
+
+  String _asText(dynamic value) => (value ?? '').toString().trim();
+
+  String _buildTrainNumDisplay(dynamic trainNum, dynamic ends) {
+    final train = _asText(trainNum);
+    if (train.isEmpty) return '';
+    final endsText = _asText(ends);
+    final result = endsText.isEmpty ? train : '$train$endsText';
+    logger.i('[机统28车号][BUILD_DISPLAY] trainNum=$trainNum ends=$ends result=$result');
+    return result;
+  }
+
+  void _logTrainNumQueryPreview(List<Map<String, dynamic>> rows) {
+    final total = rows.length;
+    const head = 10;
+    const tail = 5;
+    final headCount = total < head ? total : head;
+    final tailCount = total > head ? (total - head < tail ? total - head : tail) : 0;
+    logger.i('[机统28车号查询][RES_PREVIEW] total=$total head=$headCount tail=$tailCount');
+    for (var i = 0; i < headCount; i++) {
+      final item = rows[i];
+      logger.i(
+        '[机统28车号查询][RES_ITEM] idx=$i '
+        'trainNum=${_asText(item['trainNum'])} '
+        'ends=${_asText(item['ends'])} '
+        'displayTrainNum=${_asText(item['displayTrainNum'])} '
+        'code=${_asText(item['code'])}',
+      );
+    }
+    if (tailCount > 0) {
+      logger.i('[机统28车号查询][RES_ITEM] ...');
+      for (var i = total - tailCount; i < total; i++) {
+        final item = rows[i];
+        logger.i(
+          '[机统28车号查询][RES_ITEM] idx=$i '
+          'trainNum=${_asText(item['trainNum'])} '
+          'ends=${_asText(item['ends'])} '
+          'displayTrainNum=${_asText(item['displayTrainNum'])} '
+          'code=${_asText(item['code'])}',
+        );
+      }
+    }
+  }
+
+  bool _isSubmitSuccess(dynamic submit) {
+    if (submit is! Map) return false;
+    final code = _asText(submit['code']);
+    return code == 'S_T_S001' || code == 'S_T_S003' || code == '200';
+  }
+
+  void _showSubmitSuccessDialog() {
+    SmartDialog.show(
+      clickMaskDismiss: false,
+      builder: (con) {
+        return Container(
+          height: 150,
+          width: 200,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              const Text(
+                "机统28提报成功",
+                style: TextStyle(fontSize: 18),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints.expand(height: 30, width: 160),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    SmartDialog.dismiss().then(
+                      (value) => Navigator.of(context).pop(true),
+                    );
+                  },
+                  label: const Text('确定'),
+                  icon: const Icon(Icons.system_security_update_good_sharp),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   // 车号（支持分页加载）
   void getTrainNumCodeList({bool isLoadMore = false}) async {
@@ -147,7 +240,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
     if (!isLoadMore) {
       // 刷新数据
-      pageNum = 1;
+      pageNum = 0;
       hasMore = true;
     } else {
       // 加载更多
@@ -162,8 +255,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       Map<String, dynamic> queryParameters = {
         'typeName': jcTypeListSelected["name"],
         'pageNum': pageNum,
-        'pageSize': pageSize
+        'pageSize': pageSize,
+        'complete': 0,
       };
+      logger.i('[机统28车号查询][REQ] isLoadMore=$isLoadMore params=$queryParameters');
 
       if (!isLoadMore) {
         // 只在初次加载时显示loading
@@ -173,6 +268,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       // 获取车号
       var r =
           await ProductApi().getRepairPlanList(queryParametrs: queryParameters);
+      final rows = r.toMapList();
+      logger.i('[机统28车号查询][RES] rows=${rows.length} pageNum=$pageNum');
+      if (rows.isNotEmpty) {
+        logger.i('[机统28车号查询][RAW_FIRST_ITEM] ${jsonEncode(rows.first)}');
+      }
 
       if (!isLoadMore) {
         SmartDialog.dismiss();
@@ -180,16 +280,26 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
       if (mounted) {
         setState(() {
+          final next = rows.map((e) {
+            final m = Map<String, dynamic>.from(e);
+            m['displayTrainNum'] = _buildTrainNumDisplay(
+              m['trainNum'],
+              m['ends'],
+            );
+            return m;
+          }).toList();
+          _logTrainNumQueryPreview(next);
+          logger.i('[机统28车号][NEXT_DATA_SAMPLE] ${jsonEncode(next.take(3).toList())}');
           if (isLoadMore) {
             // 加载更多数据
-            trainNumCodeList.addAll(r.toMapList());
+            trainNumCodeList.addAll(next);
           } else {
             // 刷新数据
-            trainNumCodeList = r.toMapList();
+            trainNumCodeList = next;
           }
 
           // 判断是否还有更多数据
-          if (r.toMapList().length < pageSize) {
+          if (next.length < pageSize) {
             hasMore = false;
           }
         });
@@ -198,9 +308,9 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       if (!isLoadMore) {
         SmartDialog.dismiss();
       }
-      logger.e('getTrainNumCodeList 方法中发生异常: $e\n堆栈信息: $stackTrace');
+      logger.e('[机统28车号查询] getTrainNumCodeList 发生异常: $e\n堆栈信息: $stackTrace');
       if (mounted) {
-        if (!isLoadMore) {
+        if (isLoadMore) {
           pageNum--; // 恢复页码
         }
         showToast("获取车号失败，请重试");
@@ -419,15 +529,17 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                               ZjcCascadeTreePicker.show(
                                 context,
                                 data: trainNumCodeList,
-                                labelKey: 'trainNum',
+                                labelKey: 'displayTrainNum',
                                 valueKey: 'code',
                                 childrenKey: 'children',
                                 title: "选择检修地点",
                                 clickCallBack: (selectItem, selectArr) {
+                                  logger.i('[机统28车号][SELECTED_ITEM] ${jsonEncode(selectItem)}');
                                   setState(() {
                                     logger.i(selectArr);
                                     trainNumSelected["trainNum"] =
-                                        selectItem["trainNum"];
+                                        selectItem["displayTrainNum"] ??
+                                            selectItem["trainNum"];
                                     trainNumSelected["code"] =
                                         selectItem["code"];
                                   });
@@ -695,6 +807,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     return SafeArea(
         child: InkWell(
       onTap: () async {
+        if (_submitting) {
+          showToast("正在提报中，请勿重复提交");
+          return;
+        }
         // 验证必填字段
         if (jcTypeListSelected['code'] == null || 
             jcTypeListSelected['code'] == '') {
@@ -728,6 +844,9 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         var submit;
         List<Map<String, dynamic>> l = [];
         try {
+            if (mounted) {
+              setState(() => _submitting = true);
+            }
             SmartDialog.showLoading();
             Map<String, dynamic> queryParameters = {
               // "faultAssumption": faultAssumption,
@@ -765,7 +884,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                           queryParameters["repairPicture"] = value['data'],
                           l.insert(0, queryParameters),
                           submit = await JtApi().uploadJt28(queryParametrs: l),
-                          if (submit['data'] != null)
+                          if (!_isSubmitSuccess(submit) && submit['data'] != null)
                             {
                               showToast("${submit['data']}"),
                               // SmartDialog.dismiss(status: SmartStatus.loading)
@@ -782,10 +901,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               log("$queryParameters");
               l.insert(0, queryParameters);
               submit = await JtApi().uploadJt28(queryParametrs: l);
-              if (submit["code"] == "S_T_S003") {
-                showToast("${submit['message']}");
-                // SmartDialog.dismiss(status: SmartStatus.loading);
-              } else {
+              if (!_isSubmitSuccess(submit)) {
                 showToast("机统28提报失败，请检查网络连接");
                 // SmartDialog.dismiss(status: SmartStatus.loading);
               }
@@ -800,43 +916,11 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);
-            if (submit['code'] == "S_T_S001") {
-              SmartDialog.show(
-                  clickMaskDismiss: false,
-                  builder: (con) {
-                    return Container(
-                      height: 150,
-                      width: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          const Text(
-                            "机统28提报成功",
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints.expand(
-                                height: 30, width: 160),
-                            child: ElevatedButton.icon(
-                              onPressed: () {
-                                SmartDialog.dismiss().then(
-                                    (value) => Navigator.of(context).pop());
-                              },
-                              label: const Text('确定'),
-                              icon: const Icon(
-                                  Icons.system_security_update_good_sharp),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  });
+            if (mounted) {
+              setState(() => _submitting = false);
+            }
+            if (_isSubmitSuccess(submit)) {
+              _showSubmitSuccessDialog();
             }
           }
       },

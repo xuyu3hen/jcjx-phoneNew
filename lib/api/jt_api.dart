@@ -65,10 +65,10 @@ class JtApi extends AppApi{
     List<Map<String,dynamic>>? queryParametrs
   })async{
     var r = await AppApi.dio.post(
-      "/tasks/locomotiveMaintenanceLogDO/saveOrUpdate",
+      '/tasks/locomotiveMaintenanceLogDO/saveOrUpdate',
       data: queryParametrs,
     );
-    log("uploadJt28${r.data}");
+    log('uploadJt28${r.data}');
     return (r.data['data']);
   }
 

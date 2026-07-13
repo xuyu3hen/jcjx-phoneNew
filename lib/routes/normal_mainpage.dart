@@ -187,12 +187,39 @@ class _NormalMainPageState extends State<NormalMainPage> {
     );
   }
 
+  String _normalizeRouterTitle(String title) {
+    return title
+        .trim()
+        .replaceAll('（', '(')
+        .replaceAll('）', ')')
+        .replaceAll(' ', '');
+  }
+
   bool _canShowByRouterTitle(String title) {
     final routerTitles = Global.phoneChildrenMetaTitles;
     if (routerTitles.isEmpty) {
       return false;
     }
-    return routerTitles.contains(title);
+    if (routerTitles.contains(title)) {
+      return true;
+    }
+    final normalizedTitle = _normalizeRouterTitle(title);
+    final normalizedRouterTitles =
+        routerTitles.map(_normalizeRouterTitle).toSet();
+    if (normalizedRouterTitles.contains(normalizedTitle)) {
+      return true;
+    }
+    final aliases = <String, List<String>>{
+      '报机统28（管理）': ['报机统28(管理)', '机统28-提报（管理）', '机统28-提报(管理)'],
+    };
+    final aliasTitles = aliases[title] ?? const <String>[];
+    for (final alias in aliasTitles) {
+      if (routerTitles.contains(alias) ||
+          normalizedRouterTitles.contains(_normalizeRouterTitle(alias))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Widget _buildSectionNew() {

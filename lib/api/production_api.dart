@@ -44,7 +44,7 @@ class ProductApi extends AppApi {
   }
 
   // 统一异常处理方法
-  void _handleException(dynamic e) {
+  void _handleException(dynamic e, [StackTrace? stackTrace]) {
     String errorMessage = "";
     if (e is DioException) {
       // 根据DioException的不同类型进行更细致的处理，比如网络连接错误、超时等
@@ -91,15 +91,25 @@ class ProductApi extends AppApi {
 
     // 在开发环境下，打印更详细的错误信息，方便排查问题
     if (kDebugMode) {
-      if (e is DioException && e.response != null) {
-        // 打印请求的URL、请求方法、请求头、请求参数以及响应数据等详细信息
-        log("请求URL: ${e.requestOptions.path}");
-        log("请求方法: ${e.requestOptions.method}");
-        log("请求头: ${e.requestOptions.headers}");
-        log("请求参数: ${e.requestOptions.data}");
-        log("响应Data: ${e.response?.data}");
+      debugPrintSynchronously('===== [ERROR] [API] =====');
+      if (e is DioException) {
+        debugPrintSynchronously('[ERROR] 接口路径: ${e.requestOptions.path}');
+        debugPrintSynchronously('[ERROR] 请求方法: ${e.requestOptions.method}');
+        debugPrintSynchronously('[ERROR] 请求头: ${e.requestOptions.headers}');
+        debugPrintSynchronously('[ERROR] 请求body: ${e.requestOptions.data}');
+        debugPrintSynchronously('[ERROR] 请求query: ${e.requestOptions.queryParameters}');
+        if (e.response != null) {
+          debugPrintSynchronously('[ERROR] 响应状态码: ${e.response?.statusCode}');
+          _logLargeTagged('[ERROR] 响应Data', e.response?.data);
+        }
+        debugPrintSynchronously('[ERROR] 错误类型: ${e.type}');
+        debugPrintSynchronously('[ERROR] 错误信息: ${e.message}');
       }
-      log("出现异常: $e");
+      debugPrintSynchronously('[ERROR] 异常对象: $e');
+      if (stackTrace != null) {
+        debugPrintSynchronously('[ERROR] 堆栈信息:\n$stackTrace');
+      }
+      debugPrintSynchronously('===== [ERROR] END =====');
     }
 
     // 显示错误提示给用户
@@ -914,14 +924,15 @@ class ProductApi extends AppApi {
     Map<String, dynamic>? queryParametrs,
   }) async {
     try {
+      _logLargeTagged('[机统28车号查询接口][QUERY]', queryParametrs ?? {});
       var r = await AppApi.dio.get(
         "/dispatch/trainEntry/selectAll",
         queryParameters: queryParametrs,
       );
-      log("getRepairPlanList${r.data}");
+      _logLargeTagged('[机统28车号查询接口][RAW_RESPONSE]', r.data);
       return RepairPlanList.fromJson((r.data["data"])["data"]);
-    } catch (e) {
-      _handleException(e);
+    } catch (e, stackTrace) {
+      _handleException(e, stackTrace);
       return RepairPlanList();
     }
   }
