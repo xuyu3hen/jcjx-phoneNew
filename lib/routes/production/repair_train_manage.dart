@@ -33,6 +33,34 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
 
   bool _isLoading = true; // 添加加载状态标识
   static const double _tabSwitchVelocityThreshold = 250.0;
+  final Map<int, bool> _tabLoading = {0: false, 1: false, 2: false};
+
+  void _logTagged(String tag, String message) {
+    logger.i('$tag $message');
+  }
+
+  void _logProcPreview(String repairMainNode, List<Map<String, dynamic>> data) {
+    final total = data.length;
+    const head = 3;
+    final headCount = total < head ? total : head;
+    _logTagged(
+      '[机车派工][RES_PREVIEW]',
+      'repairMainNode=$repairMainNode totalProc=$total head=$headCount',
+    );
+    for (var i = 0; i < headCount; i++) {
+      final e = data[i];
+      final trainList = e['trainEntryList'];
+      final trainCount = trainList is List ? trainList.length : -1;
+      _logTagged(
+        '[机车派工][RES_PROC]',
+        'repairMainNode=$repairMainNode idx=$i '
+            'procCode=${(e['repairMainNodeCode'] ?? '').toString()} '
+            'procName=${(e['repairMainNodeName'] ?? '').toString()} '
+            'count=${(e['count'] ?? '').toString()} '
+            'trainEntryListLen=$trainCount',
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -44,15 +72,16 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   Future<void> _loadInitialData() async {
     try {
       // 优先使用缓存数据
-      if (Global.isRepairTrainDataLoaded && 
+      if (Global.isRepairTrainDataLoaded &&
           Global.repairTrainDataLoadTime != null &&
-          DateTime.now().difference(Global.repairTrainDataLoadTime!).inMinutes < 5) {
+          DateTime.now().difference(Global.repairTrainDataLoadTime!).inMinutes <
+              5) {
         // 使用缓存数据（5分钟内有效）
         setState(() {
           repairMainNodeInfo = Global.cachedRepairMainNodeInfoC4;
           repairMainNodeInfo1 = Global.cachedRepairMainNodeInfoC5;
           repairMainNodeInfo2 = Global.cachedRepairMainNodeInfoLinXiu;
-          
+
           // 重新计算计数
           count1 = 0;
           count2 = 0;
@@ -66,22 +95,22 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
           for (Map<String, dynamic> element in repairMainNodeInfo2) {
             count3 = count3 + (element['count'] as int? ?? 0);
           }
-          
+
           _isLoading = false;
         });
-        
+
         // 数据加载完成后，自动加载第一个标签的第一个工序节点
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
           }
         });
-        
+
         // 后台刷新数据
         _refreshDataInBackground();
         return;
       }
-      
+
       // 如果没有缓存或缓存过期，则重新加载
       await getRepairingTrainInfo('C4');
       if (mounted) {
@@ -109,7 +138,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
       }
     }
   }
-  
+
   // 后台刷新数据（不阻塞UI）
   void _refreshDataInBackground() async {
     try {
@@ -132,14 +161,74 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   //临修
   List<Map<String, dynamic>> repairMainNodeInfo2 = [];
 
+  int _tabIndexOfRepairMainNode(String repairMainNode) {
+    if (repairMainNode == 'C4') return 0;
+    if (repairMainNode == 'C5') return 1;
+    if (repairMainNode == '临修') return 2;
+    return -1;
+  }
+
+  List<Map<String, dynamic>> _safeTrainEntryList(dynamic value) {
+    if (value is! List) return <Map<String, dynamic>>[];
+    return value
+        .map((e) =>
+            e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
+  Future<void> _ensureTabData(int tabIndex) async {
+    if (_tabLoading[tabIndex] == true) return;
+    if (tabIndex == 0 && repairMainNodeInfo.isNotEmpty) return;
+    if (tabIndex == 1 && repairMainNodeInfo1.isNotEmpty) return;
+    if (tabIndex == 2 && repairMainNodeInfo2.isNotEmpty) return;
+
+    final repairMainNode = tabIndex == 0
+        ? 'C4'
+        : tabIndex == 1
+            ? 'C5'
+            : '临修';
+    _logTagged('[机车派工][ENSURE_TAB]',
+        'tabIndex=$tabIndex repairMainNode=$repairMainNode');
+    setState(() {
+      _tabLoading[tabIndex] = true;
+    });
+    try {
+      await getRepairingTrainInfo(repairMainNode);
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _tabLoading[tabIndex] = false;
+      });
+    }
+  }
+
   Future<void> getRepairingTrainInfo(String repairMainNode) async {
+    final tabIndex = _tabIndexOfRepairMainNode(repairMainNode);
     try {
       String repairProcCode1 = '';
+      await Global.ensureRepairProcInfoLoaded();
+      _logTagged(
+        '[机车派工][MATCH]',
+        'repairMainNode=$repairMainNode repairProcInfoSize=${Global.repairProcInfo.length}',
+      );
       for (final element in Global.repairProcInfo) {
-        if (element['name'] == repairMainNode) {
-          repairProcCode1 = element['code'];
-          break;
-        }
+        final name = (element['name'] ??
+                element['repairMainNode'] ??
+                element['repairProcName'] ??
+                '')
+            .toString()
+            .trim();
+        final matched = name == repairMainNode ||
+            ((repairMainNode == 'C4' || repairMainNode == 'C5') &&
+                name.startsWith(repairMainNode)) ||
+            (repairMainNode == '临修' && name.contains('临修'));
+        if (!matched) continue;
+        repairProcCode1 = (element['code'] ?? '').toString();
+        _logTagged(
+          '[机车派工][MATCH_HIT]',
+          'repairMainNode=$repairMainNode matchedName=$name repairProcCode=$repairProcCode1 raw=${element.toString()}',
+        );
+        break;
       }
       if (repairProcCode1.trim().isEmpty) {
         if (!mounted) return;
@@ -155,12 +244,15 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
             count3 = 0;
           }
         });
+        logger.w('[机车派工] 未匹配到修程code repairMainNode=$repairMainNode');
         return;
       }
       Map<String, dynamic> params = {
         // 'userId': Global.profile.permissions?.user.userId,
         'repairProcCode': repairProcCode1
       };
+      _logTagged(
+          '[机车派工][REQ]', 'repairMainNode=$repairMainNode params=$params');
       var response = await ProductApi()
           .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
 
@@ -172,6 +264,13 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                   : Map<String, dynamic>.from(e as Map))
               .toList()
           : <Map<String, dynamic>>[];
+      _logTagged(
+        '[机车派工][RES]',
+        'repairMainNode=$repairMainNode rawType=${response.runtimeType} procCount=${data.length}',
+      );
+      if (data.isNotEmpty) {
+        _logProcPreview(repairMainNode, data);
+      }
       final nextCount = data.fold<int>(
         0,
         (sum, e) => sum + ((e['count'] as int?) ?? 0),
@@ -193,6 +292,13 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         Global.isRepairTrainDataLoaded = true;
         Global.repairTrainDataLoadTime = DateTime.now();
       });
+      if (!mounted) return;
+      if (tabIndex >= 0 && _currentTab == tabIndex) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _loadFirstProcessNode(_currentTab);
+        });
+      }
     } catch (e) {
       logger.i(e);
     }
@@ -446,6 +552,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
       _currentTab = tabIndex;
     });
     Future.microtask(() => _loadFirstProcessNode(tabIndex));
+    Future.microtask(() => _ensureTabData(tabIndex));
   }
 
   /// 加载指定标签的第一个工序节点内容
@@ -467,15 +574,19 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
     if (procList.isNotEmpty) {
       final firstProc = procList[0];
       _currentProcTag = firstProc['repairMainNodeCode'];
-      repairTrainInfo = (firstProc['trainEntryList'] as List<dynamic>)
-          .map((item) => item is Map<String, dynamic>
-              ? item
-              : Map<String, dynamic>.from(item as Map))
-          .toList();
+      repairTrainInfo = _safeTrainEntryList(firstProc['trainEntryList']);
+      _logTagged(
+        '[机车派工][FIRST_PROC]',
+        'tabIndex=$tabIndex procCode=${(_currentProcTag).toString()} '
+            'procName=${(firstProc['repairMainNodeName'] ?? '').toString()} '
+            'trainCount=${repairTrainInfo.length}',
+      );
     } else {
       // 如果没有工序节点，清空相关数据
       _currentProcTag = '';
       repairTrainInfo = [];
+      _logTagged(
+          '[机车派工][FIRST_PROC_EMPTY]', 'tabIndex=$tabIndex procListEmpty=true');
     }
   }
 
@@ -584,11 +695,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   void _onProcTagTap(Map<String, dynamic> proc) {
     setState(() {
       _currentProcTag = proc['repairMainNodeCode'];
-      repairTrainInfo = (proc['trainEntryList'] as List<dynamic>)
-          .map((item) => item is Map<String, dynamic>
-              ? item
-              : Map<String, dynamic>.from(item as Map))
-          .toList();
+      repairTrainInfo = _safeTrainEntryList(proc['trainEntryList']);
     });
     // 可以在这里添加获取对应工序数据的逻辑
     showToast('切换到工序: ${proc['repairMainNodeName']}');
@@ -668,6 +775,10 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
 
   /// 构建机车详细信息列表
   Widget _buildLocomotiveDetailList() {
+    final isTabLoading = _tabLoading[_currentTab] == true;
+    if (isTabLoading && repairTrainInfo.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (repairTrainInfo.isEmpty) {
       return const Center(
         child: Text("暂无机车数据", style: TextStyle(color: Colors.grey)),
@@ -727,43 +838,43 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                         ),
                       const SizedBox(height: 8),
                       Text(
-                          "停留机车地点：${loco['stopPlace'] != "null-null" ? loco['stopPlace'] : ''}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
+                        "停留机车地点：${loco['stopPlace'] != "null-null" ? loco['stopPlace'] : ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                          "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
+                        "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                          "工序转入时间：${loco['mainNodeChangeTime'] != null ? timeFormat.format(DateTime.parse(loco['mainNodeChangeTime'])) : ''}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        "工序转入时间：${loco['mainNodeChangeTime'] != null ? timeFormat.format(DateTime.parse(loco['mainNodeChangeTime'])) : ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                          "计划转出时间：${loco['theoreticEndTime'] != null ? timeFormat.format(DateTime.parse(loco['theoreticEndTime'])) : ''}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        "计划转出时间：${loco['theoreticEndTime'] != null ? timeFormat.format(DateTime.parse(loco['theoreticEndTime'])) : ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ],
                   ),
@@ -987,7 +1098,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => TrainRepairProgressPage(
-                        initialSearchText: widget.locoInfo?['trainNum']?.toString(),
+                        initialSearchText:
+                            widget.locoInfo?['trainNum']?.toString(),
                       ),
                     ),
                   );
@@ -1086,21 +1198,19 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
-                      // 在这里处理待作业的点击事件
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => JtSearch(
-                                  trainNum: widget.locoInfo?['trainNum'] ?? '',
-                                  trainNumCode:
-                                      widget.locoInfo?['trainNumCode'] ?? '',
-                                  typeName: widget.locoInfo?['typeName'] ?? '',
-                                  typeCode: widget.locoInfo?['typeCode'] ?? '',
-                                  trainEntryCode:
-                                      widget.locoInfo?['code'] ?? '',
-                                )),
-                      );
-                    
+                    // 在这里处理待作业的点击事件
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => JtSearch(
+                                trainNum: widget.locoInfo?['trainNum'] ?? '',
+                                trainNumCode:
+                                    widget.locoInfo?['trainNumCode'] ?? '',
+                                typeName: widget.locoInfo?['typeName'] ?? '',
+                                typeCode: widget.locoInfo?['typeCode'] ?? '',
+                                trainEntryCode: widget.locoInfo?['code'] ?? '',
+                              )),
+                    );
                   },
                 ),
                 TaskCard(

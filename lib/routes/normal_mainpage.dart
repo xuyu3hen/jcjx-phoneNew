@@ -87,7 +87,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
       if (p.code == 200) {
         Global.profile.permissions = p;
 
-        final deptParentName = (p.user.dept?.parentName ?? '').toString().trim();
+        final deptParentName =
+            (p.user.dept?.parentName ?? '').toString().trim();
         if (deptParentName.isNotEmpty && deptParentName != 'null') {
           Global.parentDeptName = deptParentName;
         }
@@ -184,6 +185,33 @@ class _NormalMainPageState extends State<NormalMainPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     return Expanded(
       child: SizedBox(height: screenWidth / 4),
+    );
+  }
+
+  Widget _buildFeatureRows(List<Widget> items) {
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final rows = <Widget>[];
+    for (var i = 0; i < items.length; i += 3) {
+      final rowChildren = items.skip(i).take(3).toList();
+      while (rowChildren.length < 3) {
+        rowChildren.add(_buildFeaturePlaceholder());
+      }
+      rows.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: rowChildren,
+        ),
+      );
+    }
+    return Column(
+      children: [
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0) const SizedBox(height: 15),
+          rows[i],
+        ],
+      ],
     );
   }
 
@@ -341,70 +369,47 @@ class _NormalMainPageState extends State<NormalMainPage> {
           //     ),
           //   ],
           // ),
-          
+
           const SizedBox(height: 15),
-          // if (_canSeeShunting)
-            Builder(
-              builder: (_) {
-                final children = <Widget>[
-                  if (_canShowByRouterTitle('调车'))
-                    _buildFeatureItem(
-                      Icon(Icons.assignment, color: Colors.blue[200]),
-                      () => Navigator.pushNamed(context, 'trainShuntingPackage'),
-                      '调车',
+          _buildFeatureRows([
+            if (_canShowByRouterTitle('调车'))
+              _buildFeatureItem(
+                Icon(Icons.assignment, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'trainShuntingPackage'),
+                '调车',
+              ),
+            if (_canShowByRouterTitle('调车计划查询'))
+              _buildFeatureItem(
+                Icon(Icons.search, color: Colors.blue[200]),
+                () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          const TrainShuntingPackagePage(readOnly: true),
                     ),
-                  if (_canShowByRouterTitle('调车计划查询'))
-                    _buildFeatureItem(
-                      Icon(Icons.search, color: Colors.blue[200]),
-                      () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                const TrainShuntingPackagePage(readOnly: true),
-                          ),
-                        );
-                      },
-                      '调车计划查询',
-                    ),
-                  if (_canShowByRouterTitle('离段确认'))
-                    _buildFeatureItem(
-                      Icon(Icons.photo_camera_back, color: Colors.blue[200]),
-                      () =>
-                          Navigator.pushNamed(context, 'trainDepartureConfirm'),
-                      '离段确认',
-                    ),
-                ];
-                while (children.length < 3) {
-                  children.add(_buildFeaturePlaceholder());
-                }
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: children,
-                );
-              },
-            ),
-          if (_canShowByRouterTitle('售后登记'))
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                _buildFeatureItem(
-                  Icon(Icons.assignment_outlined, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(
-                    context,
-                    'afterSaleTempRepairRegister',
-                  ),
-                  '售后登记',
+                  );
+                },
+                '调车计划查询',
+              ),
+            if (_canShowByRouterTitle('离段确认'))
+              _buildFeatureItem(
+                Icon(Icons.photo_camera_back, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'trainDepartureConfirm'),
+                '离段确认',
+              ),
+            if (_canShowByRouterTitle('售后登记'))
+              _buildFeatureItem(
+                Icon(Icons.assignment_outlined, color: Colors.blue[200]),
+                () => Navigator.pushNamed(
+                  context,
+                  'afterSaleTempRepairRegister',
                 ),
-                _buildFeaturePlaceholder(),
-                _buildFeaturePlaceholder(),
-              ],
-            ),
+                '售后登记',
+              ),
+          ]),
           const Divider(height: 10, indent: 10, endIndent: 10),
-          
         ],
       ),
     );
   }
-
-
 }

@@ -97,7 +97,8 @@ class ProductApi extends AppApi {
         debugPrintSynchronously('[ERROR] 请求方法: ${e.requestOptions.method}');
         debugPrintSynchronously('[ERROR] 请求头: ${e.requestOptions.headers}');
         debugPrintSynchronously('[ERROR] 请求body: ${e.requestOptions.data}');
-        debugPrintSynchronously('[ERROR] 请求query: ${e.requestOptions.queryParameters}');
+        debugPrintSynchronously(
+            '[ERROR] 请求query: ${e.requestOptions.queryParameters}');
         if (e.response != null) {
           debugPrintSynchronously('[ERROR] 响应状态码: ${e.response?.statusCode}');
           _logLargeTagged('[ERROR] 响应Data', e.response?.data);
@@ -198,7 +199,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    Future<dynamic> getTrainShuntingPackageAll({
+  Future<dynamic> getTrainShuntingPackageAll({
     Map<String, dynamic>? queryParametrs,
   }) async {
     try {
@@ -230,6 +231,7 @@ class ProductApi extends AppApi {
       return null;
     }
   }
+
   // /dispatch/trainShuntingPackage/startWork
   Future<dynamic> startTrainShuntingPackage({
     required List<String> shuntingPlanCodeList,
@@ -237,7 +239,9 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get(
         "/dispatch/trainShuntingPlan/startWork",
-        queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
+        queryParameters: {
+          'shuntingPlanCodeList': shuntingPlanCodeList.join(',')
+        },
       );
       logger.i((r.data["data"]));
       return (r.data["data"]);
@@ -247,22 +251,24 @@ class ProductApi extends AppApi {
     }
   }
 
-    // /dispatch/trainShuntingPackage/invalidPlan
-    Future<dynamic> invalidTrainShuntingPackage({
-      required List<String> shuntingPlanCodeList,
-    }) async {
-      try {
-        var r = await AppApi.dio.get(
-          "/dispatch/trainShuntingPlan/invalidPlan",
-          queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
-        );
-        logger.i((r.data["data"]));
-        return (r.data["data"]);
-      } catch (e) {
-        _handleException(e);
-        return null;
-      }
+  // /dispatch/trainShuntingPackage/invalidPlan
+  Future<dynamic> invalidTrainShuntingPackage({
+    required List<String> shuntingPlanCodeList,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainShuntingPlan/invalidPlan",
+        queryParameters: {
+          'shuntingPlanCodeList': shuntingPlanCodeList.join(',')
+        },
+      );
+      logger.i((r.data["data"]));
+      return (r.data["data"]);
+    } catch (e) {
+      _handleException(e);
+      return null;
     }
+  }
 
   // /dispatch/trainShuntingPackage/completeShuntingPlan
   Future<dynamic> completeTrainShuntingPackage({
@@ -271,7 +277,9 @@ class ProductApi extends AppApi {
     try {
       var r = await AppApi.dio.get(
         "/dispatch/trainShuntingPlan/completeShuntingPlan",
-        queryParameters: {'shuntingPlanCodeList': shuntingPlanCodeList.join(',')},
+        queryParameters: {
+          'shuntingPlanCodeList': shuntingPlanCodeList.join(',')
+        },
       );
       logger.i((r.data["data"]));
       return (r.data["data"]);
@@ -410,7 +418,8 @@ class ProductApi extends AppApi {
         raw = raw['data'] ?? raw['rows'] ?? raw['list'] ?? raw;
       }
       if (raw is Map) {
-        raw = raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
+        raw =
+            raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
       }
       if (raw is List) {
         return raw
@@ -462,7 +471,8 @@ class ProductApi extends AppApi {
         raw = raw['data'] ?? raw['rows'] ?? raw['list'] ?? raw;
       }
       if (raw is Map) {
-        raw = raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
+        raw =
+            raw['rows'] ?? raw['records'] ?? raw['list'] ?? raw['data'] ?? raw;
       }
       if (raw is List) {
         return raw
@@ -486,7 +496,8 @@ class ProductApi extends AppApi {
   }) async {
     try {
       final body = queryParametrs ?? {};
-      logger.i('getMessageInfo 请求开始: ${AppApi.dio.options.baseUrl}/jcjxsystem/message/getMessageInfo');
+      logger.i(
+          'getMessageInfo 请求开始: ${AppApi.dio.options.baseUrl}/jcjxsystem/message/getMessageInfo');
       var r = await AppApi.dio.post(
         "/jcjxsystem/message/getMessageInfo",
         data: body,
@@ -581,7 +592,6 @@ class ProductApi extends AppApi {
       );
       // 解析返回的数据为 MyApkVersion 对象
       if (r.data["data"] != null) {
-
         return (r.data["data"])['data'];
       }
       return null;
@@ -635,8 +645,6 @@ class ProductApi extends AppApi {
       return null;
     }
   }
-
-
 
   // /tasks/taskCertainPackage/wholePackageMutualInspection
   Future<dynamic> wholePackageMutualInspection(
@@ -1056,7 +1064,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    // 机统28派工 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchTeamJt28
+  // 机统28派工 tasks/locomotiveMaitenanceLogDO/getNeedToDispatchTeamJt28
   Future<dynamic> getNeedToDispatchTeamJt28({
     Map<String, dynamic>? queryParametrs,
   }) async {
@@ -1467,7 +1475,8 @@ class ProductApi extends AppApi {
   //增加信息
 
   //上传调查清单图片
-  Future<dynamic> uploadShuntingInfo({required List<File>? data, String? code}) async {
+  Future<dynamic> uploadShuntingInfo(
+      {required List<File>? data, String? code}) async {
     try {
       Map<String, dynamic> formMap = {};
       formMap["shuntingCode"] = code;
@@ -1511,9 +1520,8 @@ class ProductApi extends AppApi {
       required List<File> imagedatas}) async {
     try {
       Map<String, dynamic> formMap = {};
-      formMap["shuntingCode"] =
-          queryParametrs?["code"];
-    
+      formMap["shuntingCode"] = queryParametrs?["code"];
+
       if (imagedatas.isNotEmpty) {
         List<MultipartFile> fileList = [];
         for (var i = 0; i < imagedatas.length; i++) {
@@ -1865,7 +1873,6 @@ class ProductApi extends AppApi {
       return null;
     }
   }
-  
 
   // 获取个人作业包
   Future<dynamic> getPersonalWorkPackage(
@@ -2069,8 +2076,9 @@ class ProductApi extends AppApi {
       final outer = data["data"];
       final inner = outer is Map ? outer["data"] : null;
       final rows = inner is Map ? inner["rows"] : null;
-      final rowsCount =
-          rows is List ? rows.length : (inner is List ? inner.length : (outer is List ? outer.length : 0));
+      final rowsCount = rows is List
+          ? rows.length
+          : (inner is List ? inner.length : (outer is List ? outer.length : 0));
       logger.i(
         '[修程通知单JT28] 请求完成 status=${r.statusCode} rows=$rowsCount url=${r.requestOptions.uri}',
       );
@@ -2094,7 +2102,8 @@ class ProductApi extends AppApi {
     }
   }
 
-  Future<dynamic> getJtTypeSelectAll({Map<String, dynamic>? queryParametrs}) async {
+  Future<dynamic> getJtTypeSelectAll(
+      {Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(
         "/tasks/jtType/selectAll",
@@ -2143,7 +2152,8 @@ class ProductApi extends AppApi {
     }
   }
 
-  Future<dynamic> saveMasSaleInformationAll({required List<dynamic> data}) async {
+  Future<dynamic> saveMasSaleInformationAll(
+      {required List<dynamic> data}) async {
     try {
       final r = await AppApi.dio.post(
         "/dispatch/masSaleInformation/saveAll",
@@ -2254,15 +2264,15 @@ class ProductApi extends AppApi {
       final filtered = <Map<String, dynamic>>[];
       for (final m in mapped) {
         final trainEntryCode =
-            (m['trainEntryCode'] ?? m['code'] ?? m['id'] ?? '').toString().trim();
+            (m['trainEntryCode'] ?? m['code'] ?? m['id'] ?? '')
+                .toString()
+                .trim();
         if (trainEntryCode.isEmpty || trainEntryCode == 'null') continue;
 
-        final trainNum = (m['trainNum'] ??
-                m['trainNo'] ??
-                m['trainNumber'] ??
-                '')
-            .toString()
-            .trim();
+        final trainNum =
+            (m['trainNum'] ?? m['trainNo'] ?? m['trainNumber'] ?? '')
+                .toString()
+                .trim();
         if (trainNum.isEmpty || trainNum == 'null') continue;
 
         final ends = (m['ends'] ?? '').toString().trim();
@@ -2383,8 +2393,6 @@ class ProductApi extends AppApi {
       return null;
     }
   }
-
-
 
   // 获取工序节点
   Future<List<Map<String, dynamic>>> getRepairMainNode({
@@ -2638,12 +2646,27 @@ class ProductApi extends AppApi {
   Future<List> getRepairingAllTrainEntryByRepairProcCode(
       {Map<String, dynamic>? queryParametrs}) async {
     try {
+      logger.i('[机车派工接口][QUERY] ${(queryParametrs ?? {}).toString()}');
       var r = await AppApi.dio.get(
         "/dispatch/trainEntry/getRepairingAllTrainEntryByRepairProcCode",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])["data"]);
-      return (r.data["data"])["data"];
+      dynamic raw = r.data;
+      try {
+        raw = (r.data["data"])["data"];
+      } catch (_) {}
+      if (kDebugMode) {
+        _logLargeTagged('[机车派工接口][RAW_RESPONSE]', raw);
+      }
+      if (raw is List) {
+        logger.i('[机车派工接口][RES] len=${raw.length}');
+        if (raw.isNotEmpty) {
+          logger.i('[机车派工接口][RAW_FIRST_ITEM] ${jsonEncode(raw.first)}');
+        }
+        return raw;
+      }
+      logger.i('[机车派工接口][RES] type=${raw.runtimeType}');
+      return [];
       // logger.i((r.data["data"])["data"]);
     } catch (e) {
       logger.e(e);
@@ -2673,7 +2696,7 @@ class ProductApi extends AppApi {
     }
   }
 
-    Future<dynamic> getAllPackageAndInspectionStatistics(
+  Future<dynamic> getAllPackageAndInspectionStatistics(
       {Map<String, dynamic>? queryParametrs}) async {
     try {
       var r = await AppApi.dio.get(

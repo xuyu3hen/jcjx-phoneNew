@@ -43,15 +43,16 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
   Future<void> _loadInitialData() async {
     try {
       // 优先使用缓存数据
-      if (Global.isRepairTrainDataLoaded && 
+      if (Global.isRepairTrainDataLoaded &&
           Global.repairTrainDataLoadTime != null &&
-          DateTime.now().difference(Global.repairTrainDataLoadTime!).inMinutes < 5) {
+          DateTime.now().difference(Global.repairTrainDataLoadTime!).inMinutes <
+              5) {
         // 使用缓存数据（5分钟内有效）
         setState(() {
           repairMainNodeInfo = Global.cachedRepairMainNodeInfoC4;
           repairMainNodeInfo1 = Global.cachedRepairMainNodeInfoC5;
           repairMainNodeInfo2 = Global.cachedRepairMainNodeInfoLinXiu;
-          
+
           // 重新计算计数
           count1 = 0;
           count2 = 0;
@@ -65,22 +66,22 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
           for (Map<String, dynamic> element in repairMainNodeInfo2) {
             count3 = count3 + (element['count'] as int? ?? 0);
           }
-          
+
           _isLoading = false;
         });
-        
+
         // 数据加载完成后，自动加载第一个标签的第一个工序节点
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
           }
         });
-        
+
         // 后台刷新数据
         _refreshDataInBackground();
         return;
       }
-      
+
       // 如果没有缓存或缓存过期，则重新加载
       await getRepairingTrainInfo('C4');
       if (mounted) {
@@ -108,7 +109,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
       }
     }
   }
-  
+
   // 后台刷新数据（不阻塞UI）
   void _refreshDataInBackground() async {
     try {
@@ -134,11 +135,21 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
   Future<void> getRepairingTrainInfo(String repairMainNode) async {
     try {
       String repairProcCode1 = '';
+      await Global.ensureRepairProcInfoLoaded();
       for (final element in Global.repairProcInfo) {
-        if (element['name'] == repairMainNode) {
-          repairProcCode1 = element['code'];
-          break;
-        }
+        final name = (element['name'] ??
+                element['repairMainNode'] ??
+                element['repairProcName'] ??
+                '')
+            .toString()
+            .trim();
+        final matched = name == repairMainNode ||
+            ((repairMainNode == 'C4' || repairMainNode == 'C5') &&
+                name.startsWith(repairMainNode)) ||
+            (repairMainNode == '临修' && name.contains('临修'));
+        if (!matched) continue;
+        repairProcCode1 = (element['code'] ?? '').toString();
+        break;
       }
       if (repairProcCode1.trim().isEmpty) {
         if (!mounted) return;
@@ -154,6 +165,7 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
             count3 = 0;
           }
         });
+        logger.w('[检修进度] 未匹配到修程code repairMainNode=$repairMainNode');
         return;
       }
       Map<String, dynamic> params = {
@@ -971,8 +983,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => WorkProgressPage(
-                            trainInfo: widget.locoInfo,
-                          )),
+                                trainInfo: widget.locoInfo,
+                              )),
                     );
                   },
                 ),
@@ -1397,8 +1409,8 @@ class _TrainRepairOrderPageState extends State<TrainRepairOrderPage> {
         });
         return;
       }
-      final r = await ProductApi()
-          .getTrainRepairDynamics(queryParametrs: {'trainEntryCode': trainEntryCode});
+      final r = await ProductApi().getTrainRepairDynamics(
+          queryParametrs: {'trainEntryCode': trainEntryCode});
       final rows = (r is List)
           ? r
               .whereType<Map>()
@@ -1425,9 +1437,8 @@ class _TrainRepairOrderPageState extends State<TrainRepairOrderPage> {
     final typeName = (widget.locoInfo?['typeName'] ?? '').toString();
     final trainNum = formatTrainNumWithEnds(
         widget.locoInfo?['trainNum'], widget.locoInfo?['ends']);
-    final title = (typeName.isEmpty && trainNum.isEmpty)
-        ? '检修调令'
-        : '$typeName $trainNum';
+    final title =
+        (typeName.isEmpty && trainNum.isEmpty) ? '检修调令' : '$typeName $trainNum';
 
     return Scaffold(
       appBar: AppBar(
@@ -1462,9 +1473,8 @@ class _TrainRepairOrderPageState extends State<TrainRepairOrderPage> {
                       itemBuilder: (context, index) {
                         final it = _rows[index];
                         final st = it['shuntingType'];
-                        final stInt = st is int
-                            ? st
-                            : int.tryParse(st?.toString() ?? '');
+                        final stInt =
+                            st is int ? st : int.tryParse(st?.toString() ?? '');
                         final typeText =
                             _noticeMap[stInt] ?? (stInt?.toString() ?? '');
                         return Card(

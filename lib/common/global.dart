@@ -5,18 +5,31 @@ import '../models/progress.dart';
 import '../api/production_api.dart';
 
 // #region agent log
-void _agentLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+void _agentLog(String location, String message, Map<String, dynamic> data,
+    String hypothesisId) {
   try {
     final path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
-    final m = {'location': location, 'message': message, 'data': data, 'timestamp': DateTime.now().millisecondsSinceEpoch, 'sessionId': 'debug-session', 'hypothesisId': hypothesisId};
+    final m = {
+      'location': location,
+      'message': message,
+      'data': data,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'sessionId': 'debug-session',
+      'hypothesisId': hypothesisId
+    };
     final line = '${jsonEncode(m)}\n';
     File(path).writeAsStringSync(line, mode: FileMode.append);
   } catch (_) {}
-  try { print('AGENT_LOG ${jsonEncode({'location': location, 'message': message, 'data': data, 'hypothesisId': hypothesisId})}'); } catch (_) {}
+  try {
+    print('AGENT_LOG ${jsonEncode({
+          'location': location,
+          'message': message,
+          'data': data,
+          'hypothesisId': hypothesisId
+        })}');
+  } catch (_) {}
 }
 // #endregion
-
-
 
 // 该参数用于程序样式控制(主题颜色)
 
@@ -47,26 +60,26 @@ class Global {
   static List<Map<String, dynamic>> faultPartList = [];
 
   static List<Map<String, dynamic>> packageList = [];
-  
+
   // 机车派工数据缓存
   static List<Map<String, dynamic>> cachedRepairMainNodeInfoC4 = [];
   static List<Map<String, dynamic>> cachedRepairMainNodeInfoC5 = [];
   static List<Map<String, dynamic>> cachedRepairMainNodeInfoLinXiu = [];
   static bool isRepairTrainDataLoaded = false;
   static DateTime? repairTrainDataLoadTime;
-  
+
   // 检修进度数据缓存
   static List<RepairGroup> cachedRepairProgressData = [];
   static bool isRepairProgressDataLoaded = false;
   static DateTime? repairProgressDataLoadTime;
-  
+
   // 用户个人机车作业数据缓存（repair_train.dart 使用）
   static List<Map<String, dynamic>> cachedUserRepairMainNodeInfoC4 = [];
   static List<Map<String, dynamic>> cachedUserRepairMainNodeInfoC5 = [];
   static List<Map<String, dynamic>> cachedUserRepairMainNodeInfoLinXiu = [];
   static bool isUserRepairTrainDataLoaded = false;
   static DateTime? userRepairTrainDataLoadTime;
-  
+
   // 可选的主题列表
   static List<MaterialColor> get themes => _theme;
 
@@ -87,7 +100,7 @@ class Global {
     //   try {
     //     // 校验token有效性
     //     var data = await LoginApi().getuserInfo();
-        
+
     //     if(data == 200){
     //       profile = Profile.fromJson(jsonDecode(_profile));
     //     }else{
@@ -105,56 +118,65 @@ class Global {
     //缓存策略 A??B表示 A为null则取值为B
     // ..为Flutter语法糖，等同于 CacheConfig.enable = true,Dart中的setter与getter方法为隐式
     profile.cache = profile.cache ?? CacheConfig()
-    ..enable = true
-    ..maxAge = 3600
-    ..maxCount = 100;
+      ..enable = true
+      ..maxAge = 3600
+      ..maxCount = 100;
 
     // 初始化版本号（从 pubspec.yaml 统一读取）
     await F.initVersion();
     // #region agent log
-    _agentLog('global.dart:before AppApi.init', 'about to call AppApi.init', {}, 'H3');
+    _agentLog('global.dart:before AppApi.init', 'about to call AppApi.init', {},
+        'H3');
     // #endregion
     try {
       await AppApi.init();
       // #region agent log
-      _agentLog('global.dart:after AppApi.init', 'AppApi.init completed', {}, 'H3');
+      _agentLog(
+          'global.dart:after AppApi.init', 'AppApi.init completed', {}, 'H3');
       // #endregion
     } catch (e, st) {
       // #region agent log
-      _agentLog('global.dart:AppApi.init error', 'AppApi.init threw', {'error': e.toString(), 'stack': st.toString()}, 'H3');
+      _agentLog('global.dart:AppApi.init error', 'AppApi.init threw',
+          {'error': e.toString(), 'stack': st.toString()}, 'H3');
       // #endregion
       rethrow;
     }
   }
 
   // 持久化Profile信息
-  static saveProfile() => _prefs.setString("profile", jsonEncode(profile.toJson()));
+  static saveProfile() =>
+      _prefs.setString("profile", jsonEncode(profile.toJson()));
 
   // 预加载机车派工和检修进度数据
   static Future<void> preloadRepairData() async {
     var logger = AppLogger.logger;
     try {
       logger.i('开始预加载检修数据...');
-      
+
       // 先确保修程信息已加载
       if (Global.repairProcInfo.isEmpty) {
         logger.i('修程信息为空，先加载修程信息...');
         await _loadRepairProcInfo();
       }
-      
+
       // 并行加载所有数据以提高速度（用户个人数据需要权限信息，可能稍后加载）
       await Future.wait([
         _preloadRepairTrainData(),
         _preloadRepairProgressData(),
         preloadUserRepairTrainData(),
       ]);
-      
+
       logger.i('检修数据预加载完成');
     } catch (e) {
       logger.e('预加载检修数据失败: $e');
     }
   }
-  
+
+  static Future<void> ensureRepairProcInfoLoaded() async {
+    if (Global.repairProcInfo.isNotEmpty) return;
+    await _loadRepairProcInfo();
+  }
+
   // 加载修程信息
   static Future<void> _loadRepairProcInfo() async {
     try {
@@ -229,12 +251,10 @@ class Global {
     Function(List<Map<String, dynamic>>) onSuccess,
   ) async {
     try {
-      Map<String, dynamic> params = {
-        'repairProcCode': code
-      };
+      Map<String, dynamic> params = {'repairProcCode': code};
       var response = await ProductApi()
           .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
-      
+
       // response 已经是 List 类型
       List<Map<String, dynamic>> data = (response as List)
           .map((e) => e is Map<String, dynamic>
@@ -255,7 +275,7 @@ class Global {
       Map<String, dynamic> queryParametrs = {};
       List<RepairGroup> repairGroups =
           await ProductApi().getTrainEntryAndDynamics(queryParametrs);
-      
+
       if (repairGroups.isNotEmpty) {
         cachedRepairProgressData = repairGroups;
         isRepairProgressDataLoaded = true;
@@ -287,7 +307,7 @@ class Global {
         userId = Global.profile.permissions?.user.userId;
         retryCount++;
       }
-      
+
       if (userId == null) {
         logger.w('用户ID为空，无法预加载用户个人机车作业数据（权限信息可能尚未加载）');
         return;
@@ -314,17 +334,20 @@ class Global {
       // 并行查询三个修程的数据
       List<Future> futures = [];
       if (c4Code != null) {
-        futures.add(_loadUserRepairTrainDataByCode('C4', c4Code, userId, (data) {
+        futures
+            .add(_loadUserRepairTrainDataByCode('C4', c4Code, userId, (data) {
           cachedUserRepairMainNodeInfoC4 = data;
         }));
       }
       if (c5Code != null) {
-        futures.add(_loadUserRepairTrainDataByCode('C5', c5Code, userId, (data) {
+        futures
+            .add(_loadUserRepairTrainDataByCode('C5', c5Code, userId, (data) {
           cachedUserRepairMainNodeInfoC5 = data;
         }));
       }
       if (linXiuCode != null) {
-        futures.add(_loadUserRepairTrainDataByCode('临修', linXiuCode, userId, (data) {
+        futures.add(
+            _loadUserRepairTrainDataByCode('临修', linXiuCode, userId, (data) {
           cachedUserRepairMainNodeInfoLinXiu = data;
         }));
       }
@@ -348,13 +371,11 @@ class Global {
     Function(List<Map<String, dynamic>>) onSuccess,
   ) async {
     try {
-      Map<String, dynamic> params = {
-        'userId': userId,
-        'repairProcCode': code
-      };
+      Map<String, dynamic> params = {'userId': userId, 'repairProcCode': code};
       var response = await ProductApi()
-          .getRepairingTrainEntryByUserIdAndRepairProcCode(queryParametrs: params);
-      
+          .getRepairingTrainEntryByUserIdAndRepairProcCode(
+              queryParametrs: params);
+
       // response 已经是 List 类型
       List<Map<String, dynamic>> data = (response as List)
           .map((e) => e is Map<String, dynamic>
@@ -366,5 +387,4 @@ class Global {
       AppLogger.logger.e('加载用户 $name 数据失败: $e');
     }
   }
-
 }

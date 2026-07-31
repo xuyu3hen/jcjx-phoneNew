@@ -46,15 +46,18 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   Future<void> _loadInitialData() async {
     try {
       // 优先使用缓存数据
-      if (Global.isUserRepairTrainDataLoaded && 
+      if (Global.isUserRepairTrainDataLoaded &&
           Global.userRepairTrainDataLoadTime != null &&
-          DateTime.now().difference(Global.userRepairTrainDataLoadTime!).inMinutes < 5) {
+          DateTime.now()
+                  .difference(Global.userRepairTrainDataLoadTime!)
+                  .inMinutes <
+              5) {
         // 使用缓存数据（5分钟内有效）
         setState(() {
           repairMainNodeInfo = Global.cachedUserRepairMainNodeInfoC4;
           repairMainNodeInfo1 = Global.cachedUserRepairMainNodeInfoC5;
           repairMainNodeInfo2 = Global.cachedUserRepairMainNodeInfoLinXiu;
-          
+
           // 重新计算计数
           count1 = 0;
           count2 = 0;
@@ -68,22 +71,22 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
           for (Map<String, dynamic> element in repairMainNodeInfo2) {
             count3 = count3 + (element['count'] as int? ?? 0);
           }
-          
+
           _isLoading = false;
         });
-        
+
         // 数据加载完成后，自动加载第一个标签的第一个工序节点
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
           }
         });
-        
+
         // 后台刷新数据
         _refreshDataInBackground();
         return;
       }
-      
+
       // 如果没有缓存或缓存过期，则重新加载
       await Future.wait([
         getRepairingTrainInfo('C4'),
@@ -105,7 +108,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       }
     }
   }
-  
+
   // 后台刷新数据（不阻塞UI）
   void _refreshDataInBackground() async {
     try {
@@ -131,11 +134,27 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   Future<void> getRepairingTrainInfo(String repairMainNode) async {
     try {
       String repairProcCode1 = '';
-      Global.repairProcInfo.forEach((element) {
-        if (element['name'] == repairMainNode) {
-          repairProcCode1 = element['code'];
+      await Global.ensureRepairProcInfoLoaded();
+      for (final element in Global.repairProcInfo) {
+        final name = (element['name'] ??
+                element['repairMainNode'] ??
+                element['repairProcName'] ??
+                '')
+            .toString()
+            .trim();
+        final matched = name == repairMainNode ||
+            ((repairMainNode == 'C4' || repairMainNode == 'C5') &&
+                name.startsWith(repairMainNode)) ||
+            (repairMainNode == '临修' && name.contains('临修'));
+        if (matched) {
+          repairProcCode1 = (element['code'] ?? '').toString();
+          break;
         }
-      });
+      }
+      if (repairProcCode1.trim().isEmpty) {
+        logger.w('[机车派工] 未匹配到修程code repairMainNode=$repairMainNode');
+        return;
+      }
       Map<String, dynamic> params = {
         'userId': Global.profile.permissions?.user.userId,
         'repairProcCode': repairProcCode1
@@ -153,7 +172,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                     ? e
                     : Map<String, dynamic>.from(e as Map))
                 .toList();
-            
+
             if (repairMainNode == 'C4') {
               repairMainNodeInfo = data;
               Global.cachedUserRepairMainNodeInfoC4 = data;
@@ -182,8 +201,6 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
               }
               logger.i('count3: $count3');
             }
-            
-            // 更新缓存状态
             Global.isUserRepairTrainDataLoaded = true;
             Global.userRepairTrainDataLoadTime = DateTime.now();
           } else {
@@ -696,7 +713,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                     children: [
                       Text(
                         (() {
-                          final typeName = (loco['typeName'] ?? '').toString().trim();
+                          final typeName =
+                              (loco['typeName'] ?? '').toString().trim();
                           final trainNum = formatTrainNumWithEnds(
                             loco['trainNum'],
                             extractEnds(loco),
@@ -1506,14 +1524,14 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         List<Map<String, dynamic>> loadedData = pendingDataList
             .map((item) => item as Map<String, dynamic>)
             .toList();
-        
+
         // 按时间戳排序，保证流程顺序
         loadedData.sort((a, b) {
           int timestampA = a['timestamp'] ?? 0;
           int timestampB = b['timestamp'] ?? 0;
           return timestampA.compareTo(timestampB);
         });
-        
+
         setState(() {
           pendingUploadData = loadedData;
         });
@@ -1564,7 +1582,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         var data = sortedData[i];
 
         try {
-          SmartDialog.showLoading(msg: '正在上传第${i + 1}/${sortedData.length}项数据...');
+          SmartDialog.showLoading(
+              msg: '正在上传第${i + 1}/${sortedData.length}项数据...');
 
           // 1. 上传图片和视频
           List<File> imageFiles = [];
@@ -1626,8 +1645,10 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     .toList();
 
             if (taskContentItems.isNotEmpty) {
-              var saveResult = await ProductApi().saveOrUpdateTaskContentItem(taskContentItems);
-              if (saveResult == null || (saveResult is List && saveResult.isEmpty)) {
+              var saveResult = await ProductApi()
+                  .saveOrUpdateTaskContentItem(taskContentItems);
+              if (saveResult == null ||
+                  (saveResult is List && saveResult.isEmpty)) {
                 throw Exception('作业项数据保存失败');
               }
             }
@@ -1641,7 +1662,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             }
           ];
 
-          int finishResult = await ProductApi().finishCertainPackage(completeParams);
+          int finishResult =
+              await ProductApi().finishCertainPackage(completeParams);
           if (finishResult != 200 && finishResult != -1) {
             throw Exception('完成包装失败，返回码: $finishResult');
           }
@@ -1671,7 +1693,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
           int timestampB = b['timestamp'] ?? 0;
           return timestampA.compareTo(timestampB);
         });
-        
+
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String failedDataString = json.encode(failedUploads);
         await prefs.setString('pending_upload_data', failedDataString);
@@ -1726,7 +1748,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     // 计算照片和视频数量
                     int photoCount = 0;
                     int videoCount = 0;
-                    
+
                     if (data['allMedia'] != null && data['allMedia'] is List) {
                       for (var media in data['allMedia']) {
                         if (media is Map<String, dynamic>) {
@@ -1746,7 +1768,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                         videoCount = (data['videos'] as List).length;
                       }
                     }
-                    
+
                     String mediaText = '';
                     if (photoCount > 0 && videoCount > 0) {
                       mediaText = '照片: $photoCount张, 视频: $videoCount个';
@@ -1757,7 +1779,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                     } else {
                       mediaText = '无媒体文件';
                     }
-                    
+
                     return Card(
                       child: ListTile(
                         title: Text(data['packageName']?.toString() ?? '未知项点'),
@@ -2226,14 +2248,14 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         List<Map<String, dynamic>> loadedData = pendingDataList
             .map((item) => item as Map<String, dynamic>)
             .toList();
-        
+
         // 按时间戳排序，保证流程顺序
         loadedData.sort((a, b) {
           int timestampA = a['timestamp'] ?? 0;
           int timestampB = b['timestamp'] ?? 0;
           return timestampA.compareTo(timestampB);
         });
-        
+
         setState(() {
           pendingUploadData = loadedData;
         });
@@ -2254,8 +2276,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     int number = packagePoints.length;
@@ -2267,9 +2287,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         ),
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
-        actions: [
-
-        ],
+        actions: [],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -2558,30 +2576,47 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                       setState(() {
                                         _currentIndex++;
                                         // 更新当前项点
-                                        if (_currentIndex < packagePoints.length) {
-                                          currentPackagePoint = packagePoints[_currentIndex];
+                                        if (_currentIndex <
+                                            packagePoints.length) {
+                                          currentPackagePoint =
+                                              packagePoints[_currentIndex];
                                         }
-                                        
+
                                         // 重新构建taskContentItemList，确保它始终基于当前项点的内容
                                         taskContentItemList = [];
                                         taskInstructContentList = [];
 
-                                        if (currentPackagePoint['taskInstructContentList'] != null &&
-                                            currentPackagePoint['taskInstructContentList'] is List) {
+                                        if (currentPackagePoint[
+                                                    'taskInstructContentList'] !=
+                                                null &&
+                                            currentPackagePoint[
+                                                    'taskInstructContentList']
+                                                is List) {
                                           taskInstructContentList =
-                                              (currentPackagePoint['taskInstructContentList'] as List)
-                                                  .where((item) => item is Map<String, dynamic>)
-                                                  .map((item) => item as Map<String, dynamic>)
+                                              (currentPackagePoint[
+                                                          'taskInstructContentList']
+                                                      as List)
+                                                  .where((item) => item
+                                                      is Map<String, dynamic>)
+                                                  .map((item) => item
+                                                      as Map<String, dynamic>)
                                                   .toList();
                                         }
 
-                                        for (Map<String, dynamic> item in taskInstructContentList) {
-                                          if (item['taskContentItemList'] != null &&
-                                              item['taskContentItemList'] is List) {
-                                            taskContentItemList.addAll((item['taskContentItemList'] as List)
-                                                .where((item) => item is Map<String, dynamic>)
-                                                .map((item) => item as Map<String, dynamic>)
-                                                .toList());
+                                        for (Map<String, dynamic> item
+                                            in taskInstructContentList) {
+                                          if (item['taskContentItemList'] !=
+                                                  null &&
+                                              item['taskContentItemList']
+                                                  is List) {
+                                            taskContentItemList.addAll(
+                                                (item['taskContentItemList']
+                                                        as List)
+                                                    .where((item) => item
+                                                        is Map<String, dynamic>)
+                                                    .map((item) => item
+                                                        as Map<String, dynamic>)
+                                                    .toList());
                                           }
                                         }
                                       });
@@ -2589,7 +2624,6 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                       debugPrint("已完成所有项");
                                       Navigator.pop(context, true);
                                     }
-
                                   }, // 当没有图片时禁用按钮
                             child: _currentIndex < packagePoints.length - 1
                                 ? const Text("进入下一项")
@@ -2729,9 +2763,10 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
 // 尝试上传数据，如果失败则保存到本地待上传
   Future<void> _tryUploadOrSaveLocally() async {
-    String completeTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    String completeTime =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
     int timestamp = DateTime.now().millisecondsSinceEpoch;
-    
+
     // 创建待上传数据项（无论上传成功与否，都先创建数据结构）
     Map<String, dynamic> uploadItem = {
       'packageCode': currentPackagePoint['code'],
@@ -2748,14 +2783,14 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
       'taskContentItems': taskContentItemList,
       'timestamp': timestamp,
     };
-    
+
     try {
       SmartDialog.showLoading(msg: '正在上传数据...');
-      
+
       // 1. 上传图片和视频
       List<File> imageFiles = [];
       List<File> videoFiles = [];
-      
+
       // 处理所有媒体文件
       for (var file in _files) {
         File fileObj = File(file.path);
@@ -2765,7 +2800,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           imageFiles.add(fileObj);
         }
       }
-      
+
       // 上传图片
       if (imageFiles.isNotEmpty) {
         int uploadResult = await ProductApi().uploadCertainPackageImg(
@@ -2782,7 +2817,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           throw Exception('图片上传失败');
         }
       }
-      
+
       // 上传视频
       if (videoFiles.isNotEmpty) {
         int uploadResult = await ProductApi().uploadCertainPackageImg(
@@ -2798,15 +2833,16 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           throw Exception('视频上传失败');
         }
       }
-      
+
       // 2. 保存作业项数据
       if (taskContentItemList.isNotEmpty) {
-        var saveResult = await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);
+        var saveResult =
+            await ProductApi().saveOrUpdateTaskContentItem(taskContentItemList);
         if (saveResult == null || (saveResult is List && saveResult.isEmpty)) {
           throw Exception('作业项数据保存失败');
         }
       }
-      
+
       // 3. 完成包装
       List<Map<String, dynamic>> completeParams = [
         {
@@ -2814,41 +2850,41 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           'completeTime': completeTime,
         }
       ];
-      
-      int finishResult = await ProductApi().finishCertainPackage(completeParams);
+
+      int finishResult =
+          await ProductApi().finishCertainPackage(completeParams);
       if (finishResult != 200 && finishResult != -1) {
         throw Exception('完成包装失败，返回码: $finishResult');
       }
       if (finishResult == -1) {
         throw Exception('完成包装失败');
       }
-      
+
       // 所有步骤都成功
       SmartDialog.dismiss();
       SmartDialog.showToast('数据上传成功');
       logger.i('数据上传成功: ${currentPackagePoint['name']}');
-      
     } catch (e) {
       // 上传失败，保存到本地待上传
       SmartDialog.dismiss();
       logger.w('数据上传失败，保存到本地待上传: $e');
-      
+
       try {
         // 添加到待上传列表
         setState(() {
           pendingUploadData.add(uploadItem);
         });
-        
+
         // 按时间戳排序，保证流程顺序
         pendingUploadData.sort((a, b) {
           int timestampA = a['timestamp'] ?? 0;
           int timestampB = b['timestamp'] ?? 0;
           return timestampA.compareTo(timestampB);
         });
-        
+
         // 保存到本地存储
         await _savePendingUploadData();
-        
+
         SmartDialog.showToast('网络异常，数据已保存到待上传');
         logger.i('数据已保存到本地待上传列表: ${currentPackagePoint['name']}');
       } catch (saveError) {

@@ -15,7 +15,11 @@ class TrainRepairProgressPage extends StatefulWidget {
 class _ShuntingFormData {
   Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
   List<Map<String, dynamic>> scheduleNodePickerList = [];
-  Map<String, dynamic> scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+  Map<String, dynamic> scheduleNodeSelected = {
+    'name': '',
+    'code': '',
+    'scheduleNodeName': ''
+  };
   bool scheduleNodeLoading = false;
   Map<String, dynamic> directionSelected = {};
   Map<String, dynamic> stopLocationSelected = {};
@@ -61,11 +65,17 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'pageSize': 0,
           'code': trimmed,
         });
-        final first = (r.rows != null && r.rows!.isNotEmpty) ? r.rows!.first : null;
+        final first =
+            (r.rows != null && r.rows!.isNotEmpty) ? r.rows!.first : null;
         final deptName = first?.deptName;
         final trackNum = first?.trackNum;
         final areaName = first?.areaName;
-        if (deptName != null && deptName.isNotEmpty && trackNum != null && trackNum.isNotEmpty && areaName != null && areaName.isNotEmpty) {
+        if (deptName != null &&
+            deptName.isNotEmpty &&
+            trackNum != null &&
+            trackNum.isNotEmpty &&
+            areaName != null &&
+            areaName.isNotEmpty) {
           return '$deptName-$trackNum-$areaName';
         }
         return trimmed;
@@ -173,7 +183,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       final cacheValid = !forceRefresh &&
           Global.isRepairProgressDataLoaded &&
           Global.repairProgressDataLoadTime != null &&
-          DateTime.now().difference(Global.repairProgressDataLoadTime!).inMinutes < 5 &&
+          DateTime.now()
+                  .difference(Global.repairProgressDataLoadTime!)
+                  .inMinutes <
+              5 &&
           Global.cachedRepairProgressData.isNotEmpty;
 
       if (cacheValid) {
@@ -187,17 +200,17 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       setState(() {
         _isLoading = true;
       });
-      
+
       // 如果没有缓存或缓存过期，则重新加载
       Map<String, dynamic> queryParametrs = {};
       List<RepairGroup> r =
           await ProductApi().getTrainEntryAndDynamics(queryParametrs);
-      
+
       // 更新缓存
       Global.cachedRepairProgressData = r;
       Global.isRepairProgressDataLoaded = true;
       Global.repairProgressDataLoadTime = DateTime.now();
-      
+
       setState(() {
         repairGroups = r;
         if (r.isNotEmpty) {
@@ -362,8 +375,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     int totalCount = item.totalPackageCount ?? 0;
     final trainNumWithEnds = formatTrainNumWithEnds(item.trainNum, item.ends);
     final baseTrainNum = (item.trainNum ?? '').toString().trim();
-    final trainNumText =
-        trainNumWithEnds.isNotEmpty ? trainNumWithEnds : (baseTrainNum.isNotEmpty ? baseTrainNum : '未知车号');
+    final trainNumText = trainNumWithEnds.isNotEmpty
+        ? trainNumWithEnds
+        : (baseTrainNum.isNotEmpty ? baseTrainNum : '未知车号');
     final typeNameText = (item.typeName ?? '').toString().trim();
     final headerText =
         typeNameText.isEmpty ? trainNumText : '$typeNameText $trainNumText';
@@ -487,8 +501,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     );
                   },
                 ),
-         
-                
               ],
             ),
           ),
@@ -985,10 +997,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                         'repairProcName':
                                             item.repairProcName ?? '',
                                         'repairTimes': item.repairTimes ?? '',
-                                        'trainLocation':
-                                            item.stoppingPlace ??
-                                                item.repairLocation ??
-                                                '',
+                                        'trainLocation': item.stoppingPlace ??
+                                            item.repairLocation ??
+                                            '',
                                         'assignSegmentName':
                                             item.assignSegmentName ?? '',
                                       }
@@ -1573,7 +1584,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       if (repairMainNodeCode.isEmpty) {
         setState(() {
           scheduleNodePickerList = [];
-          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeSelected = {
+            'name': '',
+            'code': '',
+            'scheduleNodeName': ''
+          };
           scheduleNodeLoading = false;
         });
         return;
@@ -1598,24 +1613,27 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           rows = activeRows;
         }
         rows.sort((a, b) => scheduleNodeSort(a).compareTo(scheduleNodeSort(b)));
-        final pickerList = rows.map((row) {
-          final code = (row['code'] ??
-                  row['mainNodeSchedleNodeCode'] ??
-                  row['mainNodeScheduleNodeCode'] ??
-                  row['scheduleNodeCode'] ??
-                  row['schedleNodeCode'] ??
-                  '')
-              .toString();
-          final name = scheduleNodeName(row);
-          final timeText = scheduleNodeTimeRange(row);
-          final displayName = timeText.isEmpty ? name : '$name  $timeText';
-          return <String, dynamic>{
-            'code': code,
-            'name': displayName,
-            'scheduleNodeName': name,
-            'sort': scheduleNodeSort(row),
-          };
-        }).where((m) => (m['code'] ?? '').toString().trim().isNotEmpty).toList();
+        final pickerList = rows
+            .map((row) {
+              final code = (row['code'] ??
+                      row['mainNodeSchedleNodeCode'] ??
+                      row['mainNodeScheduleNodeCode'] ??
+                      row['scheduleNodeCode'] ??
+                      row['schedleNodeCode'] ??
+                      '')
+                  .toString();
+              final name = scheduleNodeName(row);
+              final timeText = scheduleNodeTimeRange(row);
+              final displayName = timeText.isEmpty ? name : '$name  $timeText';
+              return <String, dynamic>{
+                'code': code,
+                'name': displayName,
+                'scheduleNodeName': name,
+                'sort': scheduleNodeSort(row),
+              };
+            })
+            .where((m) => (m['code'] ?? '').toString().trim().isNotEmpty)
+            .toList();
         setState(() {
           scheduleNodePickerList = pickerList;
           if (pickerList.length == 1) {
@@ -1630,7 +1648,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       } catch (_) {
         setState(() {
           scheduleNodePickerList = [];
-          scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          scheduleNodeSelected = {
+            'name': '',
+            'code': '',
+            'scheduleNodeName': ''
+          };
           scheduleNodeLoading = false;
         });
       }
@@ -1651,7 +1673,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'trainEntryCode': item.code,
           'typeCode': item.typeCode,
         };
-        final nodeCode = (repairMainNodeSelected['code'] ?? '').toString().trim();
+        final nodeCode =
+            (repairMainNodeSelected['code'] ?? '').toString().trim();
         if (nodeCode.isNotEmpty) {
           queryParametrs['repairMainNodeCode'] = nodeCode;
           queryParametrs['repairMainNodeName'] =
@@ -1661,11 +1684,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             (scheduleNodeSelected['code'] ?? '').toString().trim();
         if (scheduleCode.isNotEmpty) {
           queryParametrs['scheduleNodeCode'] = scheduleCode;
-          queryParametrs['scheduleNodeName'] = (scheduleNodeSelected[
-                      'scheduleNodeName'] ??
-                  scheduleNodeSelected['name'] ??
-                  '')
-              .toString();
+          queryParametrs['scheduleNodeName'] =
+              (scheduleNodeSelected['scheduleNodeName'] ??
+                      scheduleNodeSelected['name'] ??
+                      '')
+                  .toString();
         }
         if (item.doubleCarriage == true) {
           queryParametrs['ends'] =
@@ -1676,9 +1699,6 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         logger.e('savetrainShunting 方法中发生异常: $e');
       }
     }
-
-  
-    
 
     if (item.doubleCarriage != true) {
       directionSelected = {};
@@ -1705,9 +1725,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   final r = await ProductApi()
                       .getRepairMainNodeAll(queryParametrs: queryParametrs);
                   var list = r.toMapList();
-                  list = list
-                      .where((m) => m['deleted'] != true)
-                      .toList();
+                  list = list.where((m) => m['deleted'] != true).toList();
                   list.sort((a, b) {
                     final sa = (a['sort'] as num?)?.toInt() ?? 0;
                     final sb = (b['sort'] as num?)?.toInt() ?? 0;
@@ -1715,7 +1733,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   });
                   final activeCodes = (item.stateDetailList ?? const [])
                       .where((e) => (e.state ?? '').toString() == '1')
-                      .map((e) => (e.repairMainNodeCode ?? '').toString().trim())
+                      .map(
+                          (e) => (e.repairMainNodeCode ?? '').toString().trim())
                       .where((e) => e.isNotEmpty)
                       .toSet();
                   if (activeCodes.isNotEmpty) {
@@ -1741,9 +1760,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     repairMainNodeLoading = false;
                   });
                   if (!context.mounted) return;
-                  if (((repairMainNodeSelected['code'] ?? '')
-                          .toString()
-                          .trim())
+                  if (((repairMainNodeSelected['code'] ?? '').toString().trim())
                       .isNotEmpty) {
                     await loadScheduleNodes(setState);
                   }
@@ -1876,7 +1893,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                   directionSelected['value'] = selectedEnd;
                                   stopLocationSelected = {};
                                 });
-                                _applyDefaultStartStopLocation(item, selectedEnd);
+                                _applyDefaultStartStopLocation(
+                                    item, selectedEnd);
                               },
                             );
                           }
@@ -1900,7 +1918,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 logger.i(selectArr);
-                                stopLocationSelected["code"] = selectItem["code"];
+                                stopLocationSelected["code"] =
+                                    selectItem["code"];
                                 stopLocationSelected["realLocation"] =
                                     selectItem["realLocation"];
                                 stopLocationSelected["areaName"] =
@@ -1968,8 +1987,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ElevatedButton(
                   onPressed: () {
                     // 处理提交逻辑
-                    final nodeCode =
-                        (repairMainNodeSelected['code'] ?? '').toString().trim();
+                    final nodeCode = (repairMainNodeSelected['code'] ?? '')
+                        .toString()
+                        .trim();
                     if (nodeCode.isEmpty) {
                       showToast("请选择工序节点");
                       return;
@@ -1980,8 +2000,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       showToast("请选择排程节点");
                       return;
                     }
-                    final endCode =
-                        (stopLocationSelectedEnd['code'] ?? '').toString().trim();
+                    final endCode = (stopLocationSelectedEnd['code'] ?? '')
+                        .toString()
+                        .trim();
                     if (endCode.isEmpty) {
                       showToast("请选择终点位置");
                       return;
@@ -2013,7 +2034,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     List<Map<String, dynamic>> globalDynamicTypeList = [];
 
     Future<void> _loadJcType(StateSetter setState, _ShuntingFormData fd) async {
-      final dynamicCode = (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
+      final dynamicCode =
+          (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
       if (dynamicCode.isEmpty) {
         setState(() {
           fd.jcTypeList = [];
@@ -2049,7 +2071,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
 
-    Future<void> _loadTrainNum(StateSetter setState, _ShuntingFormData fd) async {
+    Future<void> _loadTrainNum(
+        StateSetter setState, _ShuntingFormData fd) async {
       final typeCode = (fd.jcTypeSelected['code'] ?? '').toString().trim();
       if (typeCode.isEmpty) {
         setState(() {
@@ -2069,8 +2092,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'typeCode': typeCode,
           'complete': 0,
           'tempRepair': false,
-          'pageNum':0,
-          'pageSize':0
+          'pageNum': 0,
+          'pageSize': 0
         });
         dynamic raw = r;
         if (raw is Map) {
@@ -2087,11 +2110,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             }
           }
         }
-        final List<Map<String, dynamic>> list = (raw is List ? raw : const <dynamic>[])
-            .where((e) => e is Map)
-            .map((e) {
+        final List<Map<String, dynamic>> list =
+            (raw is List ? raw : const <dynamic>[])
+                .where((e) => e is Map)
+                .map((e) {
           final m = Map<String, dynamic>.from(e as Map);
-          m['displayTrainNum'] = formatTrainNumWithEnds(m['trainNum'], m['ends']);
+          m['displayTrainNum'] =
+              formatTrainNumWithEnds(m['trainNum'], m['ends']);
           return m;
         }).toList();
         setState(() {
@@ -2191,13 +2216,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       return '$start ~ $end';
     }
 
-    Future<void> _loadScheduleNodes(StateSetter setState, _ShuntingFormData fd) async {
+    Future<void> _loadScheduleNodes(
+        StateSetter setState, _ShuntingFormData fd) async {
       final repairMainNodeCode =
           (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
       if (repairMainNodeCode.isEmpty) {
         setState(() {
           fd.scheduleNodePickerList = [];
-          fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          fd.scheduleNodeSelected = {
+            'name': '',
+            'code': '',
+            'scheduleNodeName': ''
+          };
           fd.scheduleNodeLoading = false;
         });
         return;
@@ -2205,7 +2235,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       setState(() {
         fd.scheduleNodeLoading = true;
         fd.scheduleNodePickerList = [];
-        fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+        fd.scheduleNodeSelected = {
+          'name': '',
+          'code': '',
+          'scheduleNodeName': ''
+        };
       });
       try {
         final r = await ProductApi().getMainNodeSchedleNodeAll(
@@ -2221,25 +2255,29 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         if (activeRows.isNotEmpty && activeRows.length != rows.length) {
           rows = activeRows;
         }
-        rows.sort((a, b) => _scheduleNodeSort(a).compareTo(_scheduleNodeSort(b)));
-        final pickerList = rows.map((row) {
-          final code = (row['code'] ??
-                  row['mainNodeSchedleNodeCode'] ??
-                  row['mainNodeScheduleNodeCode'] ??
-                  row['scheduleNodeCode'] ??
-                  row['schedleNodeCode'] ??
-                  '')
-              .toString();
-          final name = _scheduleNodeName(row);
-          final timeText = _scheduleNodeTimeRange(row);
-          final displayName = timeText.isEmpty ? name : '$name  $timeText';
-          return <String, dynamic>{
-            'code': code,
-            'name': displayName,
-            'scheduleNodeName': name,
-            'sort': _scheduleNodeSort(row),
-          };
-        }).where((m) => (m['code'] ?? '').toString().trim().isNotEmpty).toList();
+        rows.sort(
+            (a, b) => _scheduleNodeSort(a).compareTo(_scheduleNodeSort(b)));
+        final pickerList = rows
+            .map((row) {
+              final code = (row['code'] ??
+                      row['mainNodeSchedleNodeCode'] ??
+                      row['mainNodeScheduleNodeCode'] ??
+                      row['scheduleNodeCode'] ??
+                      row['schedleNodeCode'] ??
+                      '')
+                  .toString();
+              final name = _scheduleNodeName(row);
+              final timeText = _scheduleNodeTimeRange(row);
+              final displayName = timeText.isEmpty ? name : '$name  $timeText';
+              return <String, dynamic>{
+                'code': code,
+                'name': displayName,
+                'scheduleNodeName': name,
+                'sort': _scheduleNodeSort(row),
+              };
+            })
+            .where((m) => (m['code'] ?? '').toString().trim().isNotEmpty)
+            .toList();
         setState(() {
           fd.scheduleNodePickerList = pickerList;
           if (pickerList.length == 1) {
@@ -2254,7 +2292,11 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       } catch (_) {
         setState(() {
           fd.scheduleNodePickerList = [];
-          fd.scheduleNodeSelected = {'name': '', 'code': '', 'scheduleNodeName': ''};
+          fd.scheduleNodeSelected = {
+            'name': '',
+            'code': '',
+            'scheduleNodeName': ''
+          };
           fd.scheduleNodeLoading = false;
         });
       }
@@ -2279,7 +2321,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             'trainNum': fd.trainNumSelected['trainNum'],
             'typeCode': fd.jcTypeSelected['code'],
           };
-          final nodeCode = (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
+          final nodeCode =
+              (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
           if (nodeCode.isNotEmpty) {
             row['repairMainNodeCode'] = nodeCode;
             row['repairMainNodeName'] =
@@ -2289,13 +2332,15 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               (fd.scheduleNodeSelected['code'] ?? '').toString().trim();
           if (scheduleCode.isNotEmpty) {
             row['scheduleNodeCode'] = scheduleCode;
-            row['scheduleNodeName'] = (fd.scheduleNodeSelected['scheduleNodeName'] ??
-                    fd.scheduleNodeSelected['name'] ??
-                    '')
-                .toString();
+            row['scheduleNodeName'] =
+                (fd.scheduleNodeSelected['scheduleNodeName'] ??
+                        fd.scheduleNodeSelected['name'] ??
+                        '')
+                    .toString();
           }
           if (item.doubleCarriage == true) {
-            row['ends'] = fd.directionSelected['value'] ?? fd.directionSelected['name'];
+            row['ends'] =
+                fd.directionSelected['value'] ?? fd.directionSelected['name'];
           }
           queryParametrs.add(row);
         }
@@ -2312,8 +2357,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         fd.directionSelected = {};
       }
       fd.stopLocationSelectedEnd = {};
-      fd.stopLocationSelected =
-          _computeDefaultStartStopLocation(item, fd.directionSelected['value']?.toString());
+      fd.stopLocationSelected = _computeDefaultStartStopLocation(
+          item, fd.directionSelected['value']?.toString());
     }
 
     showDialog(
@@ -2343,7 +2388,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   });
                   final activeCodes = (item.stateDetailList ?? const [])
                       .where((e) => (e.state ?? '').toString() == '1')
-                      .map((e) => (e.repairMainNodeCode ?? '').toString().trim())
+                      .map(
+                          (e) => (e.repairMainNodeCode ?? '').toString().trim())
                       .where((e) => e.isNotEmpty)
                       .toSet();
                   if (activeCodes.isNotEmpty) {
@@ -2450,7 +2496,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       if ((fd.dynamicTypeSelected['code'] ?? '')
                           .toString()
                           .isEmpty) {
-                        fd.dynamicTypeSelected = Map<String, dynamic>.from(match);
+                        fd.dynamicTypeSelected =
+                            Map<String, dynamic>.from(match);
                       }
                     }
                     dynamicTypeLoading = false;
@@ -2473,7 +2520,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           .toString()
                           .isEmpty) {
                         setState(() {
-                          fd.jcTypeSelected = Map<String, dynamic>.from(jcMatch);
+                          fd.jcTypeSelected =
+                              Map<String, dynamic>.from(jcMatch);
                         });
                         await _loadTrainNum(setState, fd);
                         if (!context.mounted) return;
@@ -2518,7 +2566,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 children: [
                   const Text('调车作业通知单'),
                   IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: Colors.blue),
+                    icon: const Icon(Icons.add_circle_outline,
+                        color: Colors.blue),
                     onPressed: () {
                       setState(() {
                         formDataList.add(_ShuntingFormData());
@@ -2535,12 +2584,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   ...(formDataList).asMap().entries.map((entry) {
                     final int idx = entry.key;
                     final _ShuntingFormData fd = entry.value;
-                    
+
                     return Card(
                       elevation: 0,
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                        side: BorderSide(
+                            color: Colors.grey.withOpacity(0.3), width: 1),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Padding(
@@ -2550,11 +2600,15 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           children: [
                             if (formDataList.length > 1)
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('作业单 ${idx + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  Text('作业单 ${idx + 1}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                   IconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                                    icon: const Icon(Icons.delete_outline,
+                                        color: Colors.red, size: 20),
                                     onPressed: () {
                                       if (formDataList.length > 1) {
                                         setState(() {
@@ -2664,7 +2718,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ZjcFormSelectCell(
                               title: "工序节点",
                               text: fd.repairMainNodeSelected['name'] ?? '',
-                              hintText: repairMainNodeLoading ? "加载中..." : "请选择",
+                              hintText:
+                                  repairMainNodeLoading ? "加载中..." : "请选择",
                               clickCallBack: () {
                                 if (repairMainNodeLoading) return;
                                 if (repairMainNodeList.isEmpty) {
@@ -2700,7 +2755,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ZjcFormSelectCell(
                               title: "排程节点",
                               text: fd.scheduleNodeSelected['name'] ?? '',
-                              hintText: fd.scheduleNodeLoading ? "加载中..." : "请选择",
+                              hintText:
+                                  fd.scheduleNodeLoading ? "加载中..." : "请选择",
                               clickCallBack: () {
                                 if (fd.scheduleNodeLoading) return;
                                 if (fd.scheduleNodePickerList.isEmpty) {
@@ -2718,7 +2774,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                         fd.scheduleNodeSelected = {
                                           'name': selectItem['name'],
                                           'code': selectItem['code'],
-                                          'scheduleNodeName': selectItem['scheduleNodeName'],
+                                          'scheduleNodeName':
+                                              selectItem['scheduleNodeName'],
                                         };
                                       });
                                     },
@@ -2729,7 +2786,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ZjcFormSelectCell(
                                 title: "端",
                                 text: fd.directionSelected["name"] ?? '',
-                                hintText: item.doubleCarriage == true ? "请选择" : "无需选择",
+                                hintText: item.doubleCarriage == true
+                                    ? "请选择"
+                                    : "无需选择",
                                 clickCallBack: () {
                                   if (item.doubleCarriage != true) {
                                     showToast("非重联无需选择端");
@@ -2747,14 +2806,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                       title: "选择端",
                                       clickCallBack: (selectItem, selectArr) {
                                         final selectedEnd =
-                                            (selectItem['value'] ?? selectItem['name'])
+                                            (selectItem['value'] ??
+                                                    selectItem['name'])
                                                 ?.toString();
                                         setState(() {
                                           logger.i(selectArr);
-                                          fd.directionSelected['name'] = selectItem['name'];
-                                          fd.directionSelected['value'] = selectedEnd;
+                                          fd.directionSelected['name'] =
+                                              selectItem['name'];
+                                          fd.directionSelected['value'] =
+                                              selectedEnd;
                                           fd.stopLocationSelected =
-                                              _computeDefaultStartStopLocation(item, selectedEnd);
+                                              _computeDefaultStartStopLocation(
+                                                  item, selectedEnd);
                                         });
                                       },
                                     );
@@ -2779,8 +2842,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         logger.i(selectArr);
-                                        fd.stopLocationSelected["code"] = selectItem["code"];
-                                        fd.stopLocationSelected["realLocation"] =
+                                        fd.stopLocationSelected["code"] =
+                                            selectItem["code"];
+                                        fd.stopLocationSelected[
+                                                "realLocation"] =
                                             selectItem["realLocation"];
                                         fd.stopLocationSelected["areaName"] =
                                             selectItem["areaName"];
@@ -2812,7 +2877,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                         logger.i(selectArr);
                                         fd.stopLocationSelectedEnd["code"] =
                                             selectItem["code"];
-                                        fd.stopLocationSelectedEnd["realLocation"] =
+                                        fd.stopLocationSelectedEnd[
+                                                "realLocation"] =
                                             selectItem["realLocation"];
                                         fd.stopLocationSelectedEnd["areaName"] =
                                             selectItem["areaName"];
@@ -2864,39 +2930,47 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   onPressed: () {
                     for (int i = 0; i < formDataList.length; i++) {
                       final fd = formDataList[i];
-                      
-                      final dynamicCode = (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
+
+                      final dynamicCode = (fd.dynamicTypeSelected['code'] ?? '')
+                          .toString()
+                          .trim();
                       if (dynamicCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择动力类型");
                         return;
                       }
-                      
-                      final typeCode = (fd.jcTypeSelected['code'] ?? '').toString().trim();
+
+                      final typeCode =
+                          (fd.jcTypeSelected['code'] ?? '').toString().trim();
                       if (typeCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择机型");
                         return;
                       }
-                      
-                      final trainCode = (fd.trainNumSelected['code'] ?? '').toString().trim();
+
+                      final trainCode =
+                          (fd.trainNumSelected['code'] ?? '').toString().trim();
                       if (trainCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择车号");
                         return;
                       }
 
-                      final nodeCode =
-                          (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
+                      final nodeCode = (fd.repairMainNodeSelected['code'] ?? '')
+                          .toString()
+                          .trim();
                       if (nodeCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择工序节点");
                         return;
                       }
                       final scheduleCode =
-                          (fd.scheduleNodeSelected['code'] ?? '').toString().trim();
+                          (fd.scheduleNodeSelected['code'] ?? '')
+                              .toString()
+                              .trim();
                       if (scheduleCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择排程节点");
                         return;
                       }
-                      final endCode =
-                          (fd.stopLocationSelectedEnd['code'] ?? '').toString().trim();
+                      final endCode = (fd.stopLocationSelectedEnd['code'] ?? '')
+                          .toString()
+                          .trim();
                       if (endCode.isEmpty) {
                         showToast("作业单 ${i + 1}: 请选择终点位置");
                         return;
@@ -3058,7 +3132,8 @@ class RepairProcessNoticePage extends StatefulWidget {
   });
 
   @override
-  State<RepairProcessNoticePage> createState() => _RepairProcessNoticePageState();
+  State<RepairProcessNoticePage> createState() =>
+      _RepairProcessNoticePageState();
 }
 
 class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
@@ -3189,8 +3264,11 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   List<Map<String, dynamic>> _parseList(dynamic raw) {
     dynamic value = raw;
     if (value is Map) {
-      value =
-          value['rows'] ?? value['records'] ?? value['data'] ?? value['list'] ?? value;
+      value = value['rows'] ??
+          value['records'] ??
+          value['data'] ??
+          value['list'] ??
+          value;
       if (value is Map) {
         final nestedLists = value.values.whereType<List>().toList();
         if (nestedLists.length == 1) {
@@ -3216,6 +3294,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   String _requiredText(String text) {
     return text.trim().isEmpty ? '-' : text.trim();
   }
+
+  bool get _signeeLockedByReceiveGroup => _selectedReceiveGroup != null;
 
   String _jt28Label(Map<String, dynamic>? item) {
     return _pickText(item, [
@@ -3271,7 +3351,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   String _defaultProcessingMethodText() {
-    return _pickTextFromSources([_selectedJt28, _selectedWork], [
+    return _pickTextFromSources([
+      _selectedJt28,
+      _selectedWork
+    ], [
       'jtDictName',
       'jtDictCode',
       'processingMethod',
@@ -3289,7 +3372,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   String _defaultConfigText() {
-    return _pickTextFromSources([_selectedJt28, _selectedWork], [
+    return _pickTextFromSources([
+      _selectedJt28,
+      _selectedWork
+    ], [
       'configNodeName',
       'structure',
       'configName',
@@ -3300,7 +3386,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   String _defaultOutsourceFactoryText() {
-    return _pickTextFromSources([_selectedJt28, _selectedWork], [
+    return _pickTextFromSources([
+      _selectedJt28,
+      _selectedWork
+    ], [
       'outsourcingVendor',
       'outSourcingFactory',
       'outsourcingFactory',
@@ -3308,7 +3397,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   String _defaultRepairPlanText() {
-    return _pickTextFromSources([_selectedJt28, _selectedWork], [
+    return _pickTextFromSources([
+      _selectedJt28,
+      _selectedWork
+    ], [
       'maintenanceNotice',
       'repairProcContent',
       'repairScheme',
@@ -3322,7 +3414,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   String _defaultTechGuideText() {
-    return _pickTextFromSources([_selectedJt28, _selectedWork], [
+    return _pickTextFromSources([
+      _selectedJt28,
+      _selectedWork
+    ], [
       'techGuideName',
       'technicalGuidance',
       'guide',
@@ -3368,8 +3463,12 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     }
     _logger.i(
       '[修程通知单回写] 机统28选中后先默认回写工序节点 '
-      'repairMainNodeName=${_pickText(_selectedNotice, ['repairMainNodeName'])} '
-      'repairMainNodeCode=${_pickText(_selectedNotice, ['repairMainNodeCode'])}',
+      'repairMainNodeName=${_pickText(_selectedNotice, [
+            'repairMainNodeName'
+          ])} '
+      'repairMainNodeCode=${_pickText(_selectedNotice, [
+            'repairMainNodeCode'
+          ])}',
     );
   }
 
@@ -3399,7 +3498,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   int _noticeDetailScore(Map<String, dynamic> row) {
-    final hasProcess = _pickText(row, ['repairMainNodeName', 'repairMainNodeCode']).isNotEmpty;
+    final hasProcess =
+        _pickText(row, ['repairMainNodeName', 'repairMainNodeCode']).isNotEmpty;
     final hasStop = _noticeStopLocationText(row).isNotEmpty;
     if (hasProcess && hasStop) return 3;
     if (hasProcess) return 2;
@@ -3413,11 +3513,13 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     return DateTime.tryParse(text.replaceFirst(' ', 'T'));
   }
 
-  Map<String, dynamic> _pickLatestNoticeDetail(List<Map<String, dynamic>> rows) {
+  Map<String, dynamic> _pickLatestNoticeDetail(
+      List<Map<String, dynamic>> rows) {
     if (rows.length == 1) return Map<String, dynamic>.from(rows.first);
     final sorted = rows.map((e) => Map<String, dynamic>.from(e)).toList();
     sorted.sort((a, b) {
-      final scoreCompare = _noticeDetailScore(b).compareTo(_noticeDetailScore(a));
+      final scoreCompare =
+          _noticeDetailScore(b).compareTo(_noticeDetailScore(a));
       if (scoreCompare != 0) return scoreCompare;
       final bTime = _parseNoticeDateTime(b['updatedTime']) ??
           _parseNoticeDateTime(b['createdTime']) ??
@@ -3494,7 +3596,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     return error == null;
   }
 
-  _RepairProcessWorkBlock _createWorkBlockFromSource(Map<String, dynamic> source) {
+  _RepairProcessWorkBlock _createWorkBlockFromSource(
+      Map<String, dynamic> source) {
     final processingText = _pickText(source, [
       'requiredProcessingMethodName',
       'processingMethodName',
@@ -3532,9 +3635,11 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         'techGuide',
       ]),
     );
-    final processingCode = _pickText(source, ['jtDictCode', 'requiredProcessingMethod']);
+    final processingCode =
+        _pickText(source, ['jtDictCode', 'requiredProcessingMethod']);
     final riskCode = _pickText(source, ['riskLevelCode', 'dictCode']);
-    final configCode = _pickText(source, ['configNodeCode', 'configCode', 'code']);
+    final configCode =
+        _pickText(source, ['configNodeCode', 'configCode', 'code']);
     block.selectedProcessingMethod = _findOptionByIdOrName(
       _processingMethodOptions,
       id: processingCode,
@@ -3554,13 +3659,24 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       id: configCode,
       idKeys: const ['configCode', 'code'],
       name: configText,
-      nameKeys: const ['displayText', 'configName', 'configNodeName', 'nodeName'],
+      nameKeys: const [
+        'displayText',
+        'configName',
+        'configNodeName',
+        'nodeName',
+        'structure',
+        'componentName',
+        'name',
+        'config',
+      ],
     );
     return block;
   }
 
-  Future<void> _loadNoticeDetailByJt28(Map<String, dynamic> selectedJt28) async {
-    final jt28Code = _pickText(selectedJt28, ['jt28Code', 'code', 'masSaleInformationCode']);
+  Future<void> _loadNoticeDetailByJt28(
+      Map<String, dynamic> selectedJt28) async {
+    final jt28Code =
+        _pickText(selectedJt28, ['jt28Code', 'code', 'masSaleInformationCode']);
     if (jt28Code.isEmpty || _loadingNoticeDetail) {
       return;
     }
@@ -3639,7 +3755,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         if (item is! Map) continue;
         final userMap = Map<String, dynamic>.from(item);
         final auditUserId = userMap['userId'];
-        final auditUserName = _pickText(userMap, ['nickName', 'userName', 'name']);
+        final auditUserName =
+            _pickText(userMap, ['nickName', 'userName', 'name']);
         final dedupeKey =
             '${_asText(deptId)}_${_asText(teamId)}_${_asText(auditUserId)}';
         if (_asText(auditUserId).isEmpty || seenKeys.contains(dedupeKey)) {
@@ -3671,20 +3788,27 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }) {
     final activeStateDetail = _activeStateDetail;
     final reportUserId = _selectedNotice['reportUserId'] ?? user.userId;
-    final reportUserName = _pickText(_selectedNotice, ['reportUserName']).isNotEmpty
-        ? _pickText(_selectedNotice, ['reportUserName'])
-        : ((user.nickName ?? user.userName) ?? '').toString();
+    final reportUserName =
+        _pickText(_selectedNotice, ['reportUserName']).isNotEmpty
+            ? _pickText(_selectedNotice, ['reportUserName'])
+            : ((user.nickName ?? user.userName) ?? '').toString();
     final trainEntryCode =
-        (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '').trim().isNotEmpty
-        ? (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '').trim()
-        : _pickText(_selectedNotice, ['trainEntryCode']);
+        (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '')
+                .trim()
+                .isNotEmpty
+            ? (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '')
+                .trim()
+            : _pickText(_selectedNotice, ['trainEntryCode']);
     final trainNum = (widget.item.trainNum ?? '').trim().isNotEmpty
         ? (widget.item.trainNum ?? '').trim()
         : _pickText(_selectedNotice, ['trainNum', 'trainName']);
     final trainNumCode = (widget.item.trainNumCode ?? '').trim().isNotEmpty
         ? (widget.item.trainNumCode ?? '').trim()
         : _pickText(_selectedNotice, ['trainNumCode', 'trainCode']);
-    final trainCodeCandidate = _pickTextFromSources([_selectedJt28, _selectedNotice], [
+    final trainCodeCandidate = _pickTextFromSources([
+      _selectedJt28,
+      _selectedNotice
+    ], [
       'trainCode',
       'trainNumCode',
     ]);
@@ -3699,29 +3823,79 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         : _pickText(_selectedNotice, ['typeName']);
     final repairMainNodeCode =
         (_activeStateDetail?.repairMainNodeCode ?? '').trim().isNotEmpty
-        ? (_activeStateDetail?.repairMainNodeCode ?? '').trim()
-        : _pickText(_selectedNotice, ['repairMainNodeCode']);
+            ? (_activeStateDetail?.repairMainNodeCode ?? '').trim()
+            : _pickText(_selectedNotice, ['repairMainNodeCode']);
     final repairMainNodeName =
         (_activeStateDetail?.repairMainNodeName ?? '').trim().isNotEmpty
-        ? (_activeStateDetail?.repairMainNodeName ?? '').trim()
-        : _pickText(_selectedNotice, ['repairMainNodeName']);
+            ? (_activeStateDetail?.repairMainNodeName ?? '').trim()
+            : _pickText(_selectedNotice, ['repairMainNodeName']);
 
     return workListPayload.map((workItem) {
       final item = Map<String, dynamic>.from(workItem);
-      item['configNodeCode'] = _asText(item['configNodeCode']).isNotEmpty
-          ? item['configNodeCode']
-          : item['configCode'];
-      item['repairMainNodeCode'] = repairMainNodeCode;
-      item['repairMainNodeName'] = repairMainNodeName;
-      item['reportUserId'] = reportUserId;
-      item['reportUserName'] = reportUserName;
-      item['trainCode'] = trainCode;
-      item['trainEntryCode'] = trainEntryCode;
-      item['trainNum'] = trainNum;
-      item['trainNumCode'] = trainNumCode;
-      item['typeCode'] = typeCode;
-      item['typeName'] = typeName;
-      return item;
+      final result = <String, dynamic>{};
+      final detailCode = _asText(item['code']);
+      if (detailCode.isNotEmpty) {
+        result['code'] = detailCode;
+      }
+      final configCode = _asText(item['configCode']);
+      if (configCode.isNotEmpty) {
+        result['configCode'] = configCode;
+      }
+      final configName =
+          _pickText(item, ['configName', 'configNodeName', 'nodeName']);
+      if (configName.isNotEmpty) {
+        result['configName'] = configName;
+      }
+      final jtDictCode = _asText(item['jtDictCode']);
+      if (jtDictCode.isNotEmpty) {
+        result['jtDictCode'] = jtDictCode;
+      }
+      final jtDictName =
+          _pickText(item, ['jtDictName', 'requiredProcessingMethodName']);
+      if (jtDictName.isNotEmpty) {
+        result['jtDictName'] = jtDictName;
+      }
+      final outsourcingVendor = _pickText(item, ['outsourcingVendor']);
+      if (outsourcingVendor.isNotEmpty) {
+        result['outsourcingVendor'] = outsourcingVendor;
+      }
+      final repairProcContent = _pickText(item, ['repairProcContent']);
+      if (repairProcContent.isNotEmpty) {
+        result['repairProcContent'] = repairProcContent;
+      }
+      final riskLevel = _pickText(item, ['riskLevel']);
+      if (riskLevel.isNotEmpty) {
+        result['riskLevel'] = riskLevel;
+      }
+      if (repairMainNodeCode.isNotEmpty) {
+        result['repairMainNodeCode'] = repairMainNodeCode;
+      }
+      if (repairMainNodeName.isNotEmpty) {
+        result['repairMainNodeName'] = repairMainNodeName;
+      }
+      result['reportUserId'] = reportUserId;
+      if (reportUserName.isNotEmpty) {
+        result['reportUserName'] = reportUserName;
+      }
+      if (trainCode.isNotEmpty) {
+        result['trainCode'] = trainCode;
+      }
+      if (trainEntryCode.isNotEmpty) {
+        result['trainEntryCode'] = trainEntryCode;
+      }
+      if (trainNum.isNotEmpty) {
+        result['trainNum'] = trainNum;
+      }
+      if (trainNumCode.isNotEmpty) {
+        result['trainNumCode'] = trainNumCode;
+      }
+      if (typeCode.isNotEmpty) {
+        result['typeCode'] = typeCode;
+      }
+      if (typeName.isNotEmpty) {
+        result['typeName'] = typeName;
+      }
+      return result;
     }).toList();
   }
 
@@ -3841,10 +4015,9 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   }
 
   Future<void> _loadJt28Options() async {
-    final trainEntryCode = (widget.item.code ??
-            widget.item.c4c5ledger?.trainEntryCode ??
-            '')
-        .trim();
+    final trainEntryCode =
+        (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '')
+            .trim();
     if (trainEntryCode.isEmpty) {
       _logger.w('[修程通知单JT28] 进入页面未取到 trainEntryCode');
       return;
@@ -4095,10 +4268,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   List<String> _splitTextList(dynamic value) {
     if (value == null) return const <String>[];
     if (value is List) {
-      return value
-          .map((e) => _asText(e))
-          .where((e) => e.isNotEmpty)
-          .toList();
+      return value.map((e) => _asText(e)).where((e) => e.isNotEmpty).toList();
     }
     final text = _asText(value);
     if (text.isEmpty) return const <String>[];
@@ -4281,16 +4451,15 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     return {
       'signDept': dept.isEmpty ? null : dept,
       'signTeam': team,
-      'targetDeptId': _parseId(team?['deptId']) ?? _parseId(dept['deptId']) ?? userDeptId,
+      'targetDeptId':
+          _parseId(team?['deptId']) ?? _parseId(dept['deptId']) ?? userDeptId,
     };
   }
 
   Future<void> _applyReceiveGroupToSignees(Map<String, dynamic> group) async {
     final items = _pickList(group, ['shuntingReceiveGroupItemList']);
-    final roleIdList = items
-        .map((e) => _parseId(e['id']))
-        .whereType<int>()
-        .toList();
+    final roleIdList =
+        items.map((e) => _parseId(e['id'])).whereType<int>().toList();
     _logger.i('[修程通知单签收组] 选中签收组后开始回填 roleIdList=$roleIdList');
     if (roleIdList.isEmpty) {
       return;
@@ -4298,7 +4467,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     if (_deptList.isEmpty) {
       await _loadDepts();
     }
-    final res = await ProductApi().getVUserRolePostDetailListByRoleIdList(roleIdList);
+    final res =
+        await ProductApi().getVUserRolePostDetailListByRoleIdList(roleIdList);
     final roleUserMap = _normalizeRoleUserMap(res);
     final nextSignees = <Map<String, dynamic>>[];
     final rowIndexByKey = <String, int>{};
@@ -4309,7 +4479,11 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       for (final roleUser in roleUsers) {
         final user = Map<String, dynamic>.from(roleUser);
         _logger.i(
-          '[修程通知单签收组] 角色用户 userId=${user['userId']} deptId=${user['deptId']} nickName=${_pickText(user, ['nickName', 'userName', 'name'])}',
+          '[修程通知单签收组] 角色用户 userId=${user['userId']} deptId=${user['deptId']} nickName=${_pickText(user, [
+                'nickName',
+                'userName',
+                'name'
+              ])}',
         );
         final relation = await _resolveSigneeDeptTeam(user);
         final signDept = relation['signDept'];
@@ -4329,15 +4503,19 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
             ) ??
             user;
         _logger.i(
-          '[修程通知单签收组] 回写签收人 dept=${signDept is Map ? signDept['deptName'] : ''} team=${signTeam is Map ? signTeam['deptName'] : ''} user=${_pickText(selectedUser, ['nickName', 'userName', 'name'])}',
+          '[修程通知单签收组] 回写签收人 dept=${signDept is Map ? signDept['deptName'] : ''} team=${signTeam is Map ? signTeam['deptName'] : ''} user=${_pickText(selectedUser, [
+                'nickName',
+                'userName',
+                'name'
+              ])}',
         );
 
         final rowKey =
             '${_asText(signDept is Map ? signDept['deptId'] : '')}_${_asText(signTeam is Map ? signTeam['deptId'] : '')}';
         final existingIndex = rowIndexByKey[rowKey];
         if (existingIndex != null) {
-          final existingUsers =
-              nextSignees[existingIndex]['signUsers'] as List<Map<String, dynamic>>;
+          final existingUsers = nextSignees[existingIndex]['signUsers']
+              as List<Map<String, dynamic>>;
           final exists = existingUsers.any(
             (e) => _asText(e['userId']) == _asText(selectedUser['userId']),
           );
@@ -4349,9 +4527,13 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
         rowIndexByKey[rowKey] = nextSignees.length;
         nextSignees.add({
-          'signDept': signDept is Map ? Map<String, dynamic>.from(signDept) : null,
-          'signTeam': signTeam is Map ? Map<String, dynamic>.from(signTeam) : null,
-          'signUsers': <Map<String, dynamic>>[Map<String, dynamic>.from(selectedUser)],
+          'signDept':
+              signDept is Map ? Map<String, dynamic>.from(signDept) : null,
+          'signTeam':
+              signTeam is Map ? Map<String, dynamic>.from(signTeam) : null,
+          'signUsers': <Map<String, dynamic>>[
+            Map<String, dynamic>.from(selectedUser)
+          ],
         });
       }
     }
@@ -4490,6 +4672,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     required String labelKey,
     String valueKey = 'code',
     dynamic selectedValue,
+    dynamic selectedLabel,
+    List<String> searchKeys = const [],
   }) async {
     return Navigator.push<Map<String, dynamic>>(
       context,
@@ -4501,6 +4685,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
             labelKey: labelKey,
             valueKey: valueKey,
             selectedValue: selectedValue,
+            selectedLabel: selectedLabel,
+            searchKeys: searchKeys,
           );
         },
       ),
@@ -4551,7 +4737,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                           final userId = user['userId'];
                           return CheckboxListTile(
                             value: selectedIds.contains(userId),
-                            title: Text(_pickText(user, ['nickName', 'userName'])),
+                            title:
+                                Text(_pickText(user, ['nickName', 'userName'])),
                             onChanged: (checked) {
                               setDialogState(() {
                                 if (checked == true) {
@@ -4643,8 +4830,9 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
               Text(
                 _requiredText(value),
                 maxLines: maxLines,
-                overflow:
-                    maxLines == 1 ? TextOverflow.ellipsis : TextOverflow.visible,
+                overflow: maxLines == 1
+                    ? TextOverflow.ellipsis
+                    : TextOverflow.visible,
               ),
         ),
       ],
@@ -4680,8 +4868,9 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                   child: Text(
                     value.isEmpty ? hintText : value,
                     maxLines: maxLines,
-                    overflow:
-                        maxLines == 1 ? TextOverflow.ellipsis : TextOverflow.visible,
+                    overflow: maxLines == 1
+                        ? TextOverflow.ellipsis
+                        : TextOverflow.visible,
                     softWrap: maxLines != 1,
                     style: TextStyle(
                       color: value.isEmpty ? Colors.grey : Colors.black87,
@@ -4746,9 +4935,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       return;
     }
 
-    final payload = Map<String, dynamic>.from(_selectedNotice);
+    final noticeCode = _asText(_selectedNotice['code']);
     final workListPayload = <Map<String, dynamic>>[];
-    final repairProgressContents = <String>[];
     for (final block in _workBlocks) {
       final workItem = Map<String, dynamic>.from(_selectedWork);
       final processingMethodText = block.processingMethodText.trim();
@@ -4804,100 +4992,28 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       }
 
       workItem['outsourcingVendor'] = outsourceFactoryText;
-      workItem['outSourcingFactory'] = outsourceFactoryText;
-      workItem['outsourcingFactory'] = outsourceFactoryText;
       workItem['repairProcContent'] = repairPlanText;
-      workItem['repairScheme'] = repairPlanText;
-      workItem['repairPlan'] = repairPlanText;
-      workItem['maintenanceNotice'] = repairPlanText;
-      workItem['techGuideName'] = techGuideText;
-      workItem['technicalGuidance'] = techGuideText;
-      workItem['guide'] = techGuideText;
-      workItem['techGuide'] = techGuideText;
       workListPayload.add(workItem);
-      if (repairPlanText.isNotEmpty) {
-        repairProgressContents.add(repairPlanText);
-      }
     }
-    final repairProgressContent = repairProgressContents.join('\n');
-    final shuntingNoticeList = _buildRepairProcessNoticeList(
-      user: user,
-    );
     final masNoticeDeptList = _buildMasNoticeDeptList(
       user: user,
       workListPayload: workListPayload,
     );
-    final activeStateDetail = _activeStateDetail;
-    final faultDescription = _jt28Label(_selectedJt28).isNotEmpty
-        ? _jt28Label(_selectedJt28)
-        : _pickText(_selectedNotice, [
-            'faultDescription',
-            'faultInformation',
-            'faultDesc',
-            'faultPhenomenon',
-          ]);
-    final jt28Code = _pickTextFromSources([_selectedJt28, _selectedNotice], [
+    final jt28Code = _pickTextFromSources([
+      _selectedJt28,
+      _selectedNotice
+    ], [
       'jt28Code',
       'code',
       'masSaleInformationCode',
     ]);
-    final reportUserName = _pickText(_selectedNotice, ['reportUserName']).isNotEmpty
-        ? _pickText(_selectedNotice, ['reportUserName'])
-        : ((user.nickName ?? user.userName) ?? '').toString();
-    final reportDeptName = _pickText(_selectedNotice, ['reportDeptName']).isNotEmpty
-        ? _pickText(_selectedNotice, ['reportDeptName'])
-        : ((user.dept?.deptName ?? '')).toString();
+    final payload = <String, dynamic>{
+      'code': noticeCode,
+      'jt28Code': jt28Code,
+      'masNoticeDeptList': masNoticeDeptList,
+    };
 
-    payload['masAfterSaleUserList'] = _pickList(_selectedNotice, [
-      'masAfterSaleUserList',
-      'userList',
-      'peopleList',
-    ]);
-    payload['masAfterSalesSubpartList'] = _pickList(_selectedNotice, [
-      'masAfterSalesSubpartList',
-      'masAfterSaleSubpartList',
-      'subpartList',
-    ]);
-    payload['masNoticeDeptList'] = masNoticeDeptList;
-    payload['faultDescription'] = faultDescription;
-    payload['faultInformation'] = faultDescription;
-    payload['jt28Code'] = jt28Code;
-    payload['repairMainNodeCode'] =
-        (activeStateDetail?.repairMainNodeCode ?? '').trim().isNotEmpty
-        ? (activeStateDetail?.repairMainNodeCode ?? '').trim()
-        : _pickText(_selectedNotice, ['repairMainNodeCode']);
-    payload['repairMainNodeName'] =
-        (activeStateDetail?.repairMainNodeName ?? '').trim().isNotEmpty
-        ? (activeStateDetail?.repairMainNodeName ?? '').trim()
-        : _pickText(_selectedNotice, ['repairMainNodeName']);
-    payload['reportDeptId'] = _selectedNotice['reportDeptId'] ?? user.deptId;
-    payload['reportDeptName'] = reportDeptName;
-    payload['reportUserId'] = _selectedNotice['reportUserId'] ?? user.userId;
-    payload['reportUserName'] = reportUserName;
-    payload['trainEntryCode'] = (widget.item.code ??
-            widget.item.c4c5ledger?.trainEntryCode ??
-            '')
-        .trim();
-    payload['trainNum'] = (widget.item.trainNum ?? '').trim();
-    payload['trainNumCode'] = (widget.item.trainNumCode ?? '').trim();
-    payload['trainCode'] = _pickTextFromSources([_selectedJt28, _selectedNotice], [
-      'trainCode',
-      'trainNumCode',
-    ]).isNotEmpty
-        ? _pickTextFromSources([_selectedJt28, _selectedNotice], [
-            'trainCode',
-            'trainNumCode',
-          ])
-        : ((widget.item.trainNumCode ?? widget.item.code ?? '').trim());
-    payload['typeCode'] = (widget.item.typeCode ?? '').trim();
-    payload['typeName'] = (widget.item.typeName ?? '').trim();
-    payload['repairProgressContent'] = repairProgressContent;
-    payload['shuntingType'] = 13;
-    payload.remove('masAfterSaleWorkList');
-    payload['shuntingNoticeList'] = shuntingNoticeList;
-    payload.remove('masAfterSaleAuditList');
-
-    if (_asText(payload['code']).isEmpty) {
+    if (noticeCode.isEmpty) {
       showToast('通知单编码缺失，无法提交');
       return;
     }
@@ -4945,7 +5061,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                 style: TextStyle(fontSize: 18),
               ),
               ConstrainedBox(
-                constraints: const BoxConstraints.expand(height: 30, width: 160),
+                constraints:
+                    const BoxConstraints.expand(height: 30, width: 160),
                 child: ElevatedButton.icon(
                   onPressed: () {
                     SmartDialog.dismiss().then(
@@ -5022,7 +5139,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                       }
                     }
                   });
-                  await _loadNoticeDetailByJt28(Map<String, dynamic>.from(selected));
+                  await _loadNoticeDetailByJt28(
+                      Map<String, dynamic>.from(selected));
                 },
                 hintText: _loadingJt28 ? '机统28加载中...' : '请选择一条机统28',
               ),
@@ -5057,7 +5175,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                 final index = entry.key;
                 final block = entry.value;
                 return Container(
-                  margin: EdgeInsets.only(bottom: index == _workBlocks.length - 1 ? 0 : 16),
+                  margin: EdgeInsets.only(
+                      bottom: index == _workBlocks.length - 1 ? 0 : 16),
                   padding: const EdgeInsets.only(bottom: 8),
                   decoration: BoxDecoration(
                     border: Border(
@@ -5089,7 +5208,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                                   showToast('暂无加工方法可选');
                                   return;
                                 }
-                                final selected = await _showSearchableListDialog(
+                                final selected =
+                                    await _showSearchableListDialog(
                                   title: '选择加工方法',
                                   items: _processingMethodOptions,
                                   labelKey: 'displayText',
@@ -5099,7 +5219,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                                   block.selectedProcessingMethod =
                                       Map<String, dynamic>.from(selected);
                                   block.processingMethodText =
-                                      _processingMethodLabel(block.selectedProcessingMethod);
+                                      _processingMethodLabel(
+                                          block.selectedProcessingMethod);
                                 });
                               },
                             ),
@@ -5120,7 +5241,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                                   showToast('暂无风险等级可选');
                                   return;
                                 }
-                                final selected = await _showSearchableListDialog(
+                                final selected =
+                                    await _showSearchableListDialog(
                                   title: '选择风险等级',
                                   items: _riskLevelOptions,
                                   labelKey: 'displayText',
@@ -5151,17 +5273,33 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                             showToast('暂无关联构型可选');
                             return;
                           }
-                          final selected = await _showFullScreenSingleSelectPage(
+                          final selected =
+                              await _showFullScreenSingleSelectPage(
                             title: '选择关联构型',
                             items: _configOptions,
                             labelKey: 'displayText',
                             valueKey: 'configCode',
                             selectedValue: block.selectedConfig?['configCode'],
+                            selectedLabel: block.configText,
+                            searchKeys: const [
+                              'displayText',
+                              'nodeName',
+                              'configNodeName',
+                              'configName',
+                              'structure',
+                              'componentName',
+                              'name',
+                              'config',
+                              'configCode',
+                              'code',
+                            ],
                           );
                           if (selected == null || !mounted) return;
                           setState(() {
-                            block.selectedConfig = Map<String, dynamic>.from(selected);
-                            block.configText = _configLabel(block.selectedConfig);
+                            block.selectedConfig =
+                                Map<String, dynamic>.from(selected);
+                            block.configText =
+                                _configLabel(block.selectedConfig);
                           });
                         },
                       ),
@@ -5229,8 +5367,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                 value: _selectedReceiveGroup == null
                     ? ''
                     : _receiveGroupLabel(_selectedReceiveGroup),
-                hintText:
-                    _loadingReceiveGroup ? '签收组加载中...' : '请选择签收组',
+                hintText: _loadingReceiveGroup ? '签收组加载中...' : '请选择签收组',
                 onTap: () async {
                   if (_loadingReceiveGroup) {
                     showToast('签收组加载中，请稍后');
@@ -5263,9 +5400,20 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                     '签收人',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
+                  if (_signeeLockedByReceiveGroup) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '已由签收组自动回写',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () {
+                      if (_signeeLockedByReceiveGroup) {
+                        showToast('已按签收组自动回写签收人，不能手动新增');
+                        return;
+                      }
                       setState(() {
                         _signeeList.add({
                           'signDept': null,
@@ -5294,8 +5442,9 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                         .map((e) => Map<String, dynamic>.from(e))
                         .toList() ??
                     <Map<String, dynamic>>[];
-                final teamOptions =
-                    deptId != null ? (_teamsByDeptId[deptId] ?? []) : <Map<String, dynamic>>[];
+                final teamOptions = deptId != null
+                    ? (_teamsByDeptId[deptId] ?? [])
+                    : <Map<String, dynamic>>[];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -5304,10 +5453,15 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                         child: _selectField(
                           label: '部门',
                           value: dept is Map
-                              ? _pickText(Map<String, dynamic>.from(dept), ['deptName'])
+                              ? _pickText(
+                                  Map<String, dynamic>.from(dept), ['deptName'])
                               : '',
                           maxLines: 2,
                           onTap: () async {
+                            if (_signeeLockedByReceiveGroup) {
+                              showToast('签收人已按签收组自动回写，不能手动修改');
+                              return;
+                            }
                             final selected = await _showSearchableListDialog(
                               title: '选择部门',
                               items: _deptList,
@@ -5331,10 +5485,15 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                         child: _selectField(
                           label: '班组',
                           value: team is Map
-                              ? _pickText(Map<String, dynamic>.from(team), ['deptName'])
+                              ? _pickText(
+                                  Map<String, dynamic>.from(team), ['deptName'])
                               : '',
                           maxLines: 2,
                           onTap: () async {
+                            if (_signeeLockedByReceiveGroup) {
+                              showToast('签收人已按签收组自动回写，不能手动修改');
+                              return;
+                            }
                             if (deptId == null) {
                               showToast('请先选择部门');
                               return;
@@ -5360,14 +5519,18 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                           hintText: '请选择',
                           maxLines: 6,
                           onTap: () async {
+                            if (_signeeLockedByReceiveGroup) {
+                              showToast('签收人已按签收组自动回写，不能手动修改');
+                              return;
+                            }
                             final targetDeptId = teamId ?? deptId;
                             if (targetDeptId == null) {
                               showToast('请先选择部门或班组');
                               return;
                             }
                             await _loadUsersForDept(targetDeptId);
-                            final userOptions =
-                                _usersByDeptId[targetDeptId] ?? <Map<String, dynamic>>[];
+                            final userOptions = _usersByDeptId[targetDeptId] ??
+                                <Map<String, dynamic>>[];
                             final selected = await _showMultiUserDialog(
                               users: userOptions,
                               initialSelectedIds:
@@ -5384,6 +5547,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                         const SizedBox(width: 4),
                         IconButton(
                           onPressed: () {
+                            if (_signeeLockedByReceiveGroup) {
+                              showToast('已按签收组自动回写签收人，不能手动删除');
+                              return;
+                            }
                             setState(() {
                               _signeeList.removeAt(index);
                             });
@@ -5466,6 +5633,8 @@ class _FullScreenSingleSelectPage extends StatefulWidget {
     required this.labelKey,
     required this.valueKey,
     required this.selectedValue,
+    required this.selectedLabel,
+    required this.searchKeys,
   });
 
   final String title;
@@ -5473,6 +5642,8 @@ class _FullScreenSingleSelectPage extends StatefulWidget {
   final String labelKey;
   final String valueKey;
   final dynamic selectedValue;
+  final dynamic selectedLabel;
+  final List<String> searchKeys;
 
   @override
   State<_FullScreenSingleSelectPage> createState() =>
@@ -5493,9 +5664,22 @@ class _FullScreenSingleSelectPageState
   @override
   Widget build(BuildContext context) {
     final selected = _safeText(widget.selectedValue);
+    final selectedLabel = _safeText(widget.selectedLabel);
+    final normalizedQuery = _query.toLowerCase().trim();
     final filtered = widget.items.where((item) {
       final label = _safeText(item[widget.labelKey]);
-      return label.toLowerCase().contains(_query.toLowerCase());
+      if (normalizedQuery.isEmpty) return true;
+      final candidates = <String>{
+        label,
+        _safeText(item[widget.valueKey]),
+        for (final key in widget.searchKeys) _safeText(item[key]),
+      };
+      for (final candidate in candidates) {
+        if (candidate.toLowerCase().contains(normalizedQuery)) {
+          return true;
+        }
+      }
+      return false;
     }).toList();
     return Scaffold(
       appBar: AppBar(
@@ -5531,7 +5715,10 @@ class _FullScreenSingleSelectPageState
                 final label = _safeText(item[widget.labelKey]);
                 final currentValue = _safeText(item[widget.valueKey]);
                 final isSelected =
-                    selected.isNotEmpty && currentValue == selected;
+                    (selected.isNotEmpty && currentValue == selected) ||
+                        (selected.isEmpty &&
+                            selectedLabel.isNotEmpty &&
+                            label == selectedLabel);
                 return ListTile(
                   title: Text(
                     label.isEmpty ? '-' : label,
