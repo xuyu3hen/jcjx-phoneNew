@@ -36,6 +36,7 @@ class RepairItem {
   final int? completePackageCount;
   final String? createdBy;
   final String? createdTime;
+  final String? currentScheduleNodeName;
   final String? dynamicCode;
   final bool? doubleCarriage;
   final String? handOverTime;
@@ -52,12 +53,18 @@ class RepairItem {
   final String? repairEndTimeReal;
   final String? repairLocation;
   final String? repairLocationB;
+  final String? repairMainNodeCode;
+  final String? repairMainNodeName;
   final String? repairPlanCode;
   final String? repairProcCode;
   final String? repairProcName;
   final String? repairStartTime;
   final String? repairStartTimeReal;
   final String? repairTimes;
+  final String? scheduleNodeCode;
+  final String? scheduleNodeName;
+  final int? scheduleNodeSort;
+  final int? scheduleSort;
   final int? sort;
   final List<StateDetail>? stateDetailList;
   final int? status;
@@ -88,6 +95,7 @@ class RepairItem {
     this.completePackageCount,
     this.createdBy,
     this.createdTime,
+    this.currentScheduleNodeName,
     this.dynamicCode,
     this.doubleCarriage,
     this.handOverTime,
@@ -104,12 +112,18 @@ class RepairItem {
     this.repairEndTimeReal,
     this.repairLocation,
     this.repairLocationB,
+    this.repairMainNodeCode,
+    this.repairMainNodeName,
     this.repairPlanCode,
     this.repairProcCode,
     this.repairProcName,
     this.repairStartTime,
     this.repairStartTimeReal,
     this.repairTimes,
+    this.scheduleNodeCode,
+    this.scheduleNodeName,
+    this.scheduleNodeSort,
+    this.scheduleSort,
     this.sort,
     this.stateDetailList,
     this.status,

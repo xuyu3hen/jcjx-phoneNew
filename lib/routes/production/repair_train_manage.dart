@@ -176,6 +176,51 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         .toList();
   }
 
+  String _procScheduleKey(String procCode, String scheduleName) =>
+      '${procCode}_$scheduleName';
+
+  String? _currentScheduleTag;
+
+  List<Map<String, dynamic>> _extractScheduleNodesFromProc(
+      Map<String, dynamic> proc) {
+    final trains = _safeTrainEntryList(proc['trainEntryList']);
+    if (trains.isEmpty) return [];
+    final Map<String, Map<String, dynamic>> scheduleMap = {};
+    for (final t in trains) {
+      final sName =
+          (t['scheduleNodeName'] ?? t['currentScheduleNodeName'] ?? '未排程')
+              .toString()
+              .trim();
+      final key = sName.isEmpty ? '未排程' : sName;
+      if (!scheduleMap.containsKey(key)) {
+        final sCode = (t['scheduleNodeCode'] ?? '').toString();
+        final sSort = t['scheduleNodeSort'] is int
+            ? t['scheduleNodeSort'] as int
+            : (t['scheduleSort'] is int ? t['scheduleSort'] as int : 9999);
+        scheduleMap[key] = {
+          'scheduleNodeName': key,
+          'scheduleNodeCode': sCode,
+          'sort': sSort,
+          'count': 0,
+          'trainEntryList': <Map<String, dynamic>>[],
+        };
+      }
+      scheduleMap[key]!['count'] =
+          (scheduleMap[key]!['count'] as int) + 1;
+      (scheduleMap[key]!['trainEntryList'] as List<Map<String, dynamic>>)
+          .add(t);
+    }
+    final list = scheduleMap.values.toList();
+    list.sort((a, b) {
+      final sa = a['sort'] is int ? a['sort'] as int : 9999;
+      final sb = b['sort'] is int ? b['sort'] as int : 9999;
+      if (sa != sb) return sa.compareTo(sb);
+      return (a['scheduleNodeName'] as String)
+          .compareTo(b['scheduleNodeName'] as String);
+    });
+    return list;
+  }
+
   Future<void> _ensureTabData(int tabIndex) async {
     if (_tabLoading[tabIndex] == true) return;
     if (tabIndex == 0 && repairMainNodeInfo.isNotEmpty) return;
@@ -574,16 +619,33 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
     if (procList.isNotEmpty) {
       final firstProc = procList[0];
       _currentProcTag = firstProc['repairMainNodeCode'];
-      repairTrainInfo = _safeTrainEntryList(firstProc['trainEntryList']);
-      _logTagged(
-        '[机车派工][FIRST_PROC]',
-        'tabIndex=$tabIndex procCode=${(_currentProcTag).toString()} '
-            'procName=${(firstProc['repairMainNodeName'] ?? '').toString()} '
-            'trainCount=${repairTrainInfo.length}',
-      );
+      final scheduleNodes = _extractScheduleNodesFromProc(firstProc);
+      if (scheduleNodes.isNotEmpty) {
+        final firstSchedule = scheduleNodes[0];
+        _currentScheduleTag =
+            _procScheduleKey(_currentProcTag, firstSchedule['scheduleNodeName']);
+        repairTrainInfo = _safeTrainEntryList(firstSchedule['trainEntryList']);
+        _logTagged(
+          '[机车派工][FIRST_PROC]',
+          'tabIndex=$tabIndex procCode=${(_currentProcTag).toString()} '
+              'procName=${(firstProc['repairMainNodeName'] ?? '').toString()} '
+              'scheduleName=${(firstSchedule['scheduleNodeName'] ?? '').toString()} '
+              'trainCount=${repairTrainInfo.length}',
+        );
+      } else {
+        _currentScheduleTag = null;
+        repairTrainInfo = [];
+        _logTagged(
+          '[机车派工][FIRST_PROC]',
+          'tabIndex=$tabIndex procCode=${(_currentProcTag).toString()} '
+              'procName=${(firstProc['repairMainNodeName'] ?? '').toString()} '
+              'scheduleNodesEmpty=true',
+        );
+      }
     } else {
       // 如果没有工序节点，清空相关数据
       _currentProcTag = '';
+      _currentScheduleTag = null;
       repairTrainInfo = [];
       _logTagged(
           '[机车派工][FIRST_PROC_EMPTY]', 'tabIndex=$tabIndex procListEmpty=true');
@@ -626,66 +688,165 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
       itemBuilder: (context, index) {
         final proc = repairMainNodePage[index];
         final count = proc['count'] is int ? proc['count'] as int : 0;
+        final isProcSelected = _currentProcTag == proc['repairMainNodeCode'];
+        final scheduleNodes = isProcSelected
+            ? _extractScheduleNodesFromProc(proc)
+            : <Map<String, dynamic>>[];
 
-        return GestureDetector(
-          onTap: () {
-            // 处理标签点击事件
-            _onProcTagTap(proc);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
-              ),
-              color: _currentProcTag == proc['repairMainNodeCode']
-                  ? Colors.blue.withOpacity(0.1)
-                  : Colors.white,
-            ),
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    proc['repairMainNodeName'] ?? '',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _currentProcTag == proc['repairMainNodeCode']
-                          ? Colors.blue
-                          : Colors.black,
-                      fontWeight: _currentProcTag == proc['repairMainNodeCode']
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    textAlign: TextAlign.left,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () {
+                // 处理标签点击事件
+                _onProcTagTap(proc);
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: scheduleNodes.isEmpty
+                        ? BorderSide(color: Colors.grey.shade300, width: 0.5)
+                        : BorderSide.none,
                   ),
+                  color: isProcSelected
+                      ? Colors.blue.withOpacity(0.08)
+                      : Colors.white,
                 ),
-                if (count != 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    constraints:
-                        const BoxConstraints(minWidth: 20, minHeight: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        proc['repairMainNodeName'] ?? '',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isProcSelected
+                              ? Colors.blue
+                              : Colors.black,
+                          fontWeight: isProcSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        textAlign: TextAlign.left,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
-                      textAlign: TextAlign.center,
+                    ),
+                    if (count != 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        constraints:
+                            const BoxConstraints(minWidth: 20, minHeight: 20),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            // 工序节点下的排程节点子层级
+            if (isProcSelected && scheduleNodes.isNotEmpty)
+              ...scheduleNodes.map((sched) {
+                final sName = (sched['scheduleNodeName'] ?? '').toString();
+                final sCount = sched['count'] is int ? sched['count'] as int : 0;
+                final sKey = _procScheduleKey(
+                    proc['repairMainNodeCode'].toString(), sName);
+                final isSchedSelected = _currentScheduleTag == sKey;
+                return GestureDetector(
+                  onTap: () {
+                    _onScheduleTagTap(proc, sched);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 8),
+                    margin: const EdgeInsets.only(left: 12),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                            color: Colors.grey.shade300, width: 0.5),
+                        left: BorderSide(
+                          color: isSchedSelected
+                              ? Colors.amber
+                              : Colors.grey.shade300,
+                          width: 2,
+                        ),
+                      ),
+                      color: isSchedSelected
+                          ? Colors.amber.withOpacity(0.1)
+                          : Colors.grey.shade50,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          size: 14,
+                          color: isSchedSelected
+                              ? Colors.amber[800]
+                              : Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            sName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isSchedSelected
+                                  ? Colors.amber[900]
+                                  : Colors.black87,
+                              fontWeight: isSchedSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            textAlign: TextAlign.left,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                          ),
+                        ),
+                        if (sCount != 0) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            constraints: const BoxConstraints(
+                                minWidth: 18, minHeight: 18),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: isSchedSelected
+                                  ? Colors.amber[800]
+                                  : Colors.orange,
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                            child: Text(
+                              '$sCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
+                );
+              }).toList(),
+          ],
         );
       },
     );
@@ -693,12 +854,31 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
 
   /// 工序标签点击事件
   void _onProcTagTap(Map<String, dynamic> proc) {
+    final scheduleNodes = _extractScheduleNodesFromProc(proc);
     setState(() {
       _currentProcTag = proc['repairMainNodeCode'];
-      repairTrainInfo = _safeTrainEntryList(proc['trainEntryList']);
+      if (scheduleNodes.isNotEmpty) {
+        final firstSchedule = scheduleNodes[0];
+        _currentScheduleTag = _procScheduleKey(
+            _currentProcTag, firstSchedule['scheduleNodeName']);
+        repairTrainInfo = _safeTrainEntryList(firstSchedule['trainEntryList']);
+      } else {
+        _currentScheduleTag = null;
+        repairTrainInfo = [];
+      }
     });
-    // 可以在这里添加获取对应工序数据的逻辑
     showToast('切换到工序: ${proc['repairMainNodeName']}');
+  }
+
+  /// 排程节点标签点击事件
+  void _onScheduleTagTap(Map<String, dynamic> proc, Map<String, dynamic> sched) {
+    setState(() {
+      _currentProcTag = proc['repairMainNodeCode'];
+      _currentScheduleTag = _procScheduleKey(
+          _currentProcTag, sched['scheduleNodeName']);
+      repairTrainInfo = _safeTrainEntryList(sched['trainEntryList']);
+    });
+    showToast('排程节点: ${sched['scheduleNodeName']}');
   }
 
   void _showTrainSearchDialog() {
@@ -849,6 +1029,16 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                       const SizedBox(height: 8),
                       Text(
                         "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "排程节点：${(loco['scheduleNodeName'] ?? loco['currentScheduleNodeName'] ?? '') != '' ? (loco['scheduleNodeName'] ?? loco['currentScheduleNodeName'] ?? '') : ''}",
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -1308,6 +1498,15 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(
+            label: '排程节点',
+            value: ((widget.locoInfo?['scheduleNodeName']?.toString().trim() ?? '') != '' ||
+                    (widget.locoInfo?['currentScheduleNodeName']?.toString().trim() ?? '') != '')
+                ? (widget.locoInfo?['scheduleNodeName']?.toString().trim() ??
+                    widget.locoInfo?['currentScheduleNodeName']?.toString().trim() ??
+                    '无')
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
             label: '工序转入时间',
             value: widget.locoInfo != null &&
                     widget.locoInfo!['mainNodeChangeTime'] != null
@@ -1707,6 +1906,15 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             label: '工序节点',
             value: widget.locoInfo?['repairMainNodeName'] != ''
                 ? (widget.locoInfo?['repairMainNodeName'] ?? '无')
+                : '无'),
+        const SizedBox(height: 8),
+        _InfoItem(
+            label: '排程节点',
+            value: ((widget.locoInfo?['scheduleNodeName']?.toString().trim() ?? '') != '' ||
+                    (widget.locoInfo?['currentScheduleNodeName']?.toString().trim() ?? '') != '')
+                ? (widget.locoInfo?['scheduleNodeName']?.toString().trim() ??
+                    widget.locoInfo?['currentScheduleNodeName']?.toString().trim() ??
+                    '无')
                 : '无'),
         const SizedBox(height: 8),
         _InfoItem(

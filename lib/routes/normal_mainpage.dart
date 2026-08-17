@@ -259,100 +259,47 @@ class _NormalMainPageState extends State<NormalMainPage> {
             title: Text("检修进度",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              if (_canShowByRouterTitle('开工点名'))
-                _buildFeatureItem(
-                  Icon(Icons.people, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'repairTrainManage'),
-                  '开工点名',
-                )
-              else
-                _buildFeaturePlaceholder(),
-              if (_canShowByRouterTitle('机车入段'))
-                _buildFeatureItem(
-                  Icon(Icons.train, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'sec_enter_modify'),
-                  '机车入段',
-                )
-              else
-                _buildFeaturePlaceholder(),
-              if (_canShowByRouterTitle('检修作业'))
-                _buildFeatureItem(
-                  Icon(Icons.build, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'trainRepairInfo'),
-                  '检修作业',
-                )
-              else
-                _buildFeaturePlaceholder(),
-            ],
-          ),
+          _buildFeatureRows([
+            if (_canShowByRouterTitle('开工点名'))
+              _buildFeatureItem(
+                Icon(Icons.people, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainManage'),
+                '开工点名',
+              ),
+            if (_canShowByRouterTitle('机车入段'))
+              _buildFeatureItem(
+                Icon(Icons.train, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'sec_enter_modify'),
+                '机车入段',
+              ),
+            if (_canShowByRouterTitle('检修作业'))
+              _buildFeatureItem(
+                Icon(Icons.build, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'trainRepairInfo'),
+                '检修作业',
+              ),
+          ]),
           const SizedBox(height: 15),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              if (_canShowByRouterTitle('报机统28（管理）'))
-                _buildFeatureItem(
-                  Icon(Icons.post_add, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'jt28submitManage'),
-                  '报机统28（管理）',
-                )
-              else
-                _buildFeaturePlaceholder(),
-              if (_canShowByRouterTitle('检修调令'))
-                _buildFeatureItem(
-                  Icon(Icons.next_plan, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'repairTrainProgress'),
-                  '检修调令',
-                )
-              else
-                _buildFeaturePlaceholder(),
-              if (_canShowByRouterTitle('检修进度'))
-                _buildFeatureItem(
-                  Icon(Icons.manage_search, color: Colors.blue[200]),
-                  () => Navigator.pushNamed(context, 'repairTrainTempManage'),
-                  '检修进度',
-                )
-              else
-                _buildFeaturePlaceholder(),
-              // Expanded(
-              //   child: ElevatedButton(
-              //     onPressed: () {
-              //       // 跳转到ApplyList页面
-              //       Navigator.push(
-              //         context,
-              //         MaterialPageRoute(
-              //           builder: (context) => ApplyList(
-              //             trainNum: widget.locoInfo?['trainNum'] ?? '',
-              //             trainNumCode: widget.locoInfo?['trainNumCode'] ?? '',
-              //             typeName: widget.locoInfo?['typeName'] ?? '',
-              //             typeCode: widget.locoInfo?['typeCode'] ?? '',
-              //             trainEntryCode: widget.locoInfo?['code'] ?? '',
-              //           ),
-              //         ),
-              //       );
-              //     },
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor: Colors.blue,
-              //       foregroundColor: Colors.white,
-              //     ),
-              //     child: const Text('检修调度命令'),
-              //   ),
-              // ),
-              // _buildFeatureItem(
-              //   Icon(Icons.assignment, color: Colors.blue[200]),
-              //   () => Navigator.pushNamed(context, 'jt28'),
-              //   '处理机统28',
-              // ),
-              // _buildFeatureItem(
-              //   Icon(Icons.search, color: Colors.blue[200]),
-              //   () => Navigator.pushNamed(context, 'speciallist'),
-              //   '机统28查询',
-              //   num: specialNum,
-              // ),
-            ],
-          ),
+          _buildFeatureRows([
+            if (_canShowByRouterTitle('报机统28（管理）'))
+              _buildFeatureItem(
+                Icon(Icons.post_add, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'jt28submitManage'),
+                '报机统28（管理）',
+              ),
+            if (_canShowByRouterTitle('检修调令'))
+              _buildFeatureItem(
+                Icon(Icons.next_plan, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainProgress'),
+                '检修调令',
+              ),
+            if (_canShowByRouterTitle('检修进度'))
+              _buildFeatureItem(
+                Icon(Icons.manage_search, color: Colors.blue[200]),
+                () => Navigator.pushNamed(context, 'repairTrainTempManage'),
+                '检修进度',
+              ),
+          ]),
           // const SizedBox(height: 15),
           // Row(
           //   mainAxisAlignment: MainAxisAlignment.start,

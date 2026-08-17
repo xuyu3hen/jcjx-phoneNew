@@ -91,6 +91,125 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 搜索文本
   String _searchText = '';
 
+  String _procScheduleKey(String procCode, String scheduleName) =>
+      '${procCode}_$scheduleName';
+
+  // 获取 RepairItem 的工序节点名称（优先 repairMainNodeName，再 stateDetailList 当前 state）
+  String _repairMainNodeNameOf(RepairItem item) {
+    final direct = (item.repairMainNodeName ?? '').toString().trim();
+    if (direct.isNotEmpty) return direct;
+    final stateList = item.stateDetailList ?? const <StateDetail>[];
+    for (final s in stateList) {
+      if (s.state == null) continue;
+    }
+    if (stateList.isNotEmpty) {
+      StateDetail? active;
+      for (final s in stateList) {
+        final st = (s.state ?? '').toString().trim();
+        if (st == '进行中' || st == '已开工' || st == '作业中') {
+          active = s;
+          break;
+        }
+      }
+      active ??= stateList.last;
+      final name = (active.repairMainNodeName ?? '').toString().trim();
+      if (name.isNotEmpty) return name;
+    }
+    return '未分工序';
+  }
+
+  String _repairMainNodeCodeOf(RepairItem item) {
+    final direct = (item.repairMainNodeCode ?? '').toString().trim();
+    if (direct.isNotEmpty) return direct;
+    final stateList = item.stateDetailList ?? const <StateDetail>[];
+    if (stateList.isNotEmpty) {
+      StateDetail? active;
+      for (final s in stateList) {
+        final st = (s.state ?? '').toString().trim();
+        if (st == '进行中' || st == '已开工' || st == '作业中') {
+          active = s;
+          break;
+        }
+      }
+      active ??= stateList.last;
+      return (active.repairMainNodeCode ?? '').toString().trim();
+    }
+    return '';
+  }
+
+  String _scheduleNodeNameOf(RepairItem item) {
+    final sName = (item.scheduleNodeName ??
+            item.currentScheduleNodeName ??
+            '')
+        .toString()
+        .trim();
+    return sName.isEmpty ? '未排程' : sName;
+  }
+
+  int _scheduleSortOf(RepairItem item) {
+    final s1 = item.scheduleNodeSort;
+    if (s1 != null) return s1;
+    final s2 = item.scheduleSort;
+    if (s2 != null) return s2;
+    return 9999;
+  }
+
+  /// 将一组 RepairItem 按「工序节点 → 排程节点」两层分组
+  List<Map<String, dynamic>> _groupItemsByProcAndSchedule(List<RepairItem> items) {
+    // 1. 先按工序节点分组
+    final Map<String, Map<String, dynamic>> procMap = {};
+    for (final it in items) {
+      final procName = _repairMainNodeNameOf(it);
+      final procCode = _repairMainNodeCodeOf(it);
+      final key = procCode.isEmpty ? procName : procCode;
+      if (!procMap.containsKey(key)) {
+        procMap[key] = {
+          'repairMainNodeName': procName,
+          'repairMainNodeCode': procCode,
+          'count': 0,
+          '_items': <RepairItem>[],
+        };
+      }
+      procMap[key]!['count'] = (procMap[key]!['count'] as int) + 1;
+      (procMap[key]!['_items'] as List<RepairItem>).add(it);
+    }
+    // 2. 每个工序节点下按排程节点分组
+    final procList = procMap.values.toList();
+    for (final proc in procList) {
+      final List<RepairItem> pItems = proc['_items'] as List<RepairItem>;
+      final Map<String, Map<String, dynamic>> sMap = {};
+      for (final it in pItems) {
+        final sName = _scheduleNodeNameOf(it);
+        final sCode = (it.scheduleNodeCode ?? '').toString().trim();
+        final sSort = _scheduleSortOf(it);
+        if (!sMap.containsKey(sName)) {
+          sMap[sName] = {
+            'scheduleNodeName': sName,
+            'scheduleNodeCode': sCode,
+            'sort': sSort,
+            'count': 0,
+            '_items': <RepairItem>[],
+          };
+        }
+        sMap[sName]!['count'] = (sMap[sName]!['count'] as int) + 1;
+        final bestSort = _scheduleSortOf(it);
+        final curSort = sMap[sName]!['sort'] as int;
+        if (bestSort < curSort) sMap[sName]!['sort'] = bestSort;
+        (sMap[sName]!['_items'] as List<RepairItem>).add(it);
+      }
+      final sList = sMap.values.toList();
+      sList.sort((a, b) {
+        final sa = a['sort'] as int;
+        final sb = b['sort'] as int;
+        if (sa != sb) return sa.compareTo(sb);
+        return (a['scheduleNodeName'] as String)
+            .compareTo(b['scheduleNodeName'] as String);
+      });
+      proc['_scheduleGroups'] = sList;
+    }
+    return procList;
+  }
+
   void _showSearchDialog() {
     final controller = TextEditingController(text: _searchText);
     showDialog<void>(
@@ -316,20 +435,22 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   Widget _buildRepairGroupCard(RepairGroup group, int index) {
     bool isExpanded = _groupExpansionStates[index] ?? false;
+    final children = group.children ?? const <RepairItem>[];
+    final procGroups = _groupItemsByProcAndSchedule(children);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _groupExpansionStates[index] = !isExpanded;
-          });
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 组标题
-            Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 组标题
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _groupExpansionStates[index] = !isExpanded;
+              });
+            },
+            child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
@@ -340,7 +461,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${group.repairProcName} (${group.children?.length})',
+                    '${group.repairProcName} (${children.length})',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -354,15 +475,164 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ],
               ),
             ),
-            // 子项列表
-            if (isExpanded)
-              Column(
-                children: group.children!
-                    .map((item) => _buildRepairItem(item))
-                    .toList(),
-              ),
-          ],
-        ),
+          ),
+          // 子项列表：按 工序节点 → 排程节点 → 机车 层级展示
+          if (isExpanded)
+            ...procGroups.map((proc) {
+              final procName = (proc['repairMainNodeName'] ?? '').toString();
+              final procCount = proc['count'] is int ? proc['count'] as int : 0;
+              final sGroups =
+                  (proc['_scheduleGroups'] as List<Map<String, dynamic>>?) ??
+                      [];
+              return Container(
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Colors.grey.shade200, width: 1),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 工序节点标题
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.05),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.list_alt,
+                            size: 16,
+                            color: Colors.blue.shade700,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              procName,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue.shade900,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          if (procCount != 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              constraints: const BoxConstraints(
+                                  minWidth: 20, minHeight: 20),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade200,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$procCount',
+                                style: TextStyle(
+                                  color: Colors.blue.shade900,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    // 排程节点组
+                    ...sGroups.map((sched) {
+                      final sName =
+                          (sched['scheduleNodeName'] ?? '').toString();
+                      final sCount =
+                          sched['count'] is int ? sched['count'] as int : 0;
+                      final sItems =
+                          (sched['_items'] as List<RepairItem>?) ?? [];
+                      return Container(
+                        margin: const EdgeInsets.only(left: 12),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            left: BorderSide(
+                                color: Colors.amber.shade400, width: 2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 排程节点标题
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withOpacity(0.08),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.schedule,
+                                    size: 14,
+                                    color: Colors.amber.shade800,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      sName,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber.shade900,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  if (sCount != 0) ...[
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      constraints: const BoxConstraints(
+                                          minWidth: 18, minHeight: 18),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.shade700,
+                                        borderRadius:
+                                            BorderRadius.circular(9),
+                                      ),
+                                      child: Text(
+                                        '$sCount',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            // 机车卡片列表
+                            ...sItems
+                                .map((item) => _buildRepairItem(item))
+                                .toList(),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              );
+            }).toList(),
+        ],
       ),
     );
   }
@@ -454,6 +724,24 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   '修次：${item.repairTimes ?? ''}',
                   style: const TextStyle(
                     fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '工序节点：${_repairMainNodeNameOf(item)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '排程节点：${_scheduleNodeNameOf(item)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
                 ),

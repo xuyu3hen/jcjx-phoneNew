@@ -94,7 +94,7 @@ class _TrainDepartureConfirmPageState extends State<TrainDepartureConfirmPage> {
     }
     if (!mounted) return;
     if (_pendingTrains.isEmpty) {
-      showToast('暂无待离段车号');
+      showToast('暂无计划离段车号');
       return;
     }
 
@@ -259,7 +259,7 @@ class _TrainDepartureConfirmPageState extends State<TrainDepartureConfirmPage> {
   Future<void> _submit() async {
     if (_submitting) return;
     if (_selectedTrain == null) {
-      showToast('请选择待离段车号');
+      showToast('请选择计划离段车号');
       return;
     }
     if (_assets.isEmpty) {
@@ -483,7 +483,7 @@ class _TrainDepartureConfirmPageState extends State<TrainDepartureConfirmPage> {
         padding: const EdgeInsets.all(12),
         children: [
           ZjcFormSelectCell(
-            title: '待离段车号',
+            title: '计划离段车号',
             text: _trainDisplay,
             hintText: _loadingList ? '加载中...' : '请选择',
             showRedStar: true,

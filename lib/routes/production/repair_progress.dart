@@ -392,7 +392,7 @@ class _RepairProgressState extends State<RepairProgress> {
                     borderRadius: BorderRadius.circular(4.0),
                   ),
                   margin: const EdgeInsets.symmetric(vertical: 4.0),
-                  padding: const EdgeInsets.all(8.0), // 将 padding 移到这里
+                  padding: const EdgeInsets.all(8.0),
                   child: ListTile(
                     title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -29,9 +29,75 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
 
   String _currentProcTag = '';
 
+  String _currentScheduleTag = '';
+
   List<Map<String, dynamic>> repairTrainInfo = [];
 
   bool _isLoading = true; // 添加加载状态标识
+
+  String _procScheduleKey(String procCode, String schedName) =>
+      '$procCode||$schedName';
+
+  List<Map<String, dynamic>> _safeTrainEntryList(Map<String, dynamic> proc) {
+    final list = proc['trainEntryList'];
+    if (list is! List) return [];
+    return list
+        .map((e) => e is Map<String, dynamic>
+            ? e
+            : (e is Map ? Map<String, dynamic>.from(e) : null))
+        .whereType<Map<String, dynamic>>()
+        .toList();
+  }
+
+  List<Map<String, dynamic>> _extractScheduleNodesFromProc(
+      Map<String, dynamic> proc) {
+    final trains = _safeTrainEntryList(proc);
+    final Map<String, Map<String, dynamic>> schedMap = {};
+    for (final t in trains) {
+      final schedName = (t['scheduleNodeName']?.toString().trim() ??
+              t['currentScheduleNodeName']?.toString().trim() ??
+              '')
+          .isEmpty
+          ? '未排程'
+          : (t['scheduleNodeName']?.toString().trim() ??
+              t['currentScheduleNodeName']?.toString().trim() ??
+              '未排程');
+      final schedCode = (t['scheduleNodeCode'] ?? '').toString().trim();
+      int schedSort = 9999;
+      if (t['scheduleNodeSort'] is int) {
+        schedSort = t['scheduleNodeSort'] as int;
+      } else if (t['scheduleSort'] is int) {
+        schedSort = t['scheduleSort'] as int;
+      } else if ((t['scheduleNodeSort']?.toString() ?? '').isNotEmpty) {
+        schedSort = int.tryParse(t['scheduleNodeSort'].toString()) ?? 9999;
+      } else if ((t['scheduleSort']?.toString() ?? '').isNotEmpty) {
+        schedSort = int.tryParse(t['scheduleSort'].toString()) ?? 9999;
+      }
+      final key = schedCode.isEmpty ? schedName : schedCode;
+      if (!schedMap.containsKey(key)) {
+        schedMap[key] = {
+          'scheduleNodeName': schedName,
+          'scheduleNodeCode': schedCode,
+          'scheduleSort': schedSort,
+          'count': 0,
+          '_trains': <Map<String, dynamic>>[],
+        };
+      }
+      schedMap[key]!['count'] = (schedMap[key]!['count'] as int) + 1;
+      final curSort = schedMap[key]!['scheduleSort'] as int;
+      if (schedSort < curSort) schedMap[key]!['scheduleSort'] = schedSort;
+      (schedMap[key]!['_trains'] as List<Map<String, dynamic>>).add(t);
+    }
+    final schedList = schedMap.values.toList();
+    schedList.sort((a, b) {
+      final sa = a['scheduleSort'] as int;
+      final sb = b['scheduleSort'] as int;
+      if (sa != sb) return sa.compareTo(sb);
+      return (a['scheduleNodeName'] as String)
+          .compareTo(b['scheduleNodeName'] as String);
+    });
+    return schedList;
+  }
 
   @override
   void initState() {
@@ -466,15 +532,23 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
     // 如果工序节点列表不为空，自动选择第一个
     if (procList.isNotEmpty) {
       final firstProc = procList[0];
-      _currentProcTag = firstProc['repairMainNodeCode'];
-      repairTrainInfo = (firstProc['trainEntryList'] as List<dynamic>)
-          .map((item) => item is Map<String, dynamic>
-              ? item
-              : Map<String, dynamic>.from(item as Map))
-          .toList();
+      _currentProcTag = firstProc['repairMainNodeCode']?.toString() ?? '';
+      final schedNodes = _extractScheduleNodesFromProc(firstProc);
+      if (schedNodes.isNotEmpty) {
+        final firstSched = schedNodes[0];
+        final schedName = firstSched['scheduleNodeName'] as String;
+        _currentScheduleTag =
+            _procScheduleKey(_currentProcTag, schedName);
+        repairTrainInfo =
+            (firstSched['_trains'] as List<Map<String, dynamic>>).toList();
+      } else {
+        _currentScheduleTag = '';
+        repairTrainInfo = [];
+      }
     } else {
       // 如果没有工序节点，清空相关数据
       _currentProcTag = '';
+      _currentScheduleTag = '';
       repairTrainInfo = [];
     }
   }
@@ -510,60 +584,63 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
     } else if (_currentTab == 2) {
       repairMainNodePage = repairMainNodeInfo2;
     }
-    return ListView.builder(
-      itemCount: repairMainNodePage.length,
-      itemBuilder: (context, index) {
-        final proc = repairMainNodePage[index];
-        final count = proc['count'] is int ? proc['count'] as int : 0;
-
-        return GestureDetector(
+    final procList = repairMainNodePage;
+    final children = <Widget>[];
+    for (int i = 0; i < procList.length; i++) {
+      final proc = procList[i];
+      final procCode = proc['repairMainNodeCode']?.toString() ?? 'proc_$i';
+      final procName = proc['repairMainNodeName']?.toString() ?? '';
+      final count = proc['count'] is int ? proc['count'] as int : 0;
+      final isProcSelected = _currentProcTag == procCode;
+      children.add(
+        GestureDetector(
           onTap: () {
-            // 处理标签点击事件
             _onProcTagTap(proc);
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: Colors.grey.shade300, width: 0.5),
+                left: BorderSide(
+                  color: isProcSelected ? Colors.blue : Colors.transparent,
+                  width: isProcSelected ? 3 : 0,
+                ),
               ),
-              color: _currentProcTag == proc['repairMainNodeCode']
+              color: isProcSelected
                   ? Colors.blue.withOpacity(0.1)
-                  : Colors.white,
+                  : Colors.grey.shade50,
             ),
             child: Row(
               children: [
                 Flexible(
                   child: Text(
-                    proc['repairMainNodeName'] ?? '',
+                    procName,
                     style: TextStyle(
-                      fontSize: 14,
-                      color: _currentProcTag == proc['repairMainNodeCode']
-                          ? Colors.blue
-                          : Colors.black,
-                      fontWeight: _currentProcTag == proc['repairMainNodeCode']
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      fontSize: 13,
+                      color: isProcSelected ? Colors.blue : Colors.black,
+                      fontWeight:
+                          isProcSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     textAlign: TextAlign.left,
                   ),
                 ),
                 if (count != 0) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   Container(
                     constraints:
-                        const BoxConstraints(minWidth: 20, minHeight: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        const BoxConstraints(minWidth: 18, minHeight: 18),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
+                      color: isProcSelected ? Colors.blue : Colors.red,
+                      borderRadius: BorderRadius.circular(9),
                     ),
                     child: Text(
                       '$count',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                       textAlign: TextAlign.center,
@@ -573,23 +650,131 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
               ],
             ),
           ),
-        );
-      },
+        ),
+      );
+
+      if (isProcSelected) {
+        final schedNodes = _extractScheduleNodesFromProc(proc);
+        for (final sched in schedNodes) {
+          final schedName = sched['scheduleNodeName'] as String;
+          final schedCount = sched['count'] as int;
+          final schedKey = _procScheduleKey(procCode, schedName);
+          final isSchedSelected = _currentScheduleTag == schedKey;
+          children.add(
+            GestureDetector(
+              onTap: () {
+                _onScheduleTagTap(proc, sched);
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                margin: const EdgeInsets.only(left: 10),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+                    left: BorderSide(
+                      color: isSchedSelected
+                          ? Colors.amber.shade400
+                          : Colors.transparent,
+                      width: isSchedSelected ? 2 : 0,
+                    ),
+                  ),
+                  color: isSchedSelected
+                      ? Colors.amber.withOpacity(0.1)
+                      : Colors.white,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.schedule,
+                      size: 13,
+                      color: isSchedSelected
+                          ? Colors.amber.shade800
+                          : Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        schedName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSchedSelected
+                              ? Colors.amber.shade900
+                              : Colors.black87,
+                          fontWeight: isSchedSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                    if (schedCount != 0) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        constraints:
+                            const BoxConstraints(minWidth: 16, minHeight: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: isSchedSelected
+                              ? Colors.amber.shade700
+                              : Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$schedCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+      }
+    }
+    return ListView(
+      children: children,
     );
   }
 
   /// 工序标签点击事件
   void _onProcTagTap(Map<String, dynamic> proc) {
     setState(() {
-      _currentProcTag = proc['repairMainNodeCode'];
-      repairTrainInfo = (proc['trainEntryList'] as List<dynamic>)
-          .map((item) => item is Map<String, dynamic>
-              ? item
-              : Map<String, dynamic>.from(item as Map))
-          .toList();
+      _currentProcTag = proc['repairMainNodeCode']?.toString() ?? '';
+      final schedNodes = _extractScheduleNodesFromProc(proc);
+      if (schedNodes.isNotEmpty) {
+        final firstSched = schedNodes[0];
+        final schedName = firstSched['scheduleNodeName'] as String;
+        _currentScheduleTag = _procScheduleKey(_currentProcTag, schedName);
+        repairTrainInfo =
+            (firstSched['_trains'] as List<Map<String, dynamic>>).toList();
+      } else {
+        _currentScheduleTag = '';
+        repairTrainInfo = [];
+      }
     });
-    // 可以在这里添加获取对应工序数据的逻辑
-    showToast('切换到工序: ${proc['repairMainNodeName']}');
+  }
+
+  /// 排程节点点击事件
+  void _onScheduleTagTap(
+      Map<String, dynamic> proc, Map<String, dynamic> sched) {
+    setState(() {
+      _currentProcTag = proc['repairMainNodeCode']?.toString() ?? '';
+      final schedName = sched['scheduleNodeName'] as String;
+      _currentScheduleTag = _procScheduleKey(_currentProcTag, schedName);
+      repairTrainInfo =
+          (sched['_trains'] as List<Map<String, dynamic>>).toList();
+    });
   }
 
   void _showTrainSearchDialog() {
@@ -742,6 +927,13 @@ class _TrainRepairTempManageState extends State<TrainRepairTempManage> {
                       const SizedBox(height: 8),
                       Text(
                           "工序节点：${loco['repairMainNodeName'] != '' ? loco['repairMainNodeName'] : ''}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          )),
+                      const SizedBox(height: 8),
+                      Text(
+                          "排程节点：${(loco['scheduleNodeName']?.toString().trim() ?? loco['currentScheduleNodeName']?.toString().trim() ?? '').isEmpty ? '未排程' : (loco['scheduleNodeName']?.toString().trim() ?? loco['currentScheduleNodeName']?.toString().trim() ?? '未排程')}",
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
