@@ -1,6 +1,8 @@
 import 'package:dart_sm/dart_sm.dart';
 
 import '../index.dart';
+import '../services/after_sale_local_service.dart';
+import 'offline_mode_page.dart';
 
 // toast 统一使用 showToast 包装
 
@@ -29,7 +31,17 @@ class _LoginRouteState extends State<LoginRoute> {
     initXUpdate();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getLastUpdate();
+      _loadPendingCount();
     });
+  }
+
+  int? _pendingCount;
+  Future<void> _loadPendingCount() async {
+    try {
+      final n = await AfterSaleLocalService.instance.pendingCount();
+      if (!mounted) return;
+      setState(() => _pendingCount = n);
+    } catch (_) {}
   }
 
   // 更新组件初始化
@@ -256,12 +268,6 @@ class _LoginRouteState extends State<LoginRoute> {
                           },
                         ),
                         const SizedBox(height: 12),
-                        Center(
-                          child: TextButton(
-                            onPressed: _showHistoryLoginSheet,
-                            child: const Text("历史账号"),
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.only(top: 25),
                           child: ConstrainedBox(
@@ -270,6 +276,99 @@ class _LoginRouteState extends State<LoginRoute> {
                             child: ElevatedButton(
                               onPressed: _loginIn,
                               child: const Text("登录"),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: TextButton(
+                            onPressed: _showHistoryLoginSheet,
+                            child: const Text("历史账号"),
+                          ),
+                        ),
+                        // 离线模式入口：放在页面底部远离登录按钮，避免误触
+                        const SizedBox(height: 90),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: _gotoOfflineMode,
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.lightBlue.shade50,
+                                  Colors.lightBlue.shade100.withOpacity(0.6),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              border: Border.all(color: Colors.lightBlue.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(
+                                    Icons.cloud_off_rounded,
+                                    size: 28,
+                                    color: Colors.lightBlue.shade400,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '离线模式',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        '未登录/无网络也可提报，联网后自动同步',
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.black54),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if ((_pendingCount ?? 0) > 0)
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      '待同步 $_pendingCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                Icon(Icons.chevron_right,
+                                    color: Colors.grey.shade400, size: 22),
+                              ],
                             ),
                           ),
                         )
@@ -285,6 +384,14 @@ class _LoginRouteState extends State<LoginRoute> {
     );
   }
 
+  Future<void> _gotoOfflineMode() async {
+    await Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const OfflineModePage(),
+    ));
+    if (mounted) {
+      await _loadPendingCount();
+    }
+  }
   void _loginIn() async {
     // 便于测试本地一键登录
     Profile? profile;
@@ -335,6 +442,27 @@ class _LoginRouteState extends State<LoginRoute> {
             // 登录成功后，后台预加载数据（不阻塞UI）
             Global.preloadRepairData().catchError((e) {
               logger.e('预加载数据失败: $e');
+            });
+
+            // 同步离线售后登记（后台静默，成功/失败各 Toast 一次）
+            Future<void>(() async {
+              try {
+                final res =
+                    await AfterSaleLocalService.instance.syncAllPending();
+                final ok = res['success'] ?? 0;
+                final fail = res['failed'] ?? 0;
+                if (ok > 0 || fail > 0) {
+                  showToast(
+                    '离线售后登记同步完成：成功 $ok，失败 $fail',
+                  );
+                  if (mounted) {
+                    final n = await AfterSaleLocalService.instance.pendingCount();
+                    setState(() => _pendingCount = n);
+                  }
+                }
+              } catch (e) {
+                logger.e('离线售后登记同步失败: $e');
+              }
             });
           } else {
             // 登录失败，显示错误信息

@@ -27,7 +27,8 @@ Widget gmAvatar(String url, {
 }
 
 void showToast(String text, {dynamic gravity, dynamic toastLength}) {
-  // FlutterSmartDialog.showToast(text);
+  if (text.isEmpty) return;
+  SmartDialog.showToast(text);
 }
 
 void showLoading(context, [String? text]) {

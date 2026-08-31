@@ -742,7 +742,7 @@ class ProductApi extends AppApi {
       );
       return MainDataStructure.fromJson((r.data["data"])["data"]);
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       _handleException(e);
       return MainDataStructure(
           assigned: false, packageUserDTOList: [], station: '');
@@ -757,7 +757,7 @@ class ProductApi extends AppApi {
       logger.i(r.data);
       return InnerData.fromJson(r.data["data"]);
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       _handleException(e);
       return InnerData(list: null, data: []);
     }
@@ -780,7 +780,7 @@ class ProductApi extends AppApi {
       }
       return r.data["data"];
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
     }
   }
 
@@ -797,7 +797,7 @@ class ProductApi extends AppApi {
       logger.i(r.data["data"]);
       return r.data["data"];
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
     }
   }
 
@@ -810,7 +810,7 @@ class ProductApi extends AppApi {
       logger.i((r.data["data"])['data']);
       return (r.data["data"])['data'];
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
     }
   }
 
@@ -920,9 +920,18 @@ class ProductApi extends AppApi {
         "/subparts/jcType/selectAll",
         queryParameters: queryParametrs,
       );
-      return JcTypeList.fromJson((r.data["data"])["data"]);
-    } catch (e) {
-      _handleException(e);
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      final inner = (outer is Map) ? outer["data"] : null;
+      final json = (inner is Map)
+          ? Map<String, dynamic>.from(inner)
+          : (outer is Map
+              ? Map<String, dynamic>.from(outer)
+              : <String, dynamic>{});
+      return JcTypeList.fromJson(json);
+    } catch (e, stackTrace) {
+      logger.e(e.toString(), e, stackTrace);
+      _handleException(e, stackTrace);
       return JcTypeList();
     }
   }
@@ -1027,7 +1036,7 @@ class ProductApi extends AppApi {
       logger.i((r.data["data"])["data"]);
       return RepairSysResponse.fromJson((r.data["data"])["data"]);
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       return RepairSysResponse();
     }
   }
@@ -1044,7 +1053,7 @@ class ProductApi extends AppApi {
       logger.i((r.data["data"])['data']);
       return (r.data["data"])["data"];
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
     }
   }
 
@@ -1535,7 +1544,7 @@ class ProductApi extends AppApi {
       logger.i(r.data["data"]);
       return (r.data["data"]);
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       return -1;
     }
   }
@@ -1565,7 +1574,7 @@ class ProductApi extends AppApi {
       logger.i("uploadImg${r.data}");
       return (r.data["code"]);
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       return -1;
     }
   }
@@ -2544,7 +2553,7 @@ class ProductApi extends AppApi {
       logger.i((r.data["data"])["data"]);
       return (r.data["data"])["data"];
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
       return null;
     }
   }
@@ -2556,10 +2565,14 @@ class ProductApi extends AppApi {
         "/jcjxsystem/dept/getDeptTreeByParentIdList",
         queryParameters: queryParametrs,
       );
-      logger.i((r.data["data"])["data"]);
-      return (r.data["data"])["data"];
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      final inner = outer is Map ? outer["data"] : null;
+      logger.i(inner ?? outer);
+      return inner ?? outer;
     } catch (e, stackTrace) {
-      logger.e(e, stackTrace);
+      logger.e(e.toString(), e, stackTrace);
+      _handleException(e, stackTrace);
       return null;
     }
   }
@@ -2605,10 +2618,24 @@ class ProductApi extends AppApi {
         "/subparts/jcDynamicType/selectAll",
         queryParameters: queryParametrs,
       );
-      logger.i(r.data["data"]);
-      return (r.data["data"])["data"];
-    } catch (e) {
-      logger.e(e);
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data["data"];
+      if (outer is Map) {
+        final rows = outer["rows"];
+        if (rows != null) {
+          logger.i(rows);
+          return rows;
+        }
+        final inner = outer["data"];
+        logger.i(inner);
+        return inner;
+      }
+      logger.i(outer);
+      return outer;
+    } catch (e, stackTrace) {
+      logger.e(e.toString(), e, stackTrace);
+      _handleException(e, stackTrace);
+      return null;
     }
   }
 

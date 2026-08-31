@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:wechat_assets_picker/wechat_assets_picker.dart' hide AssetType;
 
 import '../../index.dart';
+import '../../services/after_sale_local_service.dart';
 
 class AfterSaleTempRepairRegisterPage extends StatefulWidget {
   const AfterSaleTempRepairRegisterPage({super.key});
@@ -12,7 +15,7 @@ class AfterSaleTempRepairRegisterPage extends StatefulWidget {
 
 class _AfterSaleTempRepairRegisterPageState
     extends State<AfterSaleTempRepairRegisterPage> {
-  static _AfterSaleTempRepairDraft? _draft;
+  static final _localService = AfterSaleLocalService.instance;
 
   final _formKey = GlobalKey<FormState>();
   final _logger = AppLogger.logger;
@@ -64,6 +67,10 @@ class _AfterSaleTempRepairRegisterPageState
   final _locationController = TextEditingController();
   final _phoneController = TextEditingController();
 
+  final _manualRepairDeptController = TextEditingController();
+  final _manualRepairProcController = TextEditingController();
+  DateTime? _manualCheckDate;
+
   final List<_FaultGroupControllers> _faultGroups = [];
   int _expandedFaultGroupIndex = -1;
   bool _submitting = false;
@@ -86,6 +93,12 @@ class _AfterSaleTempRepairRegisterPageState
     _loadDynamicTypes();
     _loadFaultCategories();
     _loadResponsibilityDepts();
+    Future<void>(() async {
+      try {
+        final n = await _localService.pendingCount();
+        if (mounted && n > 0) showToast('本地有待同步的售后登记：$n 条');
+      } catch (_) {}
+    });
   }
 
   @override
@@ -96,6 +109,8 @@ class _AfterSaleTempRepairRegisterPageState
     _contactController.dispose();
     _locationController.dispose();
     _phoneController.dispose();
+    _manualRepairDeptController.dispose();
+    _manualRepairProcController.dispose();
     for (final g in _faultGroups) {
       g.dispose();
     }
@@ -136,57 +151,97 @@ class _AfterSaleTempRepairRegisterPageState
     });
   }
 
+  Map<String, dynamic> _pickDefault(
+    List<Map<String, dynamic>> list,
+    Map<String, dynamic>? currentSelected,
+    String codeKey,
+  ) {
+    if (currentSelected != null) {
+      final curCode = (currentSelected[codeKey] ?? '').toString();
+      if (curCode.isNotEmpty) {
+        final hit = list.firstWhere(
+          (e) => (e[codeKey] ?? '').toString() == curCode,
+          orElse: () => const <String, dynamic>{},
+        );
+        if (hit.isNotEmpty) return hit;
+        return currentSelected;
+      }
+    }
+    return list.first;
+  }
+
   Future<void> _loadDynamicTypes() async {
+    const cacheKey = 'dynamicTypes';
+    Future<void> applyList(List<Map<String, dynamic>> list, {bool saveCache = false}) async {
+      if (saveCache && list.isNotEmpty) {
+        await _localService.setDictCache(cacheKey, list);
+      }
+      if (!mounted || list.isEmpty) return;
+      setState(() {
+        _dynamicTypes = list;
+        if (_selectedDynamicType == null) {
+          _selectedDynamicType = _pickDefault(list, null, 'code');
+        } else {
+          _selectedDynamicType = _pickDefault(list, _selectedDynamicType, 'code');
+        }
+      });
+      final code = (_selectedDynamicType?['code'] ?? '').toString();
+      if (code.isNotEmpty) {
+        await _loadJcTypes(code);
+      }
+    }
+
+    try {
+      final cached = await _localService.getDictCache(cacheKey);
+      if (cached != null && cached.isNotEmpty && mounted) {
+        await applyList(cached, saveCache: false);
+      }
+    } catch (_) {}
     try {
       final data = await ProductApi().getJcDynamicType(
         queryParametrs: {'pageNum': 0, 'pageSize': 0},
       );
-      final rows = (data is Map ? data['rows'] : null);
+      final rows = (data is Map)
+          ? data['rows']
+          : (data is List
+              ? data
+              : null);
       final list = rows is List
           ? rows
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList()
           : <Map<String, dynamic>>[];
-      if (!mounted) return;
-      setState(() {
-        _dynamicTypes = list;
-      });
-      if (_selectedDynamicType == null && list.isNotEmpty) {
-        final draftDynamicCode = _draft?.dynamicCode;
-        final selected = draftDynamicCode == null || draftDynamicCode.isEmpty
-            ? list.first
-            : (list.firstWhere(
-                (e) => (e['code'] ?? '').toString() == draftDynamicCode,
-                orElse: () => list.first,
-              ));
-        if (!mounted) return;
-        setState(() {
-          _selectedDynamicType = selected;
-        });
-        final code = (selected['code'] ?? '').toString();
-        await _loadJcTypes(code);
-        if (!mounted) return;
-        if (_selectedJcType == null && _jcTypes.isNotEmpty) {
-          final draftTypeCode = _draft?.typeCode;
-          final picked = draftTypeCode == null || draftTypeCode.isEmpty
-              ? _jcTypes.first
-              : (_jcTypes.firstWhere(
-                  (e) => (e['code'] ?? '').toString() == draftTypeCode,
-                  orElse: () => _jcTypes.first,
-                ));
-          setState(() {
-            _selectedJcType = picked;
-          });
-        }
-      }
-    } catch (e) {
-      _logger.e(e);
+      if (mounted) await applyList(list, saveCache: true);
+    } catch (e, stackTrace) {
+      _logger.e('加载动力类型字典异常', e, stackTrace);
     }
   }
 
   Future<void> _loadJcTypes(String? dynamicCode) async {
     if (dynamicCode == null || dynamicCode.trim().isEmpty) return;
+    final cacheKey = 'jcTypes:$dynamicCode';
+    Future<void> applyList(List<Map<String, dynamic>> list, {bool saveCache = false}) async {
+      if (saveCache && list.isNotEmpty) {
+        await _localService.setDictCache(cacheKey, list);
+      }
+      if (!mounted || list.isEmpty) return;
+      setState(() {
+        _jcTypes = list;
+        if (_selectedJcType == null) {
+          _selectedJcType = _pickDefault(list, null, 'code');
+        } else {
+          _selectedJcType = _pickDefault(list, _selectedJcType, 'code');
+        }
+      });
+    }
+
+    try {
+      final cached = await _localService.getDictCache(cacheKey);
+      if (cached != null && cached.isNotEmpty && mounted) {
+        await applyList(cached, saveCache: false);
+      }
+    } catch (_) {}
     try {
       final r = await ProductApi().getJcType(
         queryParametrs: {
@@ -196,16 +251,35 @@ class _AfterSaleTempRepairRegisterPageState
         },
       );
       final list = r.toMapList();
-      if (!mounted) return;
-      setState(() {
-        _jcTypes = list;
-      });
-    } catch (e) {
-      _logger.e(e);
+      if (mounted) await applyList(list, saveCache: true);
+    } catch (e, stackTrace) {
+      _logger.e('加载机型字典异常', e, stackTrace);
     }
   }
 
   Future<void> _loadFaultCategories() async {
+    const cacheKey = 'faultCategories';
+    Future<void> applyList(List<Map<String, dynamic>> list, {bool saveCache = false}) async {
+      if (saveCache && list.isNotEmpty) {
+        await _localService.setDictCache(cacheKey, list);
+      }
+      if (!mounted || list.isEmpty) return;
+      setState(() {
+        _faultCategories = list;
+        if (_selectedFaultCategory == null) {
+          _selectedFaultCategory = _pickDefault(list, null, 'code');
+        } else {
+          _selectedFaultCategory = _pickDefault(list, _selectedFaultCategory, 'code');
+        }
+      });
+    }
+
+    try {
+      final cached = await _localService.getDictCache(cacheKey);
+      if (cached != null && cached.isNotEmpty && mounted) {
+        await applyList(cached, saveCache: false);
+      }
+    } catch (_) {}
     try {
       final res = await ProductApi().getJtTypeSelectAll(
         queryParametrs: {
@@ -219,32 +293,18 @@ class _AfterSaleTempRepairRegisterPageState
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList()
-          : <Map<String, dynamic>>[];
-      if (!mounted) return;
-      setState(() {
-        _faultCategories = list;
-        if (_selectedFaultCategory == null && list.isNotEmpty) {
-          final draftCode = _draft?.faultCategoryCode;
-          _selectedFaultCategory = draftCode == null || draftCode.isEmpty
-              ? list.first
-              : list.firstWhere(
-                  (e) => (e['code'] ?? '').toString() == draftCode,
-                  orElse: () => list.first,
-                );
-        }
-      });
-    } catch (e) {
-      _logger.e(e);
+          : (res is Map
+              ? [Map<String, dynamic>.from(res)]
+              : <Map<String, dynamic>>[]);
+      if (mounted) await applyList(list, saveCache: true);
+    } catch (e, stackTrace) {
+      _logger.e('加载故障类别字典异常', e, stackTrace);
     }
   }
 
   Future<void> _loadResponsibilityDepts() async {
-    try {
-      final res = await ProductApi().getDeptTreeByParentIdList(
-        queryParametrs: {
-          'parentIdList': 101,
-        },
-      );
+    const cacheKey = 'responsibilityDepts';
+    List<Map<String, dynamic>> _extract(dynamic res) {
       final list = <Map<String, dynamic>>[];
       if (res is List && res.isNotEmpty) {
         final root = res.first;
@@ -262,20 +322,39 @@ class _AfterSaleTempRepairRegisterPageState
           }
         }
       }
-      if (!mounted) return;
+      return list;
+    }
+
+    Future<void> applyList(List<Map<String, dynamic>> list, {bool saveCache = false}) async {
+      if (saveCache && list.isNotEmpty) {
+        await _localService.setDictCache(cacheKey, list);
+      }
+      if (!mounted || list.isEmpty) return;
       setState(() {
-        if (_selectedResponsibilityDept == null && list.isNotEmpty) {
-          final draftDeptId = _draft?.deptId;
-          _selectedResponsibilityDept = draftDeptId == null || draftDeptId.isEmpty
-              ? list.first
-              : list.firstWhere(
-                  (e) => (e['deptId'] ?? '').toString() == draftDeptId,
-                  orElse: () => list.first,
-                );
+        if (_selectedResponsibilityDept == null) {
+          _selectedResponsibilityDept = _pickDefault(list, null, 'deptId');
+        } else {
+          _selectedResponsibilityDept = _pickDefault(list, _selectedResponsibilityDept, 'deptId');
         }
       });
-    } catch (e) {
-      _logger.e(e);
+    }
+
+    try {
+      final cached = await _localService.getDictCache(cacheKey);
+      if (cached != null && cached.isNotEmpty && mounted) {
+        await applyList(cached, saveCache: false);
+      }
+    } catch (_) {}
+    try {
+      final res = await ProductApi().getDeptTreeByParentIdList(
+        queryParametrs: {
+          'parentIdList': 101,
+        },
+      );
+      final list = _extract(res);
+      if (mounted) await applyList(list, saveCache: true);
+    } catch (e, stackTrace) {
+      _logger.e('加载责任车间字典异常', e, stackTrace);
     }
   }
 
@@ -388,59 +467,80 @@ class _AfterSaleTempRepairRegisterPageState
         showToast('请完善必填项');
         return;
       }
-    if (_faultDate == null) {
-      showToast('请选择故障日期');
-      return;
-    }
-    if (_selectedDynamicType == null) {
-      showToast('请选择动力类型');
-      return;
-    }
-    if (_selectedJcType == null) {
-      showToast('请选择机型');
-      return;
-    }
-    final hasAnyGroup = _faultGroups.any((g) {
-      return g.faultSituationController.text.trim().isNotEmpty ||
-          g.faultPhenomenonController.text.trim().isNotEmpty ||
-          g.attachments.isNotEmpty;
-    });
-    if (!hasAnyGroup) {
-      showToast('请填写故障情况/故障现象或添加附件');
-      return;
-    }
-    final basePayload = <String, dynamic>{
-      // 时间与基本信息
-      'faultDate': _faultDate != null ? _formatOut(_faultDate!) : null,
-      'inspectionDate': _checkDate, // 交验日期（字符串 yyyy-MM-dd HH:mm:ss）
-      // 人与部门
-      'contactPerson': _contactController.text.trim(),
-      'tel': _phoneController.text.trim(),
-      'deptId': (_selectedResponsibilityDept?['deptId'] ?? '').toString(),
-      'deptName': (_selectedResponsibilityDept?['deptName'] ?? '').toString(),
-      // 故障分类与描述
-      'failureCategory': (_selectedFaultCategory?['name'] ?? '').toString(),
-      'failureCategoryCode': (_selectedFaultCategory?['code'] ?? '').toString(),
-      // 机型与车号
-      'model': (_selectedJcType?['name'] ?? _selectedJcType?['trainType'] ?? '').toString(),
-      'modelCode': (_selectedJcType?['code'] ?? '').toString(),
-      'serialNumber': _trainNumController.text.trim(),
-      // 修程与委修段（从 JT9）
-      'repairStatus': _repairProcSituation, // 修程（只取“-”前）
-      'repairTimes': (_jt9Selected?['repairTimes'] ?? _jt9Selected?['repairTime'] ?? '').toString(),
-      'maintenanceSection': _repairDept,
-      'maintenanceSectionCode': (_jt9Selected?['assignSegmentCode'] ?? _jt9Selected?['repairSegmentCode'] ?? '').toString(),
-      // 其它
-      'kilometersTravelled': _mileageController.text.trim(),
-      'trainLocation': _locationController.text.trim(),
-      'status': '0',
-    };
-    try {
+      if (_faultDate == null) {
+        showToast('请选择故障日期');
+        return;
+      }
+      if (_selectedDynamicType == null) {
+        showToast('请选择动力类型');
+        return;
+      }
+      if (_selectedJcType == null) {
+        showToast('请选择机型');
+        return;
+      }
+      final hasAnyGroup = _faultGroups.any((g) {
+        return g.faultSituationController.text.trim().isNotEmpty ||
+            g.faultPhenomenonController.text.trim().isNotEmpty ||
+            g.attachmentPaths.isNotEmpty;
+      });
+      if (!hasAnyGroup) {
+        showToast('请填写故障情况/故障现象或添加附件');
+        return;
+      }
+      final basePayload = <String, dynamic>{
+        // 时间与基本信息
+        'faultDate': _faultDate != null ? _formatOut(_faultDate!) : null,
+        'inspectionDate': _checkDate, // 交验日期（字符串 yyyy-MM-dd HH:mm:ss）
+        // 人与部门
+        'contactPerson': _contactController.text.trim(),
+        'tel': _phoneController.text.trim(),
+        'deptId': (_selectedResponsibilityDept?['deptId'] ?? '').toString(),
+        'deptName': (_selectedResponsibilityDept?['deptName'] ?? '').toString(),
+        // 故障分类与描述
+        'failureCategory': (_selectedFaultCategory?['name'] ?? '').toString(),
+        'failureCategoryCode': (_selectedFaultCategory?['code'] ?? '').toString(),
+        // 机型与车号
+        'model': (_selectedJcType?['name'] ?? _selectedJcType?['trainType'] ?? '').toString(),
+        'modelCode': (_selectedJcType?['code'] ?? '').toString(),
+        'serialNumber': _trainNumController.text.trim(),
+        // 修程与委修段（从 JT9）
+        'repairStatus': _repairProcSituation, // 修程（只取“-”前）
+        'repairTimes': (_jt9Selected?['repairTimes'] ?? _jt9Selected?['repairTime'] ?? '').toString(),
+        'maintenanceSection': _repairDept,
+        'maintenanceSectionCode': (_jt9Selected?['assignSegmentCode'] ?? _jt9Selected?['repairSegmentCode'] ?? '').toString(),
+        // 其它
+        'kilometersTravelled': _mileageController.text.trim(),
+        'trainLocation': _locationController.text.trim(),
+        'status': '0',
+      };
+      final groups = <Map<String, dynamic>>[];
+      for (int i = 0; i < _faultGroups.length; i++) {
+        final g = _faultGroups[i];
+        final situation = g.faultSituationController.text.trim();
+        final phenomenon = g.faultPhenomenonController.text.trim();
+        final paths = List<String>.from(g.attachmentPaths);
+        if (situation.isEmpty && phenomenon.isEmpty && paths.isEmpty) continue;
+        groups.add(<String, dynamic>{
+          'faultSummary': situation,
+          'faultInformation': phenomenon,
+          'imagePaths': paths,
+        });
+      }
+      if (groups.isEmpty) {
+        showToast('请填写故障情况/故障现象或添加附件');
+        return;
+      }
+      final isLogin =
+          Global.profile.data?.accessToken?.toString().trim().isNotEmpty ?? false;
+      final confirmText = isLogin
+          ? '确定要提交吗？'
+          : '当前未登录或无网络，将保存到本地，登录后自动上传，确定吗？';
       final confirm = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('确认提交'),
-          content: const Text('确定要提交吗？'),
+          content: Text(confirmText),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -455,63 +555,91 @@ class _AfterSaleTempRepairRegisterPageState
       );
       if (confirm != true) return;
       SmartDialog.showLoading();
-      final payloadList = <Map<String, dynamic>>[];
-      for (int i = 0; i < _faultGroups.length; i++) {
-        final g = _faultGroups[i];
-        final situation = g.faultSituationController.text.trim();
-        final phenomenon = g.faultPhenomenonController.text.trim();
-        final hasFiles = g.attachments.isNotEmpty;
-        if (situation.isEmpty && phenomenon.isEmpty && !hasFiles) continue;
 
-        String fileCode = '';
-        if (hasFiles) {
-          final files = <File>[];
-          for (final a in g.attachments) {
-            final f = await a.file;
-            if (f != null) files.add(f);
+      bool submitOk = false;
+      String failMsg = '';
+      if (isLogin) {
+        try {
+          final payloadList = <Map<String, dynamic>>[];
+          for (int i = 0; i < groups.length; i++) {
+            final g = groups[i];
+            final paths = (g['imagePaths'] as List? ?? []).cast<String>();
+            String fileCode = '';
+            if (paths.isNotEmpty) {
+              final files = <File>[];
+              for (final p in paths) {
+                final f = File(p);
+                if (await f.exists()) files.add(f);
+              }
+              if (files.isNotEmpty) {
+                final uploadResp =
+                    await ProductApi().uploadMasFile(uploadFileList: files);
+                final uploaded = _extractUploadData(uploadResp);
+                fileCode = _asJsonString(uploaded);
+                if (fileCode.trim().isEmpty) {
+                  throw Exception('第${i + 1}组附件上传失败');
+                }
+              }
+            }
+            final row = Map<String, dynamic>.from(basePayload);
+            row['faultSummary'] = g['faultSummary'] ?? '';
+            row['faultInformation'] = g['faultInformation'] ?? '';
+            row['fileCode'] = fileCode;
+            payloadList.add(row);
           }
-          if (files.isEmpty) {
-            SmartDialog.dismiss();
-            showToast('第${i + 1}组附件读取失败');
-            return;
+          final saveResp = await ProductApi().saveMasSaleInformationAll(
+            data: payloadList,
+          );
+          _logger.i(saveResp);
+          final msg = _extractResponseMessage(saveResp);
+          final lower = msg.toLowerCase();
+          final isBad = lower.contains('error') ||
+              lower.contains('exception') ||
+              lower.contains('parse') ||
+              lower.contains('失败');
+          if (msg.isNotEmpty && isBad) {
+            failMsg = msg;
+            submitOk = false;
+          } else {
+            submitOk = true;
           }
-          final uploadResp =
-              await ProductApi().uploadMasFile(uploadFileList: files);
-          final uploaded = _extractUploadData(uploadResp);
-          fileCode = _asJsonString(uploaded);
-          if (fileCode.trim().isEmpty) {
-            SmartDialog.dismiss();
-            showToast('第${i + 1}组附件上传失败');
-            return;
-          }
+        } catch (e) {
+          _logger.e(e);
+          failMsg = e.toString();
+          submitOk = false;
         }
+      }
 
-        final row = Map<String, dynamic>.from(basePayload);
-        row['faultSummary'] = situation;
-        row['faultInformation'] = phenomenon;
-        row['fileCode'] = fileCode;
-        payloadList.add(row);
-      }
-      if (payloadList.isEmpty) {
+      if (!submitOk) {
+        // 未登录 / 在线提交失败 → 回退写入待同步队列
+        await _localService.enqueuePending(
+          basePayload: basePayload,
+          groups: groups,
+        );
         SmartDialog.dismiss();
-        showToast('请填写故障情况/故障现象或添加附件');
+        await _localService.clearDraft();
+        final suffix = isLogin && failMsg.isNotEmpty ? '（$failMsg）' : '';
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder: (context) => AlertDialog(
+            title: const Text('已保存到本地'),
+            content: Text(
+                '当前无法联网提交$suffix，已离线保存，登录成功后将自动上传。'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('确定'),
+              ),
+            ],
+          ),
+        );
+        if (mounted) Navigator.of(context).pop(true);
         return;
       }
-      final saveResp = await ProductApi().saveMasSaleInformationAll(
-        data: payloadList,
-      );
+
       SmartDialog.dismiss();
-      _logger.i(saveResp);
-      final msg = _extractResponseMessage(saveResp);
-      final lower = msg.toLowerCase();
-      final isBad = lower.contains('error') ||
-          lower.contains('exception') ||
-          lower.contains('parse') ||
-          lower.contains('失败');
-      if (msg.isNotEmpty && isBad) {
-        showToast(msg);
-        return;
-      }
       if (!mounted) return;
       await showDialog<void>(
         context: context,
@@ -527,60 +655,124 @@ class _AfterSaleTempRepairRegisterPageState
           ],
         ),
       );
-      _saveDraft();
+      await _localService.clearDraft();
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       SmartDialog.dismiss();
       _logger.e(e);
-      showToast('提交失败');
-    }
+      showToast('保存失败');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  void _saveDraft() {
-    _draft = _AfterSaleTempRepairDraft(
-      faultDate: _faultDate,
-      dynamicCode: (_selectedDynamicType?['code'] ?? '').toString(),
-      typeCode: (_selectedJcType?['code'] ?? '').toString(),
-      trainNum: _trainNumController.text,
-      mileage: _mileageController.text,
-      trainLocation: _locationController.text,
-      phone: _phoneController.text,
-      faultCategoryCode: (_selectedFaultCategory?['code'] ?? '').toString(),
-      deptId: (_selectedResponsibilityDept?['deptId'] ?? '').toString(),
-      deptName: (_selectedResponsibilityDept?['deptName'] ?? '').toString(),
-      jt9Selected: _jt9Selected == null ? null : Map<String, dynamic>.from(_jt9Selected!),
-      faultGroups: _faultGroups
-          .map((g) => _AfterSaleTempRepairFaultGroupDraft(
-                situation: g.faultSituationController.text,
-                phenomenon: g.faultPhenomenonController.text,
-                attachments: List<AssetEntity>.from(g.attachments),
-              ))
+  Map<String, dynamic> _buildDraftJson() {
+    return <String, dynamic>{
+      'faultDate': _faultDate?.toIso8601String(),
+      'dynamicCode': (_selectedDynamicType?['code'] ?? '').toString(),
+      'dynamicName': (_selectedDynamicType?['name'] ?? '').toString(),
+      'typeCode': (_selectedJcType?['code'] ?? '').toString(),
+      'typeName': (_selectedJcType?['name'] ?? '').toString(),
+      'trainNum': _trainNumController.text,
+      'mileage': _mileageController.text,
+      'trainLocation': _locationController.text,
+      'phone': _phoneController.text,
+      'faultCategoryCode': (_selectedFaultCategory?['code'] ?? '').toString(),
+      'faultCategoryName': (_selectedFaultCategory?['name'] ?? '').toString(),
+      'deptId': (_selectedResponsibilityDept?['deptId'] ?? '').toString(),
+      'deptName': (_selectedResponsibilityDept?['deptName'] ?? '').toString(),
+      'jt9Selected':
+          _jt9Selected == null ? null : Map<String, dynamic>.from(_jt9Selected!),
+      'manualRepairDept': _manualRepairDeptController.text,
+      'manualRepairProc': _manualRepairProcController.text,
+      'manualCheckDate': _manualCheckDate?.toIso8601String(),
+      'faultGroups': _faultGroups
+          .map((g) => <String, dynamic>{
+                'situation': g.faultSituationController.text,
+                'phenomenon': g.faultPhenomenonController.text,
+                'imagePaths': List<String>.from(g.attachmentPaths),
+              })
           .toList(),
-    );
+    };
   }
 
-  void _restoreDraft() {
-    final d = _draft;
-    if (d == null) return;
-    _faultDate = d.faultDate;
-    _trainNumController.text = d.trainNum;
-    _mileageController.text = d.mileage;
-    _locationController.text = d.trainLocation;
-    _phoneController.text = d.phone;
-    _jt9Selected = d.jt9Selected == null ? null : Map<String, dynamic>.from(d.jt9Selected!);
-    _faultGroups.clear();
-    for (final g in d.faultGroups) {
-      final c = _FaultGroupControllers();
-      c.faultSituationController.text = g.situation;
-      c.faultPhenomenonController.text = g.phenomenon;
-      c.attachments = List<AssetEntity>.from(g.attachments);
-      _faultGroups.add(c);
+  Future<void> _saveDraft() async {
+    try {
+      final json = _buildDraftJson();
+      await _localService.saveDraft(json);
+    } catch (_) {}
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final Map<String, dynamic>? d = await _localService.loadDraft();
+      if (d == null) return;
+      final faultDateRaw = d['faultDate']?.toString();
+      _faultDate =
+          (faultDateRaw != null && faultDateRaw.isNotEmpty)
+              ? DateTime.tryParse(faultDateRaw)
+              : null;
+      _trainNumController.text = (d['trainNum'] ?? '').toString();
+      _mileageController.text = (d['mileage'] ?? '').toString();
+      _locationController.text = (d['trainLocation'] ?? '').toString();
+      _phoneController.text = (d['phone'] ?? '').toString();
+      final jt9 = d['jt9Selected'];
+      _jt9Selected = (jt9 is Map) ? Map<String, dynamic>.from(jt9) : null;
+      final dynamicCode = (d['dynamicCode'] ?? '').toString();
+      final dynamicName = (d['dynamicName'] ?? '').toString();
+      final typeCode = (d['typeCode'] ?? '').toString();
+      final typeName = (d['typeName'] ?? '').toString();
+      final faultCategoryCode = (d['faultCategoryCode'] ?? '').toString();
+      final faultCategoryName = (d['faultCategoryName'] ?? '').toString();
+      final deptId = (d['deptId'] ?? '').toString();
+      final deptName = (d['deptName'] ?? '').toString();
+      if (dynamicCode.isNotEmpty) {
+        _selectedDynamicType = <String, dynamic>{
+          'code': dynamicCode,
+          'name': dynamicName,
+        };
+      }
+      if (typeCode.isNotEmpty) {
+        _selectedJcType = <String, dynamic>{'code': typeCode, 'name': typeName};
+      }
+      if (faultCategoryCode.isNotEmpty) {
+        _selectedFaultCategory = <String, dynamic>{
+          'code': faultCategoryCode,
+          'name': faultCategoryName,
+        };
+      }
+      if (deptId.isNotEmpty) {
+        _selectedResponsibilityDept = <String, dynamic>{
+          'deptId': deptId,
+          'deptName': deptName,
+        };
+      }
+      _faultGroups.clear();
+      final fg = d['faultGroups'];
+      _manualRepairDeptController.text = (d['manualRepairDept'] ?? '').toString();
+      _manualRepairProcController.text = (d['manualRepairProc'] ?? '').toString();
+      final manualCheck = d['manualCheckDate']?.toString();
+      _manualCheckDate = (manualCheck != null && manualCheck.isNotEmpty)
+          ? DateTime.tryParse(manualCheck)
+          : null;
+      if (fg is List) {
+        for (final item in fg) {
+          final m = item is Map ? Map<String, dynamic>.from(item) : null;
+          if (m == null) continue;
+          final c = _FaultGroupControllers();
+          c.faultSituationController.text = (m['situation'] ?? '').toString();
+          c.faultPhenomenonController.text =
+              (m['phenomenon'] ?? '').toString();
+          final paths = (m['imagePaths'] as List? ?? []).cast<String>();
+          c.attachmentPaths = paths;
+          _faultGroups.add(c);
+        }
+      }
+      _expandedFaultGroupIndex =
+          _faultGroups.isEmpty ? 0 : _faultGroups.length - 1;
+    } catch (e) {
+      _logger.e('恢复售后登记草稿失败: $e');
     }
-    _expandedFaultGroupIndex =
-        _faultGroups.isEmpty ? 0 : _faultGroups.length - 1;
   }
 
   String _pickText(Map<String, dynamic>? map, List<String> keys) {
@@ -624,7 +816,7 @@ class _AfterSaleTempRepairRegisterPageState
   }
 
   String get _repairDept {
-    return _pickText(_jt9Selected, [
+    final fromJt9 = _pickText(_jt9Selected, [
       'assignSegmentName',
       'repairDept',
       'repairDeptName',
@@ -633,6 +825,8 @@ class _AfterSaleTempRepairRegisterPageState
       'maintainDept',
       'maintainDeptName',
     ]);
+    if (fromJt9.trim().isNotEmpty) return fromJt9;
+    return _manualRepairDeptController.text.trim();
   }
 
   String get _repairProcSituation {
@@ -643,7 +837,9 @@ class _AfterSaleTempRepairRegisterPageState
       'repairProcess',
       'repairProcessName',
     ]);
-    return _beforeDash(procRaw);
+    final jt9Proc = _beforeDash(procRaw);
+    if (jt9Proc.isNotEmpty) return jt9Proc;
+    return _beforeDash(_manualRepairProcController.text.trim());
   }
 
   String get _checkDate {
@@ -655,7 +851,10 @@ class _AfterSaleTempRepairRegisterPageState
         _jt9Selected?['inspectionDate'] ??
         _jt9Selected?['verifyDate'] ??
         _jt9Selected?['acceptanceDate'];
-    return _fmtDate(raw);
+    final fromJt9 = _fmtDate(raw);
+    if (fromJt9.isNotEmpty) return fromJt9;
+    if (_manualCheckDate != null) return _formatOut(_manualCheckDate!);
+    return '';
   }
 
   Future<void> _loadJt9() async {
@@ -689,9 +888,22 @@ class _AfterSaleTempRepairRegisterPageState
       }
       setState(() {
         _jt9Selected = selected;
+        if (selected != null) {
+          final rp = _repairProcSituation;
+          final rd = _repairDept;
+          if (rp.isNotEmpty && _manualRepairProcController.text.trim().isEmpty) {
+            _manualRepairProcController.text = rp;
+          }
+          if (rd.isNotEmpty && _manualRepairDeptController.text.trim().isEmpty) {
+            _manualRepairDeptController.text = rd;
+          }
+        }
       });
     } catch (e) {
       _logger.e(e);
+      if (mounted) {
+        showToast('无法获取JT9信息，可手填委修段/修程/交验日期');
+      }
     } finally {
       if (mounted) setState(() => _jt9Loading = false);
     }
@@ -830,6 +1042,48 @@ class _AfterSaleTempRepairRegisterPageState
             Row(
               children: [
                 Expanded(
+                  child: TextFormField(
+                    controller: _manualRepairDeptController,
+                    decoration: _denseDecoration('委修段（可手填）'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: _manualRepairProcController,
+                    decoration: _denseDecoration('修程（可手填）'),
+                  ),
+                ),
+              ],
+            ),
+            _gap12,
+            Row(
+              children: [
+                Expanded(
+                  child: _DateField(
+                    label: '交验日期（可手填）',
+                    value: _manualCheckDate,
+                    required: false,
+                    onTap: () => _pickDate(
+                      initial: _manualCheckDate,
+                      onPicked: (d) => setState(() => _manualCheckDate = d),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _mileageController,
+                    decoration: _denseDecoration('走行公里'),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            _gap12,
+            Row(
+              children: [
+                Expanded(
                   child: DropdownButtonFormField<Map<String, dynamic>>(
                     isExpanded: true,
                     value: _selectedFaultCategory,
@@ -904,7 +1158,7 @@ class _AfterSaleTempRepairRegisterPageState
 class _FaultGroupControllers {
   final faultSituationController = TextEditingController();
   final faultPhenomenonController = TextEditingController();
-  List<AssetEntity> attachments = [];
+  List<String> attachmentPaths = [];
 
   void dispose() {
     faultSituationController.dispose();
@@ -982,11 +1236,11 @@ class _FaultGroupsSection extends StatelessWidget {
                           icon: const Icon(Icons.keyboard_arrow_down),
                           tooltip: i == expandedIndex ? '折叠' : '展开',
                         ),
-                        if (controllers[i].attachments.isNotEmpty &&
+                        if (controllers[i].attachmentPaths.isNotEmpty &&
                             i != expandedIndex)
                           Padding(
                             padding: const EdgeInsets.only(right: 6),
-                            child: Text('附件${controllers[i].attachments.length}'),
+                            child: Text('附件${controllers[i].attachmentPaths.length}'),
                           ),
                         TextButton(
                           onPressed: () => onAddAt(i),
@@ -1036,13 +1290,111 @@ class _FaultGroupsSection extends StatelessWidget {
                         assetType: AssetType.imageAndVideo,
                         lineCount: 4,
                         itemSpace: 4,
-                        selectedAssets: controllers[i].attachments,
-                        callBack: (assets) {
-                          controllers[i].attachments =
-                              List<AssetEntity>.from(assets);
-                          onChanged();
+                        selectedAssets: const [],
+                        callBack: (assets) async {
+                          if (assets.isEmpty) return;
+                          try {
+                            SmartDialog.showLoading(msg: '保存图片中...');
+                            final paths = await AfterSaleLocalService.instance
+                                .copyAssetsToSandbox(assets);
+                            if (paths.isEmpty) {
+                              showToast('图片保存失败，请重试');
+                              return;
+                            }
+                            if (paths.length < assets.length) {
+                              showToast(
+                                  '${assets.length - paths.length} 张图片保存失败，其余已添加');
+                            }
+                            controllers[i].attachmentPaths = [
+                              ...controllers[i].attachmentPaths,
+                              ...paths,
+                            ];
+                            onChanged();
+                          } catch (e) {
+                            showToast('图片保存失败');
+                          } finally {
+                            SmartDialog.dismiss(status: SmartStatus.loading);
+                          }
                         },
                       ),
+                      if (controllers[i].attachmentPaths.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '已保存图片（${controllers[i].attachmentPaths.length}）',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: 4,
+                            crossAxisSpacing: 4,
+                          ),
+                          itemCount: controllers[i].attachmentPaths.length,
+                          itemBuilder: (_, idx) {
+                            final p = controllers[i].attachmentPaths[idx];
+                            return Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Image.file(
+                                    File(p),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                        Icons.broken_image,
+                                        size: 20,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      controllers[i]
+                                          .attachmentPaths
+                                          .removeAt(idx);
+                                      try {
+                                        final f = File(p);
+                                        if (f.existsSync()) f.deleteSync();
+                                      } catch (_) {}
+                                      onChanged();
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.all(2),
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.black.withOpacity(0.55),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -1087,46 +1439,4 @@ class _DateField extends StatelessWidget {
       ),
     );
   }
-}
-
-class _AfterSaleTempRepairFaultGroupDraft {
-  final String situation;
-  final String phenomenon;
-  final List<AssetEntity> attachments;
-
-  const _AfterSaleTempRepairFaultGroupDraft({
-    required this.situation,
-    required this.phenomenon,
-    required this.attachments,
-  });
-}
-
-class _AfterSaleTempRepairDraft {
-  final DateTime? faultDate;
-  final String dynamicCode;
-  final String typeCode;
-  final String trainNum;
-  final String mileage;
-  final String trainLocation;
-  final String phone;
-  final String faultCategoryCode;
-  final String deptId;
-  final String deptName;
-  final Map<String, dynamic>? jt9Selected;
-  final List<_AfterSaleTempRepairFaultGroupDraft> faultGroups;
-
-  const _AfterSaleTempRepairDraft({
-    required this.faultDate,
-    required this.dynamicCode,
-    required this.typeCode,
-    required this.trainNum,
-    required this.mileage,
-    required this.trainLocation,
-    required this.phone,
-    required this.faultCategoryCode,
-    required this.deptId,
-    required this.deptName,
-    required this.jt9Selected,
-    required this.faultGroups,
-  });
 }
