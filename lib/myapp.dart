@@ -1,6 +1,7 @@
 
 import 'index.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:bot_toast/bot_toast.dart';
 import 'routes/production/after_sale_temp_repair_register_page.dart';
 import 'routes/offline_mode_page.dart';
 
@@ -27,8 +28,12 @@ class MyApp extends StatelessWidget {
             title: F.title,
             debugShowCheckedModeBanner: false,
             // debugShowCheckedModeBanner: true,
-            builder: FlutterSmartDialog.init(),
-            navigatorObservers: [FlutterSmartDialog.observer],
+            builder: (context, child) {
+              child = FlutterSmartDialog.init()(context, child);
+              child = BotToastInit()(context, child);
+              return child;
+            },
+            navigatorObservers: [FlutterSmartDialog.observer, BotToastNavigatorObserver()],
             theme: ThemeData(
               // colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               // 调用主题色时直接Theme.of(context).primaryColor即可

@@ -185,12 +185,21 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
   // 点击添加按钮
 
   void _showBottomSheet() {
-    ZjcBottomSheet.showText(context, dataArr: ['拍照', '录像'], title: '请选择', clickCallback: (index, str) async {
-      if (index == 1) {
+    final items = <String>[];
+    if (widget.assetType == AssetType.image || widget.assetType == AssetType.imageAndVideo) {
+      items.add('拍照');
+    }
+    if (widget.assetType == AssetType.video || widget.assetType == AssetType.imageAndVideo) {
+      items.add('录像');
+    }
+    items.add('从相册选择');
+    ZjcBottomSheet.showText(context, dataArr: items, title: '请选择', clickCallback: (index, str) async {
+      if (str == '拍照') {
         _openCameraForPhoto(context);
-      }
-      if (index == 2) {
+      } else if (str == '录像') {
         _openCameraForVideo(context);
+      } else if (str == '从相册选择') {
+        _openAlbum(context);
       }
     });
   }
@@ -201,17 +210,9 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       ZjcProgressHUD.showText('当前平台暂不支持');
       return;
     }
-    // 相机权限
+    // 相机权限（图片保存到 App 沙盒，不需要系统相册权限）
     bool isGrantedCamera = await ZjcPermissionUtils.camera();
     if (!isGrantedCamera) {
-      return;
-    }
-
-    // Android 13+ 拍照时不需要相册权限，只有在保存到相册时才需要
-    // 但 wechat_camera_picker 可能会保存到相册，所以还是需要检查
-    // 如果只是拍照不保存到相册，可以注释掉下面的相册权限检查
-    bool isGrantedPhotos = await ZjcPermissionUtils.photos();
-    if (!isGrantedPhotos) {
       return;
     }
 
@@ -242,7 +243,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       ZjcProgressHUD.showText('当前平台暂不支持');
       return;
     }
-    // 相机权限
+    // 相机权限（视频保存到 App 沙盒，不需要系统相册权限）
     bool isGrantedCamera = await ZjcPermissionUtils.camera();
     if (!isGrantedCamera) {
       return;
@@ -251,12 +252,6 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
     // 麦克风权限
     bool isGrantedMicrophone = await ZjcPermissionUtils.microphone();
     if (!isGrantedMicrophone) {
-      return;
-    }
-
-    // 相册权限
-    bool isGrantedPhotos = await ZjcPermissionUtils.photos();
-    if (!isGrantedPhotos) {
       return;
     }
 
@@ -325,7 +320,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       ZjcProgressHUD.showText('当前平台暂不支持');
       return;
     }
-    // 相机权限
+    // 相机权限（保存到 App 沙盒，不需要系统相册权限）
     bool isGrantedCamera = await ZjcPermissionUtils.camera();
     if (!isGrantedCamera) {
       return;
@@ -337,12 +332,6 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
       if (!isGrantedMicrophone) {
         return;
       }
-    }
-
-    // 相册权限
-    bool isGrantedPhotos = await ZjcPermissionUtils.photos();
-    if (!isGrantedPhotos) {
-      return;
     }
 
     final AssetEntity? result = await CameraPicker.pickFromCamera(
