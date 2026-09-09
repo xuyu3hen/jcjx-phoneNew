@@ -1321,21 +1321,14 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   locoInfo: widget.locoInfo,
                   // 将locoInfo传递给TaskCard
                   onTap: () async {
-                    if (Global.profile.permissions!.roles
-                        .contains('gongzhang')) {
-                      // 在这里处理待作业的点击事件
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                PackageArrangeInfo(locoInfo: widget.locoInfo)),
-                      );
-                      // 如果从派工页面返回了true，则刷新当前页面
-                      if (result == true) {
-                        getNumber(); // 重新获取数据
-                      }
-                    } else {
-                      showToast('只有工长有范围派工权限');
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              PackageArrangeInfo(locoInfo: widget.locoInfo)),
+                    );
+                    if (result == true) {
+                      getNumber();
                     }
                   },
                 ),
@@ -1347,8 +1340,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
-                    if (roles!.contains("chejianzhuren")) {
-                      // 在这里处理待作业的点击事件
+                    if (roles != null && roles.contains("chejianzhuren")) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1362,8 +1354,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                                       widget.locoInfo?['code'] ?? '',
                                 )),
                       );
-                    } else if (roles.contains("gongzhang")) {
-                      // 在这里处理待作业的点击事件
+                    } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(

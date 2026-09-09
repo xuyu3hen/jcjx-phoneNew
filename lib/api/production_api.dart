@@ -1883,6 +1883,53 @@ class ProductApi extends AppApi {
     }
   }
 
+  // 根据修程编码 + 工序主节点编码 获取排程节点
+  // GET /dispatch/trainScheduleTemplate/getTemplateNodeByProcCodeAndMainNodeCode
+  // 入参: procCode / repairMainNodeCode  (修程编码 + 主节点编码)
+  Future<List<Map<String, dynamic>>> getTemplateNodeByProcCodeAndMainNodeCode({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      var r = await AppApi.dio.get(
+        "/dispatch/trainScheduleTemplate/getTemplateNodeByProcCodeAndMainNodeCode",
+        queryParameters: queryParametrs,
+      );
+      logger.i(r.data["data"]);
+      final wrapped = r.data is Map ? (r.data as Map) : <String, dynamic>{};
+      final d = wrapped["data"];
+      final List raw;
+      if (d is List) {
+        raw = d;
+      } else if (d is Map) {
+        if (d.containsKey("rows") && d["rows"] is List) {
+          raw = d["rows"] as List;
+        } else if (d.containsKey("data") && d["data"] is List) {
+          raw = d["data"] as List;
+        } else if (d.containsKey("list") && d["list"] is List) {
+          raw = d["list"] as List;
+        } else if (d.containsKey("records") && d["records"] is List) {
+          raw = d["records"] as List;
+        } else {
+          raw = [];
+        }
+      } else {
+        raw = [];
+      }
+      // 显式逐个 Map<String, dynamic>.from，保证静态类型与 Future 返回类型匹配，避免 List<dynamic> 类型不匹配
+      return raw
+          .map<Map<String, dynamic>>((dynamic item) {
+            if (item is Map<String, dynamic>) return item;
+            if (item is Map) return Map<String, dynamic>.from(item);
+            return <String, dynamic>{};
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    } catch (e, stackTrace) {
+      _handleException(e, stackTrace);
+      return const <Map<String, dynamic>>[];
+    }
+  }
+
   // 获取个人作业包
   Future<dynamic> getPersonalWorkPackage(
       {Map<String, dynamic>? queryParametrs}) async {

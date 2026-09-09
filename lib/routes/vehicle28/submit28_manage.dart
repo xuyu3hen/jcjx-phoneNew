@@ -53,6 +53,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   String? reporter;
   // 科室车间
   String? workshop;
+  int? workshopId;
   // 班组
   String? team;
   int? teamCode;
@@ -70,9 +71,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   List<dynamic> workDeptIdList = [];
   // 零部件
   List<dynamic> configTree = [];
-  // 车间班组
-  List<dynamic> deptTree = [];
-  List<dynamic> teamTree = [];
+  // 车间列表（首次独立拉取，非 deptTree 嵌套）
+  List<Map<String, dynamic>> workshopList = [];
   // 班组人员
   List<dynamic> userList = [];
   // 检修作业来源
@@ -89,6 +89,17 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   String completeLabel = "自检自修";
   int completeStatus = 0;
 
+  // 完成节点（工序主节点）
+  List<dynamic> repairMainNodeList = [];
+  String? repairMainNodeName;
+  String? repairMainNodeCode;
+  // 排程节点：选完工序节点后，按 {procCode, repairMainNodeCode} 从 trainScheduleTemplate 拉
+  List<Map<String, dynamic>> scheduleNodeList = [];
+  String? scheduleNodeName;
+  String? scheduleNodeCode;
+  // 修程编码（来自选中车号 selectItem.repairProcCode，用于工序节点/排程节点查询）
+  String? repairProcCode;
+
   Map<dynamic, dynamic> dynamciTypeSelected = {};
 
   var logger = AppLogger.logger;
@@ -97,9 +108,145 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   void initState() {
     super.initState();
     getDynamicType();
-    getUserDeptree();
+    _loadAllWorkshops(); // 先拉全部车间
     getJtType();
     getJt28Dict();
+    // 工序节点必须绑定修程编码（repairProcCode），只有选完车号才有修程，
+    // 所以 initState 不调，改到「选完车号 clickCallBack」里调 getRepairMainNodeAll()
+  }
+
+  // 拉取全部车间（parentIdList: 101 检修部作为根，对齐 jt28_dispatch_page 模式）
+  Future<void> _loadAllWorkshops() async {
+    try {
+      final res = await ProductApi().getDeptTreeByParentIdList(
+        queryParametrs: {'parentIdList': 101},
+      );
+      if (res is List && res.isNotEmpty) {
+        final children = res[0]['children'];
+        if (mounted) {
+          if (children is List && children.isNotEmpty) {
+            setState(() {
+              workshopList = children
+                  .map((e) => e is Map<String, dynamic>
+                      ? e
+                      : Map<String, dynamic>.from(e as Map))
+                  .toList();
+            });
+          } else {
+            setState(() => workshopList = []);
+          }
+        }
+      } else if (mounted) {
+        setState(() => workshopList = []);
+      }
+    } catch (e, stackTrace) {
+      log("_loadAllWorkshops error: $e");
+      logger.e("_loadAllWorkshops", e, stackTrace);
+      if (mounted) setState(() => workshopList = []);
+    }
+  }
+
+  // 拉取工序主节点（根据修程编码 repairProcCode 查询，没有修程时拉全量兜底）
+  // GET /subparts/repairMainNode/selectAll  ?repairProcCode=xxx
+  // ⚠️ 返回的 RepairMainNode.rows 元素是"类实例"（不同模块都叫 Rows，存在同名类 import 冲突，不能写 is Rows）。
+  //    转纯 Map 策略：类实例若带 toJson() 就调用，否则当作 Map，递归 children 统一挂到 'children' 下。
+  void getRepairMainNodeAll() async {
+    try {
+      final Map<String, dynamic> q = {'pageNum': 0, 'pageSize': 0};
+      if (repairProcCode != null && repairProcCode!.isNotEmpty) {
+        q['repairProcCode'] = repairProcCode;
+      }
+      logger.i(
+          '[工序节点查询][REQ] GET /subparts/repairMainNode/selectAll '
+          'queryParams=${jsonEncode(q)}  '
+          '(key=repairProcCode，严格按照后端文档传修程编码)');
+      final r = await ProductApi().getRepairMainNodeAll(queryParametrs: q);
+      if (r != null && r.rows != null) {
+        if (mounted) {
+          Map<String, dynamic> _toMap(dynamic item) {
+            if (item is Map) return Map<String, dynamic>.from(item);
+            // 类实例兜底：只要带 toJson() 方法就调用（不管是哪个 Rows 类 / Dept 类 / 其他 Model 类）
+            try {
+              final dynamic fn = item.toJson;
+              if (fn is Function) {
+                final dynamic res = fn();
+                if (res is Map) return Map<String, dynamic>.from(res);
+              }
+            } catch (_) {}
+            return <String, dynamic>{};
+          }
+          Map<String, dynamic> _map(dynamic e) {
+            final m = _toMap(e);
+            // children 字段归一化：children/childList/rows 任一存在就挂到 m['children']
+            final rawChildren = m['children'] ?? m['childList'] ?? m['rows'];
+            if (rawChildren is List) {
+              m['children'] = rawChildren
+                  .map<Map<String, dynamic>>((sub) => _map(sub))
+                  .toList();
+            } else {
+              m['children'] ??= [];
+            }
+            return m;
+          }
+          final rowsList = r.rows!
+              .map<Map<String, dynamic>>((dynamic item) => _map(item))
+              .toList();
+          logger.i(
+              '[工序节点查询][RES] repairProcCode=${q['repairProcCode'] ?? '未传⚠️'}  '
+              '返回节点数=${rowsList.length}');
+          setState(() {
+            repairMainNodeList = rowsList;
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      log("getRepairMainNodeAll error: $e");
+      logger.e("getRepairMainNodeAll", e, stackTrace);
+    }
+  }
+
+  // 根据 修程编码（procCode，来自车号 repairProcCode） + 已选工序节点编码（repairMainNodeCode） 拉排程节点
+  // GET /dispatch/trainScheduleTemplate/getTemplateNodeByProcCodeAndMainNodeCode
+  // 严格对齐接口文档入参名：procCode / repairMainNodeCode（注意第一个参数是 procCode，不是 repairProcCode）
+  Future<void> _loadScheduleNodeBy({
+    required String procCode,
+    required String mainNodeCode,
+  }) async {
+    try {
+      final Map<String, dynamic> q = {
+        'procCode': procCode,
+        'repairMainNodeCode': mainNodeCode,
+      };
+      logger.i(
+          '[排程节点查询][REQ] '
+          'GET /dispatch/trainScheduleTemplate/getTemplateNodeByProcCodeAndMainNodeCode '
+          'queryParams=${jsonEncode(q)}  '
+          '(procCode=车号修程码=${procCode.isEmpty ? '空⚠️' : procCode}, '
+          'repairMainNodeCode=工序节点code=${mainNodeCode.isEmpty ? '空⚠️' : mainNodeCode})');
+      final r =
+          await ProductApi().getTemplateNodeByProcCodeAndMainNodeCode(
+        queryParametrs: q,
+      );
+      logger.i(
+          '[排程节点查询][RES] '
+          'procCode=$procCode, repairMainNodeCode=$mainNodeCode → 返回排程节点数=${r.length}');
+      if (r.isNotEmpty) {
+        final sample =
+            jsonEncode(r.length <= 5 ? r : r.take(5).toList());
+        logger.i('[排程节点查询][RES_SAMPLE] 前5条字段名示例=$sample');
+      }
+      if (mounted) {
+        setState(() {
+          scheduleNodeList = r;
+        });
+      }
+    } catch (e, stackTrace) {
+      log("_loadScheduleNodeBy error: $e");
+      logger.e("_loadScheduleNodeBy", e, stackTrace);
+      if (mounted) {
+        setState(() => scheduleNodeList = []);
+      }
+    }
   }
 
   // 动力类型
@@ -340,24 +487,6 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
     }
   }
 
-  // 车间班组
-  void getUserDeptree() async {
-    try {
-      var r = await JtApi().getUserDeptree();
-      if (r != [] && r != null) {
-        if (mounted) {
-          setState(() {
-            deptTree = ((r[0])["children"])[0]["children"];
-          });
-        }
-      } else {
-        showToast("未能获取车间班组");
-      }
-    } catch (e) {
-      log("$e");
-    }
-  }
-
   // 班组人员
   void getJtUsers() async {
     try {
@@ -525,7 +654,40 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                                             selectItem["trainNum"];
                                     trainNumSelected["code"] =
                                         selectItem["code"];
+                                    // 多 fallback 取修程编码，并记录命中了哪个 key，方便日志查
+                                    String? pickProcCode;
+                                    String hitKey = 'N/A';
+                                    if (selectItem["repairProcCode"] !=
+                                        null) {
+                                      pickProcCode =
+                                          selectItem["repairProcCode"].toString();
+                                      hitKey = 'repairProcCode';
+                                    } else if (selectItem["repair_procode"] !=
+                                        null) {
+                                      pickProcCode =
+                                          selectItem["repair_procode"].toString();
+                                      hitKey = 'repair_procode';
+                                    } else if (selectItem["procCode"] != null) {
+                                      pickProcCode =
+                                          selectItem["procCode"].toString();
+                                      hitKey = 'procCode';
+                                    }
+                                    repairProcCode = pickProcCode;
+                                    logger.i(
+                                        '[机统28车号][管理][REPAIR_PROC_CODE] '
+                                        '车号=${trainNumSelected["trainNum"]}, '
+                                        '命中字段=$hitKey, '
+                                        'repairProcCode=${repairProcCode ?? 'NULL⚠️'}');
+                                    // 选新车号时，所有节点数据要刷新
+                                    repairMainNodeName = null;
+                                    repairMainNodeCode = null;
+                                    repairMainNodeList = [];
+                                    scheduleNodeName = null;
+                                    scheduleNodeCode = null;
+                                    scheduleNodeList = [];
                                   });
+                                  // 车号选完立刻根据修程拉这个修程下的所有工序主节点
+                                  getRepairMainNodeAll();
                                 },
                               );
                             }
@@ -628,7 +790,9 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                             backgroundColor: Colors.grey[300],
                             onSelected: (bool selected) {
                               setState(() {
-                                completeStatus = selected ? 0 : completeStatus;
+                                if (!selected) return;
+                                // 互斥：选中「自检自修」就把 completeStatus 强制 0，completeLabel 自检自修
+                                completeStatus = 0;
                                 completeLabel = '自检自修';
                               });
                             },
@@ -641,8 +805,20 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                             backgroundColor: Colors.grey[300],
                             onSelected: (bool selected) {
                               setState(() {
-                                completeStatus = selected ? 1 : completeStatus;
+                                if (!selected) return;
+                                // 互斥：选中「工长派工」，把 completeStatus 强制 1，并清空自检自修模式下才填的 5 个字段，避免下次再切回时看到脏数据
+                                completeStatus = 1;
                                 completeLabel = '工长派工';
+                                workshop = null;
+                                workshopId = null;
+                                team = null;
+                                teamCode = null;
+                                repairMainNodeName = null;
+                                repairMainNodeCode = null;
+                                repairMainNodeList = [];
+                                scheduleNodeName = null;
+                                scheduleNodeCode = null;
+                                scheduleNodeList = [];
                               });
                             },
                           ),
@@ -650,6 +826,204 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                       ),
                     ],
                   ),
+                  // 车间/班组 + 工序节点 + 排程节点：仅在「自检自修」选中时展示，紧跟 Chip 下方
+                  if (completeStatus == 0) ...[
+                    ZjcFormSelectCell(
+                      title: "车间/班组",
+                      hintText: "请选择（两级依次选）",
+                      showRedStar: true,
+                      text: team == null || team!.isEmpty
+                          ? workshop
+                          : '${workshop ?? ''} / ${team ?? ''}',
+                      clickCallBack: () {
+                        if (workshopList.isEmpty) {
+                          showToast("车间数据加载中，请稍后再试");
+                          return;
+                        }
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          isShowSearch: true,
+                          data: workshopList,
+                          labelKey: 'deptName',
+                          valueKey: 'deptId',
+                          childrenKey: 'children',
+                          title: "选择车间与班组",
+                          clickCallBack: (selectItem, selectArr) {
+                            final workshopItem = selectArr.first as Map;
+                            final lastItem = selectItem as Map;
+                            var workshopIdObj = workshopItem["deptId"];
+                            var teamIdObj = lastItem["deptId"];
+                            int? wId;
+                            int? tId;
+                            if (workshopIdObj is int) {
+                              wId = workshopIdObj;
+                            } else if (workshopIdObj != null) {
+                              wId = int.tryParse(workshopIdObj.toString());
+                            }
+                            if (teamIdObj is int) {
+                              tId = teamIdObj;
+                            } else if (teamIdObj != null) {
+                              tId = int.tryParse(teamIdObj.toString());
+                            }
+                            final bool pickedTeam = selectArr.length >= 2;
+                            setState(() {
+                              workshop = workshopItem["deptName"]?.toString();
+                              workshopId = wId;
+                              if (pickedTeam) {
+                                team = lastItem["deptName"]?.toString();
+                                teamCode = tId;
+                              } else {
+                                team = null;
+                                teamCode = null;
+                              }
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    // 工序节点（repairMainNode）—— 必须先选车号拿到修程编码（repairProcCode）才能查询
+                    if (repairProcCode == null || repairProcCode!.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 6, horizontal: 16),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.info_outline,
+                                size: 16, color: Colors.orange),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                "需要选择车号后才能查到工序节点",
+                                style: TextStyle(
+                                    color: Colors.orange, fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ZjcFormSelectCell(
+                      title: "工序节点",
+                      hintText: repairProcCode == null || repairProcCode!.isEmpty
+                          ? "需要选择车号后才能查到"
+                          : "请选择",
+                      showRedStar: true,
+                      text: repairMainNodeName,
+                      clickCallBack: () {
+                        if (repairProcCode == null || repairProcCode!.isEmpty) {
+                          showToast("需要选择车号后才能查到工序节点");
+                          return;
+                        }
+                        if (repairMainNodeList.isEmpty) {
+                          showToast("工序节点数据加载中，请稍后再试");
+                          return;
+                        }
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          isShowSearch: true,
+                          data: repairMainNodeList,
+                          labelKey: 'name',
+                          valueKey: 'code',
+                          childrenKey: 'children',
+                          title: "选择工序节点",
+                          clickCallBack: (selectItem, selectArr) {
+                            final code = selectItem["code"]?.toString();
+                            final name = selectItem["name"]?.toString();
+                            logger.i(
+                                '[工序节点选中] '
+                                'name=$name, code=$code. '
+                                '⚠️ procCode 不是工序节点字段，它来自【车号.state.repairProcCode】=${repairProcCode ?? 'NULL⚠️'} '
+                                '后续排程节点查询传参：procCode=$repairProcCode, repairMainNodeCode=$code');
+                            setState(() {
+                              repairMainNodeName = name;
+                              repairMainNodeCode = code;
+                              // 工序节点变了，清空排程节点
+                              scheduleNodeName = null;
+                              scheduleNodeCode = null;
+                              scheduleNodeList = [];
+                            });
+                            // 选中工序节点后，立刻根据 {procCode, repairMainNodeCode} 拉排程节点
+                            //  - procCode         = state.repairProcCode（车号带过来的修程编码）
+                            //  - repairMainNodeCode = selectItem.code        （当前选中的工序节点编码）
+                            if (repairProcCode != null &&
+                                code != null &&
+                                code.isNotEmpty) {
+                              _loadScheduleNodeBy(
+                                procCode: repairProcCode!,
+                                mainNodeCode: code,
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
+                    // 排程节点（trainScheduleTemplate 模板节点）—— 选完工序节点才能点
+                    ZjcFormSelectCell(
+                      title: "排程节点",
+                      hintText: repairMainNodeCode == null ||
+                              repairMainNodeCode!.isEmpty
+                          ? "请先选择工序节点"
+                          : (scheduleNodeList.isEmpty ? "该工序暂无排程节点" : "请选择"),
+                      showRedStar: true,
+                      text: scheduleNodeName,
+                      clickCallBack: () {
+                        if (repairProcCode == null || repairProcCode!.isEmpty) {
+                          showToast("请先选择车号");
+                          return;
+                        }
+                        if (repairMainNodeCode == null ||
+                            repairMainNodeCode!.isEmpty) {
+                          showToast("请先选择工序节点");
+                          return;
+                        }
+                        if (scheduleNodeList.isEmpty) {
+                          showToast("暂无排程节点，请先选择其他工序节点");
+                          return;
+                        }
+                        // 统一解析一次 labelKey/valueKey，clickCallBack 里也用同一套，避免前后不一致
+                        final firstKeys = scheduleNodeList.first.keys;
+                        String pickLabelKey() {
+                          if (firstKeys.contains('nodeName')) return 'nodeName';
+                          if (firstKeys.contains('scheduleNodeName')) {
+                            return 'scheduleNodeName';
+                          }
+                          if (firstKeys.contains('displayName')) {
+                            return 'displayName';
+                          }
+                          return 'name';
+                        }
+
+                        String pickValueKey() {
+                          if (firstKeys.contains('nodeCode')) return 'nodeCode';
+                          if (firstKeys.contains('scheduleNodeId')) {
+                            return 'scheduleNodeId';
+                          }
+                          if (firstKeys.contains('id')) return 'id';
+                          return 'code';
+                        }
+
+                        final L = pickLabelKey();
+                        final V = pickValueKey();
+                        ZjcCascadeTreePicker.show(
+                          context,
+                          isShowSearch: true,
+                          data: scheduleNodeList,
+                          labelKey: L,
+                          valueKey: V,
+                          childrenKey: 'children',
+                          title: "选择排程节点",
+                          clickCallBack: (selectItem, selectArr) {
+                            final code = selectItem[V]?.toString();
+                            final nm = selectItem[L]?.toString();
+                            setState(() {
+                              scheduleNodeName = nm;
+                              scheduleNodeCode = code;
+                            });
+                          },
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -706,83 +1080,6 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                       ),
                     ],
                   ),
-                  // 自动派活组
-                  // if (completeStatus == 1) ...[
-                  //   ZjcFormSelectCell(
-                  //     title: "科室车间",
-                  //     hintText: "请选择",
-                  //     showRedStar: true,
-                  //     text: workshop,
-                  //     clickCallBack: () {
-                  //       ZjcCascadeTreePicker.show(context,
-                  //           isShowSearch: false,
-                  //           data: deptTree,
-                  //           labelKey: 'label',
-                  //           valueKey: 'label',
-                  //           childrenKey: 'child',
-                  //           title: "选择科室车间",
-                  //           clickCallBack: (selectItem, selectArr) {
-                  //         setState(() {
-                  //           workshop = selectItem["label"];
-                  //           if (selectItem["children"] != null) {
-                  //             teamTree = selectItem["children"];
-                  //           }
-                  //           team = "";
-                  //         });
-                  //       });
-                  //     },
-                  //   ),
-                  //   ZjcFormSelectCell(
-                  //     title: "班组",
-                  //     hintText: "请选择",
-                  //     showRedStar: true,
-                  //     text: team,
-                  //     clickCallBack: () {
-                  //       if (teamTree.isEmpty) {
-                  //         showToast("请先选择科室车间");
-                  //       } else {
-                  //         ZjcCascadeTreePicker.show(context,
-                  //             isShowSearch: false,
-                  //             data: teamTree,
-                  //             labelKey: 'label',
-                  //             valueKey: 'id',
-                  //             title: "选择班组",
-                  //             clickCallBack: (selectItem, selectArr) {
-                  //           setState(() {
-                  //             team = selectItem["label"];
-                  //             teamCode = selectItem["id"];
-                  //           });
-                  //           // getJtUsers();
-                  //         });
-                  //       }
-                  //     },
-                  //   ),
-                  // ZjcFormSelectCell(
-                  //   title: "施修人员",
-                  //   hintText: "请选择",
-                  //   showRedStar: true,
-                  //   text: userSelected["nickName"],
-                  //   clickCallBack: () {
-                  //     ZjcCascadeTreePicker.show(context,
-                  //       isShowSearch: false,
-                  //       data: userList,
-                  //       labelKey: 'nickName',
-                  //       valueKey: 'userId',
-                  //       title: "施修人员",
-                  //       clickCallBack: (selectItem, selectArr) {
-                  //         setState(() {
-                  //           userSelected['nickName'] = selectItem['nickName'];
-                  //           userSelected['userId'] = selectItem['userId'];
-                  //         });
-                  //       }
-                  //     );
-                  //   },
-                  // ),
-                  // ],
-                  // if(faultPics.isNotEmpty)
-                  // Container(child: Image.file(faultPics[0],width: 200,height: 200,),),
-                  // 图片传输
-                  // ... existing code ...
 
                   // 故障视频及图片
                   Column(
@@ -878,13 +1175,39 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
               "faultAssumption": selectedAssumeType, 
               "status": 0
             };
-            if (completeStatus == 1) {
+            if (completeStatus == 0) {
+              // 自检自修：必填 车间班组 / 工序节点 / 排程节点
+              if (teamCode == null) {
+                SmartDialog.dismiss(status: SmartStatus.loading);
+                if (mounted) setState(() => _submitting = false);
+                showToast("自检自修请选到班组层级（先选车间再选班组）");
+                return;
+              }
+              if (repairMainNodeCode == null || repairMainNodeCode!.isEmpty) {
+                SmartDialog.dismiss(status: SmartStatus.loading);
+                if (mounted) setState(() => _submitting = false);
+                showToast("自检自修请选择工序节点");
+                return;
+              }
+              if (scheduleNodeCode == null || scheduleNodeCode!.isEmpty) {
+                SmartDialog.dismiss(status: SmartStatus.loading);
+                if (mounted) setState(() => _submitting = false);
+                showToast("自检自修请选择排程节点");
+                return;
+              }
               queryParameters["team"] = teamCode;
-              // queryParameters["repairPersonnel"] = userSelected["userId"];
-            } else {
-              queryParameters["team"] = Global.profile.permissions?.user.deptId;
+              queryParameters["repairMainNodeCode"] = repairMainNodeCode;
+              // 排程节点编码：优先存用户从 trainScheduleTemplate 选中的排程节点 code
+              // 兼容后端不同字段名：scheduleNodeCode / scheduleNodeId / templateNodeCode
+              queryParameters["scheduleNodeCode"] = scheduleNodeCode;
+              if (repairProcCode != null && repairProcCode!.isNotEmpty) {
+                queryParameters["repairProcCode"] = repairProcCode;
+              }
               queryParameters["repairPersonnel"] =
                   Global.profile.permissions?.user.userId;
+            } else if (completeStatus == 1) {
+              // 工长派工：车间/班组、工序节点、排程节点都不在这里填（交给后续派工流程），所以不校验也不写入
+              // 留空分支占位，保持结构清晰
             }
             if (faultPics.isNotEmpty) {
               await JtApi().uploadMixJt(imagedata: faultPics).then(

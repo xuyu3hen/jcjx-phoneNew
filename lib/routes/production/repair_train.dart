@@ -7,6 +7,7 @@ import 'package:jcjx_phone/routes/production/package_special.dart';
 import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
 import '../vehicle28/submit28_manage.dart';
+import '../vehicle28/submit_28.dart';
 import 'mutual_work.dart';
 import 'package:path/path.dart' as path;
 
@@ -2489,7 +2490,49 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         ),
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
-        actions: [],
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Vehicle28Form(
+                      locoInfo: widget.locoInfo is Map
+                          ? Map<String, dynamic>.from(widget.locoInfo as Map)
+                          : null,
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.assignment_turned_in,
+                color: Colors.white,
+                size: 18,
+              ),
+              label: const Text(
+                "报机统28",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

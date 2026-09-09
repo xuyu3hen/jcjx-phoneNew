@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
+import 'package:jcjx_phone/routes/vehicle28/submit_28.dart';
 
 import '../../index.dart';
 
@@ -488,11 +489,34 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
         title: const Text("检修作业-项点"),
         backgroundColor: Colors.white,
         actions: [
-          TextButton(
-            onPressed: _reportJT6,
-            child: const Text(
-              "报机统28",
-              style: TextStyle(color: Colors.black),
+          Container(
+            margin: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+            child: ElevatedButton.icon(
+              onPressed: _reportJT6,
+              icon: const Icon(
+                Icons.assignment_turned_in,
+                color: Colors.white,
+                size: 18,
+              ),
+              label: const Text(
+                "报机统28",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                elevation: 3,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
         ],
@@ -738,8 +762,17 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
   // ---------------------- 交互逻辑（可扩展） ----------------------
   void _reportJT6() {
-    // 报JT6的业务逻辑（如提交数据、跳转页面）
-    debugPrint("报JT6功能触发");
+    // 报机统28 → 进入 机统28-提报（普通版 Vehicle28Form = submit_28.dart）
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Vehicle28Form(
+          locoInfo: widget.locoInfo is Map
+              ? Map<String, dynamic>.from(widget.locoInfo as Map)
+              : null,
+        ),
+      ),
+    );
   }
 
   _gotoSecondStation(List<Map<String, dynamic>> taskInstructContentList) {
