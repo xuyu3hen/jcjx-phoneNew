@@ -557,7 +557,8 @@ class Jt28StartWorkListItem extends StatelessWidget {
   final VoidCallback? onViewMedia;
   final VoidCallback? onStartWork;
   final String startWorkButtonText;
-  final int allowedStatusCode;
+  final int? allowedStatusCode;
+  final List<int>? allowedStatusCodes;
 
   const Jt28StartWorkListItem({
     Key? key,
@@ -568,6 +569,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
     this.onStartWork,
     this.startWorkButtonText = '开工',
     this.allowedStatusCode = 0,
+    this.allowedStatusCodes,
   }) : super(key: key);
 
   int? _getStatusCode() {
@@ -582,6 +584,14 @@ class Jt28StartWorkListItem extends StatelessWidget {
     final value = item[key];
     if (value == null) return defaultValue;
     return value.toString().isEmpty ? defaultValue : value.toString();
+  }
+
+  bool _canStartWork() {
+    final statusCode = _getStatusCode();
+    if (allowedStatusCodes != null) {
+      return statusCode != null && allowedStatusCodes!.contains(statusCode);
+    }
+    return allowedStatusCode == null || statusCode == allowedStatusCode;
   }
 
   @override
@@ -679,7 +689,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
                 width: 80,
                 height: 120,
                 child: ElevatedButton(
-                  onPressed: _getStatusCode() == allowedStatusCode ? onStartWork : null,
+                  onPressed: _canStartWork() ? onStartWork : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,

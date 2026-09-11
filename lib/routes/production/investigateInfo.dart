@@ -450,6 +450,9 @@ class _PlanListPageState extends State<PlanListPage> {
         if (procMap['repairTimes'] != null && procMap['repairTimes'].toString().trim().isNotEmpty) {
           cleanProc['repairTimes'] = procMap['repairTimes'];
         }
+        if (procMap['repairTimesCode'] != null && procMap['repairTimesCode'].toString().trim().isNotEmpty) {
+          cleanProc['repairTimesCode'] = procMap['repairTimesCode'];
+        }
         if (procMap['repairKilometer'] != null) {
           cleanProc['repairKilometer'] = procMap['repairKilometer'];
         }
@@ -565,6 +568,8 @@ class _RepairKilometerTableWidget extends StatefulWidget {
 }
 
 class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget> {
+  final logger = AppLogger.logger;
+
   // 存储修程公里数列表
   List<Map<String, dynamic>> repairProcList = [];
   
@@ -614,6 +619,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
         'repairProcCode': '',
         'repairProcName': '',
         'repairTimes': '',
+        'repairTimesCode': '',
         'repairKilometer': null,
         'repairDate': null,
       };
@@ -713,13 +719,69 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
       return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
     }
 
+    // 查询修次列表（repairProcCode）并默认回填第一条；若有多条则由用户点击修次单元格手动选
+    Future<void> _queryAndFillFirstRepairTimes(
+      int index,
+      String procCode,
+    ) async {
+      try {
+        final r = await ProductApi().getRepairTimes(
+          queryParametrs: {
+            'repairProcCode': procCode,
+            'pageNum': 0,
+            'pageSize': 0,
+          },
+        );
+        final list = r.toMapList();
+        if (!mounted) return;
+        if (index >= repairProcList.length) return; // 异步期间用户可能删行
+
+        if (list.isEmpty) {
+          logger.i('[调查清单-修次查询] repairProcCode=$procCode 返回空');
+          SmartDialog.showToast('该修程下暂无修次，请手动填写');
+          return;
+        }
+        // 按 sort 升序排序（sort 为空放最后）
+        list.sort((a, b) {
+          final sa = a['sort'] is int ? a['sort'] as int : 9999;
+          final sb = b['sort'] is int ? b['sort'] as int : 9999;
+          return sa.compareTo(sb);
+        });
+        // 只有 1 条时自动回填第一条
+        if (list.length == 1) {
+          final first = list.first;
+          final timesName = first['name']?.toString() ?? '';
+          final timesCode = first['code']?.toString() ?? '';
+          logger.i(
+              '[调查清单-修次自动回填] proc=$procCode, times=$timesName, code=$timesCode');
+          if (!mounted) return;
+          if (index >= repairProcList.length) return;
+          setState(() {
+            repairProcList[index]['repairTimes'] = timesName;
+            repairProcList[index]['repairTimesCode'] = timesCode;
+            final raw = widget.item['masInvestigateProcList'];
+            if (raw is List && index < raw.length) {
+              raw[index]['repairTimes'] = timesName;
+              raw[index]['repairTimesCode'] = timesCode;
+            }
+          });
+        } else {
+          SmartDialog.showToast(
+              '该修程下有 ${list.length} 个修次，请点击"修次"单元格手动选择');
+        }
+      } catch (e, s) {
+        logger.e('[调查清单-修次查询失败] repairProcCode=$procCode, error=$e\n$s');
+        if (mounted) SmartDialog.showToast('查询修次失败，请稍后再试');
+      }
+    }
+
     // 选择修程
     Future<void> selectRepairProc(int index) async {
       if (widget.repairProcList.isEmpty) {
-        showToast('修程列表为空，请稍后再试');
+        SmartDialog.showToast('修程列表为空，请稍后再试');
         return;
       }
-      
+
       final selected = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (context) => AlertDialog(
@@ -744,13 +806,103 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
       );
 
       if (selected != null && index < repairProcList.length) {
+        final procCode = selected['code']?.toString() ?? '';
+        final procName =
+            selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
         setState(() {
-          repairProcList[index]['repairProcCode'] = selected['code']?.toString() ?? '';
-          repairProcList[index]['repairProcName'] = selected['name']?.toString() ?? selected['repairProcName']?.toString() ?? '';
+          repairProcList[index]['repairProcCode'] = procCode;
+          repairProcList[index]['repairProcName'] = procName;
+          // 切换修程时清空旧修次/日期，避免脏数据
+          repairProcList[index]['repairTimes'] = '';
+          repairProcList[index]['repairTimesCode'] = '';
+          repairProcList[index]['repairDate'] = null;
           final raw = widget.item['masInvestigateProcList'];
           if (raw is List && index < raw.length) {
             raw[index]['repairProcCode'] = repairProcList[index]['repairProcCode'];
             raw[index]['repairProcName'] = repairProcList[index]['repairProcName'];
+            raw[index]['repairTimes'] = '';
+            raw[index]['repairTimesCode'] = '';
+            raw[index]['repairDate'] = null;
+          }
+        });
+        if (procCode.isNotEmpty) {
+          await _queryAndFillFirstRepairTimes(index, procCode);
+        }
+      }
+    }
+
+    // 手动点击修次单元格弹出选择框
+    Future<void> selectRepairTimes(int index) async {
+      if (index >= repairProcList.length) return;
+      final procCode = repairProcList[index]['repairProcCode']?.toString() ?? '';
+      if (procCode.isEmpty) {
+        SmartDialog.showToast('请先选择修程');
+        return;
+      }
+      SmartDialog.showLoading(msg: '查询修次中...');
+      final List<Map<String, dynamic>> list;
+      try {
+        final r = await ProductApi().getRepairTimes(
+          queryParametrs: {
+            'repairProcCode': procCode,
+            'pageNum': 0,
+            'pageSize': 0,
+          },
+        );
+        list = r.toMapList();
+        SmartDialog.dismiss(status: SmartStatus.loading);
+      } catch (e) {
+        SmartDialog.dismiss(status: SmartStatus.loading);
+        logger.e('[调查清单-手动查修次失败] repairProcCode=$procCode, error=$e');
+        SmartDialog.showToast('查询修次失败');
+        return;
+      }
+      if (!mounted) return;
+      if (index >= repairProcList.length) return;
+      if (list.isEmpty) {
+        SmartDialog.showToast('该修程下暂无修次');
+        return;
+      }
+      list.sort((a, b) {
+        final sa = a['sort'] is int ? a['sort'] as int : 9999;
+        final sb = b['sort'] is int ? b['sort'] as int : 9999;
+        return sa.compareTo(sb);
+      });
+      final picked = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('选择修次'),
+          content: Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxHeight: 420),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: list.length,
+              itemBuilder: (context, idx) {
+                final t = list[idx];
+                final name = t['name']?.toString() ?? t['code']?.toString() ?? '';
+                final remark = t['remark']?.toString() ?? '';
+                return ListTile(
+                  title: Text(name),
+                  subtitle: remark.isEmpty ? null : Text(remark),
+                  trailing: Text(t['sort']?.toString() ?? ''),
+                  onTap: () => Navigator.pop(context, t),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      if (picked != null && index < repairProcList.length && mounted) {
+        final timesName = picked['name']?.toString() ?? '';
+        final timesCode = picked['code']?.toString() ?? '';
+        setState(() {
+          repairProcList[index]['repairTimes'] = timesName;
+          repairProcList[index]['repairTimesCode'] = timesCode;
+          final raw = widget.item['masInvestigateProcList'];
+          if (raw is List && index < raw.length) {
+            raw[index]['repairTimes'] = timesName;
+            raw[index]['repairTimesCode'] = timesCode;
           }
         });
       }
@@ -881,10 +1033,23 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                   ),
                   // 修次
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      proc['repairTimes']?.toString() ?? '',
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.all(4.0),
+                    child: InkWell(
+                      onTap: () => selectRepairTimes(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(8.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blue),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          proc['repairTimes']?.toString().isNotEmpty == true
+                              ? proc['repairTimes'].toString()
+                              : '点击选择',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.blue),
+                        ),
+                      ),
                     ),
                   ),
                   // 走行公里

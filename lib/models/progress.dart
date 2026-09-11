@@ -70,6 +70,7 @@ class RepairItem {
   final int? status;
   final String? stoppingPlace;
   final int? totalPackageCount;
+  final TrainRepairScheduleReal? trainRepairScheduleReal;
   final String? trackNum;
   final int? trainDrivingKilometer;
   final String? trainNum;
@@ -129,6 +130,7 @@ class RepairItem {
     this.status,
     this.stoppingPlace,
     this.totalPackageCount,
+    this.trainRepairScheduleReal,
     this.trackNum,
     this.trainDrivingKilometer,
     this.trainNum,
@@ -144,6 +146,38 @@ class RepairItem {
 
   factory RepairItem.fromJson(Map<String, dynamic> json) =>
       _$RepairItemFromJson(json);
+}
+
+@JsonSerializable()
+class TrainRepairScheduleReal {
+  final String? code;
+  final String? scheduleNodeCode;
+  final String? scheduleNodeName;
+  final int? nodeStatus;
+  final bool? currentNode;
+  final String? trainEntryCode;
+  final String? startTime;
+  final String? endTime;
+  final int? sort;
+  final String? repairMainNodeCode;
+  final String? repairMainNodeName;
+
+  TrainRepairScheduleReal({
+    this.code,
+    this.scheduleNodeCode,
+    this.scheduleNodeName,
+    this.nodeStatus,
+    this.currentNode,
+    this.trainEntryCode,
+    this.startTime,
+    this.endTime,
+    this.sort,
+    this.repairMainNodeCode,
+    this.repairMainNodeName,
+  });
+
+  factory TrainRepairScheduleReal.fromJson(Map<String, dynamic> json) =>
+      _$TrainRepairScheduleRealFromJson(json);
 }
 
 // 嵌套的 c4c5ledger 模型

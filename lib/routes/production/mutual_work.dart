@@ -449,8 +449,8 @@ class _JtShowPageState extends State<MutualWorkList> {
                                       ProductApi().getFaultVideoAndImage);
                                 }
                               : null,
-                          onStartWork: () {
-                            Navigator.push(
+                          onStartWork: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => MutualDisposalPage(
@@ -468,6 +468,9 @@ class _JtShowPageState extends State<MutualWorkList> {
                                     trainInfo: item),
                               ),
                             );
+                            if (mounted) {
+                              getInfo();
+                            }
                           },
                         );
                       },

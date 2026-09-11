@@ -110,6 +110,7 @@ class _JtShowPageState extends State<JtWorkList> {
       setState(() {
         // info = r;
         sys28List = r;
+        isLoading = false;
         // total = info['total'] ?? 0;
         // isLoading = false;
       });
@@ -409,6 +410,7 @@ class _JtShowPageState extends State<JtWorkList> {
                           item: item,
                           statusMap: status,
                           buildStatusBadge: _buildStatusBadge,
+                          allowedStatusCodes: const [0, 1],
                           onViewMedia: item['repairPicture'] != null &&
                                   item['repairPicture'].toString().isNotEmpty
                               ? () {
@@ -419,7 +421,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                 }
                               : null,
                           onStartWork: () async {
-                            var result = await Navigator.push(
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => FaultDisposalPage(
@@ -439,7 +441,7 @@ class _JtShowPageState extends State<JtWorkList> {
                                         item['processMainNode'] ?? ""),
                               ),
                             );
-                            if (result == true) {
+                            if (mounted) {
                               getInfo();
                             }
                           },

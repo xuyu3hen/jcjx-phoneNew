@@ -420,8 +420,8 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                       ProductApi().getFaultVideoAndImage);
                                 }
                               : null,
-                          onStartWork: () {
-                            Navigator.push(
+                          onStartWork: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => SpecialDisposalPage(
@@ -440,6 +440,9 @@ class _JtShowPageState extends State<SpecialWorkList> {
                                 ),
                               ),
                             );
+                            if (mounted) {
+                              getInfo();
+                            }
                           },
                         );
                       },

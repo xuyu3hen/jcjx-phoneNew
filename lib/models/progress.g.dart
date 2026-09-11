@@ -75,6 +75,10 @@ RepairItem _$RepairItemFromJson(Map<String, dynamic> json) => RepairItem(
       status: (json['status'] as num?)?.toInt(),
       stoppingPlace: json['stoppingPlace'] as String?,
       totalPackageCount: (json['totalPackageCount'] as num?)?.toInt(),
+      trainRepairScheduleReal: json['trainRepairScheduleReal'] == null
+          ? null
+          : TrainRepairScheduleReal.fromJson(
+              json['trainRepairScheduleReal'] as Map<String, dynamic>),
       trackNum: json['trackNum'] as String?,
       trainDrivingKilometer: (json['trainDrivingKilometer'] as num?)?.toInt(),
       trainNum: json['trainNum'] as String?,
@@ -137,6 +141,7 @@ Map<String, dynamic> _$RepairItemToJson(RepairItem instance) =>
       'status': instance.status,
       'stoppingPlace': instance.stoppingPlace,
       'totalPackageCount': instance.totalPackageCount,
+      'trainRepairScheduleReal': instance.trainRepairScheduleReal,
       'trackNum': instance.trackNum,
       'trainDrivingKilometer': instance.trainDrivingKilometer,
       'trainNum': instance.trainNum,
@@ -175,6 +180,38 @@ Map<String, dynamic> _$C4c5ledgerToJson(C4c5ledger instance) =>
       'trainEntryCode': instance.trainEntryCode,
       'updatedBy': instance.updatedBy,
       'updatedTime': instance.updatedTime,
+    };
+
+TrainRepairScheduleReal _$TrainRepairScheduleRealFromJson(
+        Map<String, dynamic> json) =>
+    TrainRepairScheduleReal(
+      code: json['code'] as String?,
+      scheduleNodeCode: json['scheduleNodeCode'] as String?,
+      scheduleNodeName: json['scheduleNodeName'] as String?,
+      nodeStatus: (json['nodeStatus'] as num?)?.toInt(),
+      currentNode: json['currentNode'] as bool?,
+      trainEntryCode: json['trainEntryCode'] as String?,
+      startTime: json['startTime'] as String?,
+      endTime: json['endTime'] as String?,
+      sort: (json['sort'] as num?)?.toInt(),
+      repairMainNodeCode: json['repairMainNodeCode'] as String?,
+      repairMainNodeName: json['repairMainNodeName'] as String?,
+    );
+
+Map<String, dynamic> _$TrainRepairScheduleRealToJson(
+        TrainRepairScheduleReal instance) =>
+    <String, dynamic>{
+      'code': instance.code,
+      'scheduleNodeCode': instance.scheduleNodeCode,
+      'scheduleNodeName': instance.scheduleNodeName,
+      'nodeStatus': instance.nodeStatus,
+      'currentNode': instance.currentNode,
+      'trainEntryCode': instance.trainEntryCode,
+      'startTime': instance.startTime,
+      'endTime': instance.endTime,
+      'sort': instance.sort,
+      'repairMainNodeCode': instance.repairMainNodeCode,
+      'repairMainNodeName': instance.repairMainNodeName,
     };
 
 StateDetail _$StateDetailFromJson(Map<String, dynamic> json) => StateDetail(

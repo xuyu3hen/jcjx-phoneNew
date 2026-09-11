@@ -96,6 +96,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   // 获取 RepairItem 的工序节点名称（优先 repairMainNodeName，再 stateDetailList 当前 state）
   String _repairMainNodeNameOf(RepairItem item) {
+    final nested =
+        (item.trainRepairScheduleReal?.repairMainNodeName ?? '').toString().trim();
+    if (nested.isNotEmpty) return nested;
     final direct = (item.repairMainNodeName ?? '').toString().trim();
     if (direct.isNotEmpty) return direct;
     final stateList = item.stateDetailList ?? const <StateDetail>[];
@@ -119,6 +122,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   String _repairMainNodeCodeOf(RepairItem item) {
+    final nested =
+        (item.trainRepairScheduleReal?.repairMainNodeCode ?? '').toString().trim();
+    if (nested.isNotEmpty) return nested;
     final direct = (item.repairMainNodeCode ?? '').toString().trim();
     if (direct.isNotEmpty) return direct;
     final stateList = item.stateDetailList ?? const <StateDetail>[];
@@ -138,7 +144,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   String _scheduleNodeNameOf(RepairItem item) {
-    final sName = (item.scheduleNodeName ??
+    final sName = (item.trainRepairScheduleReal?.scheduleNodeName ??
+            item.scheduleNodeName ??
             item.currentScheduleNodeName ??
             '')
         .toString()
@@ -147,6 +154,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   int _scheduleSortOf(RepairItem item) {
+    final nested = item.trainRepairScheduleReal?.sort;
+    if (nested != null) return nested;
     final s1 = item.scheduleNodeSort;
     if (s1 != null) return s1;
     final s2 = item.scheduleSort;
