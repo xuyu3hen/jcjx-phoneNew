@@ -258,17 +258,20 @@ class _JtShowPageState extends State<MutualWorkList> {
       Map<String, dynamic> queryParameters = {
         'typeCode': widget.typeCode,
         'pageNum': 0,
-        'pageSize': 1,
+        'pageSize': 0,
         // 'name': faultyPartController.text,
       };
 
+      logger.i('getFaultPart queryParameters: $queryParameters');
       var r = await ProductApi().getFaultPart(queryParameters);
+      logger.i('getFaultPart raw response: $r');
       if (mounted) {
         setState(() {
           //将List<dynamic>转换为List<Map<String, dynamic>>
           Global.faultPartList = (r as List)
               .map((item) => Map<String, dynamic>.from(item as Map))
               .toList();
+          logger.i('getFaultPart parsed count: ${Global.faultPartList.length}');
           logger.i(Global.faultPartList.length);
         });
       }

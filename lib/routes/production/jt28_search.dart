@@ -91,7 +91,7 @@ class _JtShowPageState extends State<JtSearch> {
     Map<String, dynamic> queryParameters = {
       'pageNum': pageNum,
       'pageSize': pageSize,
-      // 'status': 0,
+      'status': 0,
       'trainEntryCode': widget.trainEntryCode,
  
       'trainType': widget.typeName
