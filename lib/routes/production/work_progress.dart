@@ -20,7 +20,7 @@ class _WorkProgressPageState extends State<WorkProgressPage> {
   bool _isLoadingDeptProgress = false;
 
   // 用于追踪部门进度展开状态
-  Map<int, bool> _deptExpansionStates = {};
+  final Map<int, bool> _deptExpansionStates = {};
 
 
   @override
@@ -194,7 +194,7 @@ class _WorkProgressPageState extends State<WorkProgressPage> {
               ),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.business,
                     color: Colors.white,
                     size: 24,

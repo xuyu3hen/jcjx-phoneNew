@@ -35,7 +35,7 @@ class _MaterialItem extends State<MaterialItem> {
                 title: Text(widget.materialSt.materialCode??'',textScaleFactor: .9,),
                 // 副标题
                 subtitle: subtitle,
-                trailing:  Text("数量：${widget.materialSt.num}"),
+                trailing:  Text('数量：${widget.materialSt.num}'),
               ),
 
               Padding(
@@ -48,7 +48,7 @@ class _MaterialItem extends State<MaterialItem> {
                       style: TextStyle(
                         fontSize:15,
                         fontWeight: FontWeight.bold,
-                        fontStyle: widget.materialSt.state == "1"
+                        fontStyle: widget.materialSt.state == '1'
                                     ? FontStyle.italic:FontStyle.normal,
                       ),
                     ),

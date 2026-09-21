@@ -92,7 +92,7 @@ class _JtShowPageState extends State<JtShow> {
       // 显示错误信息
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       });
     }
@@ -137,7 +137,7 @@ class _JtShowPageState extends State<JtShow> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -154,7 +154,7 @@ class _JtShowPageState extends State<JtShow> {
   Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
         'name': faultyPartController.text,
@@ -178,7 +178,7 @@ class _JtShowPageState extends State<JtShow> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -199,12 +199,12 @@ class _JtShowPageState extends State<JtShow> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
         'team': 100
       };
       logger.i(queryParameters);
-      var r = await ProductApi().getCheckPerson(queryParameters);
+      // var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
         setState(() {});
       }
@@ -217,7 +217,7 @@ class _JtShowPageState extends State<JtShow> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28展示"),
+        title: const Text('机统28展示'),
       ),
       body: _buildBody(),
     );
@@ -234,13 +234,13 @@ class _JtShowPageState extends State<JtShow> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               ZjcFormSelectCell(
-                title: "动力类型",
-                text: dynamciTypeSelected["name"],
-                hintText: "请选择",
+                title: '动力类型',
+                text: dynamciTypeSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (dynamicTypeList.isEmpty) {
-                    showToast("无动力类型选择");
+                    showToast('无动力类型选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -248,12 +248,12 @@ class _JtShowPageState extends State<JtShow> {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择动力类型",
+                      title: '选择动力类型',
                       clickCallBack: (selectItem, selectArr) {
                         logger.i(selectArr);
                         setState(() {
-                          dynamciTypeSelected["code"] = selectItem["code"];
-                          dynamciTypeSelected["name"] = selectItem["name"];
+                          dynamciTypeSelected['code'] = selectItem['code'];
+                          dynamciTypeSelected['name'] = selectItem['name'];
                           getJcType();
                         });
                       },
@@ -262,13 +262,13 @@ class _JtShowPageState extends State<JtShow> {
                 },
               ),
               ZjcFormSelectCell(
-                title: "机型",
-                text: jcTypeListSelected["name"],
-                hintText: "请选择",
+                title: '机型',
+                text: jcTypeListSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (jcTypeList.isEmpty) {
-                    showToast("无机型可以选择");
+                    showToast('无机型可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -276,12 +276,12 @@ class _JtShowPageState extends State<JtShow> {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择机型",
+                      title: '选择机型',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          jcTypeListSelected["name"] = selectItem["name"];
-                          jcTypeListSelected["code"] = selectItem["code"];
+                          jcTypeListSelected['name'] = selectItem['name'];
+                          jcTypeListSelected['code'] = selectItem['code'];
                           getTrainNumCodeList();
                         });
                       },
@@ -290,13 +290,13 @@ class _JtShowPageState extends State<JtShow> {
                 },
               ),
 ZjcFormSelectCell(
-                title: "车号",
-                text: trainNumSelected["trainNum"],
-                hintText: "请选择",
+                title: '车号',
+                text: trainNumSelected['trainNum'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (trainNumCodeList.isEmpty) {
-                    showToast("无车号可以选择");
+                    showToast('无车号可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -304,12 +304,12 @@ ZjcFormSelectCell(
                       labelKey: 'trainNum',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择车号",
+                      title: '选择车号',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          trainNumSelected["trainNum"] = selectItem["trainNum"];
-                          trainNumSelected["code"] = selectItem["code"];
+                          trainNumSelected['trainNum'] = selectItem['trainNum'];
+                          trainNumSelected['code'] = selectItem['code'];
                         });
                       },
                     );

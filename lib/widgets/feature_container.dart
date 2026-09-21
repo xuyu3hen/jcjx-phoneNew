@@ -37,7 +37,7 @@ class _FeatureContainer extends State<FeatureContainer> {
               curve: Curves.fastOutSlowIn,
               colorChangeAnimationCurve: Curves.easeInCubic,
             ),
-            badgeContent: Text("${widget.num}", style: const TextStyle(fontSize: 18)),
+            badgeContent: Text('${widget.num}', style: const TextStyle(fontSize: 18)),
             child: Container(
               constraints: BoxConstraints.tightFor(width: (widget.width!)/6, height: (widget.width!)/6),
               decoration: BoxDecoration(

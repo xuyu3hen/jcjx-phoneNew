@@ -51,8 +51,8 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
         }
       });
     } catch (e) {
-      logger.e("$e");
-      showToast("获取专互检人员表失败");
+      logger.e('$e');
+      showToast('获取专互检人员表失败');
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -66,7 +66,7 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text("开工点名"),
+        title: const Text('开工点名'),
       ),
       // 打开侧边栏需要传递更低一级context
       body: Builder(builder:(BuildContext context) {
@@ -152,21 +152,21 @@ class _MuSpecialCallState extends State<MuSpecialCall>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${wip.name}",style: const TextStyle(fontSize: 16.0),),
+                title: Text('${wip.name}',style: const TextStyle(fontSize: 16.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
-                trailing:Text("${wip.riskLevel}",style: const TextStyle(fontSize: 18.0))
+                trailing:Text('${wip.riskLevel}',style: const TextStyle(fontSize: 18.0))
               ),
               ZjcFormInputCell(
-                title: "互检",
+                title: '互检',
                 text: wip.mutualPersonnelName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),
               ZjcFormInputCell(
-                title: "专检",
+                title: '专检',
                 text: wip.specialPersonnelName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),
@@ -229,7 +229,7 @@ Widget _personDrawer(){
   // 侧边主体
   Widget _buildMenus() {
     if(mutualList.isEmpty&&specialList.isEmpty){
-      return const ZjcEmptyView(text:"请选择作业项");
+      return const ZjcEmptyView(text:'请选择作业项');
     }
     return Consumer<UserModel>(
       builder: (BuildContext context,UserModel userModel,Widget? child){
@@ -323,8 +323,8 @@ Widget _personDrawer(){
               // holy shit
               List muList = mutualList.where((element) => element['select'] == true).toList();
               List spList = specialList.where((element) => element['select'] == true).toList();
-              String muStr = "";String muNameStr = "";
-              String spStr = "";String spNameStr = "";
+              String muStr = '';String muNameStr = '';
+              String spStr = '';String spNameStr = '';
               // 数组指定属性拼接
               muStr = muList.map((e){return (e['userId']).toString();}).join(',');
               muNameStr = muList.map((e){return (e['nickName']).toString();}).join(',');
@@ -352,7 +352,7 @@ Widget _personDrawer(){
               var submit = await JtApi().updateInstructPackageUser(
                 queryParameters: list
               );
-              if(submit['code'] != "S_T_S003"){
+              if(submit['code'] != 'S_T_S003'){
                 showToast("${submit['message']}");
               }
             }on DioException catch(e){

@@ -52,7 +52,7 @@ class ZjcAssetPicker extends StatefulWidget {
   final Duration? maximumRecordingDuration; // 录制视频最长时长, 默认为 15 秒，可以使用 `null` 来设置无限制的视频录制
   final Color bgColor; // 背景色
   final Function(List<AssetEntity> assetEntityList)? callBack; // 选择回调
-  List<AssetEntity> selectedAssets;
+  final List<AssetEntity> selectedAssets;
 
   @override
   State<ZjcAssetPicker> createState() => _ZjcAssetPickerState();
@@ -219,7 +219,7 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
     try {
       final AssetEntity? result = await CameraPicker.pickFromCamera(
         context,
-        pickerConfig: CameraPickerConfig(
+        pickerConfig: const CameraPickerConfig(
           // 只拍照，不录像
           enableRecording: false,
           // textDelegate: const EnglishCameraPickerTextDelegate(),
@@ -307,7 +307,8 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
     );
     if (result != null) {
       setState(() {
-        widget.selectedAssets = result;
+        widget.selectedAssets.clear();
+        widget.selectedAssets.addAll(result);
       });
       // 相册选择回调
       widget.callBack?.call(result);

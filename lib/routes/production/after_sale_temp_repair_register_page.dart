@@ -1,6 +1,4 @@
-import 'dart:io';
 
-import 'package:wechat_assets_picker/wechat_assets_picker.dart' hide AssetType;
 
 import '../../index.dart';
 import '../../services/after_sale_local_service.dart';
@@ -304,7 +302,7 @@ class _AfterSaleTempRepairRegisterPageState
 
   Future<void> _loadResponsibilityDepts() async {
     const cacheKey = 'responsibilityDepts';
-    List<Map<String, dynamic>> _extract(dynamic res) {
+    List<Map<String, dynamic>> extract(dynamic res) {
       final list = <Map<String, dynamic>>[];
       if (res is List && res.isNotEmpty) {
         final root = res.first;
@@ -351,7 +349,7 @@ class _AfterSaleTempRepairRegisterPageState
           'parentIdList': 101,
         },
       );
-      final list = _extract(res);
+      final list = extract(res);
       if (mounted) await applyList(list, saveCache: true);
     } catch (e, stackTrace) {
       _logger.e('加载责任车间字典异常', e, stackTrace);

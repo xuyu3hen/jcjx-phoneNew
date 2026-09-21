@@ -1,12 +1,8 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
-import '../api/production_api.dart';
 import '../index.dart';
 
 class AfterSaleLocalService {

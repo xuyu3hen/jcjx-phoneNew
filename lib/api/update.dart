@@ -25,7 +25,7 @@ class UpdateApi extends AppApi{
     })async{
       try {
         // 构建完整的下载URL（使用HTTPS）
-        String url = "${distributionServerUrl}/api/apk/version/last";
+        String url = '$distributionServerUrl/api/apk/version/last';
         
         // 添加环境参数
         Map<String, dynamic> params = Map.from(queryParametrs ?? {});
@@ -61,7 +61,7 @@ class UpdateApi extends AppApi{
         Map<String, dynamic> responseData = r.data;
         if (responseData.containsKey('data')) {
           // 新API格式: {code: 200, message: "成功", data: {...}}
-          return MyApkVersion.fromJson(responseData["data"]);
+          return MyApkVersion.fromJson(responseData['data']);
         } else {
           // 兼容旧API格式: {data: {...}}
           return MyApkVersion.fromJson(responseData);

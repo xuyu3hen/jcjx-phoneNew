@@ -1,7 +1,7 @@
 import 'package:jcjx_phone/index.dart';
 
 class SearchWorkPackage extends StatefulWidget {
-  Map<String, dynamic>? loco;
+  final Map<String, dynamic>? loco;
   SearchWorkPackage({super.key, this.loco});
 
   @override
@@ -54,15 +54,15 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
       mainNodeAndProcList = r.toMapList();
       mainNodeAndProcSelected = mainNodeAndProcList[0];
       logger.i(mainNodeAndProcList);
-      logger.i(mainNodeAndProcSelected["repairMainNodeList"].toString());
-      mainNodeAndProcSelected["repairMainNodeList"]?.forEach((element) {
+      logger.i(mainNodeAndProcSelected['repairMainNodeList'].toString());
+      mainNodeAndProcSelected['repairMainNodeList']?.forEach((element) {
         procList.add(element.toJson());
       });
       procSelected = procList[0];
       logger.i(procSelected);
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'repairMainNodeCode': procSelected["code"],
+        'repairMainNodeCode': procSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -74,7 +74,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
       trainNumSelected = trainNumList[0];
       //构建查询作业包参数
       Map<String, dynamic> queryParameters1 = {
-        'trainEntryCode': trainNumSelected["code"],
+        'trainEntryCode': trainNumSelected['code'],
       };
       //获取作业包
       workPackageList = await ProductApi()
@@ -101,7 +101,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'repairMainNodeCode': procSelected["repairMainNodeCode"],
+        'repairMainNodeCode': procSelected['repairMainNodeCode'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -121,7 +121,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
     try {
       //构建查询作业包参数
       Map<String, dynamic> queryParameters = {
-        'trainEntryCode': trainNumSelected["code"],
+        'trainEntryCode': trainNumSelected['code'],
       };
       //获取作业包
       workPackageList = await ProductApi()
@@ -139,8 +139,8 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
     List<Map<String, dynamic>> startWorkList = [];
     for (var element in workPackageList) {
       startWorkList.add({
-        "code": element.code,
-        "startTime": DateTime.now().millisecondsSinceEpoch
+        'code': element.code,
+        'startTime': DateTime.now().millisecondsSinceEpoch
       });
     }
     // 等待开工操作完成
@@ -206,13 +206,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   ZjcFormSelectCell(
-                    title: "修程",
-                    text: mainNodeAndProcSelected["name"] ?? "",
-                    hintText: "请选择",
+                    title: '修程',
+                    text: mainNodeAndProcSelected['name'] ?? '',
+                    hintText: '请选择',
                     showRedStar: true,
                     clickCallBack: () {
                       if (mainNodeAndProcList.isEmpty) {
-                        showToast("无修程选择");
+                        showToast('无修程选择');
                       } else {
                         ZjcCascadeTreePicker.show(
                           context,
@@ -220,16 +220,16 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           labelKey: 'name',
                           valueKey: 'code',
                           childrenKey: 'children',
-                          title: "选择动力类型",
+                          title: '选择动力类型',
                           clickCallBack: (selectItem, selectArr) {
                             logger.i(selectArr);
                             setState(() {
-                              mainNodeAndProcSelected["name"] =
-                                  selectItem["name"];
+                              mainNodeAndProcSelected['name'] =
+                                  selectItem['name'];
                               List<Map<String, dynamic>> repairNodecList = [];
                               logger.i(
-                                  selectItem["repairMainNodeList"].toString());
-                              selectItem["repairMainNodeList"]
+                                  selectItem['repairMainNodeList'].toString());
+                              selectItem['repairMainNodeList']
                                   ?.forEach((element) {
                                 repairNodecList.add(element.toJson());
                               });
@@ -242,13 +242,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                     },
                   ),
                   ZjcFormSelectCell(
-                    title: "工序节点",
-                    text: procSelected["name"],
-                    hintText: "请选择",
+                    title: '工序节点',
+                    text: procSelected['name'],
+                    hintText: '请选择',
                     showRedStar: true,
                     clickCallBack: () {
                       if (procList.isEmpty) {
-                        showToast("无工序节点可以选择");
+                        showToast('无工序节点可以选择');
                       } else {
                         ZjcCascadeTreePicker.show(
                           context,
@@ -256,13 +256,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           labelKey: 'name',
                           valueKey: 'code',
                           childrenKey: 'children',
-                          title: "选择机型",
+                          title: '选择机型',
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
                               logger.i(selectArr);
-                              procSelected["name"] = selectItem["name"];
-                              procSelected["repairMainNodeCode"] =
-                                  selectItem["code"];
+                              procSelected['name'] = selectItem['name'];
+                              procSelected['repairMainNodeCode'] =
+                                  selectItem['code'];
                               getTrainNum();
                             });
                           },
@@ -271,13 +271,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                     },
                   ),
                   ZjcFormSelectCell(
-                    title: "车号",
-                    text: trainNumSelected["trainNum"],
-                    hintText: "请选择",
+                    title: '车号',
+                    text: trainNumSelected['trainNum'],
+                    hintText: '请选择',
                     showRedStar: true,
                     clickCallBack: () {
                       if (trainNumList.isEmpty) {
-                        showToast("无车号可以选择");
+                        showToast('无车号可以选择');
                       } else {
                         ZjcCascadeTreePicker.show(
                           context,
@@ -285,13 +285,13 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                           labelKey: 'trainNum',
                           valueKey: 'code',
                           childrenKey: 'children',
-                          title: "选择检修地点",
+                          title: '选择检修地点',
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
                               logger.i(selectArr);
-                              trainNumSelected["trainNum"] =
-                                  selectItem["trainNum"];
-                              trainNumSelected["code"] = selectItem["code"];
+                              trainNumSelected['trainNum'] =
+                                  selectItem['trainNum'];
+                              trainNumSelected['code'] = selectItem['code'];
                               getWorkPackage();
                             });
                           },
@@ -415,7 +415,7 @@ class _DataDisplayPageState extends State<SearchWorkPackage> {
                               ),
                             ))
                         .toList()
-                    : [const Center(child: Text("暂无作业包信息"))],
+                    : [const Center(child: Text('暂无作业包信息'))],
               ),
             ],
           ),

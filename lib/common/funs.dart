@@ -9,7 +9,7 @@ Widget gmAvatar(String url, {
   BorderRadius? borderRadius,
 }) {
   var placeholder = Image.asset(
-      "imgs/avatar-default.png", //头像占位图
+      'imgs/avatar-default.png', //头像占位图
       width: width,
       height: height
   );
@@ -32,7 +32,7 @@ void showToast(String text, {dynamic gravity, dynamic toastLength}) {
 }
 
 void showLoading(context, [String? text]) {
-  String text1 = text ?? "Loading...";
+  String text1 = text ?? 'Loading...';
   showDialog(
       barrierDismissible: false,
       context: context,

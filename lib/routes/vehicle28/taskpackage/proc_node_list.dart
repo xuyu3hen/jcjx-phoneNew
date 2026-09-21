@@ -17,7 +17,7 @@ class _ProcNodeListState extends State<ProcNodeList>{
   void getProcessingMainNodeAndProc() async {
     var r = await JtApi().getProcessingMainNodeAndProc(
     );
-    if(r['code'] == "S_F_S000"){
+    if(r['code'] == 'S_F_S000'){
       setState(() {
         procList =  r['data'].map<RepairProcAndNode>((e) => RepairProcAndNode.fromJson(e)).toList();
       });
@@ -36,7 +36,7 @@ class _ProcNodeListState extends State<ProcNodeList>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("进行中工序"),
+        title: const Text('进行中工序'),
       ),
       // 打开侧边栏需要传递更低一级context
       body: _body(),
@@ -64,7 +64,7 @@ class _ProcNodeListState extends State<ProcNodeList>{
       children: [
         ExpansionTile(
           title: Text('${rpan.name}',style: tileText(18.0),),
-          subtitle: Text(rpan.remark??""),
+          subtitle: Text(rpan.remark??''),
           initiallyExpanded: true,
           collapsedBackgroundColor: Colors.blue[100],
           children: <Widget>[
@@ -112,7 +112,7 @@ class _ProcNodeListState extends State<ProcNodeList>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${rmnl.name}",style: const TextStyle(fontSize: 18.0),),
+                title: Text('${rmnl.name}',style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   Navigator.of(context).pushNamed('trainbynode',arguments: rmnl.code).then((value) => {

@@ -8,8 +8,8 @@ class DatetimeFormitem extends StatefulWidget {
   });
 
   final DateTimePickerType type;
-  DateTime? datetime;
-  String title;
+  final DateTime? datetime;
+  final String title;
 
   @override
   State<DatetimeFormitem> createState() => _DatetimeFormitemState();
@@ -17,10 +17,17 @@ class DatetimeFormitem extends StatefulWidget {
 
 class _DatetimeFormitemState extends State<DatetimeFormitem> {
   DateTime d = DateTime.now();
+  late DateTime? _datetime;
+
+  @override
+  void initState() {
+    super.initState();
+    _datetime = widget.datetime;
+  }
 
   void update(DateTime date) {
     setState(() {
-      widget.datetime = date;
+      _datetime = date;
     });
   }
 
@@ -62,7 +69,7 @@ class _DatetimeFormitemState extends State<DatetimeFormitem> {
               const SizedBox(width: 20),
               Expanded(
                 child: Text(
-                  BoardDateFormat(format).format(widget.datetime!),
+                  BoardDateFormat(format).format(_datetime!),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),

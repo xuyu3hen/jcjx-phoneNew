@@ -42,8 +42,8 @@ class _NormalMainPageState extends State<NormalMainPage> {
       if (mounted) {
         setState(() {
           dynamicTypeList = r.toMapList();
-          dynamicTypeSelected["code"] = r.toMapList()[0]["code"];
-          dynamicTypeSelected["name"] = r.toMapList()[0]["name"];
+          dynamicTypeSelected['code'] = r.toMapList()[0]['code'];
+          dynamicTypeSelected['name'] = r.toMapList()[0]['name'];
           getJcType();
         });
       }
@@ -56,7 +56,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -109,7 +109,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
           });
         }
       } else {
-        showToast("获取用户账号信息失败");
+        showToast('获取用户账号信息失败');
       }
       Map<String, dynamic> queryParameters = {};
       if ((Global.parentDeptName == null || Global.parentDeptName!.isEmpty) &&
@@ -256,7 +256,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
         children: [
           const SizedBox(height: 30),
           const ListTile(
-            title: Text("检修进度",
+            title: Text('检修进度',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           _buildFeatureRows([

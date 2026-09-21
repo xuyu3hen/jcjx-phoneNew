@@ -1,14 +1,11 @@
-import 'dart:convert';
-import 'dart:io';
 import '../index.dart';
 import '../models/progress.dart';
-import '../api/production_api.dart';
 
 // #region agent log
 void _agentLog(String location, String message, Map<String, dynamic> data,
     String hypothesisId) {
   try {
-    final path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
+    const path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
     final m = {
       'location': location,
       'message': message,
@@ -84,7 +81,7 @@ class Global {
   static List<MaterialColor> get themes => _theme;
 
   // 是否为release版
-  static bool get isRelease => const bool.fromEnvironment("dart.vm.product");
+  static bool get isRelease => const bool.fromEnvironment('dart.vm.product');
 
   // 初始化全局信息
   static Future init() async {
@@ -145,7 +142,7 @@ class Global {
 
   // 持久化Profile信息
   static saveProfile() =>
-      _prefs.setString("profile", jsonEncode(profile.toJson()));
+      _prefs.setString('profile', jsonEncode(profile.toJson()));
 
   // 预加载机车派工和检修进度数据
   static Future<void> preloadRepairData() async {
@@ -256,7 +253,7 @@ class Global {
           .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
 
       // response 已经是 List 类型
-      List<Map<String, dynamic>> data = (response as List)
+      List<Map<String, dynamic>> data = (response)
           .map((e) => e is Map<String, dynamic>
               ? e
               : Map<String, dynamic>.from(e as Map))

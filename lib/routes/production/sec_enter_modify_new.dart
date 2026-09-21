@@ -137,8 +137,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           dynamicTypeList = r.toMapList();
           permissions = permissionResponse;
           logger.i(permissions.toJson());
-          dynamicTypeSelected["code"] = r.toMapList()[0]["code"];
-          dynamicTypeSelected["name"] = r.toMapList()[0]["name"];
+          dynamicTypeSelected['code'] = r.toMapList()[0]['code'];
+          dynamicTypeSelected['name'] = r.toMapList()[0]['name'];
           getJcType();
         });
       }
@@ -151,7 +151,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -160,8 +160,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       if (mounted) {
         setState(() {
           jcTypeList = r.toMapList();
-          jcTypeListSelected["code"] = r.toMapList()[0]["code"];
-          jcTypeListSelected["name"] = r.toMapList()[0]["name"];
+          jcTypeListSelected['code'] = r.toMapList()[0]['code'];
+          jcTypeListSelected['name'] = r.toMapList()[0]['name'];
           getRepairProc();
         });
       }
@@ -173,9 +173,9 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   // 获取修制信息
   Future<void> getRepairSys() async {
     try {
-      logger.i(dynamicTypeSelected["code"]);
+      logger.i(dynamicTypeSelected['code']);
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -216,7 +216,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   void getRepairTimes() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'repairProcCode': repairSelected["code"],
+        'repairProcCode': repairSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -272,7 +272,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -293,8 +293,8 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   void getRepairPlanByTrainNum() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'trainNum': trainNumSelected["trainNum"],
-        'typeCode': jcTypeListSelected["code"]
+        'trainNum': trainNumSelected['trainNum'],
+        'typeCode': jcTypeListSelected['code']
       };
       var r = await ProductApi()
           .getTrainInfoByPlan(queryParametrs: queryParameters);
@@ -318,35 +318,35 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       // 如果数据存在但缺少必要字段，给出提示但继续填充可用数据
       if (mounted) {
         setState(() {
-          trainNumSelected["trainNum"] = r['trainNum'] ?? trainNumSelected["trainNum"];
-          trainNumSelected["code"] = r['trainNumCode'] ??
+          trainNumSelected['trainNum'] = r['trainNum'] ?? trainNumSelected['trainNum'];
+          trainNumSelected['code'] = r['trainNumCode'] ??
               r['locoCode'] ??
               r['locomotiveCode'] ??
-              trainNumSelected["code"];
-          trainNumSelected["repairPlanCode"] = r['repairPlanCode'] ??
+              trainNumSelected['code'];
+          trainNumSelected['repairPlanCode'] = r['repairPlanCode'] ??
               r['planCode'] ??
               r['code'] ??
-              trainNumSelected["repairPlanCode"];
+              trainNumSelected['repairPlanCode'];
           // 安全地设置机型信息
           if (r['trainType'] != null) {
-            jcTypeListSelected["name"] = r['trainType'];
+            jcTypeListSelected['name'] = r['trainType'];
           }
           if (r['trainTypeCode'] != null) {
-            jcTypeListSelected["code"] = r['trainTypeCode'];
+            jcTypeListSelected['code'] = r['trainTypeCode'];
           }
           //修程信息
-          if (r["repairProc"] != null) {
-            repairSelected["name"] = r["repairProc"];
+          if (r['repairProc'] != null) {
+            repairSelected['name'] = r['repairProc'];
           }
-          if (r["repairProcCode"] != null) {
-            repairSelected["code"] = r["repairProcCode"];
+          if (r['repairProcCode'] != null) {
+            repairSelected['code'] = r['repairProcCode'];
           }
           //修次信息
-          if (r["repairTimes"] != null) {
-            repairTimesSelected['name'] = r["repairTimes"];
+          if (r['repairTimes'] != null) {
+            repairTimesSelected['name'] = r['repairTimes'];
           }
-          if (r["repairTimesCode"] != null) {
-            repairTimesSelected['code'] = r["repairTimesCode"];
+          if (r['repairTimesCode'] != null) {
+            repairTimesSelected['code'] = r['repairTimesCode'];
           }
           //配属段信息
           if (r['attachDept'] != null) {
@@ -386,7 +386,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
     if (faultPics.isNotEmpty) {
       try {
         var r = await ProductApi().upSlipImg(
-            queryParametrs: {"trainEntryCode": val}, imagedataList: faultPics);
+            queryParametrs: {'trainEntryCode': val}, imagedataList: faultPics);
         if (r == 200) {
           SmartDialog.dismiss();
           // 上传成功后才清除图片
@@ -406,57 +406,53 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   Future<String> newEntry() async {
     try {
       if (isSubmitting) {
-        return ""; // 如果正在提报，直接返回空字符串
+        return ''; // 如果正在提报，直接返回空字符串
       }
       setState(() {
         isSubmitting = true; // 开始提报，设置状态为正在提报
       });
       SmartDialog.showLoading(msg: '正在提交入段');
       Map<String, dynamic> queryParameter = {
-        'dynamicCode': dynamicTypeSelected["code"],
-        'dynamicName': dynamicTypeSelected["name"],
-        'typeCode': jcTypeListSelected["code"],
-        'typeName': jcTypeListSelected["name"],
+        'dynamicCode': dynamicTypeSelected['code'],
+        'dynamicName': dynamicTypeSelected['name'],
+        'typeCode': jcTypeListSelected['code'],
+        'typeName': jcTypeListSelected['name'],
         'trainNum': trainNumSelected['trainNum'],
         'trainNumCode': trainNumSelected['code'],
         'repairPlanCode': trainNumSelected['repairPlanCode'],
-        'repairTimes': repairTimesSelected["name"],
+        'repairTimes': repairTimesSelected['name'],
         'repairProcName': repairSelected['name'],
         'repairProcCode': repairSelected['code'],
-        'repairLocation': stopLocationSelected["code"],
+        'repairLocation': stopLocationSelected['code'],
         'trackNum': stopLocationSelected['trackNum'],
         'stoppingPlace': stopLocationSelected['areaName'],
         'trackNumB': stopLocationSelected['trackNum'],
         'stoppingPlaceB': stopLocationSelected['areaName'],
         'attachSegmentCode': assignSegmentSelected['code'],
         'attachDept': assignSegmentSelected['assignSegment'],
-        'repairLocationB': stopLocationSelected["code"]
+        'repairLocationB': stopLocationSelected['code']
       };
       logger.i(queryParameter);
       try {
         final raw = await ProductApi()
             .trainEntrySave(queryParameter)
             .timeout(const Duration(seconds: 25));
-        if (raw is! Map) {
-          showToast("入段失败：返回数据异常");
-          return "";
-        }
         final r = Map<String, dynamic>.from(raw);
-        final topCode = r["code"]?.toString();
-        final data = r["data"];
-        if (topCode != "S_F_S000") {
-          showToast((r["message"] ?? "入段失败").toString());
-          return "";
+        final topCode = r['code']?.toString();
+        final data = r['data'];
+        if (topCode != 'S_F_S000') {
+          showToast((r['message'] ?? '入段失败').toString());
+          return '';
         }
         bool isBusinessError = false;
         String? msg;
         dynamic entryCode;
         if (data is Map) {
-          final dataCode = data["code"];
-          isBusinessError = dataCode == 500 || dataCode?.toString() == "500";
-          msg = (data["msg"] ?? "").toString();
+          final dataCode = data['code'];
+          isBusinessError = dataCode == 500 || dataCode?.toString() == '500';
+          msg = (data['msg'] ?? '').toString();
           if (!isBusinessError) {
-            entryCode = data["code"];
+            entryCode = data['code'];
           }
         } else if (data is List) {
           Map? first;
@@ -466,45 +462,45 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               break;
             }
           }
-          entryCode = first?["code"];
+          entryCode = first?['code'];
         } else {
-          showToast((r["message"] ?? "入段失败").toString());
-          return "";
+          showToast((r['message'] ?? '入段失败').toString());
+          return '';
         }
 
         if (!isBusinessError) {
           final entryCodeStr = entryCode?.toString().trim() ?? '';
-          logger.i("trainEntrySave success: $entryCodeStr");
+          logger.i('trainEntrySave success: $entryCodeStr');
 
           if (entryCodeStr.isEmpty) {
             logger.e('trainEntrySave data.code is null/empty');
-            showToast("基础信息保存成功，但缺少必要数据无法上传图片");
-            return "";
+            showToast('基础信息保存成功，但缺少必要数据无法上传图片');
+            return '';
           }
 
           if (faultPics.isEmpty) {
             logger.w('没有选择图片，跳过上传');
             // showToast("基础信息保存成功，但未选择图片");
-            return r["code"];
+            return r['code'];
           }
 
           try {
             await uploadSlip(entryCodeStr)
                 .timeout(const Duration(seconds: 60));
-            return topCode ?? "";
+            return topCode ?? '';
           } catch (e, stackTrace) {
             logger.e('uploadSlip 发生异常: $e\n堆栈信息: $stackTrace');
-            showToast("基础信息已保存，图片上传失败");
-            return "";
+            showToast('基础信息已保存，图片上传失败');
+            return '';
           }
         } else {
           final m = (msg ?? '').trim();
-          if (m.isNotEmpty && m != "null") {
+          if (m.isNotEmpty && m != 'null') {
             _showMessageDialog(m);
           } else {
-            showToast((r["message"] ?? "入段失败").toString());
+            showToast((r['message'] ?? '入段失败').toString());
           }
-          return "";
+          return '';
         }
       } finally {
         SmartDialog.dismiss();
@@ -516,16 +512,16 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
       }
     } on TimeoutException catch (e, stackTrace) {
       logger.e('newEntry 超时: $e\n堆栈信息: $stackTrace');
-      showToast("网络超时，请检查信号后重试");
-      return "";
+      showToast('网络超时，请检查信号后重试');
+      return '';
     } catch (e, stackTrace) {
       logger.e('newEntry 方法中发生异常: $e\n堆栈信息: $stackTrace');
       if (e is TypeError) {
-        showToast("入段失败：返回数据异常");
+        showToast('入段失败：返回数据异常');
       } else {
-        showToast("入段失败");
+        showToast('入段失败');
       }
-      return "";
+      return '';
     }
   }
 
@@ -545,7 +541,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                "提示",
+                '提示',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
@@ -581,12 +577,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
         ListView(children: [
         Column(mainAxisAlignment: MainAxisAlignment.start, children: [
           ZjcFormSelectCell(
-            title: "动力类型",
-            text: dynamicTypeSelected["name"] ?? '',
-            hintText: "请选择",
+            title: '动力类型',
+            text: dynamicTypeSelected['name'] ?? '',
+            hintText: '请选择',
             clickCallBack: () {
               if (dynamicTypeList.isEmpty) {
-                showToast("无动力类型选择");
+                showToast('无动力类型选择');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -594,13 +590,13 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   labelKey: 'name',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择动力类型",
+                  title: '选择动力类型',
                   clickCallBack: (selectItem, selectArr) {
                     logger.i(selectArr);
                     if (mounted) {
                       setState(() {
-                        dynamicTypeSelected["code"] = selectItem["code"];
-                        dynamicTypeSelected["name"] = selectItem["name"];
+                        dynamicTypeSelected['code'] = selectItem['code'];
+                        dynamicTypeSelected['name'] = selectItem['name'];
                         getJcType();
                       });
                     }
@@ -616,11 +612,11 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                 child: SizedBox(
                   height: 60, // 设置统一高度
                   child: ZjcFormSelectCell(
-                    text: jcTypeListSelected["name"] ?? '',
-                    hintText: "请选择机型",
+                    text: jcTypeListSelected['name'] ?? '',
+                    hintText: '请选择机型',
                     clickCallBack: () {
                       if (jcTypeList.isEmpty) {
-                        showToast("无机型可以选择");
+                        showToast('无机型可以选择');
                       } else {
                         ZjcCascadeTreePicker.show(
                           context,
@@ -628,13 +624,13 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                           labelKey: 'name',
                           valueKey: 'code',
                           childrenKey: 'children',
-                          title: "选择机型",
+                          title: '选择机型',
                           clickCallBack: (selectItem, selectArr) {
                             if (mounted) {
                               setState(() {
                                 logger.i(selectArr);
-                                jcTypeListSelected["name"] = selectItem["name"];
-                                jcTypeListSelected["code"] = selectItem["code"];
+                                jcTypeListSelected['name'] = selectItem['name'];
+                                jcTypeListSelected['code'] = selectItem['code'];
                                 // getTrainNumCodeList();
                                 // 在这里添加获取车号等后续逻辑，如果有的话
                               });
@@ -652,17 +648,17 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                 child: SizedBox(
                   height: 60, // 设置统一高度
                   child: ZjcFormInputCell(
-                    title: "车号",
-                    hintText: "车号",
+                    title: '车号',
+                    hintText: '车号',
                     rightWidget: IconButton(
                       icon: const Icon(Icons.search),
                       onPressed: () {
                         FocusScope.of(context).unfocus();
-                        if (trainNumSelected["trainNum"] != null &&
-                            trainNumSelected["trainNum"].toString().isNotEmpty) {
+                        if (trainNumSelected['trainNum'] != null &&
+                            trainNumSelected['trainNum'].toString().isNotEmpty) {
                           getRepairPlanByTrainNum();
                         } else {
-                           SmartDialog.showToast("请输入车号");
+                           SmartDialog.showToast('请输入车号');
                          }
                        },
                      ),
@@ -673,10 +669,10 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                      },
                      inputCallBack: (value) {
                        setState(() {
-                         trainNumSelected["trainNum"] = value;
+                         trainNumSelected['trainNum'] = value;
                          // 手工修改车号后，清空上一次查到的计划标识，避免串数据
-                         trainNumSelected["code"] = null;
-                         trainNumSelected["repairPlanCode"] = null;
+                         trainNumSelected['code'] = null;
+                         trainNumSelected['repairPlanCode'] = null;
                        });
                      },
                   ),
@@ -685,12 +681,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             ],
           ),
           ZjcFormSelectCell(
-            title: "配属段",
-            text: assignSegmentSelected["assignSegment"] ?? '',
-            hintText: "请选择",
+            title: '配属段',
+            text: assignSegmentSelected['assignSegment'] ?? '',
+            hintText: '请选择',
             clickCallBack: () {
               if (assignSegmentList.isEmpty) {
-                showToast("无配属段可选择");
+                showToast('无配属段可选择');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -698,14 +694,14 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   labelKey: 'assignSegment',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择配属段",
+                  title: '选择配属段',
                   clickCallBack: (selectItem, selectArr) {
                     logger.i(selectArr);
                     if (mounted) {
                       setState(() {
-                        assignSegmentSelected["code"] = selectItem["code"];
-                        assignSegmentSelected["assignSegment"] =
-                            selectItem["assignSegment"];
+                        assignSegmentSelected['code'] = selectItem['code'];
+                        assignSegmentSelected['assignSegment'] =
+                            selectItem['assignSegment'];
                       });
                     }
                   },
@@ -718,12 +714,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               Expanded(
                 flex: 1,
                 child: ZjcFormSelectCell(
-                  title: "修程",
-                  text: repairSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '修程',
+                  text: repairSelected['name'] ?? '',
+                  hintText: '请选择',
                   clickCallBack: () {
                     if (repairList.isEmpty) {
-                      showToast("无修程信息");
+                      showToast('无修程信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -731,14 +727,14 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择修程",
+                        title: '选择修程',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              repairSelected["name"] = selectItem["name"];
+                              repairSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              repairSelected["code"] = selectItem["code"];
+                              repairSelected['code'] = selectItem['code'];
                               getRepairTimes();
                               // getRepairMainNode();
                             });
@@ -752,12 +748,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
               Expanded(
                 flex: 1,
                 child: ZjcFormSelectCell(
-                  title: "修次",
-                  text: repairTimesSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '修次',
+                  text: repairTimesSelected['name'] ?? '',
+                  hintText: '请选择',
                   clickCallBack: () {
                     if (repairTImesList.isEmpty) {
-                      showToast("无修次信息");
+                      showToast('无修次信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -765,14 +761,14 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择修次",
+                        title: '选择修次',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              repairTimesSelected["name"] = selectItem["name"];
+                              repairTimesSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              repairTimesSelected["code"] = selectItem["code"];
+                              repairTimesSelected['code'] = selectItem['code'];
                             });
                           }
                         },
@@ -784,12 +780,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             ],
           ),
           ZjcFormSelectCell(
-            title: "检修地点",
-            text: stopLocationSelected["realLocation"],
-            hintText: "请选择",
+            title: '检修地点',
+            text: stopLocationSelected['realLocation'],
+            hintText: '请选择',
             clickCallBack: () {
               if (stopLocationList.isEmpty) {
-                showToast("无检修地点可选择");
+                showToast('无检修地点可选择');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -797,15 +793,15 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                   labelKey: 'realLocation',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择检修地点",
+                  title: '选择检修地点',
                   clickCallBack: (selectItem, selectArr) {
                     setState(() {
                       logger.i(selectArr);
-                      stopLocationSelected["code"] = selectItem["code"];
-                      stopLocationSelected["realLocation"] =
-                          selectItem["realLocation"];
-                      stopLocationSelected["areaName"] = selectItem["areaName"];
-                      stopLocationSelected["trackNum"] = selectItem["trackNum"];
+                      stopLocationSelected['code'] = selectItem['code'];
+                      stopLocationSelected['realLocation'] =
+                          selectItem['realLocation'];
+                      stopLocationSelected['areaName'] = selectItem['areaName'];
+                      stopLocationSelected['trackNum'] = selectItem['trackNum'];
                     });
                   },
                 );
@@ -814,12 +810,12 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
           ),
           //增加朝向
           ZjcFormSelectCell(
-              title: "朝向",
-              text: directionSelected["name"] ?? '',
-              hintText: "请选择",
+              title: '朝向',
+              text: directionSelected['name'] ?? '',
+              hintText: '请选择',
               clickCallBack: () {
                 if (directionList.isEmpty) {
-                  showToast("无朝向可选择");
+                  showToast('无朝向可选择');
                 } else {
                   ZjcCascadeTreePicker.show(
                     context,
@@ -827,7 +823,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
                     labelKey: 'name',
                     valueKey: 'name',
                     childrenKey: 'children',
-                    title: "选择朝向",
+                    title: '选择朝向',
                     clickCallBack: (selectItem, selectArr) {
                       setState(() {
                         logger.i(selectArr);
@@ -922,38 +918,38 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
   }
 
   bool _validateForm() {
-    if (trainNumSelected["trainNum"] == null ||
-        trainNumSelected["trainNum"].toString().isEmpty) {
+    if (trainNumSelected['trainNum'] == null ||
+        trainNumSelected['trainNum'].toString().isEmpty) {
       SmartDialog.showToast('请填写车号');
       return false;
     }
 
-    if (assignSegmentSelected["assignSegment"] == null ||
-        assignSegmentSelected["assignSegment"].toString().isEmpty) {
+    if (assignSegmentSelected['assignSegment'] == null ||
+        assignSegmentSelected['assignSegment'].toString().isEmpty) {
       SmartDialog.showToast('请填写配属段');
       return false;
     }
 
-    if (repairSelected["name"] == null ||
-        repairSelected["name"].toString().isEmpty) {
+    if (repairSelected['name'] == null ||
+        repairSelected['name'].toString().isEmpty) {
       SmartDialog.showToast('请填写修程');
       return false;
     }
 
-    if (repairTimesSelected["name"] == null ||
-        repairTimesSelected["name"].toString().isEmpty) {
+    if (repairTimesSelected['name'] == null ||
+        repairTimesSelected['name'].toString().isEmpty) {
       SmartDialog.showToast('请填写修次');
       return false;
     }
 
-    if (stopLocationSelected["realLocation"] == null ||
-        stopLocationSelected["realLocation"].toString().isEmpty) {
+    if (stopLocationSelected['realLocation'] == null ||
+        stopLocationSelected['realLocation'].toString().isEmpty) {
       SmartDialog.showToast('请填写检修地点');
       return false;
     }
 
-    if (directionSelected["name"] == null ||
-        directionSelected["name"].toString().isEmpty) {
+    if (directionSelected['name'] == null ||
+        directionSelected['name'].toString().isEmpty) {
       SmartDialog.showToast('请填写朝向');
       return false;
     }
@@ -984,7 +980,7 @@ class _SecEnterModifyStateNew extends State<SecEnterModifyNew> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const Text(
-                "入段成功",
+                '入段成功',
                 style: TextStyle(fontSize: 18),
               ),
               ConstrainedBox(

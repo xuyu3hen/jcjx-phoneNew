@@ -48,7 +48,7 @@ class _MyPageItems extends State<MyPageItems> {
                     return ListTile(
                       leading:
                           Icon(Icons.update, color: Theme.of(context).primaryColor),
-                      title: const Text("版本号：", style: TextStyle(fontSize: 18)),
+                      title: const Text('版本号：', style: TextStyle(fontSize: 18)),
                       trailing:
                           Text(version, style: const TextStyle(fontSize: 18)),
                     );
@@ -97,29 +97,29 @@ class _MyPageItems extends State<MyPageItems> {
       return ListTile(
         leading:
             Icon(Icons.logout_outlined, color: Theme.of(context).primaryColor),
-        title: const Text("退出登录", style: TextStyle(fontSize: 18)),
+        title: const Text('退出登录', style: TextStyle(fontSize: 18)),
         onTap: () {
           showDialog(
               context: context,
               builder: (context) {
                 return AlertDialog(
-                  content: const Text("退出登录"),
+                  content: const Text('退出登录'),
                   actions: <Widget>[
                     TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("取消")),
+                        child: const Text('取消')),
                     TextButton(
                         onPressed: () async {
                           usermodel.accessToken = null;
                           Global.profile = Profile();
                          
-                          var _prefs = await SharedPreferences.getInstance();
-                          _prefs.remove("profile");
+                          var prefs = await SharedPreferences.getInstance();
+                          prefs.remove('profile');
                           Navigator.pop(context);
                           // Scaffold.of(context).closeDrawer();
                           // 需要改为StatefulWidget父类
                         },
-                        child: const Text("确定"))
+                        child: const Text('确定'))
                   ],
                 );
               });
@@ -129,9 +129,9 @@ class _MyPageItems extends State<MyPageItems> {
       return ListTile(
         leading:
             Icon(Icons.logout_outlined, color: Theme.of(context).primaryColor),
-        title: const Text("登录", style: TextStyle(fontSize: 18)),
+        title: const Text('登录', style: TextStyle(fontSize: 18)),
         onTap: () {
-          Navigator.of(context).pushNamed("login");
+          Navigator.of(context).pushNamed('login');
         },
       );
     }

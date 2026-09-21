@@ -15,7 +15,7 @@ class Special extends StatefulWidget {
 
 class _SpecialState extends State<Special> {
   // 互检结果
-  Map<dynamic,dynamic> mutualStatus = {"label":"通过","value":1};
+  Map<dynamic,dynamic> mutualStatus = {'label':'通过','value':1};
   // 故障图片
   List<AssetEntity> assestPics = [];
   List<File> repairPics = [];
@@ -32,7 +32,7 @@ class _SpecialState extends State<Special> {
     jtMes = ModalRoute.of(context)!.settings.arguments as JtMessage;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("专检"),
+        title: const Text('专检'),
       ),
       body: _buildBody(),
       persistentFooterButtons:[
@@ -53,59 +53,59 @@ class _SpecialState extends State<Special> {
             ListTile(
               // dense: true,
               leading: Text(
-                "${jtMes?.trainType}-${jtMes?.trainNum}",
+                '${jtMes?.trainType}-${jtMes?.trainNum}',
                 style: const TextStyle(fontSize: 18.0),
               ),
               // title: Text("${jtMes?.trainType}-${jtMes?.trainNum}",style: TextStyle(fontSize: 18.0),),
-              trailing: Text("加工方法：${jtMes?.processMethodName}"),
+              trailing: Text('加工方法：${jtMes?.processMethodName}'),
             ),
             ListTile(
               dense: true,
               title: Text(
-                "检修作业来源：${jtMes?.repairResourceName}",
+                '检修作业来源：${jtMes?.repairResourceName}',
                 style: const TextStyle(fontSize: 18.0),
               ),
-              subtitle: Text("报修人：${jtMes?.reporterName}"),
-              trailing: Text("风险等级：${jtMes?.riskLevel}"),
+              subtitle: Text('报修人：${jtMes?.reporterName}'),
+              trailing: Text('风险等级：${jtMes?.riskLevel}'),
             ),
             ListTile(
               dense: true,
               title: Text(
-                "施修情况：${jtMes?.repairStatus}",
+                '施修情况：${jtMes?.repairStatus}',
                 style: const TextStyle(fontSize: 18.0),
               ),
-              subtitle: Text("施修人：${jtMes?.repairName}"),
+              subtitle: Text('施修人：${jtMes?.repairName}'),
             ),
             ListTile(
               dense: true,
               title: Text(
-                "故障零部件:${jtMes?.jcNodeName}",
+                '故障零部件:${jtMes?.jcNodeName}',
                 style: const TextStyle(fontSize: 18.0),
               ),
             ),
             ZjcFormInputCell(
-              title: "故障现象",
+              title: '故障现象',
               text: jtMes?.faultDescription,
               maxLines: 3,
               maxLength: 200,
               enabled: false,
             ),
             ZjcFormSelectCell(
-              title: "专检结果",
+              title: '专检结果',
               text: mutualStatus['label'],
-              hintText: "请选择",
+              hintText: '请选择',
               showRedStar: true,
               clickCallBack: () {
                 ZjcCascadeTreePicker.show(
                   context,
                   data: FilterData.mutualStatusList,
                   isShowSearch: false,
-                  title: "选择互检结果",
+                  title: '选择互检结果',
                   clickCallBack: (selectItem, selectArr) {
                     logger.i(selectArr);
                     setState(() {
-                      mutualStatus['label'] = selectItem["label"];
-                      mutualStatus['value'] = selectItem["value"];
+                      mutualStatus['label'] = selectItem['label'];
+                      mutualStatus['value'] = selectItem['value'];
                     });
                   },
                 );
@@ -155,7 +155,7 @@ class _SpecialState extends State<Special> {
         SmartDialog.showLoading();
         List<Map<String,dynamic>> queryParameters = [];
         queryParameters.insert(0, {
-          "code":jtMes?.code,
+          'code':jtMes?.code,
         });
         if(mutualStatus['value'] == 0){
           queryParameters[0]['completeStatus'] = 0;
@@ -167,13 +167,13 @@ class _SpecialState extends State<Special> {
           queryParameters[0]['specialInspectionPicture'] = upload['data'];
         }
         queryParameters[0]['status'] = jtMes?.status;
-        log("$queryParameters");
+        log('$queryParameters');
         await JtApi().uploadJt28(queryParametrs: queryParameters).then((value) async => {
           message = value,
           SmartDialog.dismiss(status: SmartStatus.loading)
         });
-        log("$message");
-        if(message['code'] == "S_T_S003"){
+        log('$message');
+        if(message['code'] == 'S_T_S003'){
           SmartDialog.show(
             clickMaskDismiss: false,
             builder: (con){
@@ -189,7 +189,7 @@ class _SpecialState extends State<Special> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    const Text("专检提报成功",style: TextStyle(fontSize: 18),),
+                    const Text('专检提报成功',style: TextStyle(fontSize: 18),),
                     ConstrainedBox(
                       constraints: const BoxConstraints.expand(height: 30,width: 160),
                       child: ElevatedButton.icon(
@@ -208,7 +208,7 @@ class _SpecialState extends State<Special> {
       }
       }, 
       icon: const Icon(Icons.check_circle_outline_rounded), 
-      label: const Text("确认"),
+      label: const Text('确认'),
       style: ElevatedButton.styleFrom(
         minimumSize: Size(MediaQuery.of(context).size.width, 40),
       ),

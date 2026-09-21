@@ -18,7 +18,7 @@ class _PersonPageState extends State<PersonPage> {
         Global.profile.permissions = p;
       });
     } else {
-      showToast("获取用户账号信息失败");
+      showToast('获取用户账号信息失败');
     }
   }
 
@@ -46,7 +46,7 @@ class _PersonPageState extends State<PersonPage> {
               height: 20.0,
             ),
             Text(
-              "正在请求用户数据",
+              '正在请求用户数据',
               style: TextStyle(color: Colors.blue[700]),
             ),
           ],
@@ -141,11 +141,11 @@ class _PersonPageState extends State<PersonPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "${Global.profile.permissions?.user.nickName}",
+              '${Global.profile.permissions?.user.nickName}',
               style: AppConstants.textStylePerson,
             ),
             Text(
-              "${Global.parentDeptName} -${Global.profile.permissions?.user.dept?.deptName}",
+              '${Global.parentDeptName} -${Global.profile.permissions?.user.dept?.deptName}',
               style: AppConstants.textStylePerson,
             ),
           ],
@@ -155,11 +155,11 @@ class _PersonPageState extends State<PersonPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "${Global.profile.permissions?.user.nickName}",
+              '${Global.profile.permissions?.user.nickName}',
               style: AppConstants.textStylePerson,
             ),
             Text(
-              "${Global.profile.permissions?.user.dept?.deptName}",
+              '${Global.profile.permissions?.user.dept?.deptName}',
               style: AppConstants.textStylePerson,
             ),
           ],
@@ -167,7 +167,7 @@ class _PersonPageState extends State<PersonPage> {
       }
     } else {
       return const Text(
-        "未登录",
+        '未登录',
         style: AppConstants.textStylePerson,
       );
     }

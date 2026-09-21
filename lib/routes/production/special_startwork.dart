@@ -52,11 +52,11 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
   bool _isChecked = false;
 
   // 加工方法列表
-  List<Map<String, dynamic>> _processMethodList = [];
+  // List<Map<String, dynamic>> _processMethodList = [];
   Map<String, dynamic> dynamicMethodSelected = {};
   Map<String, dynamic> faultPartListInfo = {};
   Map<String, dynamic>? _selectedFaultPart;
-  bool _faultPartConfirmed = false;
+  // bool _faultPartConfirmed = false;
 
   // 添加用于零部件搜索的控制器
   final TextEditingController _searchController = TextEditingController();
@@ -68,19 +68,19 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
   // 获取加工方法
   void getProcessMethod() async {
     try {
-      Map<String, dynamic> params = {"pageNum": 0, 'pageSize': 0};
+      Map<String, dynamic> params = {'pageNum': 0, 'pageSize': 0};
 
       var response = await ProductApi().getProcessMethod(params);
       logger.i(response);
 
       if (response != null && response is List && response.isNotEmpty) {
         //将List<dynamic>转换为List<Map<String,dynamic>>
-        _processMethodList = response
-            .map((item) => {
-                  'code': item['code'],
-                  'dictName': item['dictName'],
-                })
-            .toList();
+        // _processMethodList = response
+        //     .map((item) => {
+        //           'code': item['code'],
+        //           'dictName': item['dictName'],
+        //         })
+        //     .toList();
       }
     } catch (e) {
       print('获取机统28数据失败: $e');
@@ -100,11 +100,9 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
       setState(() {
         _filteredFaultPartList = Global.faultPartList.where((part) {
           // 确保part是Map类型并且name字段存在
-          if (part is Map) {
-            final partName = part['nodeName']?.toString() ?? '';
-            return partName.toLowerCase().contains(query.toLowerCase());
-          }
-          return false;
+          final partName = part['nodeName']?.toString() ?? '';
+          return partName.toLowerCase().contains(query.toLowerCase());
+          // return false;
         }).toList();
         logger.i(_filteredFaultPartList);
         _isSearching = true;
@@ -130,7 +128,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
   void _loadJt28Data() async {
     try {
       Map<String, dynamic> params = {
-        "trainEntryCode": widget.trainEntryCode,
+        'trainEntryCode': widget.trainEntryCode,
       };
 
       var response =
@@ -325,7 +323,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
-                    child: const Text("修复视频及图片"),
+                    child: const Text('修复视频及图片'),
                   ),
                 ),
               ],
@@ -374,7 +372,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                         onChanged: (Map<String, dynamic>? newValue) {
                           setState(() {
                             _selectedFaultPart = newValue;
-                            _faultPartConfirmed = false;
+                            // _faultPartConfirmed = false;
                           });
                         },
                         items: _filteredFaultPartList
@@ -418,7 +416,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                               child: ElevatedButton(
                                 onPressed: () {
                                   setState(() {
-                                    _faultPartConfirmed = true;
+                                    // _faultPartConfirmed = true;
                                   });
                                   showToast('已确认零部件');
                                 },
@@ -552,21 +550,21 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                   try {
                     SmartDialog.showLoading();
                     Map<String, dynamic> queryParameters = {
-                      "code": widget.code,
-                      "awardApplication": dynamicMethodSelected['dictName'],
+                      'code': widget.code,
+                      'awardApplication': dynamicMethodSelected['dictName'],
                       //工时系数
-                      "workHourFactor": _processingMethodController.text,
-                      "completeStatus": 4,
-                      "status": widget.trainInfo['status'],
+                      'workHourFactor': _processingMethodController.text,
+                      'completeStatus': 4,
+                      'status': widget.trainInfo['status'],
                       'faultyComponent': _selectedFaultPart?['code'],
                     };
                     logger.i(queryParameters);
                     if (faultPics.isNotEmpty) {
                       await JtApi().uploadMixJt(imagedata: faultPics).then(
                             (value) async => {
-                              if (value['data'] != null && value['data'] != "")
+                              if (value['data'] != null && value['data'] != '')
                                 {
-                                  queryParameters["specialInspectionPicture"] =
+                                  queryParameters['specialInspectionPicture'] =
                                       value['data'],
                                   l.insert(0, queryParameters),
                                   submit = await JtApi()
@@ -579,29 +577,29 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                                 }
                               else
                                 {
-                                  showToast("图片上传失败，请检查网络连接"),
+                                  showToast('图片上传失败，请检查网络连接'),
                                   // SmartDialog.dismiss(status: SmartStatus.loading)
                                 }
                             },
                           );
                     } else {
-                      logger.i("$queryParameters");
+                      logger.i('$queryParameters');
                       l.insert(0, queryParameters);
                       submit = await JtApi().uploadJt28(queryParametrs: l);
-                      if (submit["code"] == "S_T_S003") {
+                      if (submit['code'] == 'S_T_S003') {
                         showToast("${submit['message']}");
                         // SmartDialog.dismiss(status: SmartStatus.loading);
                       } else {
-                        showToast("机统28提报失败，请检查网络连接");
+                        showToast('机统28提报失败，请检查网络连接');
                         // SmartDialog.dismiss(status: SmartStatus.loading);
                       }
                     }
                   } on DioException catch (e) {
-                    showToast("故障提报失败");
+                    showToast('故障提报失败');
                     logger.i(e.toString());
                   } finally {
                     SmartDialog.dismiss(status: SmartStatus.loading);
-                    if (submit['code'] == "S_T_S003") {
+                    if (submit['code'] == 'S_T_S003') {
                       SmartDialog.show(
                           clickMaskDismiss: false,
                           builder: (con) {
@@ -619,7 +617,7 @@ class _SpecialDisposalPageState extends State<SpecialDisposalPage> {
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: <Widget>[
                                   const Text(
-                                    "机统28提报成功",
+                                    '机统28提报成功',
                                     style: TextStyle(fontSize: 18),
                                   ),
                                   ConstrainedBox(

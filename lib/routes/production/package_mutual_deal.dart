@@ -1,9 +1,7 @@
-import 'dart:math';
 
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 import '../../index.dart';
-import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 import 'package:path/path.dart' as path;
 
 class MutualDisposalPackagePage extends StatefulWidget {
@@ -38,10 +36,10 @@ class MutualDisposalPackagePage extends StatefulWidget {
 
 class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
   // 数据变量
-  String _model = '';
-  String _trainNum = '';
-  String _faultPhenomenon = '';
-  String _repairPlan = '';
+  // String _model = '';
+  // String _trainNum = '';
+  // String _faultPhenomenon = '';
+  // String _repairPlan = '';
 
   // 故障图片
   List<AssetEntity> assestPics = [];
@@ -55,41 +53,41 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
 
   bool _isLoading = true;
 
-  bool _isChecked = false;
+  // final bool _isChecked = false;
 
   // 加工方法列表
-  List<Map<String, dynamic>> _processMethodList = [];
+  // List<Map<String, dynamic>> _processMethodList = [];
   Map<String, dynamic> dynamicMethodSelected = {};
   Map<String, dynamic> faultPartListInfo = {};
-  Map<String, dynamic>? _selectedFaultPart;
+  // Map<String, dynamic>? _selectedFaultPart;
 
   // 添加用于零部件搜索的控制器
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredFaultPartList = [];
-  bool _isSearching = false;
+  // bool _isSearching = false;
 
   var logger = AppLogger.logger;
 
   List<Map<String, dynamic>> pictureList = [];
 
-   final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+   final List<String> _photos = ['photo_1']; // 示例：存储照片标识
   //展示照片文件
   final List<XFile> _files = [];
 
   // 获取加工方法
   void getProcessMethod() async {
     try {
-      Map<String, dynamic> params = {"pageNum": 0, 'pageSize': 0};
+      Map<String, dynamic> params = {'pageNum': 0, 'pageSize': 0};
       var response = await ProductApi().getProcessMethod(params);
       logger.i(response);
       if (response != null && response is List && response.isNotEmpty) {
         //将List<dynamic>转换为List<Map<String,dynamic>>
-        _processMethodList = response
-            .map((item) => {
-                  'code': item['code'],
-                  'dictName': item['dictName'],
-                })
-            .toList();
+        // _processMethodList = response
+        //     .map((item) => {
+        //           'code': item['code'],
+        //           'dictName': item['dictName'],
+        //         })
+        //     .toList();
       }
     } catch (e) {
       print('获取机统28数据失败: $e');
@@ -102,21 +100,19 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
       // 如果查询为空，清空列表
       setState(() {
         _filteredFaultPartList = [];
-        _isSearching = false;
+        // _isSearching = false;
       });
     } else {
       // 根据查询关键词筛选零部件
       setState(() {
         _filteredFaultPartList = Global.faultPartList.where((part) {
           // 确保part是Map类型并且name字段存在
-          if (part is Map) {
-            final partName = part['nodeName']?.toString() ?? '';
-            return partName.toLowerCase().contains(query.toLowerCase());
-          }
-          return false;
+          final partName = part['nodeName']?.toString() ?? '';
+          return partName.toLowerCase().contains(query.toLowerCase());
+          // return false;
         }).toList();
         logger.i(_filteredFaultPartList);
-        _isSearching = true;
+        // _isSearching = true;
       });
     }
   }
@@ -137,7 +133,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
   void _loadJt28Data() async {
     try {
       Map<String, dynamic> params = {
-        "trainEntryCode": widget.trainEntryCode,
+        'trainEntryCode': widget.trainEntryCode,
       };
 
       var response =
@@ -145,34 +141,34 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
 
       if (response != null && response is List && response.isNotEmpty) {
         // 获取第一条记录
-        var data = response[0];
+        // var data = response[0];
 
         setState(() {
           // 设置机型
-          _model = data['trainType'] ?? widget.typeName;
+          // _model = data['trainType'] ?? widget.typeName;
 
           // 设置机车号
-          _trainNum = data['trainNum'] ?? widget.trainNum;
+          // _trainNum = data['trainNum'] ?? widget.trainNum;
 
           // 设置故障现象
-          _faultPhenomenon = data['faultPhenomenon'] ??
-              data['faultDesc'] ??
-              widget.faultDescription;
+          // _faultPhenomenon = data['faultPhenomenon'] ??
+          //     data['faultDesc'] ??
+          //     widget.faultDescription;
 
-          _repairPlan = data['maintenanceNotice'] ??
-              data['repairScheme'] ??
-              data['repairProgram'] ??
-              widget.repairScheme;
+          // _repairPlan = data['maintenanceNotice'] ??
+          //     data['repairScheme'] ??
+          //     data['repairProgram'] ??
+          //     widget.repairScheme;
 
           _isLoading = false;
         });
       } else {
         // 如果没有获取到数据，使用传入的参数
         setState(() {
-          _model = widget.typeName;
-          _trainNum = widget.trainNum;
-          _faultPhenomenon = widget.faultDescription;
-          _repairPlan = widget.repairScheme;
+          // _model = widget.typeName;
+          // _trainNum = widget.trainNum;
+          // _faultPhenomenon = widget.faultDescription;
+          // _repairPlan = widget.repairScheme;
           _isLoading = false;
         });
       }
@@ -180,10 +176,10 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
       print('获取机统28数据失败: $e');
       // 出错时使用传入的参数
       setState(() {
-        _model = widget.typeName;
-        _trainNum = widget.trainNum;
-        _faultPhenomenon = widget.faultDescription;
-        _repairPlan = widget.repairScheme;
+        // _model = widget.typeName;
+        // _trainNum = widget.trainNum;
+        // _faultPhenomenon = widget.faultDescription;
+        // _repairPlan = widget.repairScheme;
         _isLoading = false;
       });
     }
@@ -315,7 +311,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
-                    child: const Text("修复视频及图片"),
+                    child: const Text('修复视频及图片'),
                   ),
                 ),
               ],
@@ -333,7 +329,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                   Row(
                     children: [
                       const Text(
-                        "必须采集",
+                        '必须采集',
                         style: TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
@@ -504,14 +500,15 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                   try {
                     SmartDialog.showLoading();
                     Map<String, dynamic> queryParameters = {
-                      "code": widget.code,
-                      "mutualInspectionName":
+                      'code': widget.code,
+                      'mutualInspectionName':
                           Global.profile.permissions?.user.nickName,
-                      "mutualInspectionId":
+                      'mutualInspectionId':
                           Global.profile.permissions?.user.userId,
                       'mutualInspectionTime': DateTime.now().toString(),
                     };
-                    var result = await ProductApi()
+                    // var result = await ProductApi()
+                    await ProductApi()
                         .wholePackageMutualInspection(queryParameters);
                     await upLoadFileList();
                     SmartDialog.dismiss();
@@ -531,7 +528,7 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: <Widget>[
                                 const Text(
-                                  "互检提报成功",
+                                  '互检提报成功',
                                   style: TextStyle(fontSize: 18),
                                 ),
                                 ConstrainedBox(
@@ -553,12 +550,12 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
                         });
                   } on DioException catch (e) {
                     SmartDialog.dismiss();
-                    showToast("互检提报失败");
-                    logger.e("互检提报失败: ${e.toString()}");
+                    showToast('互检提报失败');
+                    logger.e('互检提报失败: ${e.toString()}');
                   } catch (e) {
                     SmartDialog.dismiss();
-                    showToast("发生未知错误");
-                    logger.e("互检提报发生未知错误: ${e.toString()}");
+                    showToast('发生未知错误');
+                    logger.e('互检提报发生未知错误: ${e.toString()}');
                   }
                 },
                 child: const Text('合格'),
@@ -572,7 +569,8 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
   Future<void> upLoadFileList() async {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
-      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      // var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      await ProductApi().uploadCertainPackageImg(queryParametrs: {
         'certainPackageCodeList': widget.code,
         'inspectionType': 2
       }, imagedatas: files);
@@ -639,8 +637,8 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
     final List<XFile> _videos = []; // 存储视频文件
   // 拍照方法
   void _takePhoto() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 80,
     );
@@ -655,8 +653,8 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
 
 // 录像方法
   void _recordVideo() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? video = await _picker.pickVideo(
+    final ImagePicker picker = ImagePicker();
+    final XFile? video = await picker.pickVideo(
       source: ImageSource.camera,
       maxDuration: const Duration(minutes: 1), // 限制录像时长为1分钟
     );
@@ -671,12 +669,12 @@ class _MutualDisposalPackagePageState extends State<MutualDisposalPackagePage> {
 
 // 从相册选择图片或视频
   void _pickFromGallery() async {
-    final ImagePicker _picker = ImagePicker();
+    final ImagePicker picker = ImagePicker();
 
     // 允许同时选择图片和视频
-    final List<XFile>? media = await _picker.pickMultipleMedia();
+    final List<XFile> media = await picker.pickMultipleMedia();
 
-    if (media != null && media.isNotEmpty) {
+    if (media.isNotEmpty) {
       setState(() {
         for (var file in media) {
           _files.add(file);

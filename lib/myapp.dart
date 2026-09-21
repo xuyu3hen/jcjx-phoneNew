@@ -57,13 +57,13 @@ class MyApp extends StatelessWidget {
               // 开屏(废弃)
               // "opening":(context) => const MyHomePage(title: 'Maitre Scan Home Page'),
               // 主路由展示
-              "main_page":(context) => const MainPage(),
+              'main_page':(context) => const MainPage(),
               // 登录（外层 LoginRoute 可能主动 pushNamed 到登录/离线登记）
-              "login": (context) => const LoginRoute(),
+              'login': (context) => const LoginRoute(),
               // 离线模式主页
-              "offlineMode": (context) => const OfflineModePage(),
+              'offlineMode': (context) => const OfflineModePage(),
               // 售后临修登记（离线入口：未登录时 LoginRoute 跳转必须走外层路由表）
-              "afterSaleTempRepairRegister": (context) =>
+              'afterSaleTempRepairRegister': (context) =>
                   const AfterSaleTempRepairRegisterPage(),
               // 筛选器测试
               // "menu":(context) => DownnMenu(),

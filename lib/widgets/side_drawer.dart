@@ -35,7 +35,7 @@ class SideDrawer extends StatelessWidget {
                   child: ClipOval(
                     child: 
                     Image.asset(
-                      "assets/head.png",
+                      'assets/head.png',
                       width: 80,
                     )
                     ),
@@ -44,7 +44,7 @@ class SideDrawer extends StatelessWidget {
           ),
           onTap: (){
             if(!value.isLogin){
-              Navigator.of(context).pushNamed("login");
+              Navigator.of(context).pushNamed('login');
             }
           },
         );
@@ -66,29 +66,29 @@ class SideDrawer extends StatelessWidget {
             if(userModel.isLogin)
             ListTile(
               leading: const Icon(Icons.power_settings_new),
-              title: const Text("退出登录"),
+              title: const Text('退出登录'),
               onTap: (){
                 showDialog(
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      content: const Text("确定退出当前号码"),
+                      content: const Text('确定退出当前号码'),
                       actions: <Widget>[
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text("取消")
+                          child: const Text('取消')
                         ),
                         TextButton(
                           onPressed: ()async{
                             // userModel.user = null;
                             Global.profile = Profile();
                             var prefs = await SharedPreferences.getInstance();
-                            prefs.remove("profile");
+                            prefs.remove('profile');
                             Navigator.pop(context);
                             // Scaffold.of(context).closeDrawer();
                             // 需要改为StatefulWidget父类
                           },
-                          child: const Text("确定")
+                          child: const Text('确定')
                         )
                       ],
                     );
@@ -102,7 +102,7 @@ class SideDrawer extends StatelessWidget {
                 String version = snapshot.data ?? F.version;
                 return ListTile(
                   leading: const Icon(Icons.view_kanban_rounded),
-                  title: Text("版本号$version"),
+                  title: Text('版本号$version'),
                 );
               },
             )

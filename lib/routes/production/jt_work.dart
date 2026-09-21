@@ -122,7 +122,7 @@ class _JtShowPageState extends State<JtWorkList> {
       // 显示错误信息
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       });
     }
@@ -159,8 +159,8 @@ class _JtShowPageState extends State<JtWorkList> {
       setState(() {
         dynamicTypeList = r.toMapList();
         permissions = permissionResponse;
-        dynamciTypeSelected["code"] = dynamicTypeList[0]["code"];
-        dynamciTypeSelected["name"] = dynamicTypeList[0]["name"];
+        dynamciTypeSelected['code'] = dynamicTypeList[0]['code'];
+        dynamciTypeSelected['name'] = dynamicTypeList[0]['name'];
         getJcType();
         logger.i(permissions);
       });
@@ -172,7 +172,7 @@ class _JtShowPageState extends State<JtWorkList> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -189,7 +189,7 @@ class _JtShowPageState extends State<JtWorkList> {
   Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
         'name': faultyPartController.text,
@@ -213,7 +213,7 @@ class _JtShowPageState extends State<JtWorkList> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -234,12 +234,12 @@ class _JtShowPageState extends State<JtWorkList> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
         'team': 100
       };
       logger.i(queryParameters);
-      var r = await ProductApi().getCheckPerson(queryParameters);
+      // var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
         setState(() {});
       }
@@ -252,7 +252,7 @@ class _JtShowPageState extends State<JtWorkList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业"),
+        title: const Text('机统28作业'),
       ),
       body: _buildBody(),
     );
@@ -364,18 +364,18 @@ class _JtShowPageState extends State<JtWorkList> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "机型",
+                      title: '机型',
                       text: widget.typeName,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
                   ),
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "车号",
+                      title: '车号',
                       text: widget.trainNum,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
@@ -416,7 +416,7 @@ class _JtShowPageState extends State<JtWorkList> {
                               ? () {
                                   PhotoPreviewDialog.show(
                                       context,
-                                      item['repairPicture'] ?? "",
+                                      item['repairPicture'] ?? '',
                                       ProductApi().getFaultVideoAndImage);
                                 }
                               : null,
@@ -426,19 +426,19 @@ class _JtShowPageState extends State<JtWorkList> {
                               MaterialPageRoute(
                                 builder: (context) => FaultDisposalPage(
                                     faultDescription:
-                                        item['faultDescription'] ?? "",
+                                        item['faultDescription'] ?? '',
                                     typeName: widget.typeName,
                                     trainEntryCode: widget.trainEntryCode,
                                     trainNum: widget.trainNum,
                                     repairScheme: item['maintenanceNotice'] ??
                                         item['repairScheme'] ??
-                                        "",
-                                    trainNumCode: widget.trainNumCode ?? "",
-                                    typeCode: widget.typeCode ?? "",
-                                    code: item['code'] ?? "",
-                                    repairPicture: item['repairPicture'] ?? "",
+                                        '',
+                                    trainNumCode: widget.trainNumCode,
+                                    typeCode: widget.typeCode,
+                                    code: item['code'] ?? '',
+                                    repairPicture: item['repairPicture'] ?? '',
                                     processMainNode:
-                                        item['processMainNode'] ?? ""),
+                                        item['processMainNode'] ?? ''),
                               ),
                             );
                             if (mounted) {

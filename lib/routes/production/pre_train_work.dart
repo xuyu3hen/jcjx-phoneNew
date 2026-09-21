@@ -13,8 +13,8 @@ class _DataDisplayPageState extends State<PreTrainWork> {
   late List<Map<String, dynamic>> deptList = [];
   // 筛选科室车间
   late Map<String, dynamic> deptSelected = {
-    "deptName": "总成车间",
-    "deptId": 231,
+    'deptName': '总成车间',
+    'deptId': 231,
   };
 
   final TextEditingController _trainNumController = TextEditingController();
@@ -38,7 +38,7 @@ class _DataDisplayPageState extends State<PreTrainWork> {
   void getDept() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'parentIdList': "231,232,233,234,235,236,237,230",
+        'parentIdList': '231,232,233,234,235,236,237,230',
       };
       var r = await ProductApi()
           .getDeptTreeByParentIdList(queryParametrs: queryParameters);
@@ -73,13 +73,13 @@ class _DataDisplayPageState extends State<PreTrainWork> {
         children: [
           // 科室车间筛选
           ZjcFormSelectCell(
-            title: "科室车间",
-            text: deptSelected["deptName"] ?? '',
-            hintText: "请选择科室车间",
+            title: '科室车间',
+            text: deptSelected['deptName'] ?? '',
+            hintText: '请选择科室车间',
             showRedStar: false,
             clickCallBack: () {
               if (deptList.isEmpty) {
-                showToast("无科室车间信息");
+                showToast('无科室车间信息');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -87,13 +87,13 @@ class _DataDisplayPageState extends State<PreTrainWork> {
                   labelKey: 'deptName',
                   valueKey: 'deptId',
                   childrenKey: 'children1',
-                  title: "选择科室车间",
+                  title: '选择科室车间',
                   clickCallBack: (selectItem, selectArr) {
                     if (mounted) {
                       setState(() {
                         logger.i(selectArr);
-                        deptSelected["deptName"] = selectItem["deptName"];
-                        deptSelected["deptId"] = selectItem["deptId"];
+                        deptSelected['deptName'] = selectItem['deptName'];
+                        deptSelected['deptId'] = selectItem['deptId'];
                       });
                     }
                   },
@@ -149,7 +149,7 @@ class _DataDisplayPageState extends State<PreTrainWork> {
                             MaterialPageRoute(
                               builder: (context) => TeamInfo(
                                   planCode: train['code'],
-                                  deptId: deptSelected["deptId"]),
+                                  deptId: deptSelected['deptId']),
                             ),
                           );
                         },
@@ -238,9 +238,9 @@ class _DataDisplayPageState extends State<PreTrainWork> {
   //searchTrainInfo
   void searchTrainInfo() async {
      final trainNum = _trainNumController.text.trim();
-     logger.d("trainNum: $trainNum");
+     logger.d('trainNum: $trainNum');
     if (trainNum.isEmpty) {
-      showToast("请输入车号");
+      showToast('请输入车号');
       return;
     }
 
@@ -257,13 +257,13 @@ class _DataDisplayPageState extends State<PreTrainWork> {
             trainNotEnter = r;
           } else {
             trainNotEnter = [];
-            showToast("未找到匹配的列车");
+            showToast('未找到匹配的列车');
           }
         });
       }
     } catch (e, stackTrace) {
       logger.e('搜索列车时发生异常: $e\n堆栈信息: $stackTrace');
-      showToast("搜索失败，请稍后重试");
+      showToast('搜索失败，请稍后重试');
     }
   }
 }

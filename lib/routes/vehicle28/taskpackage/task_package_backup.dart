@@ -76,7 +76,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
         'trainEntryCode': trainCode,
       }
     );
-    if(r.message == "操作成功"&&r.data != []){
+    if(r.message == '操作成功'&&r.data != []){
       setState(() {
         // 作业包表数据获取
         _items.insertAll(_items.length, r.data!);
@@ -93,7 +93,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
     var r = await JtApi().updateWorkInstructPackage(
       queryParameters:list
     );
-    if(r['message'] == "操作成功"&&r['code']== 200){
+    if(r['message'] == '操作成功'&&r['code']== 200){
       logger.i('切换AB端成功');
     }else{
       showToast('切换AB端出现错误');
@@ -112,7 +112,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("个人作业包"),
+        title: const Text('个人作业包'),
       ),
       body: _filter(),
     );
@@ -121,7 +121,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
   Widget _filter() {
     return downmenu.DefaultDropdownMenuController(
       onSelected: ({int? menuIndex, dynamic data}) {
-        logger.i("int menuIndex, dynamic data = $menuIndex,$data");
+        logger.i('int menuIndex, dynamic data = $menuIndex,$data');
         if (menuIndex == 0) {
           // value1 = '选中下标$menuIndex,\n选中内容$data';
           setState(() {
@@ -132,13 +132,13 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
         }
         if (menuIndex == 1) {
           setState(() {
-            logger.i("看看数据$data");
+            logger.i('看看数据$data');
             typeName = data[0]['name'];
           });
         }
         if (menuIndex == 2) {
           setState(() {
-            logger.i("看看数据$data");
+            logger.i('看看数据$data');
             trainCode = data['urgency'];
             getIndividualTaskPackage();
           });
@@ -181,7 +181,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
             return downmenu.DropdownListMenu(
               selectedIndex: dynamicList[0],
               isOperatingButton: false,
-              keyWords: "code",
+              keyWords: 'code',
               data: dynamicList,
               valueKey: 'name',
               itemBuilder: downmenu.buildCheckItem,
@@ -199,7 +199,7 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
               return downmenu.DropdownListMenu(
                 selectedIndex: jcTypeList[0],
                 isOperatingButton: false,
-                keyWords: "code",
+                keyWords: 'code',
                 data: jcTypeList,
                 valueKey: 'name',
                 itemBuilder: downmenu.buildCheckItem,
@@ -228,10 +228,10 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
 
   // 列表
   Widget _buildBody(){
-    if(_items.isEmpty&&trainCode == ""){
-      return const ZjcEmptyView(text:"请先选择车号");
+    if(_items.isEmpty&&trainCode == ''){
+      return const ZjcEmptyView(text:'请先选择车号');
     }else if(_items.isEmpty){
-      return const ZjcEmptyView(text:"暂无数据");
+      return const ZjcEmptyView(text:'暂无数据');
     }
     else{
       return SingleChildScrollView(
@@ -289,8 +289,8 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
               if(item.wholePackage!)...[
                 ListTile(
                   dense: true,
-                  leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
-                  title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
+                  leading: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
+                  title: Text('${item.station}',style: const TextStyle(fontSize: 16.0)),
                   // subtitle: Text(""),
                   trailing:ElevatedButton(onPressed: (){
                     changeABDialog(item);
@@ -300,8 +300,8 @@ class _TaskPackageBackupState extends State<TaskPackageBackup> {
               ]else...[
                 ListTile(
                   dense: true,
-                  leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
-                  title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
+                  leading: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
+                  title: Text('${item.station}',style: const TextStyle(fontSize: 16.0)),
                 ),
               ],
               Row(
@@ -452,14 +452,14 @@ class __FinancialMoreTemplateState extends State<_FinancialMoreTemplate> {
   void getTrainNumCodeList() async {
     var r = await ProductApi().getRepairPlanList(
       queryParametrs: {
-        "pageNum":0,
-        "pageSize":0,
-        "typeName":widget.typeName
+        'pageNum':0,
+        'pageSize':0,
+        'typeName':widget.typeName
       }
     );
     // print(r.rows);
     setState(() {
-      trainNum = "";
+      trainNum = '';
       trainNumCodeList = r.rows!.map((e) => e.toJson()).toList();
     });
   }

@@ -293,7 +293,7 @@ class _DialogButton extends StatelessWidget {
         height: 48.0,
         child: TextButton(
           onPressed: onPressed,
-          style: ButtonStyle(foregroundColor: MaterialStateProperty.all(textColor)),
+          style: ButtonStyle(foregroundColor: WidgetStateProperty.all(textColor)),
           child: Text(text, style: const TextStyle(fontSize: _btnFontSize)),
         ),
       ),

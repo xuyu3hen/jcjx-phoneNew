@@ -1,7 +1,4 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import '../../index.dart';
 import '../../models/progress.dart';
@@ -25,7 +22,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
   late TextEditingController _resultController;
   
   // 用于存储选择的媒体文件（图片和视频）
-  List<XFile> _selectedMedia = [];
+  final List<XFile> _selectedMedia = [];
   
   // 用于存储已上传的媒体URL
   List<String> _uploadedMedia = [];
@@ -98,8 +95,8 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
             
             // 显示已上传的媒体
             if (_uploadedMedia.isNotEmpty) ...[
-              Text('已上传附件:', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 8),
+              const Text('已上传附件:', style: TextStyle(fontSize: 14)),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -122,7 +119,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: _isVideoUrl(_uploadedMedia[index])
-                                  ? Icon(Icons.video_library,
+                                  ? const Icon(Icons.video_library,
                                       size: 60, color: Colors.blue)
                                   : Image.network(
                                       _uploadedMedia[index],
@@ -145,8 +142,8 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
             
             // 显示新选择的媒体
             if (_selectedMedia.isNotEmpty) ...[
-              Text('待上传附件:', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 8),
+              const Text('待上传附件:', style: TextStyle(fontSize: 14)),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -172,7 +169,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: isVideo
-                                  ? Icon(Icons.videocam, size: 60, color: Colors.blue)
+                                  ? const Icon(Icons.videocam, size: 60, color: Colors.blue)
                                   : FutureBuilder<Uint8List?>(
                                       future: media.readAsBytes(),
                                       builder: (context, snapshot) {
@@ -217,7 +214,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                   },
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
             ],
             // 添加媒体按钮
             Row(
@@ -255,7 +252,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -284,12 +281,12 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
 
   // 辅助方法：选择媒体文件
   Future<void> _pickMedia(ImageSource source, bool isVideo) async {
-    final ImagePicker _picker = ImagePicker();
+    final ImagePicker picker = ImagePicker();
     try {
       if (source == ImageSource.camera) {
         if (isVideo) {
           // 录像
-          final XFile? video = await _picker.pickVideo(source: source);
+          final XFile? video = await picker.pickVideo(source: source);
           if (video != null) {
             setState(() {
               _selectedMedia.add(video);
@@ -297,7 +294,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
           }
         } else {
           // 拍照
-          final XFile? photo = await _picker.pickImage(source: source, imageQuality: 80);
+          final XFile? photo = await picker.pickImage(source: source, imageQuality: 80);
           if (photo != null) {
             setState(() {
               _selectedMedia.add(photo);
@@ -308,7 +305,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
         // 从图库选择
         if (isVideo) {
           // 选择视频
-          final XFile? video = await _picker.pickVideo(source: source);
+          final XFile? video = await picker.pickVideo(source: source);
           if (video != null) {
             setState(() {
               _selectedMedia.add(video);
@@ -316,7 +313,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
           }
         } else {
           // 选择图片
-          final List<XFile> images = await _picker.pickMultiImage(imageQuality: 80);
+          final List<XFile> images = await picker.pickMultiImage(imageQuality: 80);
           if (images.isNotEmpty) {
             setState(() {
               _selectedMedia.addAll(images);
@@ -378,7 +375,7 @@ class _EditInvestigatePageState extends State<EditInvestigatePage> {
       // 如果有新选择的媒体文件，先上传
       if (_selectedMedia.isNotEmpty) {
         Map<String, dynamic> queryParametrs = {
-          "code": widget.investigateItem['code'],
+          'code': widget.investigateItem['code'],
         };
         logger.i('上传媒体参数：$queryParametrs');
 

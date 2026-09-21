@@ -10,7 +10,7 @@ class LoginApi extends AppApi{
   Map<String,dynamic>? queryParametrs,// 分页参数
   })async{
     var r = await AppApi.dio.post(
-      "/auth/login",
+      '/auth/login',
       data: queryParametrs,
     );
     logger.i('登录信息：${(r.data)}');
@@ -20,7 +20,7 @@ class LoginApi extends AppApi{
   // 获取用户信息
   Future<Permissions> getpermissions()async{
     var r = await AppApi.dio.get(
-      "/system/user/getInfo",
+      '/system/user/getInfo',
     );
     //打印r
     logger.i(r.data);
@@ -31,7 +31,7 @@ class LoginApi extends AppApi{
    
     try {
       var r = await AppApi.dio.get(
-        "/system/menu/getRouters",
+        '/system/menu/getRouters',
       );
       final raw = r.data;
       final body = raw is Map ? raw['data'] : null;
@@ -92,7 +92,7 @@ class LoginApi extends AppApi{
     Map<String,dynamic>? queryParameters
   })async{
     var r = await AppApi.dio.post(
-      "/jcjxsystem/message/getMessageInfo",
+      '/jcjxsystem/message/getMessageInfo',
       data: queryParameters
     );
     return SysMessageVO.fromJson((r.data['data'])['data']);

@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:jcjx_phone/routes/production/jt28_dispatch_page.dart';
@@ -6,7 +5,6 @@ import 'package:jcjx_phone/routes/production/train_shunting_package_page.dart';
 
 import '../index.dart';
 import '../models/progress.dart';
-import 'production/investigateInfo.dart';
 
 abstract class ShuntingNoticeApi {
   Future<dynamic> getShuntingNotice({Map<String, dynamic>? queryParametrs});
@@ -88,7 +86,7 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
           'pageSize': 1, // 只需要 total，不需要拉取具体列表
         },
       );
-      final dataShunting = resShunting is Map ? resShunting as Map : <String, dynamic>{};
+      final dataShunting = resShunting is Map ? resShunting : <String, dynamic>{};
       final shuntingTotal = dataShunting['total'];
       if (shuntingTotal is num) {
         shuntingUnreadCount = shuntingTotal.toInt();
@@ -192,7 +190,7 @@ class _MessageCenterPageState extends State<MessageCenterPage> {
                             final item = _list[index];
                             final map = item is Map
                                 ? Map<String, dynamic>.from(
-                                    (item as Map).map(
+                                    (item).map(
                                       (k, v) => MapEntry(k.toString(), v),
                                     ),
                                   )
@@ -369,7 +367,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
       ]);
       if (!mounted) return;
       int? parseTotal(dynamic res) {
-        final data = res is Map ? res as Map : <String, dynamic>{};
+        final data = res is Map ? res : <String, dynamic>{};
         final total = data['total'];
         if (total is num) return total.toInt();
         return int.tryParse(total?.toString() ?? '');
@@ -404,7 +402,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         queryParametrs: queryParametrs,
       );
       if (mounted) {
-        final data = res is Map ? res as Map : <String, dynamic>{};
+        final data = res is Map ? res : <String, dynamic>{};
         final rows = data['rows'];
         final total = data['total'];
         setState(() {
@@ -434,7 +432,9 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
   Future<void> _loadShuntingNoticeMore() async {
     if (_shuntingLoadingMore ||
         _shuntingTotal == null ||
-        _shuntingRows.length >= _shuntingTotal!) return;
+        _shuntingRows.length >= _shuntingTotal!) {
+      return;
+    }
     try {
       setState(() => _shuntingLoadingMore = true);
       final user = Global.profile.permissions?.user;
@@ -451,7 +451,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
         queryParametrs: queryParametrs,
       );
       if (mounted) {
-        final data = res is Map ? res as Map : <String, dynamic>{};
+        final data = res is Map ? res : <String, dynamic>{};
         final rows = data['rows'];
         final newRows = rows is List ? List<dynamic>.from(rows) : <dynamic>[];
         setState(() {
@@ -589,7 +589,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
               final item = _shuntingRows[index];
               final itemMap = item is Map
                   ? Map<String, dynamic>.from(
-                      (item as Map).map((k, v) => MapEntry(k.toString(), v)),
+                      (item).map((k, v) => MapEntry(k.toString(), v)),
                     )
                   : <String, dynamic>{};
               return Padding(
@@ -831,6 +831,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     '19': '物料变更',
     '20': '机统28提报',
     '21': '售后故障录入通知',
+    '22': '检修过程故障处置单',
   };
 
   String _formatShuntingValue(String key, dynamic v) {
@@ -938,8 +939,9 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
               final rawVal = entries[k]?.toString() ?? '';
               Color? valueColor;
               if (k == 'status') {
-                if (rawVal == '0') valueColor = Colors.orange;
-                else if (rawVal == '1') valueColor = Colors.green;
+                if (rawVal == '0') {
+                  valueColor = Colors.orange;
+                } else if (rawVal == '1') valueColor = Colors.green;
                 else if (rawVal == '2') valueColor = Colors.red;
               } else if (k == 'shuntingType') {
                 valueColor = Colors.blue;
@@ -1747,12 +1749,12 @@ class _RepairProcessNoticeDetailPageState
                 _dataTable(
                   rows: workRows.isEmpty ? <Map<String, dynamic>>[row] : workRows,
                   columns: [
-                    MapEntry('关联构型', ['configNodeName', 'configName', 'nodeName']),
-                    MapEntry('加工方法', ['jtDictName', 'processingMethodName', 'requiredProcessingMethodName']),
-                    MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
-                    MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
-                    MapEntry('施修方案', ['repairProcContent', 'maintenanceNotice', 'repairScheme', 'repairPlan']),
-                    MapEntry('技术指导', ['techGuideName', 'technicalGuidance', 'guide', 'techGuide']),
+                    const MapEntry('关联构型', ['configNodeName', 'configName', 'nodeName']),
+                    const MapEntry('加工方法', ['jtDictName', 'processingMethodName', 'requiredProcessingMethodName']),
+                    const MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
+                    const MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
+                    const MapEntry('施修方案', ['repairProcContent', 'maintenanceNotice', 'repairScheme', 'repairPlan']),
+                    const MapEntry('技术指导', ['techGuideName', 'technicalGuidance', 'guide', 'techGuide']),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -1763,11 +1765,11 @@ class _RepairProcessNoticeDetailPageState
                 _dataTable(
                   rows: signRows.isEmpty ? <Map<String, dynamic>>[row] : signRows,
                   columns: [
-                    MapEntry('发布人', ['applyUserName']),
-                    MapEntry('签收部门', ['auditDeptName']),
-                    MapEntry('签收班组', ['auditTeamName']),
-                    MapEntry('签收人', ['auditUserName']),
-                    MapEntry('签收时间', ['auditTime']),
+                    const MapEntry('发布人', ['applyUserName']),
+                    const MapEntry('签收部门', ['auditDeptName']),
+                    const MapEntry('签收班组', ['auditTeamName']),
+                    const MapEntry('签收人', ['auditUserName']),
+                    const MapEntry('签收时间', ['auditTime']),
                   ],
                 ),
               ],
@@ -2079,7 +2081,7 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
 
     TableRow row3(String l1, String v1, String l2, String v2, String l3, String v3) {
       final headerStyle = TextStyle(color: Colors.grey[700], fontSize: 13);
-      final valueStyle = const TextStyle(fontSize: 13);
+      const valueStyle = TextStyle(fontSize: 13);
       Widget cell(String text, TextStyle? style, {bool header = false}) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -2266,25 +2268,25 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
         _sectionTitle(
           'JT28信息',
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             _jt28AndPeopleHint,
-            style: const TextStyle(fontSize: 12, color: Colors.green),
+            style: TextStyle(fontSize: 12, color: Colors.green),
           ),
         ),
         _dataTable(
           rows: displayRows,
           dataRowMaxHeight: 120,
           columns: [
-            MapEntry('构型', ['configNodeName', 'structure', 'configName', 'componentName', 'nodeName', 'config']),
-            MapEntry('加工方法', ['jtDictName', 'jtDictCode', 'processingMethod', 'processingMethodName', 'requiredProcessingMethodName', 'requiredProcessingMethod']),
-            MapEntry('施修方案', ['repairProcContent', 'repairScheme', 'repairProgram', 'repairPlan', 'repairStatus', 'maintenanceNotice']),
-            MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
-            MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
-            MapEntry('责任车间', ['responsibleDeptNameDisplay']),
-            if (hasTeam) MapEntry('责任班组', ['responsibleTeamNameDisplay']),
-            if (hasPeople) MapEntry('施修人', ['repairPersonnelDisplay']),
+            const MapEntry('构型', ['configNodeName', 'structure', 'configName', 'componentName', 'nodeName', 'config']),
+            const MapEntry('加工方法', ['jtDictName', 'jtDictCode', 'processingMethod', 'processingMethodName', 'requiredProcessingMethodName', 'requiredProcessingMethod']),
+            const MapEntry('施修方案', ['repairProcContent', 'repairScheme', 'repairProgram', 'repairPlan', 'repairStatus', 'maintenanceNotice']),
+            const MapEntry('风险等级', ['riskLevel', 'riskLevelName']),
+            const MapEntry('外包厂家', ['outsourcingVendor', 'outSourcingFactory', 'outsourcingFactory']),
+            const MapEntry('责任车间', ['responsibleDeptNameDisplay']),
+            if (hasTeam) const MapEntry('责任班组', ['responsibleTeamNameDisplay']),
+            if (hasPeople) const MapEntry('施修人', ['repairPersonnelDisplay']),
           ],
         ),
       ],
@@ -2323,15 +2325,15 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
         _dataTable(
           rows: displayRows,
           columns: [
-            MapEntry('配件名称', ['configName', 'configNodeName', 'materialName', 'partsName', 'accessoryName', 'name']),
-            MapEntry('规格型号', ['modelInfoName', 'modelInfoCode', 'spec', 'specification', 'model', 'materialModel']),
-            MapEntry('发货时间', ['deliveryTime', 'sendTime', 'materialDeliveryTime']),
-            MapEntry('数量', ['quantity', 'count', 'num']),
-            MapEntry('发货方式', ['deliveryMethod', 'sendWay', 'deliveryWay', 'sendType']),
-            MapEntry('处置方式', ['disposalTypeDisplay', 'recycleType', 'disposalWay', 'disposalType', 'disposalPlan']),
-            MapEntry('责任车间', ['responsibleDeptName', 'deptName', 'workshop', 'responsibilityDeptName']),
-            MapEntry('责任班组', ['responsibleTeamName', 'teamName', 'team', 'responsibilityTeamName']),
-            MapEntry('责任人', ['responsibleUserName', 'responsibilityUserName', 'userName', 'nickName', 'responsibilityUser']),
+            const MapEntry('配件名称', ['configName', 'configNodeName', 'materialName', 'partsName', 'accessoryName', 'name']),
+            const MapEntry('规格型号', ['modelInfoName', 'modelInfoCode', 'spec', 'specification', 'model', 'materialModel']),
+            const MapEntry('发货时间', ['deliveryTime', 'sendTime', 'materialDeliveryTime']),
+            const MapEntry('数量', ['quantity', 'count', 'num']),
+            const MapEntry('发货方式', ['deliveryMethod', 'sendWay', 'deliveryWay', 'sendType']),
+            const MapEntry('处置方式', ['disposalTypeDisplay', 'recycleType', 'disposalWay', 'disposalType', 'disposalPlan']),
+            const MapEntry('责任车间', ['responsibleDeptName', 'deptName', 'workshop', 'responsibilityDeptName']),
+            const MapEntry('责任班组', ['responsibleTeamName', 'teamName', 'team', 'responsibilityTeamName']),
+            const MapEntry('责任人', ['responsibleUserName', 'responsibilityUserName', 'userName', 'nickName', 'responsibilityUser']),
           ],
         ),
       ],
@@ -2399,11 +2401,11 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
         _dataTable(
           rows: displayRows,
           columns: [
-            MapEntry('车间', ['deptName', 'workshop', 'teamDeptName']),
-            MapEntry('班组', ['teamName', 'team', 'groupName']),
-            MapEntry('人员', ['userName', 'nickName', 'name', 'personName']),
-            MapEntry('人员类型', ['personTypeDisplay']),
-            MapEntry('电话', ['phoneDisplay']),
+            const MapEntry('车间', ['deptName', 'workshop', 'teamDeptName']),
+            const MapEntry('班组', ['teamName', 'team', 'groupName']),
+            const MapEntry('人员', ['userName', 'nickName', 'name', 'personName']),
+            const MapEntry('人员类型', ['personTypeDisplay']),
+            const MapEntry('电话', ['phoneDisplay']),
           ],
         ),
       ],
@@ -2468,11 +2470,11 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
         _dataTable(
           rows: normalized,
           columns: [
-            MapEntry('调令发布人', ['applyUserName', 'sendUserName', 'createdByName']),
-            MapEntry('发布时间', ['applyTime', 'createdTime', 'publishTime']),
-            MapEntry('签收部门', ['auditDeptName', 'deptName']),
-            MapEntry('签收人', ['auditUserName', 'receiveUserName']),
-            MapEntry('签收时间', ['auditTime']),
+            const MapEntry('调令发布人', ['applyUserName', 'sendUserName', 'createdByName']),
+            const MapEntry('发布时间', ['applyTime', 'createdTime', 'publishTime']),
+            const MapEntry('签收部门', ['auditDeptName', 'deptName']),
+            const MapEntry('签收人', ['auditUserName', 'receiveUserName']),
+            const MapEntry('签收时间', ['auditTime']),
           ],
         ),
       ],
@@ -2536,7 +2538,7 @@ class _AfterSaleServiceNoticePageState extends State<AfterSaleServiceNoticePage>
       appBar: AppBar(
         title: const Text('售后服务通知单'),
         actions: [
-          if (debugItem != null && _pickList(debugItem!, ['masAfterSaleWorkList']).isNotEmpty)
+          if (debugItem != null && _pickList(debugItem, ['masAfterSaleWorkList']).isNotEmpty)
             TextButton(
               onPressed: () async {
                 final rows = _pickList(debugItem!, ['masAfterSaleWorkList']);

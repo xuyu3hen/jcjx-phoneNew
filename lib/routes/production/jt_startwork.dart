@@ -61,7 +61,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   // 获取加工方法
   void getProcessMethod() async {
     try {
-      Map<String, dynamic> params = {"pageNum": 0, 'pageSize': 0};
+      Map<String, dynamic> params = {'pageNum': 0, 'pageSize': 0};
 
       var response = await ProductApi().getProcessMethod(params);
       logger.i(response);
@@ -186,7 +186,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                   children: [
                     Expanded(
                       child: ZjcFormInputCell(
-                        title: "机型",
+                        title: '机型',
                         text: _model,
                         enabled: false,
                         showRedStar: false,
@@ -195,7 +195,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ZjcFormInputCell(
-                        title: "机车号",
+                        title: '机车号',
                         text: _trainNum,
                         enabled: false,
                         showRedStar: false,
@@ -205,14 +205,14 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                 ),
                 // 2. 工序节点
                 ZjcFormInputCell(
-                  title: "工序节点",
+                  title: '工序节点',
                   text: _processMainNode,
                   enabled: false,
                   showRedStar: false,
                 ),
                 // 2. 故障现象 文本域
                 ZjcFormInputCell(
-                  title: "故障现象",
+                  title: '故障现象',
                   text: _faultPhenomenon,
                   maxLines: 3,
                   enabled: false,
@@ -221,7 +221,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                 
                 
                 ZjcFormInputCell(
-                  title: "建议施修方案",
+                  title: '建议施修方案',
                   text: _repairPlan,
                   maxLines: 3,
                   enabled: false,
@@ -235,13 +235,13 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                       child: ElevatedButton(
                         onPressed: () async {
                           // 修复：直接调用PhotoPreviewDialog.show方法来展示图片
-                          PhotoPreviewDialog.show(context, widget.repairPicture??"",
+                          PhotoPreviewDialog.show(context, widget.repairPicture,
                               ProductApi().getFaultVideoAndImage);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                         ),
-                        child: const Text("查看故障视频及图片"),
+                        child: const Text('查看故障视频及图片'),
                       ),
                     ),
                   ],
@@ -249,13 +249,13 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
 
                 // 4. 加工方法 输入框
                 ZjcFormSelectCell(
-                  title: "加工方法",
-                  text: dynamicMethodSelected["dictName"],
-                  hintText: "请选择",
+                  title: '加工方法',
+                  text: dynamicMethodSelected['dictName'],
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (_processMethodList.isEmpty) {
-                      showToast("无动力类型选择");
+                      showToast('无动力类型选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -263,13 +263,13 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                         labelKey: 'dictName',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择动力类型",
+                        title: '选择动力类型',
                         clickCallBack: (selectItem, selectArr) {
                           logger.i(selectArr);
                           setState(() {
-                            dynamicMethodSelected["code"] = selectItem["code"];
-                            dynamicMethodSelected["dictName"] =
-                                selectItem["dictName"];
+                            dynamicMethodSelected['code'] = selectItem['code'];
+                            dynamicMethodSelected['dictName'] =
+                                selectItem['dictName'];
                             logger.i(dynamicMethodSelected);
                           });
                         },
@@ -280,8 +280,8 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
 
                 // 5. 施修情况
                 ZjcFormInputCell(
-                  title: "施修情况",
-                  hintText: "请输入施修情况...",
+                  title: '施修情况',
+                  hintText: '请输入施修情况...',
                   text: _repairSituationController.text,
                   maxLines: 5,
                   showRedStar: true,
@@ -367,11 +367,11 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                               dynamicMethodSelected['dictName']
                                   .toString()
                                   .isEmpty) {
-                            showToast("请选择加工方法");
+                            showToast('请选择加工方法');
                             return;
                           }
                           if (_repairSituationController.text.trim().isEmpty) {
-                            showToast("请输入施修情况");
+                            showToast('请输入施修情况');
                             return;
                           }
 
@@ -402,11 +402,11 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                           try {
                             SmartDialog.showLoading();
                             Map<String, dynamic> queryParameters = {
-                              "code": widget.code,
-                              "processMethod":
+                              'code': widget.code,
+                              'processMethod':
                                   dynamicMethodSelected['dictName'],
-                              "repairStatus": _repairSituationController.text,
-                              "completeStatus": 2
+                              'repairStatus': _repairSituationController.text,
+                              'completeStatus': 2
                             };
                             logger.i(queryParameters);
                             if (faultPics.isNotEmpty) {
@@ -415,13 +415,13 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                   .then(
                                 (value) async {
                                   if (value['data'] != null &&
-                                      value['data'] != "") {
-                                    queryParameters["repairEndPicture"] =
+                                      value['data'] != '') {
+                                    queryParameters['repairEndPicture'] =
                                         value['data'];
                                     l.insert(0, queryParameters);
                                     submit = await JtApi()
                                         .uploadJt28(queryParametrs: l);
-                                    if (submit['code'] == "S_T_S003") {
+                                    if (submit['code'] == 'S_T_S003') {
                                       showToast(
                                           "${submit['data'] ?? submit['message']}");
                                     } else {
@@ -429,28 +429,28 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                           "提交失败：${submit['message'] ?? '未知错误'}");
                                     }
                                   } else {
-                                    showToast("图片上传失败，请检查网络连接");
+                                    showToast('图片上传失败，请检查网络连接');
                                   }
                                 },
                               );
                             } else {
-                              logger.i("$queryParameters");
+                              logger.i('$queryParameters');
                               l.insert(0, queryParameters);
                               submit =
                                   await JtApi().uploadJt28(queryParametrs: l);
-                              if (submit["code"] == "S_T_S003") {
+                              if (submit['code'] == 'S_T_S003') {
                                 showToast("${submit['message']}");
                               } else {
-                                showToast("机统28提报失败，请检查网络连接");
+                                showToast('机统28提报失败，请检查网络连接');
                               }
                             }
                           } on DioException catch (e) {
-                            showToast("故障提报失败");
+                            showToast('故障提报失败');
                             logger.i(e.toString());
                           } finally {
                             SmartDialog.dismiss(status: SmartStatus.loading);
                             if (submit != null &&
-                                submit['code'] == "S_T_S003") {
+                                submit['code'] == 'S_T_S003') {
                               SmartDialog.show(
                                   clickMaskDismiss: false,
                                   builder: (con) {
@@ -469,7 +469,7 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
                                             CrossAxisAlignment.center,
                                         children: <Widget>[
                                           const Text(
-                                            "机统28提报成功",
+                                            '机统28提报成功',
                                             style: TextStyle(fontSize: 18),
                                           ),
                                           ConstrainedBox(
@@ -540,11 +540,11 @@ class _FaultDisposalPageState extends State<FaultDisposalPage> {
   }
 
   void applyWorkRelease() async {
-    Map<String, dynamic> queryParameters = {
-      // "jt28Code": widget.applyId,
-    };
-    var r =
-        await ProductApi().saveReleaseShunting(queryParametrs: queryParameters);
+    // Map<String, dynamic> queryParameters = {
+    //   // "jt28Code": widget.applyId,
+    // };
+    // var r =
+    //     await ProductApi().saveReleaseShunting(queryParametrs: queryParameters);
   }
 
 // ... existing code ...
@@ -569,12 +569,12 @@ class ApplyReleaseDialog extends StatefulWidget {
 class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
   final TextEditingController _reasonController = TextEditingController();
   final TextEditingController _recipientController = TextEditingController();
-  Map<String, dynamic> _selectedRecipient = {};
+  final Map<String, dynamic> _selectedRecipient = {};
   Future<void> getUserList() async {
     Map<String, dynamic> params = {
-      "deptId": 231,
-      "pageNum": 0,
-      "pageSize": 0,
+      'deptId': 231,
+      'pageNum': 0,
+      'pageSize': 0,
     };
     try {
       var response = await ProductApi().getUserList1(queryParametrs: params);
@@ -618,11 +618,11 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
 
   void releaseShunting() async {
     if (_reasonController.text.trim().isEmpty) {
-      showToast("请输入放行原因");
+      showToast('请输入放行原因');
       return;
     }
     if (_selectedRecipient.isEmpty || _selectedRecipient['userId'] == null) {
-      showToast("请选择放行人员");
+      showToast('请选择放行人员');
       return;
     }
 
@@ -659,10 +659,10 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
       var r = await ProductApi()
           .saveReleaseShunting(queryParametrs: queryParameters);
       if (r['code'] == 'S_T_S003' || r['code'] == 200) {
-         showToast(r['msg'] ?? "操作成功");
+         showToast(r['msg'] ?? '操作成功');
          widget.onConfirm();
       } else {
-         showToast(r['msg'] ?? "操作失败");
+         showToast(r['msg'] ?? '操作失败');
       }
     } catch (e) {
       // 处理异常情况
@@ -711,13 +711,13 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
           const SizedBox(height: 16),
           // 签收人选择输入框
           ZjcFormSelectCell(
-            title: "放行人员",
-            text: _selectedRecipient["nickName"],
-            hintText: "请选择",
+            title: '放行人员',
+            text: _selectedRecipient['nickName'],
+            hintText: '请选择',
             showRedStar: true,
             clickCallBack: () {
               if (_recipients.isEmpty) {
-                showToast("无放行人员选择");
+                showToast('无放行人员选择');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -725,13 +725,13 @@ class _ApplyReleaseDialogState extends State<ApplyReleaseDialog> {
                   labelKey: 'nickName',
                   valueKey: 'userId',
                   childrenKey: 'children',
-                  title: "选择放行人员",
+                  title: '选择放行人员',
                   clickCallBack: (selectItem, selectArr) {
                     setState(() {
-                      _selectedRecipient["userId"] = selectItem["userId"];
-                      _selectedRecipient["nickName"] = selectItem["nickName"];
-                      _selectedRecipient["deptId"] = selectItem["deptId"];
-                      _selectedRecipient["deptName"] = selectItem["deptName"];
+                      _selectedRecipient['userId'] = selectItem['userId'];
+                      _selectedRecipient['nickName'] = selectItem['nickName'];
+                      _selectedRecipient['deptId'] = selectItem['deptId'];
+                      _selectedRecipient['deptName'] = selectItem['deptName'];
                     });
                   },
                 );

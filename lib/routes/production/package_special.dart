@@ -1,11 +1,7 @@
-import 'dart:math';
 
-import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
-import 'package:jcjx_phone/routes/production/package_mutual_deal.dart';
 import 'package:jcjx_phone/routes/production/package_special_deal.dart';
 
 import '../../index.dart';
-import 'jt_startwork.dart';
 
 //范围作业互检
 class SpecialPackageList extends StatefulWidget {
@@ -115,7 +111,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
       // 显示错误信息
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       });
     }
@@ -153,8 +149,8 @@ class _JtShowPageState extends State<SpecialPackageList> {
       setState(() {
         dynamicTypeList = r.toMapList();
         permissions = permissionResponse;
-        dynamciTypeSelected["code"] = dynamicTypeList[0]["code"];
-        dynamciTypeSelected["name"] = dynamicTypeList[0]["name"];
+        dynamciTypeSelected['code'] = dynamicTypeList[0]['code'];
+        dynamciTypeSelected['name'] = dynamicTypeList[0]['name'];
         getJcType();
         logger.i(permissions);
       });
@@ -166,7 +162,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -207,7 +203,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -228,12 +224,12 @@ class _JtShowPageState extends State<SpecialPackageList> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
         'team': 100
       };
       logger.i(queryParameters);
-      var r = await ProductApi().getCheckPerson(queryParameters);
+      // var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
         setState(() {});
       }
@@ -320,7 +316,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       }
     }
@@ -330,7 +326,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("范围作业专检作业"),
+        title: const Text('范围作业专检作业'),
       ),
       body: _buildBody(),
     );
@@ -338,11 +334,11 @@ class _JtShowPageState extends State<SpecialPackageList> {
 
   // 添加状态筛选相关变量
   late List<Map<String, dynamic>> statusFilterList = [
-    {"name": "待专检", "value": 2},
-    {"name": "待互检", "value": 1},
-    {"name": "已开工", "value": 6},
+    {'name': '待专检', 'value': 2},
+    {'name': '待互检', 'value': 1},
+    {'name': '已开工', 'value': 6},
   ];
-  late Map<String, dynamic> statusFilterSelected = {"name": "待专检", "value": 2};
+  late Map<String, dynamic> statusFilterSelected = {'name': '待专检', 'value': 2};
 
   Widget _buildBody() {
     return Container(
@@ -386,18 +382,18 @@ class _JtShowPageState extends State<SpecialPackageList> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "机型",
+                      title: '机型',
                       text: widget.typeName,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
                   ),
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "车号",
+                      title: '车号',
                       text: widget.trainNum,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
@@ -408,9 +404,9 @@ class _JtShowPageState extends State<SpecialPackageList> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "状态",
-                      text: statusFilterSelected["name"],
-                      hintText: "请选择",
+                      title: '状态',
+                      text: statusFilterSelected['name'],
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: () {
                         ZjcCascadeTreePicker.show(
@@ -418,7 +414,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                           data: statusFilterList,
                           labelKey: 'name',
                           valueKey: 'value',
-                          title: "选择状态",
+                          title: '选择状态',
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
                               statusFilterSelected =
@@ -574,7 +570,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                             SpecialDisposalPackagePage(
                                                 faultDescription:
                                                     item['faultDescription'] ??
-                                                        "",
+                                                        '',
                                                 typeName: widget.typeName,
                                                 trainEntryCode:
                                                     widget.trainEntryCode,
@@ -582,7 +578,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                                 repairScheme:
                                                     item['maintenanceNotice'] ??
                                                         item['repairScheme'] ??
-                                                        "",
+                                                        '',
                                                 trainNumCode:
                                                     widget.trainNumCode,
                                                 typeCode: widget.typeCode,
@@ -604,7 +600,7 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                     padding: const EdgeInsets.all(10),
                                   ),
                                   child: const Text(
-                                    "专检",
+                                    '专检',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -631,8 +627,8 @@ class _JtShowPageState extends State<SpecialPackageList> {
                                   getSpecialRepairInfo();
                                 },
                           child: isLoading
-                              ? const Text("正在加载...")
-                              : const Text("加载更多"),
+                              ? const Text('正在加载...')
+                              : const Text('加载更多'),
                         ),
                       ),
                   ],

@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 
@@ -10,7 +8,7 @@ export 'package:dio/dio.dart' show DioException;
 // #region agent log
 void _agentLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
   try {
-    final path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
+    const path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
     final m = {'location': location, 'message': message, 'data': data, 'timestamp': DateTime.now().millisecondsSinceEpoch, 'sessionId': 'debug-session', 'hypothesisId': hypothesisId};
     final line = '${jsonEncode(m)}\n';
     File(path).writeAsStringSync(line, mode: FileMode.append);
@@ -24,7 +22,7 @@ class AppApi {
   late Options appOptions;
 
   AppApi([this.context]) {
-    appOptions = Options(extra: {"context": context});
+    appOptions = Options(extra: {'context': context});
   }
 
 //服务
@@ -37,8 +35,8 @@ class AppApi {
       // baseUrl: 'http://10.102.12.211:8000/supplyapplocal',
       baseUrl: F.appBaseURL,
       headers: {
-        HttpHeaders.acceptHeader: "application/json,"
-            "*/*",
+        HttpHeaders.acceptHeader: 'application/json,'
+            '*/*',
       }));
   //服务
   static Dio dio2 = Dio(BaseOptions(
@@ -50,20 +48,20 @@ class AppApi {
       // baseUrl: 'http://10.102.12.211:8000/supplyapplocal',
       baseUrl: F.appBaseURL,
       headers: {
-        HttpHeaders.acceptHeader: "application/json,"
-            "*/*",
+        HttpHeaders.acceptHeader: 'application/json,'
+            '*/*',
       }));
 
 
 static void disableCertificateVerification(Dio dioInstance) {
   if (dioInstance.httpClientAdapter is IOHttpClientAdapter) {
     (dioInstance.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate = (client) {
-      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      client.badCertificateCallback = (X509Certificate cert, String host, dynamic port) => true;
       AppLogger.logger.i("SSL certificate validation disabled for ${identical(dioInstance, dio) ? 'dio' : 'dio2'}.");
       return null;
     };
   } else {
-    AppLogger.logger.e("Failed to disable SSL: httpClientAdapter is not IOHttpClientAdapter");
+    AppLogger.logger.e('Failed to disable SSL: httpClientAdapter is not IOHttpClientAdapter');
   }
 }
 
@@ -93,12 +91,12 @@ static Future<void> init() async {
   _agentLog('app_api.dart:after auth header', 'first header set', {'authSet': dio.options.headers[HttpHeaders.authorizationHeader] != null}, 'H4');
   // #endregion
   logger.i(
-      "authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}");
+      'authorizationHeader:${dio.options.headers[HttpHeaders.authorizationHeader]}');
   dio.options.headers.addAll({'token': Global.profile.accessToken});
   // #region agent log
   _agentLog('app_api.dart:after addAll', 'addAll done', {}, 'H4');
   // #endregion
-  dio2.options.headers["content-type"] = "application/json";
+  dio2.options.headers['content-type'] = 'application/json';
   dio2.options.headers[HttpHeaders.authorizationHeader] =
       Global.profile.data?.accessToken;
   logger.i('apptoken${dio.options.headers['token']}');
@@ -108,7 +106,7 @@ static Future<void> init() async {
   _agentLog('app_api.dart:before disableCert', 'before disableCertificateVerification', {'dioAdapter': dio.httpClientAdapter.runtimeType.toString()}, 'H5');
   // #endregion
   if (F.appFlavor == Flavor.env_release) {
-    final prefix = '/jcjx-prod-api';
+    const prefix = '/jcjx-prod-api';
     final addPrefix = InterceptorsWrapper(
       onRequest: (options, handler) {
         final p = options.path;

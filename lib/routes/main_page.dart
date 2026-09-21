@@ -6,7 +6,6 @@ import 'package:jcjx_phone/routes/production/repair_train.dart';
 
 import 'package:jcjx_phone/routes/production/after_sale_temp_repair_register_page.dart';
 import 'package:jcjx_phone/routes/production/repair_train_manage.dart';
-import 'package:jcjx_phone/routes/production/sec_enter_modify_new.dart';
 import 'package:jcjx_phone/routes/production/train_departure_confirm_page.dart';
 import 'package:jcjx_phone/routes/vehicle28/taskpackage/proc_node_list.dart';
 import 'package:flutter_app_badger/flutter_app_badger.dart';
@@ -148,13 +147,13 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   void getLastUpdate() async {
     try {
       var logger = AppLogger.logger;
-      logger.i("检查更新，应用ID: ${F.id}");
+      logger.i('检查更新，应用ID: ${F.id}');
 
       // 获取当前应用版本信息
       String currentVersion = await F.getVersion();
       int currentBuildNumber = await F.getBuildNumber();
 
-      logger.i("当前版本: $currentVersion+$currentBuildNumber");
+      logger.i('当前版本: $currentVersion+$currentBuildNumber');
 
       // 获取当前环境对应的 env 参数
       String env = 'release';
@@ -174,7 +173,7 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
 
       // 使用 getLatestOne 获取最新版本信息
       var r = await ProductApi().getLatestOne(env: env);
-      logger.i("服务器返回的版本信息: $r");
+      logger.i('服务器返回的版本信息: $r');
       // if (r == null || r.version == null) {
       //   logger.i("服务器返回的版本信息为空");
       //   return;
@@ -391,34 +390,34 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
               style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue[100]))),
       routes: <String, WidgetBuilder>{
-        "main": (context) => const MainPage(),
+        'main': (context) => const MainPage(),
 
         // 登录
-        "login": (context) => const LoginRoute(),
+        'login': (context) => const LoginRoute(),
         // 入段车辆查看
-        "enter_list": (context) => const EnterList(),
+        'enter_list': (context) => const EnterList(),
         // 新增入段修改
-        "sec_enter_modify": (context) => const SecEnterModifyNew(),
-        "sec_enter_detail_record": (context) => const SecEnterModifyNew(),
+        'sec_enter_modify': (context) => const SecEnterModifyNew(),
+        'sec_enter_detail_record': (context) => const SecEnterModifyNew(),
         // 机统28
-        "submit28": (context) => const Vehicle28Form(),
-        "dispatchlist": (context) => const DispatchList(),
-        "repairlist": (context) => const RepairList(),
-        "repair": (context) => const Repair(),
-        "mutuallist": (context) => const MutualList(),
-        "mutual": (context) => const Mutual(),
-        "speciallist": (context) => const SpecialList(),
-        "special": (context) => const Special(),
-        "vehimageviewer": (context) => const VehImageViewer(),
-        "certainPackage": (context) => const CertainPackage(),
-        "rollcall": (context) => const RollCall(),
-        "muspecial": (context) => const MuSpecialCall(),
-        "procnode": (context) => const ProcNodeList(),
-        "trainbynode": (context) => const TrainEntryListByNodeCode(),
-        "packageviewer": (context) => const PackageViewer(),
-        "preDispatchWork": (context) => const PreDispatchWork(),
-        "getWorkPackage": (context) => const GetWorkPackage(),
-        "searchWorkPackage": (context) =>  SearchWorkPackage(),
+        'submit28': (context) => const Vehicle28Form(),
+        'dispatchlist': (context) => const DispatchList(),
+        'repairlist': (context) => const RepairList(),
+        'repair': (context) => const Repair(),
+        'mutuallist': (context) => const MutualList(),
+        'mutual': (context) => const Mutual(),
+        'speciallist': (context) => const SpecialList(),
+        'special': (context) => const Special(),
+        'vehimageviewer': (context) => const VehImageViewer(),
+        'certainPackage': (context) => const CertainPackage(),
+        'rollcall': (context) => const RollCall(),
+        'muspecial': (context) => const MuSpecialCall(),
+        'procnode': (context) => const ProcNodeList(),
+        'trainbynode': (context) => const TrainEntryListByNodeCode(),
+        'packageviewer': (context) => const PackageViewer(),
+        'preDispatchWork': (context) => const PreDispatchWork(),
+        'getWorkPackage': (context) => const GetWorkPackage(),
+        'searchWorkPackage': (context) =>  SearchWorkPackage(),
         'preTrainWork': (context) => const PreTrainWork(),
         'temporaryRepairInfoPage': (context) => const TemporaryRepairInfoPage(),
         'repairProgress': (context) => const RepairProgress(),

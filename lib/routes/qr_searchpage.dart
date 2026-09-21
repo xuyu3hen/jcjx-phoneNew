@@ -18,7 +18,7 @@ class _QRsearchPage extends State<QRsearchPage>{
     QRSearchMsg abd = ModalRoute.of(context)!.settings.arguments as QRSearchMsg;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("物料信息"),
+        title: const Text('物料信息'),
       ),
       body: _buildBody(abd),
     );
@@ -32,7 +32,7 @@ class _QRsearchPage extends State<QRsearchPage>{
           
           if(menuIndex == 0){
           
-            showpackage = (data[0])["value"];
+            showpackage = (data[0])['value'];
          
             setState(() {
               
@@ -60,7 +60,7 @@ class _QRsearchPage extends State<QRsearchPage>{
     // reveal是包括code和msg的返回体
     Package package = abd.reveal.data;
     var children = <Widget>[
-      Text("二维码code:${package.code}"),
+      Text('二维码code:${package.code}'),
     ];
     if(package.materialList != []){
       children.add(
@@ -145,7 +145,7 @@ class _QRsearchPage extends State<QRsearchPage>{
               isOperatingButton: false,
               // 是否多选
               isMultiple: false,
-              keyWords: "key",
+              keyWords: 'key',
               data: FilterData.packageFlag,
               itemBuilder: downmenu.buildCheckItem,
           );

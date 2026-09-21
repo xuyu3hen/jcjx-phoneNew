@@ -45,7 +45,7 @@ class _RotableItem extends State<RotableItem> {
                 // 副标题
                 // subtitle: subtitle,
                 trailing:  Text(
-                  "单位：${widget.rotableSt.unitNum}",
+                  '单位：${widget.rotableSt.unitNum}',
                   style: const TextStyle(fontSize: 18,fontStyle: FontStyle.italic),
                 ),
               ),

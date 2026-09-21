@@ -1,13 +1,10 @@
 import 'package:intl/intl.dart';
-import 'package:jcjx_phone/routes/production/apply_page.dart';
 import 'package:jcjx_phone/routes/production/jt_work.dart';
 import 'package:jcjx_phone/routes/production/package_complete.dart';
 import 'package:jcjx_phone/routes/production/package_mutual.dart';
 import 'package:jcjx_phone/routes/production/package_special.dart';
 import 'package:jcjx_phone/routes/production/special_work.dart';
 import '../../index.dart';
-import '../vehicle28/submit28_manage.dart';
-import '../vehicle28/submit_28.dart';
 import 'mutual_work.dart';
 import 'package:path/path.dart' as path;
 
@@ -288,7 +285,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
-        "检修作业-机车",
+        '检修作业-机车',
         style: TextStyle(color: Colors.black),
       ),
       backgroundColor: Colors.white,
@@ -338,7 +335,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                       children: [
                         Center(
                           child: Text(
-                            "C4",
+                            'C4',
                             style: TextStyle(
                               fontSize: 18,
                               color:
@@ -361,7 +358,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count1",
+                              '$count1',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -403,7 +400,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                       children: [
                         Center(
                           child: Text(
-                            "C5",
+                            'C5',
                             style: TextStyle(
                               fontSize: 18,
                               color:
@@ -426,7 +423,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count2",
+                              '$count2',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -467,7 +464,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                       children: [
                         Center(
                           child: Text(
-                            "临修",
+                            '临修',
                             style: TextStyle(
                               fontSize: 18,
                               color: _currentTab == 2
@@ -491,7 +488,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count3",
+                              '$count3',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -780,16 +777,16 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   }
 
   void _showTrainSearchDialog() {
-    TextEditingController _controller = TextEditingController();
+    TextEditingController controller = TextEditingController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('车号查询'),
           content: TextField(
-            controller: _controller,
+            controller: controller,
             decoration: const InputDecoration(
-              hintText: "请输入车号",
+              hintText: '请输入车号',
             ),
           ),
           actions: [
@@ -801,7 +798,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
             ),
             TextButton(
               onPressed: () {
-                String trainNum = _controller.text.trim();
+                String trainNum = controller.text.trim();
                 if (trainNum.isNotEmpty) {
                   _searchTrainByNum(trainNum);
                   Navigator.of(context).pop();
@@ -855,7 +852,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
   Widget _buildLocomotiveDetailList() {
     if (repairTrainInfo.isEmpty) {
       return const Center(
-        child: Text("暂无机车数据", style: TextStyle(color: Colors.grey)),
+        child: Text('暂无机车数据', style: TextStyle(color: Colors.grey)),
       );
     }
     return ListView.builder(
@@ -863,7 +860,7 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
         final loco = repairTrainInfo[index];
-        final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+        final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
         return GestureDetector(
           onTap: () {
             Navigator.push(
@@ -958,13 +955,13 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
                   // 自检、互检、专检信息展示
                   Row(
                     children: [
-                      _buildInspectionItem("自检",
+                      _buildInspectionItem('自检',
                           loco['taskCertainPackageCount']?.toString() ?? '0'),
                       const SizedBox(width: 16),
-                      _buildInspectionItem("互检",
+                      _buildInspectionItem('互检',
                           loco['mutualInspectionCount']?.toString() ?? '0'),
                       const SizedBox(width: 16),
-                      _buildInspectionItem("专检",
+                      _buildInspectionItem('专检',
                           loco['specialInspectionCount']?.toString() ?? '0'),
                     ],
                   ),
@@ -1100,8 +1097,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   //获取待作业数量
   void getNumber() async {
     Map<String, dynamic> params = {
-      "trainEntryCode": widget.locoInfo?['code'],
-      "userId": Global.profile.permissions?.user.userId
+      'trainEntryCode': widget.locoInfo?['code'],
+      'userId': Global.profile.permissions?.user.userId
     };
     try {
       var r = await ProductApi()
@@ -1348,7 +1345,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   }
 
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1378,7 +1375,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
@@ -1611,8 +1608,8 @@ class _PackageInfoState extends State<PackageInfo> {
 
   void getWorkPackage() async {
     Map<String, dynamic> params = {
-      "trainEntryCode": widget.locoInfo?['code'],
-      "userId": Global.profile.permissions?.user.userId
+      'trainEntryCode': widget.locoInfo?['code'],
+      'userId': Global.profile.permissions?.user.userId
     };
     logger.i(params);
     var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
@@ -1683,22 +1680,22 @@ class InspectionPackagePage extends StatefulWidget {
 
 class _InspectionPackagePageState extends State<InspectionPackagePage> {
   // 模拟机车数据
-  final Locomotive _locomotive = Locomotive(
-    id: "HXD3C 0016",
-    inTime: DateTime(2023, 2, 24, 14, 58, 15),
-    track: "J2道机",
-    planTrain: "无",
-    planOut: "无",
-    status: "整备中",
-  );
+  // final Locomotive _locomotive = Locomotive(
+  //   id: 'HXD3C 0016',
+  //   inTime: DateTime(2023, 2, 24, 14, 58, 15),
+  //   track: 'J2道机',
+  //   planTrain: '无',
+  //   planOut: '无',
+  //   status: '整备中',
+  // );
 
   // 模拟作业项数据
-  final List<TaskItem> _tasks = [
-    TaskItem(name: "车内2", completed: 0, total: 16, userStatus: "未申领"),
-    TaskItem(name: "车底", completed: 0, total: 8, userStatus: "未申领"),
-    TaskItem(name: "车外", completed: 0, total: 15, userStatus: "未申领"),
-    TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
-  ];
+  // final List<TaskItem> _tasks = [
+  //   TaskItem(name: '车内2', completed: 0, total: 16, userStatus: '未申领'),
+  //   TaskItem(name: '车底', completed: 0, total: 8, userStatus: '未申领'),
+  //   TaskItem(name: '车外', completed: 0, total: 15, userStatus: '未申领'),
+  //   TaskItem(name: '车顶', completed: 0, total: 12, userStatus: '未申领'),
+  // ];
 
   var logger = AppLogger.logger;
 
@@ -2025,8 +2022,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   void getWorkPackage() async {
     Map<String, dynamic> params = {
-      "trainEntryCode": widget.locoInfo?['code'],
-      "userId": Global.profile.permissions?.user.userId
+      'trainEntryCode': widget.locoInfo?['code'],
+      'userId': Global.profile.permissions?.user.userId
     };
     logger.i(params);
     var r = await ProductApi().getPersonalWorkPackage(queryParametrs: params);
@@ -2038,7 +2035,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
                 : Map<String, dynamic>.from(item as Map))
             .toList();
         for (var item in Global.packageList) {
-          int i = 0;
+          // int i = 0;
           // item['taskCertainPackageList']
           for (var v in item['taskCertainPackageList']) {
             if (v['complete'] == 0) {}
@@ -2050,7 +2047,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   @override
   Widget build(BuildContext context) {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
+    // final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss'); // 时间格式化
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -2064,7 +2061,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             }
           },
         ),
-        title: const Text("检修作业-作业包"),
+        title: const Text('检修作业-作业包'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -2093,7 +2090,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   /// 构建机车基本信息区域
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2123,7 +2120,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
@@ -2357,12 +2354,12 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 }
 
 class InspectionVertexPage extends StatefulWidget {
-  Map<String, dynamic>? packageInfo = {};
-  Map<String, dynamic>? locoInfo = {};
+  final Map<String, dynamic>? packageInfo;
+  final Map<String, dynamic>? locoInfo;
   //index代表第几个作业包
-  int? index;
+  final int? index;
   //count代表完成的第几个
-  int count;
+  final int count;
 
   InspectionVertexPage(
       {super.key,
@@ -2379,7 +2376,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   // 模拟已采集的照片（可扩展为文件路径列表）
   var logger = AppLogger.logger;
 
-  final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+  final List<String> _photos = ['photo_1']; // 示例：存储照片标识
   //展示照片文件
   final List<XFile> _files = [];
   int _currentIndex = 0;
@@ -2401,8 +2398,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.packageInfo?["taskCertainPackageList"] is List) {
-      packagePoints = (widget.packageInfo?["taskCertainPackageList"] as List)
+    if (widget.packageInfo?['taskCertainPackageList'] is List) {
+      packagePoints = (widget.packageInfo?['taskCertainPackageList'] as List)
           .map((item) => item is Map<String, dynamic>
               ? item
               : Map<String, dynamic>.from(item as Map))
@@ -2424,16 +2421,16 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         currentPackagePoint['taskInstructContentList'] is List) {
       taskInstructContentList =
           (currentPackagePoint['taskInstructContentList'] as List)
-              .where((item) => item is Map<String, dynamic>)
-              .map((item) => item as Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => item)
               .toList();
     }
     for (Map<String, dynamic> item in taskInstructContentList) {
       if (item['taskContentItemList'] != null &&
           item['taskContentItemList'] is List) {
         taskContentItemList.addAll((item['taskContentItemList'] as List)
-            .where((item) => item is Map<String, dynamic>)
-            .map((item) => item as Map<String, dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map((item) => item)
             .toList());
       }
     }
@@ -2488,7 +2485,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () => Navigator.pop(context, true),
         ),
-        title: const Text("检修作业-项点"),
+        title: const Text('检修作业-项点'),
         backgroundColor: Colors.white,
         actions: [
           Container(
@@ -2512,7 +2509,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 size: 18,
               ),
               label: const Text(
-                "报机统28",
+                '报机统28',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -2585,7 +2582,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                 TextButton(
                   onPressed: () => _gotoSecondStation(taskInstructContentList),
                   child: const Text(
-                    "作业内容",
+                    '作业内容',
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
@@ -2626,7 +2623,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                   Row(
                     children: [
                       const Text(
-                        "必须采集",
+                        '必须采集',
                         style: TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
@@ -2745,25 +2742,25 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                         title: Text.rich(
                           TextSpan(
                             children: [
-                              TextSpan(text: '数据名称:'),
+                              const TextSpan(text: '数据名称:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['name'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '最小值可等于:'),
+                              const TextSpan(text: '最小值可等于:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitMin'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '最大值可等于:'),
+                              const TextSpan(text: '最大值可等于:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitMax'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '单位'),
+                              const TextSpan(text: '单位'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitUnit'] ?? ''}',
@@ -2814,9 +2811,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                     _files.clear();
                                     _photos.clear();
                                     _videos.clear();
-                                    if (packagePoints != null &&
-                                        _currentIndex <
-                                            packagePoints!.length - 1) {
+                                    if (_currentIndex <
+                                            packagePoints.length - 1) {
                                       // 如果还有下一项，则更新索引以显示下一项
                                       setState(() {
                                         _currentIndex++;
@@ -2841,10 +2837,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                               (currentPackagePoint[
                                                           'taskInstructContentList']
                                                       as List)
-                                                  .where((item) => item
-                                                      is Map<String, dynamic>)
-                                                  .map((item) => item
-                                                      as Map<String, dynamic>)
+                                                  .whereType<Map<String, dynamic>>()
+                                                  .map((item) => item)
                                                   .toList();
                                         }
 
@@ -2857,22 +2851,20 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
                                             taskContentItemList.addAll(
                                                 (item['taskContentItemList']
                                                         as List)
-                                                    .where((item) => item
-                                                        is Map<String, dynamic>)
-                                                    .map((item) => item
-                                                        as Map<String, dynamic>)
+                                                    .whereType<Map<String, dynamic>>()
+                                                    .map((item) => item)
                                                     .toList());
                                           }
                                         }
                                       });
                                     } else {
-                                      debugPrint("已完成所有项");
+                                      debugPrint('已完成所有项');
                                       Navigator.pop(context, true);
                                     }
                                   }, // 当没有图片时禁用按钮
                             child: _currentIndex < packagePoints.length - 1
-                                ? const Text("进入下一项")
-                                : const Text("完成"),
+                                ? const Text('进入下一项')
+                                : const Text('完成'),
                           ),
                         ),
                       ),
@@ -2942,8 +2934,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
 // 拍照方法
   void _takePhoto() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 80,
     );
@@ -2958,8 +2950,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
 // 录像方法
   void _recordVideo() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? video = await _picker.pickVideo(
+    final ImagePicker picker = ImagePicker();
+    final XFile? video = await picker.pickVideo(
       source: ImageSource.camera,
       maxDuration: const Duration(minutes: 1), // 限制录像时长为1分钟
     );
@@ -2974,12 +2966,12 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
 // 从相册选择图片或视频
   void _pickFromGallery() async {
-    final ImagePicker _picker = ImagePicker();
+    final ImagePicker picker = ImagePicker();
 
     // 允许同时选择图片和视频
-    final List<XFile>? media = await _picker.pickMultipleMedia();
+    final List<XFile> media = await picker.pickMultipleMedia();
 
-    if (media != null && media.isNotEmpty) {
+    if (media.isNotEmpty) {
       setState(() {
         for (var file in media) {
           _files.add(file);
@@ -3142,7 +3134,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   // ---------------------- 交互逻辑（可扩展） ----------------------
   void _reportJT6() {
     // 报JT6的业务逻辑（如提交数据、跳转页面）
-    debugPrint("报JT6功能触发");
+    debugPrint('报JT6功能触发');
   }
 
 // ... existing code ...
@@ -3212,7 +3204,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
 
   void _deletePhoto(XFile photo) {
     // 删除照片逻辑
-    debugPrint("删除照片：$photo");
+    debugPrint('删除照片：$photo');
     setState(() {
       _files.remove(photo);
     });
@@ -3231,13 +3223,13 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
     completePackage();
     // 将图片清空
     _files.clear();
-    if (packagePoints != null && _currentIndex < packagePoints!.length - 1) {
+    if (_currentIndex < packagePoints.length - 1) {
       // 如果还有下一项，则更新索引以显示下一项
       setState(() {
         _currentIndex++;
       });
     } else {
-      debugPrint("已完成所有项");
+      debugPrint('已完成所有项');
       Navigator.pop(context, true);
     }
   }
@@ -3245,7 +3237,8 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   Future<void> upLoadFileList() async {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
-      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      // var r =
+      await ProductApi().uploadCertainPackageImg(queryParametrs: {
         'certainPackageCodeList': currentPackagePoint['code'],
       }, imagedatas: files);
     } catch (e) {
@@ -3283,7 +3276,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
   // ---------------------- 辅助方法：机车信息展示 ----------------------
   /// 构建机车基本信息区域
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3313,7 +3306,7 @@ class _InspectionVertexPageState extends State<InspectionVertexPage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),

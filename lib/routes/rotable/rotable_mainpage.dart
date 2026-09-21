@@ -13,7 +13,7 @@ class _RotableMainPage extends State<RotableMainPage>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("周转件主页"),
+        title: const Text('周转件主页'),
       ),
       resizeToAvoidBottomInset: false,
       body: _buildBody(),
@@ -26,7 +26,7 @@ class _RotableMainPage extends State<RotableMainPage>{
     if(!usermodel.isLogin){
       return Center(
         child: ElevatedButton(
-          onPressed: () => Navigator.of(context).pushNamed("login"),
+          onPressed: () => Navigator.of(context).pushNamed('login'),
           child: const Text('欢迎')
         ),
       );

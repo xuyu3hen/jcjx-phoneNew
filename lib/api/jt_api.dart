@@ -14,10 +14,10 @@ class JtApi extends AppApi{
     File? imagedata
   })async{
     FormData formData = FormData.fromMap({
-      "uploadFileList": await MultipartFile.fromFile(imagedata!.path)
+      'uploadFileList': await MultipartFile.fromFile(imagedata!.path)
     });
     var r = await AppApi.dio.post(
-      "/fileserver/jt28File/uploadFile",
+      '/fileserver/jt28File/uploadFile',
       data: formData,
       // options: Options(
       //   contentType: "multipart/form-data"
@@ -36,16 +36,16 @@ class JtApi extends AppApi{
       mfList.insert(0,a);
     }
     FormData formData = FormData.fromMap({
-      "uploadFileList": mfList
+      'uploadFileList': mfList
     });
     var r = await AppApi.dio.post(
-      "/fileserver/jt28File/uploadFile",
+      '/fileserver/jt28File/uploadFile',
       data: formData,
       options: Options(
-        contentType: "multipart/form-data"
+        contentType: 'multipart/form-data'
       )
     );
-    log("uploadMixJt${r.data}");
+    log('uploadMixJt${r.data}');
     return (r.data['data']);
   }
 
@@ -53,7 +53,7 @@ class JtApi extends AppApi{
   // subparts/workInstructPackage/syncWorkPackageToPackageUser 同步作业包
   Future<void> syncWorkPackageToPackageUser(Map<String, dynamic> params) async{
       var r = await AppApi.dio.get(
-        "/subparts/workInstructPackage/syncWorkPackageToPackageUser",
+        '/subparts/workInstructPackage/syncWorkPackageToPackageUser',
         data: params
       );
       logger.i(r.data);  
@@ -77,10 +77,10 @@ class JtApi extends AppApi{
     List<Map<String,dynamic>>? queryParametrs
   })async{
     var r = await AppApi.dio.post(
-      "/tasks/locomotiveMaintenanceLogDO/saveOrUpdate",
+      '/tasks/locomotiveMaintenanceLogDO/saveOrUpdate',
       data: queryParametrs,
     );
-    log("dispatchJt28${r.data}");
+    log('dispatchJt28${r.data}');
     return (r.data['data']);
   }
 
@@ -89,7 +89,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParametrs
   })async{
     var r = await AppApi.dio.get(
-      "/subparts/jcConfigNode/getAllConfigTreeByCode",
+      '/subparts/jcConfigNode/getAllConfigTreeByCode',
       queryParameters: queryParametrs,
     );
     // log("getAllConfigTreeByCode${r.data}");
@@ -101,7 +101,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParametrs
   })async{
     var r = await AppApi.dio.get(
-      "/system/user/deptTree",
+      '/system/user/deptTree',
       queryParameters: queryParametrs,
     );
     // log("getAllConfigTreeByCode${r.data}");
@@ -113,10 +113,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParametrs
   })async{
     var r = await AppApi.dio.get(
-      "/system/user/list",
+      '/system/user/list',
       queryParameters: queryParametrs,
     );
-    log("getUserList${r.data}");
+    log('getUserList${r.data}');
     return (r.data);
   }
 
@@ -136,20 +136,20 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   })async{
     var r = await AppApi.dio.get(
-      "/tasks/vJtWebSearch/selectAll",
+      '/tasks/vJtWebSearch/selectAll',
       queryParameters: queryParameters
     );
-    log("getJtList${r.data}");
+    log('getJtList${r.data}');
     return JtMessageList.fromJson((r.data['data'])['data']);
   }
 
   // 机统自动派活人员组分组查找
   Future<dynamic> getJtAssign()async{
     var r = await AppApi.dio.post(
-      "/tasks/jtAssign/list",
+      '/tasks/jtAssign/list',
       data: {
-        "pageNum" : 0,
-        "pageSize" : 0,
+        'pageNum' : 0,
+        'pageSize' : 0,
       },
     );
     // log("getJtAssign${r.data}");
@@ -159,10 +159,10 @@ class JtApi extends AppApi{
   // 检修作业来源
   Future<JtTypeList> getJtType()async{
     var r = await AppApi.dio.get(
-      "/tasks/jtType/selectAll",
+      '/tasks/jtType/selectAll',
       queryParameters: {
-        "pageNum" : 0,
-        "pageSize" : 0,
+        'pageNum' : 0,
+        'pageSize' : 0,
       },
     );
     // log("getJtType${r.data}");
@@ -172,10 +172,10 @@ class JtApi extends AppApi{
   // 加工方法
   Future<JtTypeList> getJt28Dict()async{
     var r = await AppApi.dio.get(
-      "/tasks/jt28Dict/selectAll",
+      '/tasks/jt28Dict/selectAll',
       queryParameters: {
-        "pageNum" : 0,
-        "pageSize" : 0,
+        'pageNum' : 0,
+        'pageSize' : 0,
       },
     );
     // log("getJt28Dict${r.data}");
@@ -187,10 +187,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   })async{
     var r = await AppApi.dio.post(
-      "/subparts/riskLevelPost/getUserList",
+      '/subparts/riskLevelPost/getUserList',
       data: queryParameters,
     );
-    log("getCheckList${r.data}");
+    log('getCheckList${r.data}');
     return (r.data['data'])['data'];
   }
 
@@ -199,7 +199,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   })async{
     var r = await AppApi.dio.get(
-      "/fileserver/jt28File/getByGroupId",
+      '/fileserver/jt28File/getByGroupId',
       queryParameters: queryParameters,
     );
     // log("getCheckList${r.data}");
@@ -211,7 +211,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
         var r = await AppApi.dio.get(
-      "/tasks/taskInstructPackage/getIndividualTaskPackage",
+      '/tasks/taskInstructPackage/getIndividualTaskPackage',
       queryParameters: queryParameters,
     );
     // log("getCheckList${r.data}");
@@ -223,7 +223,7 @@ class JtApi extends AppApi{
     List<Map<String,dynamic>>? queryParameters
   }) async {
       var r = await AppApi.dio.post(
-      "/subparts/workInstructPackage/updateWorkInstructPackage",
+      '/subparts/workInstructPackage/updateWorkInstructPackage',
       data: queryParameters,
     );
     return r.data;
@@ -234,10 +234,10 @@ class JtApi extends AppApi{
     List<Map<String,dynamic>>? queryParameters
   }) async {
       var r = await AppApi.dio.post(
-      "/tasks/taskCertainPackage/completeTaskCertainPackage",
+      '/tasks/taskCertainPackage/completeTaskCertainPackage',
       data: queryParameters,
     );
-    log("complete${r.data}");
+    log('complete${r.data}');
     return r.data;
   }
 
@@ -246,10 +246,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskCertainPackage/selectAll",
+      '/tasks/taskCertainPackage/selectAll',
       data: queryParameters
     );
-    log("getTaskCertainPackage${r.data}");
+    log('getTaskCertainPackage${r.data}');
     return r.data;
   }
 
@@ -258,10 +258,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/fileserver/taskCertainContentFile/uploadFile",
+      '/fileserver/taskCertainContentFile/uploadFile',
       data: queryParameters
     );
-    log("uploadFileTaskCertainContentFile${r.data}");
+    log('uploadFileTaskCertainContentFile${r.data}');
     return r.data;
   }
 
@@ -270,10 +270,10 @@ class JtApi extends AppApi{
     List<TaskContentItem>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskContentItem/saveOrUpdate",
+      '/tasks/taskContentItem/saveOrUpdate',
       data: queryParameters
     );
-    log("updateTaskContentItem${r.data}");
+    log('updateTaskContentItem${r.data}');
     return r.data;
   }
 
@@ -283,7 +283,7 @@ class JtApi extends AppApi{
   }) async {
     logger.i(queryParameters);
     var r = await AppApi.dio.get(
-      "/subparts/workInstructPackageUser/getPackageUserList",
+      '/subparts/workInstructPackageUser/getPackageUserList',
       queryParameters: queryParameters
     );
     // log("getPackageUserList${r.data}");
@@ -296,7 +296,7 @@ class JtApi extends AppApi{
     List<Map<String,dynamic>>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/subparts/workInstructPackageUser/saveOrUpdate",
+      '/subparts/workInstructPackageUser/saveOrUpdate',
       data: queryParameters
     );
     // log("updateInstructPackageUser${r.data}");
@@ -308,7 +308,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.get(
-      "/subparts/workInstructPackageUser/selectAll",
+      '/subparts/workInstructPackageUser/selectAll',
       queryParameters: queryParameters
     );
     // log("getworkInstructPackageUser${r.data}");
@@ -320,10 +320,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.get(
-      "/tasks/taskInstructPackage/getCommonPackageList",
+      '/tasks/taskInstructPackage/getCommonPackageList',
       queryParameters: queryParameters
     );
-    log("getCommonPackageList${r.data}");
+    log('getCommonPackageList${r.data}');
     return IndividualTaskPackageList.fromJson(r.data['data']);
   }
 
@@ -332,10 +332,10 @@ class JtApi extends AppApi{
     List<String>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/selectPersonalPackage",
+      '/tasks/taskInstructPackage/selectPersonalPackage',
       data: queryParameters
     );
-    log("selectPersonalPackage${r.data}");
+    log('selectPersonalPackage${r.data}');
     return r.data;
   }
 
@@ -344,10 +344,10 @@ class JtApi extends AppApi{
     List<String>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/cancelPersonalPackage",
+      '/tasks/taskInstructPackage/cancelPersonalPackage',
       data: queryParameters
     );
-    log("cancelPersonalPackage${r.data}");
+    log('cancelPersonalPackage${r.data}');
     return r.data;
   }
 
@@ -356,10 +356,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/selectAssistantPackage",
+      '/tasks/taskInstructPackage/selectAssistantPackage',
       data: queryParameters
     );
-    log("selectAssistantPackage${r.data}");
+    log('selectAssistantPackage${r.data}');
     return r.data;
   }
 
@@ -368,10 +368,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.post(
-      "/tasks/taskInstructPackage/cancelAssistantPackage",
+      '/tasks/taskInstructPackage/cancelAssistantPackage',
       data: queryParameters
     );
-    log("cancelAssistantPackage${r.data}");
+    log('cancelAssistantPackage${r.data}');
     return r.data;
   }
 
@@ -380,10 +380,10 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.get(
-      "/subparts/repairMainNode/getProcessingMainNodeAndProc",
+      '/subparts/repairMainNode/getProcessingMainNodeAndProc',
       queryParameters: queryParameters
     );
-    log("getProcessingMainNodeAndProc${r.data}");
+    log('getProcessingMainNodeAndProc${r.data}');
     return r.data['data'];
   }
 
@@ -392,7 +392,7 @@ class JtApi extends AppApi{
     Map<String,dynamic>? queryParameters
   }) async {
     var r = await AppApi.dio.get(
-      "/dispatch/trainEntry/getTrainEntryByRepairMainNodeCode",
+      '/dispatch/trainEntry/getTrainEntryByRepairMainNodeCode',
       queryParameters: queryParameters
     );
     // log("getTrainEntryByRepairMainNodeCode${r.data}");

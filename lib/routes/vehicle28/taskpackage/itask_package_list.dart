@@ -21,7 +21,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
         'trainEntryCode':widget.trainEntryCode
       }
     );
-    if(r.code == "S_F_S000"&&r.data !=null){
+    if(r.code == 'S_F_S000'&&r.data !=null){
       setState(() {
         procList =  r.data!;
       });
@@ -35,7 +35,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
     var r = await JtApi().selectPersonalPackage(
       queryParameters: [val]
     );
-    if(r.code == "S_F_S000"){
+    if(r.code == 'S_F_S000'){
       showToast('主修开工');
       return true;
     }else{
@@ -84,7 +84,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
         if(item.executorId != null)...[
           ExpansionTile(
             title: Text('${item.name}',style: tileText(18.0),),
-            subtitle: Text(item.station??""),
+            subtitle: Text(item.station??''),
             trailing: ElevatedButton(onPressed: () {
               selectPersonalPackage(item.code).then((value) => {
                 if(value == true){
@@ -99,7 +99,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
         ]else...[
           ExpansionTile(
             title: Text('${item.name}',style: tileText(18.0),),
-            subtitle: Text(item.station??""),
+            subtitle: Text(item.station??''),
             collapsedBackgroundColor: Colors.blue[100],
             children: list
           ),
@@ -139,7 +139,7 @@ class _ITaskPackageListState extends State<ITaskPackageList>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
+                title: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
               ),
             ],

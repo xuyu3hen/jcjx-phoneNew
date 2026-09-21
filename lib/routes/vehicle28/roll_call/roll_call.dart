@@ -121,10 +121,10 @@ class _RollCallState extends State<RollCall>{
         });
         // log('${userList[0]}');
       }else{
-        showToast("未能获取班组人员");
+        showToast('未能获取班组人员');
       }
     }catch(e){
-      logger.e("$e");
+      logger.e('$e');
     }
   }
 
@@ -139,7 +139,7 @@ class _RollCallState extends State<RollCall>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("开工点名"),
+        title: const Text('开工点名'),
       ),
       // 打开侧边栏需要传递更低一级context
       body: Builder(builder:(BuildContext context) {
@@ -168,7 +168,7 @@ class _RollCallState extends State<RollCall>{
             const SizedBox(
               height: 20.0,
             ),
-            Text("正在获取动力类型-机型数据",
+            Text('正在获取动力类型-机型数据',
               style: TextStyle(color: Colors.blue[700]),
             ),
           ],
@@ -191,9 +191,9 @@ class _RollCallState extends State<RollCall>{
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            buildItem(typeName,"机型",jctypeListSelect),
-            buildItem(repairProcName,"修程",repairProcListSelect),
-            buildItem(repairMainNodeName,"工序节点",repairMainNodeListSelect),
+            buildItem(typeName,'机型',jctypeListSelect),
+            buildItem(repairProcName,'修程',repairProcListSelect),
+            buildItem(repairMainNodeName,'工序节点',repairMainNodeListSelect),
           ],
         )),
     );
@@ -303,8 +303,8 @@ class _RollCallState extends State<RollCall>{
               // holy shit
               List reList = userList.where((element) => element['repairF'] == true).toList();
               List asList = userList.where((element) => element['assistantF'] == true).toList();
-              String repairStr = "";String repairNameStr = "";
-              String asStr = "";String asNameStr = "";
+              String repairStr = '';String repairNameStr = '';
+              String asStr = '';String asNameStr = '';
               // 数组指定属性拼接
               repairStr = reList.map((e){return (e['userId']).toString();}).join(',');
               repairNameStr = reList.map((e){return (e['nickName']).toString();}).join(',');
@@ -327,7 +327,7 @@ class _RollCallState extends State<RollCall>{
               var submit = await JtApi().updateInstructPackageUser(
                 queryParameters: list
               );
-              if(submit['code'] != "S_T_S003"){
+              if(submit['code'] != 'S_T_S003'){
                 showToast("${submit['message']}");
               }
             }on DioException catch(e){
@@ -355,7 +355,7 @@ class _RollCallState extends State<RollCall>{
       valueKey: 'code',
       childrenKey: 'jcTypeList',
       isShowSearch: false,
-      title: "选择机型",
+      title: '选择机型',
       clickCallBack: (selectItem, selectArr) {
         // print(selectArr);
         setState((){
@@ -384,7 +384,7 @@ class _RollCallState extends State<RollCall>{
         valueKey: 'code',
         childrenKey: 'repairProcList',
         isShowSearch: false,
-        title: "选择修程",
+        title: '选择修程',
         clickCallBack: (selectItem, selectArr) {
           // print(selectArr);
           setState((){
@@ -410,7 +410,7 @@ class _RollCallState extends State<RollCall>{
         labelKey: 'name',
         valueKey: 'code',
         isShowSearch: false,
-        title: "选择工序节点",
+        title: '选择工序节点',
         clickCallBack: (selectItem, selectArr) {
           // print(selectArr);
           setState((){
@@ -460,7 +460,7 @@ class _RollCallState extends State<RollCall>{
                         children: [
                           Flexible(
                             child: Text(
-                              "$showTitle",
+                              '$showTitle',
                               style: TextStyle(
                                 color: title != null?Colors.blueAccent:Colors.black,
                                 fontSize: 15.0),
@@ -535,7 +535,7 @@ class _RollCallState extends State<RollCall>{
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${dto.packageName}",style: const TextStyle(fontSize: 18.0),),
+                title: Text('${dto.packageName}',style: const TextStyle(fontSize: 18.0),),
                 // subtitle: Text("报修人：${item.reporterName}"),
                 trailing:ElevatedButton(onPressed: (){
                   packageSelected = dto;
@@ -560,16 +560,16 @@ class _RollCallState extends State<RollCall>{
                 }, child: const Icon(Icons.checklist_rtl_sharp)),
               ),
               ZjcFormInputCell(
-                title: "主修",
+                title: '主修',
                 text: dto.workInstructPackageUserList![0].repairPersonnelName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),
               ZjcFormInputCell(
-                title: "辅修",
+                title: '辅修',
                 text: dto.workInstructPackageUserList![0].assistantName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),

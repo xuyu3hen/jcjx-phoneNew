@@ -30,11 +30,11 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
 
   List<Map<String, dynamic>> _deptList = [];
 
-  Map<String, dynamic>? _signDept;
-  Map<String, dynamic>? _signTeam;
-  List<Map<String, dynamic>> _signUsers = [];
+  // Map<String, dynamic>? _signDept;
+  // Map<String, dynamic>? _signTeam;
+  // final List<Map<String, dynamic>> _signUsers = [];
   
-  List<Map<String, dynamic>> _signeeList = [
+  final List<Map<String, dynamic>> _signeeList = [
     {
       'signDept': null,
       'signTeam': null,
@@ -653,7 +653,7 @@ class _Jt28DispatchPageState extends State<Jt28DispatchPage> {
     TableRow row3(
         String l1, String v1, String l2, String v2, String l3, String v3) {
       final headerStyle = TextStyle(color: Colors.grey[700], fontSize: 13);
-      final valueStyle = const TextStyle(fontSize: 13);
+      const valueStyle = TextStyle(fontSize: 13);
       Widget cell(String text, TextStyle? style, {bool header = false}) {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),

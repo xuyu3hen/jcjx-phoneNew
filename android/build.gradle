@@ -1,20 +1,142 @@
-buildscript {
-    ext.kotlin_version = '1.7.10'
-    repositories {
-        google()
-        mavenCentral()
+// 【PREFER_SETTINGS 强制统一所有插件项目级 repositories，避免插件自己声明的仓库覆盖 DRM 设置】
+// 在子项目 apply 之前清空其 repositories，DRM 的 PREFER_SETTINGS 会把 settings.gradle DRM 中的仓库补充为默认
+// 注意：必须在 beforeEvaluate 阶段执行，子项目 build.gradle 在这之后 apply 才会加 repositories，
+// 因此再加 afterEvaluate 二次清空兜底。
+subprojects {
+    def cleanRepos = { project ->
+        try { project.repositories.clear() } catch (Exception ignored) {}
     }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.0'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    beforeEvaluate { p -> cleanRepos(p) }
+    afterEvaluate { p -> cleanRepos(p) }
+}
+// 同样清理 allprojects（root build.gradle L1-14 老的 allprojects.repositories 仍可能生效）
+allprojects {
+    afterEvaluate { p ->
+        try { p.repositories.clear() } catch (Exception ignored) {}
     }
 }
 
 allprojects {
     repositories {
+        // 【国内镜像】阿里云 Maven（优先）
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/jcenter' }
+        // 【国内镜像】腾讯云 Maven（兜底）
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        // 【JitPack】阿里云/腾讯云都不代理 jitpack，直接走官方（flutter_xupdate 依赖在 jitpack.io）
+        maven { url 'https://jitpack.io' }
+        // 原始仓库（兜底）
         google()
         mavenCentral()
+    }
+}
+
+// 【AGP 8.x 兼容老 Flutter 插件 2/2】：
+// 修复 "sourceCompatibility is not yet finalized" 异常（photo_manager 2.8.2 等老插件
+// 在 compileOptions {} 里先读 getJavaVersion() 再赋值，但 AGP 8.4 里
+// compileOptions.sourceCompatibility 是懒 Provider，读了再赋值会 finalize 失败）。
+// 用 beforeEvaluate 先于子项目自己的 android {} 闭包执行，统一强制固定 JDK17，
+// 配合 gradle.properties 的 java.version=17，老插件的 getJavaVersion() 直接命中。
+subprojects {
+    beforeEvaluate { project ->
+        project.plugins.withId('com.android.library') {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+        // 覆盖 kotlin-android 插件的 jvmTarget（beforeEvaluate 早于子项目的 apply plugin，
+        // 若子项目没 apply kotlin-android，这里设置会抛异常，所以必须 try/catch + withId 双保险）
+        try {
+            project.plugins.withId('kotlin-android') {
+                try {
+                    project.kotlinOptions {
+                        jvmTarget = '17'
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+    }
+}
+
+// 【AGP 8.x 兼容老 Flutter 插件 1/2】：
+// 很多老插件（如 flutter_app_badger 1.5.0、camera 旧版等）没有在
+// build.gradle 里声明 namespace，AGP 8.4 强制要求。此处遍历所有
+// library subproject，在 afterEvaluate 阶段从 AndroidManifest.xml
+// 的 package 属性自动回填 namespace，避免逐个手改 pub 缓存。
+subprojects {
+    afterEvaluate { project ->
+        if (!project.plugins.hasPlugin('com.android.library')) {
+            return
+        }
+        def androidExt = project.extensions.findByName('android')
+        if (androidExt == null) {
+            return
+        }
+        // a) 自动补 namespace
+        if (androidExt.hasProperty('namespace')
+                && (androidExt.namespace == null || androidExt.namespace.toString().trim().isEmpty())) {
+            def manifestFile = project.file('src/main/AndroidManifest.xml')
+            if (manifestFile.exists()) {
+                def manifestText = manifestFile.getText('UTF-8')
+                def pkgMatcher = (manifestText =~ /package\s*=\s*["']([^"']+)["']/)
+                if (pkgMatcher.find()) {
+                    def pkgName = pkgMatcher.group(1)
+                    try {
+                        androidExt.namespace = pkgName
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+        // b) 兜底：afterEvaluate 末尾再次强制写一遍 compileOptions / kotlinOptions，
+        //    覆盖老插件自己的设置（很多老插件写死了 1.8/21/11 等 jvmTarget，与新的 Java 17 冲突）。
+        try {
+            androidExt.compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        } catch (Exception ignored) {}
+        // b-2) kotlinOptions jvmTarget = '17'（覆盖老插件的 1.8/21/11，保持 Java/Kotlin 一致）
+        try {
+            if (project.plugins.hasPlugin('kotlin-android')) {
+                // 优先 extensions.findByName('kotlinOptions') 直接 DSL 赋值；
+                // 老插件若用的是 task.configure 也会被 afterEvaluate 覆盖。
+                def kotlinOpt = project.extensions.findByName('kotlinOptions')
+                if (kotlinOpt != null) {
+                    kotlinOpt.metaClass.setProperty(kotlinOpt, 'jvmTarget', '17')
+                }
+                // 双重保险：遍历所有 compileDebugKotlin / compileReleaseKotlin 任务的 jvmTarget
+                try {
+                    project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { task ->
+                        try { task.kotlinOptions.jvmTarget = '17' } catch (Exception ignored) {}
+                        try { task.compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } catch (Exception ignored) {}
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+        // c) 兜底：compileSdkVersion < 34 时强制提升到 34。
+        //    AGP 8.4 + JDK17 要求 compileSdk>=34 才能编译 Java 17 bytecode，
+        //    老插件如 flutter_app_badger 1.5.0 默认 compileSdk 低会炸。
+        try {
+            def current = androidExt.hasProperty('compileSdkVersion') ? androidExt.compileSdkVersion : null
+            def currentInt = null
+            if (current instanceof CharSequence) {
+                try { currentInt = current.toString().replaceAll('[^0-9]','').toInteger() } catch (Exception ignored) {}
+            } else if (current instanceof Number) {
+                currentInt = current.intValue()
+            }
+            if (currentInt == null || currentInt < 34) {
+                if (androidExt.metaClass.respondsTo(androidExt, 'setCompileSdkVersion', Integer)) {
+                    androidExt.setCompileSdkVersion(34)
+                } else {
+                    androidExt.compileSdkVersion = 34
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }
 

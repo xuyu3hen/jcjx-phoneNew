@@ -113,10 +113,10 @@ class _TaskPackageDetailsPageState extends State<TaskPackageDetailsPage> {
 
       for (TaskCertainPackageList taskCertainPackage
           in taskCertainPackageList) {
-        String secondPackageCode = '';
+        // String secondPackageCode = '';
         for (Rows rows in secondPackageList) {
           if (taskCertainPackage.code == rows.certainPackageCode) {
-            secondPackageCode = rows.secondPackageCode ?? '';
+            // secondPackageCode = rows.secondPackageCode ?? '';
           }
         }
         int i =
@@ -493,7 +493,7 @@ class _NewPageState extends State<NewPage> {
           _images.add(File(pickedFile.path));
           SmartDialog.dismiss();
         } else {
-          showToast("未获取图片");
+          showToast('未获取图片');
         }
       });
     } catch (e, stackTrace) {
@@ -516,9 +516,9 @@ class _NewPageState extends State<NewPage> {
             secondShowPackageList[0].taskCertainPackageList!.secondPackageCode
       }, imagedatas: _images);
       if (r == 200) {
-        showToast("上传成功");
+        showToast('上传成功');
       } else {
-        showToast("上传失败");
+        showToast('上传失败');
       }
 
       SmartDialog.dismiss();
@@ -601,13 +601,13 @@ class _NewPageState extends State<NewPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     ZjcFormSelectCell(
-                      title: "互检人员",
-                      text: mutualSelected["nickName"] ?? "",
-                      hintText: "请选择",
+                      title: '互检人员',
+                      text: mutualSelected['nickName'] ?? '',
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: () {
                         if (mutualListData.isEmpty) {
-                          showToast("无互检人员");
+                          showToast('无互检人员');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -615,7 +615,7 @@ class _NewPageState extends State<NewPage> {
                             labelKey: 'nickName',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择动力类型",
+                            title: '选择动力类型',
                             clickCallBack: (selectItem, selectArr) {
                               logger.i(selectArr);
                               setState(() {
@@ -635,13 +635,13 @@ class _NewPageState extends State<NewPage> {
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     ZjcFormSelectCell(
-                      title: "专检人员",
-                      text: specialSelected["nickName"] ?? "",
-                      hintText: "请选择",
+                      title: '专检人员',
+                      text: specialSelected['nickName'] ?? '',
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: () {
                         if (specialListData.isEmpty) {
-                          showToast("无专检人员");
+                          showToast('无专检人员');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -649,7 +649,7 @@ class _NewPageState extends State<NewPage> {
                             labelKey: 'nickName',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择动力类型",
+                            title: '选择动力类型',
                             clickCallBack: (selectItem, selectArr) {
                               logger.i(selectArr);
                               setState(() {
@@ -781,9 +781,9 @@ class _NewPageState extends State<NewPage> {
                   SmartDialog.dismiss()
                 }
               else
-                {showToast("请先选择上传图像")}
+                {showToast('请先选择上传图像')}
             },
-            child: const Text("上传", style: TextStyle(fontSize: 18.0)),
+            child: const Text('上传', style: TextStyle(fontSize: 18.0)),
           ),
         ),
       ],
@@ -805,14 +805,14 @@ class _NewPageState extends State<NewPage> {
       height: 150,
       child: Column(
         children: [
-          buildItem("拍照", onTap: () {
+          buildItem('拍照', onTap: () {
             getImage(ImageSource.camera);
             Navigator.of(context).pop();
           }),
           //分割线
           const Divider(),
 
-          buildItem("打开相册", onTap: () {
+          buildItem('打开相册', onTap: () {
             getImage(ImageSource.gallery);
             Navigator.of(context).pop();
           }),
@@ -831,7 +831,7 @@ class _NewPageState extends State<NewPage> {
             child: Container(
               height: 44,
               alignment: Alignment.center,
-              child: const Text("取消"),
+              child: const Text('取消'),
             ),
           )
         ],

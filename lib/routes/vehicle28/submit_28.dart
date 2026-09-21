@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
@@ -19,25 +18,25 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   String? dynamicCode;
   String? dynamicName;
   // 机型
-  Map<dynamic, dynamic> jcTypeListSelected = {"name": "", "code": ""};
+  Map<dynamic, dynamic> jcTypeListSelected = {'name': '', 'code': ''};
   List<Map<String, dynamic>> jcTypeList = [];
   // 车号
-  Map<dynamic, dynamic> trainNumSelected = {"trainNum": "", "code": ""};
+  Map<dynamic, dynamic> trainNumSelected = {'trainNum': '', 'code': ''};
   List<Map<String, dynamic>> trainNumCodeList = [];
   String? trainNum;
   String? trainCode;
   // 检修作业来源
-  Map<dynamic, dynamic> repairWorkResource = {"name": "", "code": ""};
+  Map<dynamic, dynamic> repairWorkResource = {'name': '', 'code': ''};
   // 风险等级
   String? riskLevel;
   // 加工方法
-  Map<dynamic, dynamic> requiredProcessingMethod = {"dictName": "", "code": ""};
+  Map<dynamic, dynamic> requiredProcessingMethod = {'dictName': '', 'code': ''};
   // 故障现象
   String? faultDesc;
   // 故障假设
   String? faultAssumption;
   // 故障零部件
-  Map<dynamic, dynamic> componentName = {"nodeName": "", "configCode": ""};
+  Map<dynamic, dynamic> componentName = {'nodeName': '', 'configCode': ''};
   // 报修时间
   DateTime? reportDate;
   // 故障图片
@@ -97,7 +96,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
   // 自动派活
   bool isAssigned = false;
-  String completeLabel = "自检自修";
+  String completeLabel = '自检自修';
   int completeStatus = 0;
 
   Map<dynamic, dynamic> dynamciTypeSelected = {};
@@ -113,20 +112,20 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
     _loadAllWorkshops();
     // 从入口 locoInfo 预置：车号 / 机型 / repairProcCode
     // 如果 repairProcCode 非空，立刻查工序节点（这样用户从"检修作业项点"点进来不用再选一次车号）
-    final locoProcCode = (widget.locoInfo?["repairProcCode"] ??
-            widget.locoInfo?["repair_procode"] ??
-            widget.locoInfo?["procCode"])
+    final locoProcCode = (widget.locoInfo?['repairProcCode'] ??
+            widget.locoInfo?['repair_procode'] ??
+            widget.locoInfo?['procCode'])
         ?.toString();
     setState(() {
-      trainNumSelected["trainNum"] = formatTrainNumWithEnds(
-        widget.locoInfo?["trainNum"],
+      trainNumSelected['trainNum'] = formatTrainNumWithEnds(
+        widget.locoInfo?['trainNum'],
         extractEnds(widget.locoInfo),
       );
-      trainNumSelected['code'] = widget.locoInfo?["trainNumCode"] ??
-          widget.locoInfo?["code"] ??
-          "";
-      jcTypeListSelected['name'] = widget.locoInfo?["typeName"] ?? "";
-      jcTypeListSelected['code'] = widget.locoInfo?["typeCode"] ?? "";
+      trainNumSelected['code'] = widget.locoInfo?['trainNumCode'] ??
+          widget.locoInfo?['code'] ??
+          '';
+      jcTypeListSelected['name'] = widget.locoInfo?['typeName'] ?? '';
+      jcTypeListSelected['code'] = widget.locoInfo?['typeCode'] ?? '';
       repairProcCode = locoProcCode?.isNotEmpty == true ? locoProcCode : null;
     });
     logger.i('[机统28-提报(普通)][INIT] locoInfo=${jsonEncode(widget.locoInfo)} '
@@ -147,18 +146,18 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   // ---------- 车号被选中时的统一处理（手工选 / 模拟选 都走这里，保证 repairProcCode 链路一致） ----------
   void _handleTrainNumPicked(Map<String, dynamic> selectItem) {
     logger.i('[机统28车号][SELECTED_ITEM] ${jsonEncode(selectItem)}');
-    final pickedProcCode = (selectItem["repairProcCode"] ??
-            selectItem["repair_procode"] ??
-            selectItem["procCode"])
+    final pickedProcCode = (selectItem['repairProcCode'] ??
+            selectItem['repair_procode'] ??
+            selectItem['procCode'])
         ?.toString();
     logger.i(
         '[机统28车号][REPAIR_PROC_CODE] '
         '车号=${selectItem["trainNum"] ?? selectItem["displayTrainNum"]}, '
         'repairProcCode=${pickedProcCode ?? 'NULL⚠️'}');
     setState(() {
-      trainNumSelected["trainNum"] =
-          selectItem["displayTrainNum"] ?? selectItem["trainNum"];
-      trainNumSelected["code"] = selectItem["code"];
+      trainNumSelected['trainNum'] =
+          selectItem['displayTrainNum'] ?? selectItem['trainNum'];
+      trainNumSelected['code'] = selectItem['code'];
       repairProcCode =
           pickedProcCode?.isNotEmpty == true ? pickedProcCode : null;
       // 车号变了，清空节点
@@ -234,21 +233,21 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       final r = await ProductApi().getRepairMainNodeAll(queryParametrs: q);
       logger.i(
           '[工序节点查询][RES] repairProcCode=$repairProcCode '
-          'r=${r == null ? 'NULL⚠️' : 'ok'} r.rows?.length=${r?.rows?.length ?? 0}');
+          'r=${'ok'} r.rows?.length=${r.rows?.length ?? 0}');
       // 和 submit28_manage 一致：先判 r!=null 再判 r.rows!=null，避免 r 为 null 时取 r.rows 崩溃
-      if (r != null && r.rows != null && mounted) {
+      if (r.rows != null && mounted) {
         setState(() {
           repairMainNodeList = r.rows!
               .map<Map<String, dynamic>>((dynamic item) => _map(item))
               .toList();
         });
-      } else if (r == null || r.rows == null) {
+      } else if (r.rows == null) {
         logger.w('[工序节点查询] 返回 null 或 rows 为空 → repairMainNodeList=[]');
         if (mounted) setState(() => repairMainNodeList = []);
       }
     } catch (e, stackTrace) {
-      log("getRepairMainNodeAll error: $e");
-      logger.e("getRepairMainNodeAll", e, stackTrace);
+      log('getRepairMainNodeAll error: $e');
+      logger.e('getRepairMainNodeAll', e, stackTrace);
       if (mounted) setState(() => repairMainNodeList = []);
     }
   }
@@ -312,8 +311,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         setState(() => scheduleNodeList = r);
       }
     } catch (e, stackTrace) {
-      log("_loadScheduleNodeBy error: $e");
-      logger.e("_loadScheduleNodeBy", e, stackTrace);
+      log('_loadScheduleNodeBy error: $e');
+      logger.e('_loadScheduleNodeBy', e, stackTrace);
       if (mounted) setState(() => scheduleNodeList = []);
     }
   }
@@ -426,7 +425,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const Text(
-                "机统28提报成功",
+                '机统28提报成功',
                 style: TextStyle(fontSize: 18),
               ),
               ConstrainedBox(
@@ -467,7 +466,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
       // 构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': pageNum,
         'pageSize': pageSize,
         'complete': 0,
@@ -521,7 +520,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           // 只在初次刷新（非 loadMore）且 trainNumSelected['code'] 有预置值时才模拟
           if (!isLoadMore) {
             final presetCode =
-                (trainNumSelected['code'] ?? widget.locoInfo?["trainNumCode"] ?? widget.locoInfo?["code"])
+                (trainNumSelected['code'] ?? widget.locoInfo?['trainNumCode'] ?? widget.locoInfo?['code'])
                     ?.toString();
             if (presetCode != null && presetCode.isNotEmpty) {
               // 优先完全匹配 code；找不到则兜底匹配 trainNum（手写 for 循环，避免依赖 package:collection 的 firstWhereOrNull 扩展方法，保证不报错）
@@ -536,7 +535,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                 }
               }
               if (match == null) {
-                final pT = (widget.locoInfo?["trainNum"] ?? '').toString().trim();
+                final pT = (widget.locoInfo?['trainNum'] ?? '').toString().trim();
                 if (pT.isNotEmpty) {
                   for (final m in next) {
                     final t = (m['trainNum'] ?? '').toString().trim();
@@ -550,7 +549,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               if (match != null) {
                 logger.i('[机统28车号][模拟选中] presetCode=$presetCode → 匹配到 ${jsonEncode(match)}');
                 // 用微任务抛到下一次事件循环，避免嵌套 setState 的时序问题
-                final picked = match!;
+                final picked = match;
                 Future.microtask(() {
                   if (mounted) _handleTrainNumPicked(picked);
                 });
@@ -570,7 +569,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         if (isLoadMore) {
           pageNum--; // 恢复页码
         }
-        showToast("获取车号失败，请重试");
+        showToast('获取车号失败，请重试');
       }
     } finally {
       isLoading = false;
@@ -589,10 +588,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           });
         }
       } else {
-        showToast("获取零部件表失败,请检查网络");
+        showToast('获取零部件表失败,请检查网络');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -605,14 +604,14 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       if (r != [] && r != null) {
         if (mounted) {
           setState(() {
-            deptTree = ((r[0])["children"])[0]["children"];
+            deptTree = ((r[0])['children'])[0]['children'];
           });
         }
       } else {
-        showToast("未能获取车间班组");
+        showToast('未能获取车间班组');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -628,10 +627,10 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           });
         }
       } else {
-        showToast("未能获取班组人员");
+        showToast('未能获取班组人员');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -643,21 +642,21 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         if (mounted) {
           setState(() {
             jtTypeList = r.rows!;
-            if ((repairWorkResource["code"] ?? "").toString().isEmpty &&
+            if ((repairWorkResource['code'] ?? '').toString().isEmpty &&
                 jtTypeList.isNotEmpty &&
                 jtTypeList.first is Map) {
               final first = jtTypeList.first as Map;
-              repairWorkResource["name"] = (first["name"] ?? "").toString();
-              repairWorkResource["code"] = (first["code"] ?? "").toString();
-              riskLevel = first["riskLevel"]?.toString();
+              repairWorkResource['name'] = (first['name'] ?? '').toString();
+              repairWorkResource['code'] = (first['code'] ?? '').toString();
+              riskLevel = first['riskLevel']?.toString();
             }
           });
         }
       } else {
-        showToast("未能获取作业来源");
+        showToast('未能获取作业来源');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -669,21 +668,21 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         if (mounted) {
           setState(() {
             jt28DictList = r.rows!;
-            if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty &&
+            if ((requiredProcessingMethod['code'] ?? '').toString().isEmpty &&
                 jt28DictList.isNotEmpty &&
                 jt28DictList.first is Map) {
               final first = jt28DictList.first as Map;
-              requiredProcessingMethod["dictName"] =
-                  (first["dictName"] ?? "").toString();
-              requiredProcessingMethod["code"] = (first["code"] ?? "").toString();
+              requiredProcessingMethod['dictName'] =
+                  (first['dictName'] ?? '').toString();
+              requiredProcessingMethod['code'] = (first['code'] ?? '').toString();
             }
           });
         }
       } else {
-        showToast("未能获取加工方法");
+        showToast('未能获取加工方法');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -691,7 +690,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28-提报（作业）"),
+        title: const Text('机统28-提报（作业）'),
       ),
       // resizeToAvoidBottomInset: false,
       body: _buildBody(),
@@ -744,12 +743,12 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                       Expanded(
                         flex: 1,
                         child: ZjcFormSelectCell(
-                          title: "机型",
-                          text: jcTypeListSelected["name"],
-                          hintText: "请选择",
+                          title: '机型',
+                          text: jcTypeListSelected['name'],
+                          hintText: '请选择',
                           clickCallBack: () {
                             if (jcTypeList.isEmpty) {
-                              showToast("无机型可以选择");
+                              showToast('无机型可以选择');
                             } else {
                               ZjcCascadeTreePicker.show(
                                 context,
@@ -757,14 +756,14 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                                 labelKey: 'name',
                                 valueKey: 'code',
                                 childrenKey: 'children',
-                                title: "选择机型",
+                                title: '选择机型',
                                 clickCallBack: (selectItem, selectArr) {
                                   setState(() {
                                     logger.i(selectArr);
-                                    jcTypeListSelected["name"] =
-                                        selectItem["name"];
-                                    jcTypeListSelected["code"] =
-                                        selectItem["code"];
+                                    jcTypeListSelected['name'] =
+                                        selectItem['name'];
+                                    jcTypeListSelected['code'] =
+                                        selectItem['code'];
                                     getTrainNumCodeList();
                                   });
                                 },
@@ -776,12 +775,12 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                       Expanded(
                         flex: 1,
                         child: ZjcFormSelectCell(
-                          title: "车号",
-                          text: trainNumSelected["trainNum"],
-                          hintText: "请选择",
+                          title: '车号',
+                          text: trainNumSelected['trainNum'],
+                          hintText: '请选择',
                           clickCallBack: () {
                             if (trainNumCodeList.isEmpty) {
-                              showToast("无车号可以选择");
+                              showToast('无车号可以选择');
                             } else {
                               ZjcCascadeTreePicker.show(
                                 context,
@@ -789,7 +788,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                                 labelKey: 'displayTrainNum',
                                 valueKey: 'code',
                                 childrenKey: 'children',
-                                title: "选择检修地点",
+                                title: '选择检修地点',
                                 clickCallBack: (selectItem, selectArr) {
                                   _handleTrainNumPicked(
                                     selectItem is Map<String, dynamic>
@@ -859,7 +858,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                   //   },
                   // ),
                   ZjcFormInputCell(
-                    title: "故障现象",
+                    title: '故障现象',
                     text: faultDesc,
                     maxLines: 7,
                     maxLength: 300,
@@ -873,7 +872,7 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "派工方式",
+                        '派工方式',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -997,35 +996,35 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
         child: InkWell(
       onTap: () async {
         if (_submitting) {
-          showToast("正在提报中，请勿重复提交");
+          showToast('正在提报中，请勿重复提交');
           return;
         }
         // 验证必填字段
         if (jcTypeListSelected['code'] == null || 
             jcTypeListSelected['code'] == '') {
-          showToast("请选择机型");
+          showToast('请选择机型');
           return;
         }
         if (trainNumSelected['code'] == null || 
             trainNumSelected['code'] == '') {
-          showToast("请选择车号");
+          showToast('请选择车号');
           return;
         }
         if (faultDesc == null || faultDesc!.trim().isEmpty) {
-          showToast("请填写故障现象");
+          showToast('请填写故障现象');
           return;
         }
-        if (widget.locoInfo?["code"] == null || 
-            widget.locoInfo?["code"] == '') {
-          showToast("机车信息不完整，请重新进入");
+        if (widget.locoInfo?['code'] == null || 
+            widget.locoInfo?['code'] == '') {
+          showToast('机车信息不完整，请重新进入');
           return;
         }
-        if ((repairWorkResource["code"] ?? "").toString().isEmpty) {
-          showToast("检修作业来源未获取到，请稍后重试");
+        if ((repairWorkResource['code'] ?? '').toString().isEmpty) {
+          showToast('检修作业来源未获取到，请稍后重试');
           return;
         }
-        if ((requiredProcessingMethod["code"] ?? "").toString().isEmpty) {
-          showToast("加工方法未获取到，请稍后重试");
+        if ((requiredProcessingMethod['code'] ?? '').toString().isEmpty) {
+          showToast('加工方法未获取到，请稍后重试');
           return;
         }
         
@@ -1039,18 +1038,18 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
             SmartDialog.showLoading();
             Map<String, dynamic> queryParameters = {
               // "faultAssumption": faultAssumption,
-              "faultDescription": faultDesc,
+              'faultDescription': faultDesc,
               // "faultyComponent": componentName['configCode'],
-              "machineModel": jcTypeListSelected['code'],
+              'machineModel': jcTypeListSelected['code'],
               // "maintenanceNotice": maintenanceNotice,
-              "trainEntryCode": widget.locoInfo?["code"],
-              "repairWorkResource": repairWorkResource["code"],
-              "riskLevel": riskLevel,
+              'trainEntryCode': widget.locoInfo?['code'],
+              'repairWorkResource': repairWorkResource['code'],
+              'riskLevel': riskLevel,
               'deptId': Global.profile.permissions?.user.deptId,
               'deptName': Global.profile.permissions?.user.dept?.deptName ,
-              "requiredProcessingMethod": requiredProcessingMethod["code"],
-              "completeStatus": completeStatus,
-              "status": 0
+              'requiredProcessingMethod': requiredProcessingMethod['code'],
+              'completeStatus': completeStatus,
+              'status': 0
             };
             queryParameters.removeWhere((key, value) {
               if (value == null) return true;
@@ -1058,15 +1057,15 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               return false;
             });
             if (completeStatus == 0) {
-              queryParameters["repairPersonnel"] =
+              queryParameters['repairPersonnel'] =
                   Global.profile.permissions?.user.userId;
             }
             if (faultPics.isNotEmpty) {
               await JtApi().uploadMixJt(imagedata: faultPics).then(
                     (value) async => {
-                      if (value['data'] != null && value['data'] != "")
+                      if (value['data'] != null && value['data'] != '')
                         {
-                          queryParameters["repairPicture"] = value['data'],
+                          queryParameters['repairPicture'] = value['data'],
                           l.insert(0, queryParameters),
                           submit = await JtApi().uploadJt28(queryParametrs: l),
                           if (!_isSubmitSuccess(submit) && submit['data'] != null)
@@ -1077,25 +1076,25 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
                         }
                       else
                         {
-                          showToast("图片上传失败，请检查网络连接"),
+                          showToast('图片上传失败，请检查网络连接'),
                           // SmartDialog.dismiss(status: SmartStatus.loading)
                         }
                     },
                   );
             } else {
-              log("$queryParameters");
+              log('$queryParameters');
               l.insert(0, queryParameters);
               submit = await JtApi().uploadJt28(queryParametrs: l);
               if (!_isSubmitSuccess(submit)) {
-                showToast("机统28提报失败，请检查网络连接");
+                showToast('机统28提报失败，请检查网络连接');
                 // SmartDialog.dismiss(status: SmartStatus.loading);
               }
             }
           } on DioException catch (e) {
             final serverMsg = e.response?.data is Map
-                ? (e.response?.data["msg"] ??
-                    e.response?.data["message"] ??
-                    e.response?.data["error"])
+                ? (e.response?.data['msg'] ??
+                    e.response?.data['message'] ??
+                    e.response?.data['error'])
                 : null;
             showToast("故障提报失败${serverMsg != null ? "：$serverMsg" : ""}");
             logger.i(e.toString());
@@ -1121,9 +1120,9 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
   Future<String> selectDate(str) async {
     DateTimePickerType dt;
-    if (str == "datetime") {
+    if (str == 'datetime') {
       dt = DateTimePickerType.datetime;
-    } else if (str == "date") {
+    } else if (str == 'date') {
       dt = DateTimePickerType.date;
     } else {
       dt = DateTimePickerType.time;
@@ -1133,16 +1132,16 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
       context: context,
       pickerType: dt,
     );
-    if (val != null && str == "datetime") {
+    if (val != null && str == 'datetime') {
       String str =
           formatDate(val, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss]);
       logger.i(str);
       return str;
-    } else if (val != null && str == "date") {
+    } else if (val != null && str == 'date') {
       String str = formatDate(val, [yyyy, '-', mm, '-', dd]);
       return str;
     } else {
-      return "";
+      return '';
     }
   }
 }

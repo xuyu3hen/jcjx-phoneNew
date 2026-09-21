@@ -138,7 +138,7 @@ class _LoginRouteState extends State<LoginRoute> {
     final credentialsList = await _getSavedCredentials();
     if (!mounted) return;
     if (credentialsList.isEmpty) {
-      showToast("暂无历史登录信息");
+      showToast('暂无历史登录信息');
       return;
     }
 
@@ -148,7 +148,7 @@ class _LoginRouteState extends State<LoginRoute> {
         final screenHeight = MediaQuery.of(context).size.height;
         final dialogHeight = screenHeight * 0.5 > 420 ? 420.0 : screenHeight * 0.5;
         return AlertDialog(
-          title: const Center(child: Text("历史账号")),
+          title: const Center(child: Text('历史账号')),
           content: SizedBox(
             width: double.maxFinite,
             height: dialogHeight,
@@ -161,7 +161,7 @@ class _LoginRouteState extends State<LoginRoute> {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Center(
-                    child: Text(username.isNotEmpty ? username : "未知账号"),
+                    child: Text(username.isNotEmpty ? username : '未知账号'),
                   ),
                   onTap: () => Navigator.of(context).pop(item),
                 );
@@ -171,7 +171,7 @@ class _LoginRouteState extends State<LoginRoute> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text("取消"),
+              child: const Text('取消'),
             ),
           ],
         );
@@ -193,7 +193,7 @@ class _LoginRouteState extends State<LoginRoute> {
     if (username.isNotEmpty && password.isNotEmpty) {
       _loginIn();
     } else {
-      showToast("历史账号信息不完整");
+      showToast('历史账号信息不完整');
     }
   }
 
@@ -226,8 +226,8 @@ class _LoginRouteState extends State<LoginRoute> {
                         TextFormField(
                           controller: _unameController,
                           decoration: InputDecoration(
-                            labelText: "请输入用户名",
-                            hintText: "请输入用户名",
+                            labelText: '请输入用户名',
+                            hintText: '请输入用户名',
                             prefixIcon: const Icon(Icons.person),
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.8),
@@ -235,7 +235,7 @@ class _LoginRouteState extends State<LoginRoute> {
                           validator: (v) {
                             return v == null || v.trim().isNotEmpty
                                 ? null
-                                : "用户名不能为空";
+                                : '用户名不能为空';
                           },
                           autofocus: _nameAutoFouce,
                         ),
@@ -244,8 +244,8 @@ class _LoginRouteState extends State<LoginRoute> {
                           controller: _pwdController,
                           autofocus: !_nameAutoFouce,
                           decoration: InputDecoration(
-                            labelText: "密码",
-                            hintText: "密码",
+                            labelText: '密码',
+                            hintText: '密码',
                             prefixIcon: const Icon(Icons.lock),
                             suffixIcon: IconButton(
                               icon: Icon(pwdShow
@@ -264,7 +264,7 @@ class _LoginRouteState extends State<LoginRoute> {
                           validator: (v) {
                             return v == null || v.trim().isNotEmpty
                                 ? null
-                                : "密码不能为空！";
+                                : '密码不能为空！';
                           },
                         ),
                         const SizedBox(height: 12),
@@ -275,7 +275,22 @@ class _LoginRouteState extends State<LoginRoute> {
                                 const BoxConstraints.expand(height: 55.0),
                             child: ElevatedButton(
                               onPressed: _loginIn,
-                              child: const Text("登录"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1E5EB7),
+                                foregroundColor: Colors.white,
+                                elevation: 3,
+                                shadowColor: Colors.black26,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                '登录',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -283,7 +298,7 @@ class _LoginRouteState extends State<LoginRoute> {
                         Center(
                           child: TextButton(
                             onPressed: _showHistoryLoginSheet,
-                            child: const Text("历史账号"),
+                            child: const Text('历史账号'),
                           ),
                         ),
                         // 离线模式入口：放在页面底部远离登录按钮，避免误触
@@ -401,11 +416,11 @@ class _LoginRouteState extends State<LoginRoute> {
         final username = _unameController.text.trim();
         final passwordPlain = _pwdController.text;
         if (username.isEmpty) {
-          showToast("账号不能为空");
+          showToast('账号不能为空');
           return;
         }
         if (passwordPlain.trim().isEmpty) {
-          showToast("密码不能为空");
+          showToast('密码不能为空');
           return;
         }
         SmartDialog.showLoading();
@@ -467,14 +482,14 @@ class _LoginRouteState extends State<LoginRoute> {
           } else {
             // 登录失败，显示错误信息
             final msg = (r.msg ?? '').toString().trim();
-            final text = msg.isEmpty ? "用户名或密码错误" : msg;
+            final text = msg.isEmpty ? '用户名或密码错误' : msg;
             SmartDialog.dismiss(status: SmartStatus.loading);
             if (text.contains('剩余重试次数') ||
                 text.contains('锁定') ||
                 text.contains('不在指定范围')) {
               await _showLoginErrorDialog(text);
             } else {
-              showToast("登录失败：$text");
+              showToast('登录失败：$text');
             }
           }
         }
@@ -482,10 +497,10 @@ class _LoginRouteState extends State<LoginRoute> {
         String? serverMsg;
         final data = e.response?.data;
         if (data is Map) {
-          serverMsg = (data["msg"] ??
-                  data["message"] ??
-                  data["error"] ??
-                  data["data"])
+          serverMsg = (data['msg'] ??
+                  data['message'] ??
+                  data['error'] ??
+                  data['data'])
               ?.toString();
         } else if (data is String) {
           serverMsg = data;
@@ -504,17 +519,17 @@ class _LoginRouteState extends State<LoginRoute> {
           }
         } else if (statusCode == 401) {
           SmartDialog.dismiss(status: SmartStatus.loading);
-          showToast("用户名或密码错误");
+          showToast('用户名或密码错误');
         } else if (statusCode == 423 || statusCode == 429) {
           SmartDialog.dismiss(status: SmartStatus.loading);
           if (mounted) {
-            await _showLoginErrorDialog("密码错误次数过多，账号已锁定，请联系管理员");
+            await _showLoginErrorDialog('密码错误次数过多，账号已锁定，请联系管理员');
           } else {
-            showToast("密码错误次数过多，账号已锁定，请联系管理员");
+            showToast('密码错误次数过多，账号已锁定，请联系管理员');
           }
         } else {
           SmartDialog.dismiss(status: SmartStatus.loading);
-          showToast("登录失败，请检查网络后重试");
+          showToast('登录失败，请检查网络后重试');
         }
       } finally {
         SmartDialog.dismiss(status: SmartStatus.loading);
@@ -544,13 +559,13 @@ class _LoginRouteState extends State<LoginRoute> {
 
   void getLastUpdate() async {
     try {
-      logger.i("检查更新，应用ID: ${F.id}");
+      logger.i('检查更新，应用ID: ${F.id}');
 
       // 获取当前应用版本信息
       String currentVersion = await F.getVersion();
       int currentBuildNumber = await F.getBuildNumber();
 
-      logger.i("当前版本: $currentVersion+$currentBuildNumber");
+      logger.i('当前版本: $currentVersion+$currentBuildNumber');
 
       // 获取当前环境对应的 env 参数
       String env = 'release';
@@ -570,7 +585,7 @@ class _LoginRouteState extends State<LoginRoute> {
 
       // 使用 getLatestOne 获取最新版本信息
       var r = await ProductApi().getLatestOne(env: env);
-      logger.i("最新版本信息123: $r");
+      logger.i('最新版本信息123: $r');
       if (r is! Map) {
         return;
       }
@@ -584,7 +599,7 @@ class _LoginRouteState extends State<LoginRoute> {
           ? ''
           : (fileSizeKb / 1024).toStringAsFixed(2);
       logger.i(
-          "更新信息: version=$version, url=$downloadUrl, description=$description, fileSize=$fileSize, fileSizeKb=$fileSizeKb, fileSizeMb=$fileSizeMb");
+          '更新信息: version=$version, url=$downloadUrl, description=$description, fileSize=$fileSize, fileSizeKb=$fileSizeKb, fileSizeMb=$fileSizeMb');
       // 比较版本并使用 XUpdate 下载与安装
       if (version.isNotEmpty && downloadUrl.isNotEmpty) {
         final cmp = _compareVersion(version, currentVersion);
@@ -597,7 +612,7 @@ class _LoginRouteState extends State<LoginRoute> {
         }
       }
     } catch (e) {
-      logger.e("检查更新失败: $e");
+      logger.e('检查更新失败: $e');
       // 不显示错误提示，避免影响用户体验
     }
   }

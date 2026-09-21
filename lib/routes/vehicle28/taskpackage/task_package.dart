@@ -32,7 +32,7 @@ class _TaskPackageState extends State<TaskPackage> {
         'trainEntryCode': widget.trainEntryCode,
       }
     );
-    if(r.message == "操作成功"&&r.data != []){
+    if(r.message == '操作成功'&&r.data != []){
       setState(() {
         // 作业包表数据获取
         _items.insertAll(_items.length, r.data!);
@@ -46,7 +46,7 @@ class _TaskPackageState extends State<TaskPackage> {
     var r = await JtApi().cancelPersonalPackage(
       queryParameters: [val]
     );
-    if(r.code == "S_F_S000"){
+    if(r.code == 'S_F_S000'){
       showToast('领活已回退');
       return true;
     }else{
@@ -62,7 +62,7 @@ class _TaskPackageState extends State<TaskPackage> {
     var r = await JtApi().updateWorkInstructPackage(
       queryParameters:list
     );
-    if(r['message'] == "操作成功"&&r['code']== 200){
+    if(r['message'] == '操作成功'&&r['code']== 200){
       logger.i('切换AB端成功');
     }else{
       showToast('切换AB端出现错误');
@@ -127,8 +127,8 @@ class _TaskPackageState extends State<TaskPackage> {
             if(item.wholePackage!&&item.progress == 0)...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
+                leading: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
+                title: Text('${item.station}',style: const TextStyle(fontSize: 16.0)),
                 // subtitle: Text(""),
                 trailing:ElevatedButton(onPressed: (){
                   changeABDialog(item);
@@ -138,16 +138,16 @@ class _TaskPackageState extends State<TaskPackage> {
             ]else if(item.wholePackage!)...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
+                leading: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
+                title: Text('${item.station}',style: const TextStyle(fontSize: 16.0)),
                 // subtitle: Text(""),
                 trailing:Text(item.ends??'A/B',style: tileText(18.0,bold: FontWeight.bold,col: item.ends =='B'?Colors.orange:Colors.red),),
               ),
             ]else...[
               ListTile(
                 dense: true,
-                leading: Text("${item.name}",style: const TextStyle(fontSize: 18.0),),
-                title: Text("${item.station}",style: const TextStyle(fontSize: 16.0)),
+                leading: Text('${item.name}',style: const TextStyle(fontSize: 18.0),),
+                title: Text('${item.station}',style: const TextStyle(fontSize: 16.0)),
               ),
             ],
             Row(

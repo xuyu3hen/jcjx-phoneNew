@@ -1,6 +1,4 @@
-import 'dart:math';
 
-import 'package:jcjx_phone/routes/production/team_people.dart';
 
 import '../../index.dart';
 
@@ -120,7 +118,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
       // 显示错误信息
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       });
     }
@@ -157,8 +155,8 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
       setState(() {
         dynamicTypeList = r.toMapList();
         permissions = permissionResponse;
-        dynamciTypeSelected["code"] = dynamicTypeList[0]["code"];
-        dynamciTypeSelected["name"] = dynamicTypeList[0]["name"];
+        dynamciTypeSelected['code'] = dynamicTypeList[0]['code'];
+        dynamciTypeSelected['name'] = dynamicTypeList[0]['name'];
         getJcType();
         logger.i(permissions);
       });
@@ -170,7 +168,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -187,7 +185,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
         'name': faultyPartController.text,
@@ -211,7 +209,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -232,12 +230,12 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
         'team': 100
       };
       logger.i(queryParameters);
-      var r = await ProductApi().getCheckPerson(queryParameters);
+      // var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
         setState(() {});
       }
@@ -250,7 +248,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业-班组派工"),
+        title: const Text('机统28作业-班组派工'),
       ),
       body: _buildBody(),
     );
@@ -314,8 +312,8 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                     );
                   },
                   errorBuilder: (context, error, stackTrace) {
-                    return Column(
-                      children: const [
+                    return const Column(
+                      children: [
                         Icon(Icons.broken_image, size: 50, color: Colors.grey),
                         SizedBox(height: 10),
                         Text('图片加载失败'),
@@ -453,18 +451,18 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "机型",
+                      title: '机型',
                       text: widget.typeName,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
                   ),
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "车号",
+                      title: '车号',
                       text: widget.trainNum,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
@@ -540,7 +538,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                                       (BuildContext context) {
                                                     return AlertDialog(
                                                       title:
-                                                          const Text("故障视频及图片"),
+                                                          const Text('故障视频及图片'),
                                                       content: photoList
                                                               .isNotEmpty
                                                           ? Column(
@@ -581,7 +579,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.green,
                                               ),
-                                              child: const Text("查看故障视频及图片"),
+                                              child: const Text('查看故障视频及图片'),
                                             ),
                                           ),
                                         ],
@@ -662,7 +660,7 @@ class _JtShowPageState extends State<JtWorkAssignTeam> {
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                   ),
-                                  child: const Text("班组派工"),
+                                  child: const Text('班组派工'),
                                 ),
                               ),
                             ],
@@ -784,8 +782,8 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
   late Team _selectedMember;
 
   // 机型选项（模拟下拉）
-  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
-  String _selectedModel = 'HXD3CA';
+  // final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
+  // final String _selectedModel = 'HXD3CA';
 
   // 检修项列表（模拟状态）
   final List<InspectionItem> _inspectionItems = [
@@ -800,7 +798,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
 
   void getTeamList() async {
     Map<String, dynamic> params = {
-      "parentIdList": Global.profile.permissions?.user.dept?.parentId,
+      'parentIdList': Global.profile.permissions?.user.dept?.parentId,
     };
     try {
       var response =
@@ -873,22 +871,20 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
     try {
       // 构建参数
       Map<String, dynamic> params = {
-        "code": widget.jtCode,
+        'code': widget.jtCode,
       };
       // 设置主修人员
-      if (_selectedMember != null) {
-        params['team'] = _selectedMember.id;
-        params['teamName'] = _selectedMember.name;
-      }
+      params['team'] = _selectedMember.id;
+      params['teamName'] = _selectedMember.name;
       logger.i(params);
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
-      if (response['code'] == "S_T_S003") {
-        showToast("分配成功");
+      if (response['code'] == 'S_T_S003') {
+        showToast('分配成功');
       }
     } catch (e) {
       print('分配人员失败: $e');
-      showToast("分配失败，请重试");
+      showToast('分配失败，请重试');
     }
   }
 
@@ -971,7 +967,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
                             ),
                             color: isSelected ? Colors.green : Colors.white,
                             child: Text(
-                              '${member.name}',
+                              member.name,
                               style: TextStyle(
                                 color: isSelected ? Colors.white : Colors.black,
                                 fontSize: 16, // 增大字体

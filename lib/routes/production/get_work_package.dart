@@ -50,24 +50,24 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
           package.repairPersonnel!
               .contains(permissions.user.userId.toString()) &&
           package.executorId == null) {
-        return "成为主修";
+        return '成为主修';
       } else if (package.repairPersonnel != null &&
           package.repairPersonnel!
               .contains(permissions.user.userId.toString()) &&
           package.executorId == permissions.user.userId) {
-        return "取消主修";
+        return '取消主修';
       } else if (package.repairPersonnel != null &&
           package.repairPersonnel!
               .contains(permissions.user.userId.toString()) &&
           package.executorId != permissions.user.userId &&
           package.executorId != null) {
-        return "已经有其他主修可选人成为主修";
+        return '已经有其他主修可选人成为主修';
       } else {
-        return "无法成为主修";
+        return '无法成为主修';
       }
     } catch (e, stackTrace) {
       logger.e('getMainRepairText 方法中发生异常: $e\n堆栈信息: $stackTrace');
-      return "无法成为主修";
+      return '无法成为主修';
     }
   }
 
@@ -76,22 +76,22 @@ class _DataDisplayPageState extends State<GetWorkPackage> {
       if (package.assistant != null &&
           package.assistant!.contains(permissions.user.userId.toString()) &&
           package.assistantId == null) {
-        return "成为辅修";
+        return '成为辅修';
       } else if (package.assistant != null &&
           package.assistant!.contains(permissions.user.userId.toString()) &&
           package.assistantId == permissions.user.userId) {
-        return "取消辅修";
+        return '取消辅修';
       } else if (package.assistant != null &&
           package.assistant!.contains(permissions.user.userId.toString()) &&
           package.assistantId != permissions.user.userId &&
           package.assistantId != null) {
-        return "已经有其他辅修可选人辅修";
+        return '已经有其他辅修可选人辅修';
       } else {
-        return "无法成为辅修";
+        return '无法成为辅修';
       }
     } catch (e, stackTrace) {
       logger.e('getAssistantText 方法中发生异常: $e\n堆栈信息: $stackTrace');
-      return "无法成为辅修";
+      return '无法成为辅修';
     }
   }
 
@@ -118,7 +118,7 @@ Future<void> initData() async {
     var r1 = await ProductApi().getJcType(queryParametrs: queryParameters);
     Map<String, dynamic> initJcTypeSelected = r1.toMapList()[0];
     Map<String, dynamic> queryParameters1 = {
-      'typeName': initJcTypeSelected["name"],
+      'typeName': initJcTypeSelected['name'],
       'pageNum': 0,
       'pageSize': 0
     };
@@ -130,7 +130,7 @@ Future<void> initData() async {
 
     // 构建查询作业包参数
     Map<String, dynamic> queryParameters2 = {
-      'trainEntryCode': trainNumSelected["code"],
+      'trainEntryCode': trainNumSelected['code'],
     };
 
     // 获取作业包
@@ -170,7 +170,7 @@ Future<void> initData() async {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -188,7 +188,7 @@ Future<void> initData() async {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -261,7 +261,7 @@ Future<void> initData() async {
     try {
       //构建查询作业包参数
       Map<String, dynamic> queryParameters = {
-        'trainEntryCode': trainNumSelected["code"],
+        'trainEntryCode': trainNumSelected['code'],
       };
       //获取作业包
       var r =
@@ -280,7 +280,7 @@ Future<void> initData() async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("领取作业包"),
+        title: const Text('领取作业包'),
       ),
       body: _buildBody(),
     );
@@ -297,13 +297,13 @@ Future<void> initData() async {
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               ZjcFormSelectCell(
-                title: "动力类型",
-                text: dynamciTypeSelected["name"],
-                hintText: "请选择",
+                title: '动力类型',
+                text: dynamciTypeSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (dynamicTypeList.isEmpty) {
-                    showToast("无动力类型选择");
+                    showToast('无动力类型选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -311,12 +311,12 @@ Future<void> initData() async {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择动力类型",
+                      title: '选择动力类型',
                       clickCallBack: (selectItem, selectArr) {
                         logger.i(selectArr);
                         setState(() {
-                          dynamciTypeSelected["code"] = selectItem["code"];
-                          dynamciTypeSelected["name"] = selectItem["name"];
+                          dynamciTypeSelected['code'] = selectItem['code'];
+                          dynamciTypeSelected['name'] = selectItem['name'];
                           getJcType();
                         });
                       },
@@ -325,13 +325,13 @@ Future<void> initData() async {
                 },
               ),
               ZjcFormSelectCell(
-                title: "机型",
-                text: jcTypeListSelected["name"],
-                hintText: "请选择",
+                title: '机型',
+                text: jcTypeListSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (jcTypeList.isEmpty) {
-                    showToast("无机型可以选择");
+                    showToast('无机型可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -339,11 +339,11 @@ Future<void> initData() async {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择机型",
+                      title: '选择机型',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          jcTypeListSelected["name"] = selectItem["name"];
+                          jcTypeListSelected['name'] = selectItem['name'];
                           getTrainNumCodeList();
                         });
                       },
@@ -352,13 +352,13 @@ Future<void> initData() async {
                 },
               ),
               ZjcFormSelectCell(
-                title: "车号",
-                text: trainNumSelected["trainNum"],
-                hintText: "请选择",
+                title: '车号',
+                text: trainNumSelected['trainNum'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (trainNumCodeList.isEmpty) {
-                    showToast("无车号可以选择");
+                    showToast('无车号可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -366,12 +366,12 @@ Future<void> initData() async {
                       labelKey: 'trainNum',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择车号",
+                      title: '选择车号',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          trainNumSelected["trainNum"] = selectItem["trainNum"];
-                          trainNumSelected["code"] = selectItem["code"];
+                          trainNumSelected['trainNum'] = selectItem['trainNum'];
+                          trainNumSelected['code'] = selectItem['code'];
                           getWorkPackage();
                         });
                       },
@@ -531,7 +531,7 @@ Future<void> initData() async {
                               ),
                             ))
                         .toList()
-                    : [const Text("暂无作业包信息")],
+                    : [const Text('暂无作业包信息')],
               )
             ],
           ),

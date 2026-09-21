@@ -17,7 +17,7 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
   bool hasMore = true;
   int pageNum = 1;
   // 搜索栏数据
-  String searchBarText = "";
+  String searchBarText = '';
 
   @override
   void initState(){
@@ -87,7 +87,7 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
                     return Container(
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(16),
-                      child: Text("没有更多待处理的作业内容了",
+                      child: Text('没有更多待处理的作业内容了',
                         style: TextStyle(color: Colors.blue[700]),
                       ),
                     );
@@ -142,32 +142,32 @@ class _UnqualifiedListState extends State<UnqualifiedList> {
               ListTile(
                 dense: true,
                 // leading: ,
-                title: Text("${item.trainType}-${item.trainNum}",style: const TextStyle(fontSize: 18.0),),
-                subtitle: Text("报修人：${item.reporterName}"),
+                title: Text('${item.trainType}-${item.trainNum}',style: const TextStyle(fontSize: 18.0),),
+                subtitle: Text('报修人：${item.reporterName}'),
                 trailing:ElevatedButton(onPressed: (){
                   Navigator.of(context).pushNamed('vehimageviewer',arguments: item);
                 }, child: const Icon(Icons.image)),
               ),
               ZjcFormInputCell(
-                title: "故障现象",
+                title: '故障现象',
                 text: item.faultDescription,
-                hintText: "无数据",
+                hintText: '无数据',
                 maxLines: 2,
                 maxLength: 200,
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),
               ZjcFormInputCell(
-                title: "加工方法",
+                title: '加工方法',
                 text: item.processMethodName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),
               ZjcFormInputCell(
-                title: "协助人",
+                title: '协助人',
                 text: item.assistantName,
-                hintText: "无数据",
+                hintText: '无数据',
                 enabled: false,
                 titleStyle: tileText(16.0),
               ),

@@ -41,7 +41,7 @@ class _CertainPackageState extends State<CertainPackage>{
     var r = await JtApi().completeTaskCertainPackage(
       queryParameters:list
     );
-    if(r['message'] == "操作成功"&&r['code']== 200){
+    if(r['message'] == '操作成功'&&r['code']== 200){
       logger.i('作业项完成正常');
     }else{
       showToast('作业项完成出现错误');
@@ -58,7 +58,7 @@ class _CertainPackageState extends State<CertainPackage>{
         'packageCode':iTpackage?.code
       }
     );
-    if(r['message'] == "操作成功"&&r['code']== 200){
+    if(r['message'] == '操作成功'&&r['code']== 200){
       
     }else{
       showToast('获取作业项出现错误');
@@ -150,7 +150,7 @@ class _CertainPackageState extends State<CertainPackage>{
                   }
                 });
               }, value: item.selected,),
-              title: Text("${item.packageSort}-${item.name}",style: TextStyle(fontSize: 16.0,color: item.secondPackageCode == null?Colors.black:distinguish),),
+              title: Text('${item.packageSort}-${item.name}',style: TextStyle(fontSize: 16.0,color: item.secondPackageCode == null?Colors.black:distinguish),),
               // subtitle: Text("${item.packageSort}",style: TextStyle(fontSize: 18.0,color: item.secondPackageCode == null?Colors.black:distinguish),),
               trailing:ElevatedButton(onPressed: (){
                   // changeABDialog(item);
@@ -160,7 +160,7 @@ class _CertainPackageState extends State<CertainPackage>{
             ),
             ListTile(
               dense: true,
-              leading: const Text("完成情况",style: TextStyle(fontSize: 16.0),),
+              leading: const Text('完成情况',style: TextStyle(fontSize: 16.0),),
               // title: Text("${item.complete}",style: TextStyle(fontSize: 16.0)),
               trailing:Text(item.complete=='0'?'未完成':'已完成',style: TextStyle(fontSize: 16.0,color: item.complete=='0'?Colors.orange:Colors.blue))
             ),
@@ -296,10 +296,10 @@ class _CertainPackageState extends State<CertainPackage>{
                                         if(item.taskContentItemList != null)...[
                                           for(var tc in item.taskContentItemList!)...[
                                             ZjcFormInputCell(
-                                              title: tc.name??"",
+                                              title: tc.name??'',
                                               keyboardType: TextInputType.number,
                                               showRedStar: true,
-                                              text: "${tc.realValue}",
+                                              text: '${tc.realValue}',
                                               inputFormatters: [FilteringTextInputFormatter.allow(RegExp('[0-9.]')), LengthLimitingTextInputFormatter(8)],
                                               inputCallBack:(value) {
                                                 tc.realValue = double.parse(value);

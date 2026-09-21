@@ -121,7 +121,7 @@ class _JtShowPageState extends State<JtSearch> {
       // 显示错误信息
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("获取数据失败")),
+          const SnackBar(content: Text('获取数据失败')),
         );
       });
     }
@@ -160,8 +160,8 @@ class _JtShowPageState extends State<JtSearch> {
       setState(() {
         dynamicTypeList = r.toMapList();
         permissions = permissionResponse;
-        dynamciTypeSelected["code"] = dynamicTypeList[0]["code"];
-        dynamciTypeSelected["name"] = dynamicTypeList[0]["name"];
+        dynamciTypeSelected['code'] = dynamicTypeList[0]['code'];
+        dynamciTypeSelected['name'] = dynamicTypeList[0]['name'];
         getJcType();
         logger.i(permissions);
       });
@@ -173,7 +173,7 @@ class _JtShowPageState extends State<JtSearch> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -190,7 +190,7 @@ class _JtShowPageState extends State<JtSearch> {
   Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
         'name': faultyPartController.text,
@@ -214,7 +214,7 @@ class _JtShowPageState extends State<JtSearch> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -235,12 +235,12 @@ class _JtShowPageState extends State<JtSearch> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
         'team': 100
       };
       logger.i(queryParameters);
-      var r = await ProductApi().getCheckPerson(queryParameters);
+      // var r = await ProductApi().getCheckPerson(queryParameters);
       if (mounted) {
         setState(() {});
       }
@@ -253,7 +253,7 @@ class _JtShowPageState extends State<JtSearch> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28作业查询"),
+        title: const Text('机统28作业查询'),
       ),
       body: _buildBody(),
     );
@@ -408,18 +408,18 @@ class _JtShowPageState extends State<JtSearch> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "机型",
+                      title: '机型',
                       text: widget.typeName,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
                   ),
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "车号",
+                      title: '车号',
                       text: widget.trainNum,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
@@ -634,7 +634,7 @@ class Jt28StartWorkListItem extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: onViewMedia,
                         icon: const Icon(Icons.photo_library, size: 18),
-                        label: const Text("查看故障视频及图片"),
+                        label: const Text('查看故障视频及图片'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -789,8 +789,8 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
   late Team _selectedMember;
 
   // 机型选项（模拟下拉）
-  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
-  String _selectedModel = 'HXD3CA';
+  // final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
+  // final String _selectedModel = 'HXD3CA';
 
   // 检修项列表（模拟状态）
   final List<InspectionItem> _inspectionItems = [
@@ -805,7 +805,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
 
   void getTeamList() async {
     Map<String, dynamic> params = {
-      "parentId": Global.profile.permissions?.user.dept?.parentId,
+      'parentId': Global.profile.permissions?.user.dept?.parentId,
     };
 
     try {
@@ -879,7 +879,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
     try {
       // 构建参数
       Map<String, dynamic> params = {
-        "code": widget.jtCode,
+        'code': widget.jtCode,
       };
       // 设置主修人员
       params['team'] = _selectedMember.id;
@@ -887,12 +887,12 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
       logger.i(params);
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
-      if (response['code'] == "S_T_S003") {
-        showToast("分配成功");
+      if (response['code'] == 'S_T_S003') {
+        showToast('分配成功');
       }
     } catch (e) {
       print('分配人员失败: $e');
-      showToast("分配失败，请重试");
+      showToast('分配失败，请重试');
     }
   }
 
@@ -975,7 +975,7 @@ class _JtAssignTeamState extends State<JtAssignTeam> {
                             ),
                             color: isSelected ? Colors.green : Colors.white,
                             child: Text(
-                              '${member.name}',
+                              member.name,
                               style: TextStyle(
                                 color: isSelected ? Colors.white : Colors.black,
                                 fontSize: 16, // 增大字体
@@ -1119,7 +1119,7 @@ class _FaultMediaListDialogState extends State<FaultMediaListDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("故障视频及图片"),
+      title: const Text('故障视频及图片'),
       content: SizedBox(
         width: double.maxFinite,
         child: _buildContent(),
@@ -1187,9 +1187,9 @@ class _FaultMediaListDialogState extends State<FaultMediaListDialog> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
-              const SizedBox(height: 16),
-              const Text('暂无图片或视频'),
+              Icon(Icons.image_not_supported, size: 48, color: Colors.grey),
+              SizedBox(height: 16),
+              Text('暂无图片或视频'),
             ],
           ),
         ),
@@ -1485,7 +1485,7 @@ class Jt28ListItem extends StatelessWidget {
                 child: ElevatedButton.icon(
                   onPressed: onViewMedia,
                   icon: const Icon(Icons.photo_library, size: 18),
-                  label: const Text("查看故障视频及图片"),
+                  label: const Text('查看故障视频及图片'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -1647,7 +1647,7 @@ class Jt28AssignListItem extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: onViewMedia,
                         icon: const Icon(Icons.photo_library, size: 18),
-                        label: const Text("查看故障视频及图片"),
+                        label: const Text('查看故障视频及图片'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,

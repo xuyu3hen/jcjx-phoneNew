@@ -47,7 +47,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   bool _isLoading = true;
 
   // 当前选中的机车
-  Map<String, dynamic>? _selectedLocomotive;
+  // Map<String, dynamic>? _selectedLocomotive;
 
   List<RepairGroup> repairGroups = [];
 
@@ -86,7 +86,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 用于追踪每个组的展开状态
-  Map<int, bool> _groupExpansionStates = {};
+  final Map<int, bool> _groupExpansionStates = {};
 
   // 搜索文本
   String _searchText = '';
@@ -293,7 +293,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     17: '售后通知单',
     18: '工人工装变更通知单',
     19: '材料工艺变更通知单',
-    20: 'jt28提报单'
+    20: 'jt28提报单',
+    22: '检修过程故障处置单',
   };
 
   @override
@@ -317,6 +318,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               5 &&
           Global.cachedRepairProgressData.isNotEmpty;
 
+      if (!mounted) return;
       if (cacheValid) {
         setState(() {
           repairGroups = Global.cachedRepairProgressData;
@@ -339,6 +341,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       Global.isRepairProgressDataLoaded = true;
       Global.repairProgressDataLoadTime = DateTime.now();
 
+      if (!mounted) return;
       setState(() {
         repairGroups = r;
         if (r.isNotEmpty) {
@@ -386,7 +389,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               onRefresh: _refreshData,
               child: repairGroups.isEmpty
                   ? ListView(
-                      children: [
+                      children: const [
                         SizedBox(height: 180),
                         Center(child: Text('暂无数据')),
                       ],
@@ -1069,13 +1072,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         rows = r.map((item) => item as Map<String, dynamic>).toList();
       }
 
+      if (!mounted) return;
       setState(() {
         investigateList = rows;
         logger.i(investigateList);
       });
     } catch (e) {
       logger.e('获取调查清单失败: $e');
-      showToast('获取数据失败');
+      if (mounted) showToast('获取数据失败');
     }
   }
 
@@ -1095,13 +1099,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         rows = r.map((item) => item as Map<String, dynamic>).toList();
       }
 
+      if (!mounted) return;
       setState(() {
         masSaleList = rows;
         logger.i(masSaleList);
       });
     } catch (e) {
       logger.e('获取调查清单失败: $e');
-      showToast('获取数据失败');
+      if (mounted) showToast('获取数据失败');
     }
   }
 
@@ -1233,6 +1238,24 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         });
                       },
                     ),
+                    const Divider(),
+                    ListTile(
+                      leading: Radio<int>(
+                        value: 6,
+                        groupValue: selectedOption,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value ?? -1;
+                          });
+                        },
+                      ),
+                      title: const Text('检修过程故障处置单'),
+                      onTap: () {
+                        setState(() {
+                          selectedOption = 6;
+                        });
+                      },
+                    ),
 // ... existing code ...
                   ],
                 ),
@@ -1314,6 +1337,44 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                 ),
                               );
                               break;
+                            case 6: // 检修过程故障处置单
+                              await getMasSale(item);
+                              if (!mounted) return;
+                              final faultCandidates = masSaleList.isNotEmpty
+                                  ? List<Map<String, dynamic>>.from(masSaleList)
+                                  : <Map<String, dynamic>>[
+                                      {
+                                        'code': item.masSaleInformationCode ??
+                                            item.code ??
+                                            '',
+                                        'faultInformation':
+                                            item.repairDynamics ?? '',
+                                        'trainNum': item.trainNum ?? '',
+                                        'typeName': item.typeName ?? '',
+                                        'repairProcName':
+                                            item.repairProcName ?? '',
+                                        'repairTimes': item.repairTimes ?? '',
+                                        'trainLocation': item.stoppingPlace ??
+                                            item.repairLocation ??
+                                            '',
+                                        'assignSegmentName':
+                                            item.assignSegmentName ?? '',
+                                      }
+                                    ];
+                              if (masSaleList.isEmpty) {
+                                showToast('未查询到现成故障数据，已打开填写界面');
+                              }
+                              await Navigator.push(
+                                rootContext,
+                                MaterialPageRoute(
+                                  builder: (context) => RepairProcessNoticePage(
+                                    item: item,
+                                    noticeCandidates: faultCandidates,
+                                    noticeType: 22,
+                                  ),
+                                ),
+                              );
+                              break;
                           }
                         },
                   child: const Text('下一步'),
@@ -1327,7 +1388,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   }
 
   // 推送选项的状态 - 只保留安全生产指挥中心
-  bool _pushToCommandCenter = true;
+  // final bool _pushToCommandCenter = true;
   // 产生停留地点
   // 起始位置
   List<Map<String, dynamic>> stopLocationList = [];
@@ -1567,8 +1628,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 显示调查内容输入对话框
   void _showInvestigateInputDialog(BuildContext context, RepairItem item,
       Map<String, dynamic> investigateItem) {
-    final TextEditingController _contentController = TextEditingController();
-    final TextEditingController _resultController = TextEditingController();
+    // final TextEditingController contentController = TextEditingController();
+    // final TextEditingController resultController = TextEditingController();
     final masInvestigateList = investigateItem['masInvestigateListList'] ?? [];
     final shuntingNoticeList = investigateItem['shuntingNoticeList'] ?? [];
     List<Map<String, dynamic>> mappedList = [];
@@ -1577,13 +1638,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
     if (masInvestigateList is List) {
       mappedList = masInvestigateList
-          .where((item) => item is Map)
+          .whereType<Map>()
           .map((item) => item as Map<String, dynamic>)
           .toList();
     }
     if (shuntingNoticeList is List) {
       shuntingMappedList = shuntingNoticeList
-          .where((item) => item is Map)
+          .whereType<Map>()
           .map((item) => item as Map<String, dynamic>)
           .toList();
     }
@@ -1696,9 +1757,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 显示编辑调查内容对话框
   void _showEditInvestigateDialog(BuildContext context, RepairItem item,
       Map<String, dynamic> investigateItem) {
-    final TextEditingController _contentController = TextEditingController(
-        text: investigateItem['investigateContent'] as String? ?? '');
-    final TextEditingController _resultController = TextEditingController(
+    // final TextEditingController contentController = TextEditingController(
+    //     text: investigateItem['investigateContent'] as String? ?? '');
+    final TextEditingController resultController = TextEditingController(
         text: investigateItem['investigateResult'] as String? ?? '');
 
     showDialog(
@@ -1728,7 +1789,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                  controller: _resultController,
+                  controller: resultController,
                   decoration: const InputDecoration(
                     labelText: '调查结果',
                     border: OutlineInputBorder(),
@@ -1752,7 +1813,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                   'code': investigateItem['code'],
                   'deptId': Global.profile.permissions?.user.deptId,
                   'deptName': Global.profile.permissions?.user.dept?.deptName,
-                  'investigateResult': _resultController.text,
+                  'investigateResult': resultController.text,
                   'reportUserId': Global.profile.permissions?.user.userId,
                   'reportUserName': Global.profile.permissions?.user.nickName,
                   'teamId': Global.profile.permissions?.user.deptId,
@@ -1775,9 +1836,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   // 显示调车作业申请单输入对话框
   void _showShuntingApplicationDialog(BuildContext context, RepairItem item) {
-    final TextEditingController _reasonController = TextEditingController();
-    final TextEditingController _locationController = TextEditingController();
-    String? _selectedType;
+    final TextEditingController reasonController = TextEditingController();
+    // final TextEditingController locationController = TextEditingController();
+    // String? selectedType;
     List<Map<String, dynamic>> repairMainNodeList = [];
     Map<String, dynamic> repairMainNodeSelected = {'name': '', 'code': ''};
     bool repairMainNodeRequested = false;
@@ -1963,7 +2024,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           'applyUserName': Global.profile.permissions?.user.userName,
           'dynamicCode': item.dynamicCode,
           'endStopPositionCode': stopLocationSelectedEnd['code'],
-          'remark': _reasonController.text,
+          'remark': reasonController.text,
           'sort': 0,
           'startStopPositionCode': stopLocationSelected['code'],
           'status': 0,
@@ -2096,13 +2157,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     ),
                     const SizedBox(height: 10),
                     ZjcFormSelectCell(
-                      title: "工序节点",
+                      title: '工序节点',
                       text: repairMainNodeSelected['name'] ?? '',
-                      hintText: repairMainNodeLoading ? "加载中..." : "请选择",
+                      hintText: repairMainNodeLoading ? '加载中...' : '请选择',
                       clickCallBack: () {
                         if (repairMainNodeLoading) return;
                         if (repairMainNodeList.isEmpty) {
-                          showToast("无工序节点可选择");
+                          showToast('无工序节点可选择');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -2110,7 +2171,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             labelKey: 'name',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择工序节点",
+                            title: '选择工序节点',
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 repairMainNodeSelected = {
@@ -2132,13 +2193,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       },
                     ),
                     ZjcFormSelectCell(
-                      title: "排程节点",
+                      title: '排程节点',
                       text: scheduleNodeSelected['name'] ?? '',
-                      hintText: scheduleNodeLoading ? "加载中..." : "请选择",
+                      hintText: scheduleNodeLoading ? '加载中...' : '请选择',
                       clickCallBack: () {
                         if (scheduleNodeLoading) return;
                         if (scheduleNodePickerList.isEmpty) {
-                          showToast("无排程节点可选择");
+                          showToast('无排程节点可选择');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -2146,7 +2207,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             labelKey: 'name',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择排程节点",
+                            title: '选择排程节点',
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 scheduleNodeSelected = {
@@ -2162,16 +2223,16 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       },
                     ),
                     ZjcFormSelectCell(
-                        title: "端",
-                        text: directionSelected["name"] ?? '',
-                        hintText: item.doubleCarriage == true ? "请选择" : "无需选择",
+                        title: '端',
+                        text: directionSelected['name'] ?? '',
+                        hintText: item.doubleCarriage == true ? '请选择' : '无需选择',
                         clickCallBack: () {
                           if (item.doubleCarriage != true) {
-                            showToast("非重联无需选择端");
+                            showToast('非重联无需选择端');
                             return;
                           }
                           if (directionList.isEmpty) {
-                            showToast("无端可选择");
+                            showToast('无端可选择');
                           } else {
                             ZjcCascadeTreePicker.show(
                               context,
@@ -2179,7 +2240,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               labelKey: 'name',
                               valueKey: 'value',
                               childrenKey: 'children',
-                              title: "选择端",
+                              title: '选择端',
                               clickCallBack: (selectItem, selectArr) {
                                 final selectedEnd =
                                     (selectItem['value'] ?? selectItem['name'])
@@ -2198,12 +2259,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         }),
                     const SizedBox(height: 10),
                     ZjcFormSelectCell(
-                      title: "起始位置",
-                      text: stopLocationSelected["realLocation"],
-                      hintText: "请选择",
+                      title: '起始位置',
+                      text: stopLocationSelected['realLocation'],
+                      hintText: '请选择',
                       clickCallBack: () {
                         if (startStopLocationList.isEmpty) {
-                          showToast("无检修地点可选择");
+                          showToast('无检修地点可选择');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -2211,18 +2272,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             labelKey: 'realLocation',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择检修地点",
+                            title: '选择检修地点',
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 logger.i(selectArr);
-                                stopLocationSelected["code"] =
-                                    selectItem["code"];
-                                stopLocationSelected["realLocation"] =
-                                    selectItem["realLocation"];
-                                stopLocationSelected["areaName"] =
-                                    selectItem["areaName"];
-                                stopLocationSelected["trackNum"] =
-                                    selectItem["trackNum"];
+                                stopLocationSelected['code'] =
+                                    selectItem['code'];
+                                stopLocationSelected['realLocation'] =
+                                    selectItem['realLocation'];
+                                stopLocationSelected['areaName'] =
+                                    selectItem['areaName'];
+                                stopLocationSelected['trackNum'] =
+                                    selectItem['trackNum'];
                               });
                             },
                           );
@@ -2230,12 +2291,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       },
                     ),
                     ZjcFormSelectCell(
-                      title: "终点位置",
-                      text: stopLocationSelectedEnd["realLocation"],
-                      hintText: "请选择",
+                      title: '终点位置',
+                      text: stopLocationSelectedEnd['realLocation'],
+                      hintText: '请选择',
                       clickCallBack: () {
                         if (stopLocationList.isEmpty) {
-                          showToast("无检修地点可选择");
+                          showToast('无检修地点可选择');
                         } else {
                           ZjcCascadeTreePicker.show(
                             context,
@@ -2243,18 +2304,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             labelKey: 'realLocation',
                             valueKey: 'code',
                             childrenKey: 'children',
-                            title: "选择检修地点",
+                            title: '选择检修地点',
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
                                 logger.i(selectArr);
-                                stopLocationSelectedEnd["code"] =
-                                    selectItem["code"];
-                                stopLocationSelectedEnd["realLocation"] =
-                                    selectItem["realLocation"];
-                                stopLocationSelectedEnd["areaName"] =
-                                    selectItem["areaName"];
-                                stopLocationSelectedEnd["trackNum"] =
-                                    selectItem["trackNum"];
+                                stopLocationSelectedEnd['code'] =
+                                    selectItem['code'];
+                                stopLocationSelectedEnd['realLocation'] =
+                                    selectItem['realLocation'];
+                                stopLocationSelectedEnd['areaName'] =
+                                    selectItem['areaName'];
+                                stopLocationSelectedEnd['trackNum'] =
+                                    selectItem['trackNum'];
                               });
                             },
                           );
@@ -2262,7 +2323,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       },
                     ),
                     TextFormField(
-                      controller: _reasonController,
+                      controller: reasonController,
                       decoration: const InputDecoration(
                         labelText: '备注',
                         border: OutlineInputBorder(),
@@ -2288,20 +2349,20 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                         .toString()
                         .trim();
                     if (nodeCode.isEmpty) {
-                      showToast("请选择工序节点");
+                      showToast('请选择工序节点');
                       return;
                     }
                     final scheduleCode =
                         (scheduleNodeSelected['code'] ?? '').toString().trim();
                     if (scheduleCode.isEmpty) {
-                      showToast("请选择排程节点");
+                      showToast('请选择排程节点');
                       return;
                     }
                     final endCode = (stopLocationSelectedEnd['code'] ?? '')
                         .toString()
                         .trim();
                     if (endCode.isEmpty) {
-                      showToast("请选择终点位置");
+                      showToast('请选择终点位置');
                       return;
                     }
                     Navigator.pop(context);
@@ -2321,7 +2382,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   // 显示调车作业通知单
   void _showShuntingAnswerDialog(BuildContext context, RepairItem item) {
     final List<_ShuntingFormData> formDataList = [_ShuntingFormData()];
-    DateTime? _planDateSelected;
+    DateTime? planDateSelected;
     List<Map<String, dynamic>> repairMainNodeList = [];
     bool repairMainNodeRequested = false;
     bool repairMainNodeLoading = false;
@@ -2330,7 +2391,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     bool dynamicTypeLoading = false;
     List<Map<String, dynamic>> globalDynamicTypeList = [];
 
-    Future<void> _loadJcType(StateSetter setState, _ShuntingFormData fd) async {
+    Future<void> loadJcType(StateSetter setState, _ShuntingFormData fd) async {
       final dynamicCode =
           (fd.dynamicTypeSelected['code'] ?? '').toString().trim();
       if (dynamicCode.isEmpty) {
@@ -2368,7 +2429,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
 
-    Future<void> _loadTrainNum(
+    Future<void> loadTrainNum(
         StateSetter setState, _ShuntingFormData fd) async {
       final typeCode = (fd.jcTypeSelected['code'] ?? '').toString().trim();
       if (typeCode.isEmpty) {
@@ -2409,9 +2470,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         }
         final List<Map<String, dynamic>> list =
             (raw is List ? raw : const <dynamic>[])
-                .where((e) => e is Map)
+                .whereType<Map>()
                 .map((e) {
-          final m = Map<String, dynamic>.from(e as Map);
+          final m = Map<String, dynamic>.from(e);
           m['displayTrainNum'] =
               formatTrainNumWithEnds(m['trainNum'], m['ends']);
           return m;
@@ -2428,7 +2489,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
     }
 
-    List<Map<String, dynamic>> _parseScheduleRows(dynamic response) {
+    List<Map<String, dynamic>> parseScheduleRows(dynamic response) {
       dynamic raw = response;
       if (raw is Map) {
         raw = raw['rows'] ??
@@ -2446,12 +2507,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       }
       final list = raw is List ? raw : const <dynamic>[];
       return list
-          .where((e) => e is Map)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
           .toList();
     }
 
-    String _scheduleNodeName(Map<String, dynamic> row) {
+    String scheduleNodeName(Map<String, dynamic> row) {
       return (row['schedleNodeName'] ??
               row['scheduleNodeName'] ??
               row['mainNodeSchedleNodeName'] ??
@@ -2461,13 +2522,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           .toString();
     }
 
-    int _scheduleNodeSort(Map<String, dynamic> row) {
+    int scheduleNodeSort(Map<String, dynamic> row) {
       final v = row['sort'] ?? row['orderNum'] ?? row['seq'] ?? row['index'];
       if (v is num) return v.toInt();
       return int.tryParse(v?.toString() ?? '') ?? 0;
     }
 
-    bool _isScheduleNodeActive(Map<String, dynamic> row) {
+    bool isScheduleNodeActive(Map<String, dynamic> row) {
       final state = row['state'];
       if (state != null) {
         if (state is bool) return state;
@@ -2494,7 +2555,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       return true;
     }
 
-    String _scheduleNodeTimeRange(Map<String, dynamic> row) {
+    String scheduleNodeTimeRange(Map<String, dynamic> row) {
       final startRaw = (row['planStartTime'] ??
               row['theoreticStartTime'] ??
               row['startTime'] ??
@@ -2513,7 +2574,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       return '$start ~ $end';
     }
 
-    Future<void> _loadScheduleNodes(
+    Future<void> loadScheduleNodes(
         StateSetter setState, _ShuntingFormData fd) async {
       final repairMainNodeCode =
           (fd.repairMainNodeSelected['code'] ?? '').toString().trim();
@@ -2546,14 +2607,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             'repairMainNodeCode': repairMainNodeCode,
           },
         );
-        var rows = _parseScheduleRows(r);
+        var rows = parseScheduleRows(r);
         rows = rows.where((m) => m['deleted'] != true).toList();
-        final activeRows = rows.where(_isScheduleNodeActive).toList();
+        final activeRows = rows.where(isScheduleNodeActive).toList();
         if (activeRows.isNotEmpty && activeRows.length != rows.length) {
           rows = activeRows;
         }
         rows.sort(
-            (a, b) => _scheduleNodeSort(a).compareTo(_scheduleNodeSort(b)));
+            (a, b) => scheduleNodeSort(a).compareTo(scheduleNodeSort(b)));
         final pickerList = rows
             .map((row) {
               final code = (row['code'] ??
@@ -2563,14 +2624,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                       row['schedleNodeCode'] ??
                       '')
                   .toString();
-              final name = _scheduleNodeName(row);
-              final timeText = _scheduleNodeTimeRange(row);
+              final name = scheduleNodeName(row);
+              final timeText = scheduleNodeTimeRange(row);
               final displayName = timeText.isEmpty ? name : '$name  $timeText';
               return <String, dynamic>{
                 'code': code,
                 'name': displayName,
                 'scheduleNodeName': name,
-                'sort': _scheduleNodeSort(row),
+                'sort': scheduleNodeSort(row),
               };
             })
             .where((m) => (m['code'] ?? '').toString().trim().isNotEmpty)
@@ -2601,7 +2662,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
     void saveShuntingAnswer() async {
       try {
-        final planStart = _planDateSelected ?? DateTime.now();
+        final planStart = planDateSelected ?? DateTime.now();
         List<Map<String, dynamic>> queryParametrs = [];
 
         for (final fd in formDataList) {
@@ -2642,7 +2703,8 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
           queryParametrs.add(row);
         }
 
-        var r = await ProductApi()
+        // var r =
+        await ProductApi()
             .directPublishShuntingPlan(queryParametrs: queryParametrs);
       } catch (e) {
         logger.e('saveShuntingAnswer 方法中发生异常: $e');
@@ -2719,7 +2781,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             .toString()
                             .trim())
                         .isNotEmpty) {
-                      await _loadScheduleNodes(setState, fd);
+                      await loadScheduleNodes(setState, fd);
                     }
                   }
                 } catch (_) {
@@ -2805,7 +2867,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     if ((fd.dynamicTypeSelected['code'] ?? '')
                         .toString()
                         .isNotEmpty) {
-                      await _loadJcType(setState, fd);
+                      await loadJcType(setState, fd);
                       if (!context.mounted) return;
                       var jcMatch = fd.jcTypeList.firstWhere(
                         (e) => e['code'] == item.typeCode,
@@ -2820,7 +2882,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           fd.jcTypeSelected =
                               Map<String, dynamic>.from(jcMatch);
                         });
-                        await _loadTrainNum(setState, fd);
+                        await loadTrainNum(setState, fd);
                         if (!context.mounted) return;
                         final desiredTrainNum =
                             (item.trainNum ?? '').toString().trim();
@@ -2918,13 +2980,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               ),
                             // 新增: 动力类型
                             ZjcFormSelectCell(
-                              title: "动力类型",
+                              title: '动力类型',
                               text: fd.dynamicTypeSelected['name'] ?? '',
-                              hintText: dynamicTypeLoading ? "加载中..." : "请选择",
+                              hintText: dynamicTypeLoading ? '加载中...' : '请选择',
                               clickCallBack: () {
                                 if (dynamicTypeLoading) return;
                                 if (globalDynamicTypeList.isEmpty) {
-                                  showToast("无动力类型可选择");
+                                  showToast('无动力类型可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -2932,7 +2994,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'name',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择动力类型",
+                                    title: '选择动力类型',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         fd.dynamicTypeSelected = {
@@ -2940,7 +3002,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                           'code': selectItem['code'],
                                         };
                                       });
-                                      _loadJcType(setState, fd);
+                                      loadJcType(setState, fd);
                                     },
                                   );
                                 }
@@ -2948,13 +3010,13 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ),
                             // 新增: 机型
                             ZjcFormSelectCell(
-                              title: "机型",
+                              title: '机型',
                               text: fd.jcTypeSelected['name'] ?? '',
-                              hintText: fd.jcTypeLoading ? "加载中..." : "请选择",
+                              hintText: fd.jcTypeLoading ? '加载中...' : '请选择',
                               clickCallBack: () {
                                 if (fd.jcTypeLoading) return;
                                 if (fd.jcTypeList.isEmpty) {
-                                  showToast("无机型可选择");
+                                  showToast('无机型可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -2962,7 +3024,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'name',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择机型",
+                                    title: '选择机型',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         fd.jcTypeSelected = {
@@ -2970,7 +3032,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                           'code': selectItem['code'],
                                         };
                                       });
-                                      _loadTrainNum(setState, fd);
+                                      loadTrainNum(setState, fd);
                                     },
                                   );
                                 }
@@ -2978,16 +3040,16 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ),
                             // 新增: 车号
                             ZjcFormSelectCell(
-                              title: "车号",
+                              title: '车号',
                               text: (fd.trainNumSelected['displayTrainNum'] ??
                                       fd.trainNumSelected['trainNum'] ??
                                       '')
                                   .toString(),
-                              hintText: fd.trainNumLoading ? "加载中..." : "请选择",
+                              hintText: fd.trainNumLoading ? '加载中...' : '请选择',
                               clickCallBack: () {
                                 if (fd.trainNumLoading) return;
                                 if (fd.trainNumList.isEmpty) {
-                                  showToast("无车号可选择");
+                                  showToast('无车号可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -2995,7 +3057,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'displayTrainNum',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择车号",
+                                    title: '选择车号',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         fd.trainNumSelected = {
@@ -3013,14 +3075,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             ),
                             //增加朝向
                             ZjcFormSelectCell(
-                              title: "工序节点",
+                              title: '工序节点',
                               text: fd.repairMainNodeSelected['name'] ?? '',
                               hintText:
-                                  repairMainNodeLoading ? "加载中..." : "请选择",
+                                  repairMainNodeLoading ? '加载中...' : '请选择',
                               clickCallBack: () {
                                 if (repairMainNodeLoading) return;
                                 if (repairMainNodeList.isEmpty) {
-                                  showToast("无工序节点可选择");
+                                  showToast('无工序节点可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -3028,7 +3090,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'name',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择工序节点",
+                                    title: '选择工序节点',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         fd.repairMainNodeSelected = {
@@ -3043,21 +3105,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                         };
                                         fd.scheduleNodeLoading = true;
                                       });
-                                      _loadScheduleNodes(setState, fd);
+                                      loadScheduleNodes(setState, fd);
                                     },
                                   );
                                 }
                               },
                             ),
                             ZjcFormSelectCell(
-                              title: "排程节点",
+                              title: '排程节点',
                               text: fd.scheduleNodeSelected['name'] ?? '',
                               hintText:
-                                  fd.scheduleNodeLoading ? "加载中..." : "请选择",
+                                  fd.scheduleNodeLoading ? '加载中...' : '请选择',
                               clickCallBack: () {
                                 if (fd.scheduleNodeLoading) return;
                                 if (fd.scheduleNodePickerList.isEmpty) {
-                                  showToast("无排程节点可选择");
+                                  showToast('无排程节点可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -3065,7 +3127,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'name',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择排程节点",
+                                    title: '选择排程节点',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         fd.scheduleNodeSelected = {
@@ -3081,18 +3143,18 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               },
                             ),
                             ZjcFormSelectCell(
-                                title: "端",
-                                text: fd.directionSelected["name"] ?? '',
+                                title: '端',
+                                text: fd.directionSelected['name'] ?? '',
                                 hintText: item.doubleCarriage == true
-                                    ? "请选择"
-                                    : "无需选择",
+                                    ? '请选择'
+                                    : '无需选择',
                                 clickCallBack: () {
                                   if (item.doubleCarriage != true) {
-                                    showToast("非重联无需选择端");
+                                    showToast('非重联无需选择端');
                                     return;
                                   }
                                   if (directionList.isEmpty) {
-                                    showToast("无端可选择");
+                                    showToast('无端可选择');
                                   } else {
                                     ZjcCascadeTreePicker.show(
                                       context,
@@ -3100,7 +3162,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                       labelKey: 'name',
                                       valueKey: 'value',
                                       childrenKey: 'children',
-                                      title: "选择端",
+                                      title: '选择端',
                                       clickCallBack: (selectItem, selectArr) {
                                         final selectedEnd =
                                             (selectItem['value'] ??
@@ -3122,12 +3184,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                 }),
                             const SizedBox(height: 10),
                             ZjcFormSelectCell(
-                              title: "起始位置",
-                              text: fd.stopLocationSelected["realLocation"],
-                              hintText: "请选择",
+                              title: '起始位置',
+                              text: fd.stopLocationSelected['realLocation'],
+                              hintText: '请选择',
                               clickCallBack: () {
                                 if (stopLocationList.isEmpty) {
-                                  showToast("无检修地点可选择");
+                                  showToast('无检修地点可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -3135,19 +3197,19 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'realLocation',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择检修地点",
+                                    title: '选择检修地点',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         logger.i(selectArr);
-                                        fd.stopLocationSelected["code"] =
-                                            selectItem["code"];
+                                        fd.stopLocationSelected['code'] =
+                                            selectItem['code'];
                                         fd.stopLocationSelected[
-                                                "realLocation"] =
-                                            selectItem["realLocation"];
-                                        fd.stopLocationSelected["areaName"] =
-                                            selectItem["areaName"];
-                                        fd.stopLocationSelected["trackNum"] =
-                                            selectItem["trackNum"];
+                                                'realLocation'] =
+                                            selectItem['realLocation'];
+                                        fd.stopLocationSelected['areaName'] =
+                                            selectItem['areaName'];
+                                        fd.stopLocationSelected['trackNum'] =
+                                            selectItem['trackNum'];
                                       });
                                     },
                                   );
@@ -3155,12 +3217,12 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               },
                             ),
                             ZjcFormSelectCell(
-                              title: "终点位置",
-                              text: fd.stopLocationSelectedEnd["realLocation"],
-                              hintText: "请选择",
+                              title: '终点位置',
+                              text: fd.stopLocationSelectedEnd['realLocation'],
+                              hintText: '请选择',
                               clickCallBack: () {
                                 if (stopLocationList.isEmpty) {
-                                  showToast("无检修地点可选择");
+                                  showToast('无检修地点可选择');
                                 } else {
                                   ZjcCascadeTreePicker.show(
                                     context,
@@ -3168,19 +3230,19 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                     labelKey: 'realLocation',
                                     valueKey: 'code',
                                     childrenKey: 'children',
-                                    title: "选择检修地点",
+                                    title: '选择检修地点',
                                     clickCallBack: (selectItem, selectArr) {
                                       setState(() {
                                         logger.i(selectArr);
-                                        fd.stopLocationSelectedEnd["code"] =
-                                            selectItem["code"];
+                                        fd.stopLocationSelectedEnd['code'] =
+                                            selectItem['code'];
                                         fd.stopLocationSelectedEnd[
-                                                "realLocation"] =
-                                            selectItem["realLocation"];
-                                        fd.stopLocationSelectedEnd["areaName"] =
-                                            selectItem["areaName"];
-                                        fd.stopLocationSelectedEnd["trackNum"] =
-                                            selectItem["trackNum"];
+                                                'realLocation'] =
+                                            selectItem['realLocation'];
+                                        fd.stopLocationSelectedEnd['areaName'] =
+                                            selectItem['areaName'];
+                                        fd.stopLocationSelectedEnd['trackNum'] =
+                                            selectItem['trackNum'];
                                       });
                                     },
                                   );
@@ -3232,21 +3294,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           .toString()
                           .trim();
                       if (dynamicCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择动力类型");
+                        showToast('作业单 ${i + 1}: 请选择动力类型');
                         return;
                       }
 
                       final typeCode =
                           (fd.jcTypeSelected['code'] ?? '').toString().trim();
                       if (typeCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择机型");
+                        showToast('作业单 ${i + 1}: 请选择机型');
                         return;
                       }
 
                       final trainCode =
                           (fd.trainNumSelected['code'] ?? '').toString().trim();
                       if (trainCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择车号");
+                        showToast('作业单 ${i + 1}: 请选择车号');
                         return;
                       }
 
@@ -3254,7 +3316,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                           .toString()
                           .trim();
                       if (nodeCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择工序节点");
+                        showToast('作业单 ${i + 1}: 请选择工序节点');
                         return;
                       }
                       final scheduleCode =
@@ -3262,14 +3324,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               .toString()
                               .trim();
                       if (scheduleCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择排程节点");
+                        showToast('作业单 ${i + 1}: 请选择排程节点');
                         return;
                       }
                       final endCode = (fd.stopLocationSelectedEnd['code'] ?? '')
                           .toString()
                           .trim();
                       if (endCode.isEmpty) {
-                        showToast("作业单 ${i + 1}: 请选择终点位置");
+                        showToast('作业单 ${i + 1}: 请选择终点位置');
                         return;
                       }
                     }
@@ -3421,11 +3483,13 @@ class RepairProgressDetailPage extends StatelessWidget {
 class RepairProcessNoticePage extends StatefulWidget {
   final RepairItem item;
   final List<Map<String, dynamic>> noticeCandidates;
+  final int noticeType;
 
   const RepairProcessNoticePage({
     super.key,
     required this.item,
     required this.noticeCandidates,
+    this.noticeType = 13,
   });
 
   @override
@@ -3454,20 +3518,25 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   List<Map<String, dynamic>> _configOptions = [];
   final List<_RepairProcessWorkBlock> _workBlocks = [];
   Map<String, dynamic>? _selectedJt28;
-  Map<String, dynamic>? _selectedProcessingMethod;
-  Map<String, dynamic>? _selectedRiskLevel;
-  Map<String, dynamic>? _selectedConfig;
+  // Map<String, dynamic>? _selectedProcessingMethod;
+  // Map<String, dynamic>? _selectedRiskLevel;
+  // Map<String, dynamic>? _selectedConfig;
   late Map<String, dynamic> _selectedNotice;
   late Future<String> _stopLocationFuture;
   String _stopLocationDisplay = '';
   bool _loadingNoticeDetail = false;
   bool _loadingDept = false;
+  List<Map<String, dynamic>> _repairMainNodeOptions = [];
+  List<Map<String, dynamic>> _scheduleNodeOptions = [];
+  bool _loadingRepairMainNode = false;
+  bool _loadingScheduleNode = false;
   bool _loadingJt28 = false;
   bool _loadingProcessingMethod = false;
   bool _loadingRiskLevel = false;
   bool _loadingConfig = false;
   bool _loadingReceiveGroup = false;
   bool _submitting = false;
+  final Set<int> _faultCardExpanded = <int>{};
 
   @override
   void initState() {
@@ -3539,6 +3608,31 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     return '';
   }
 
+  Map<String, dynamic>? _extractVjt(Map<String, dynamic>? item) {
+    if (item == null) return null;
+    final v = item['vjtWebSearch'];
+    if (v is Map) return Map<String, dynamic>.from(v);
+    final v1 = item['vjtWebSearchs'];
+    if (v1 is Map) return Map<String, dynamic>.from(v1);
+    final v2 = item['jtWebSearch'];
+    if (v2 is Map) return Map<String, dynamic>.from(v2);
+    final v3 = item['detailWebSearch'];
+    if (v3 is Map) return Map<String, dynamic>.from(v3);
+    return null;
+  }
+
+  String _pickFromItem(
+    Map<String, dynamic>? item,
+    List<String> keys,
+  ) {
+    final vjt = _extractVjt(item);
+    if (vjt != null) {
+      final direct = _pickText(vjt, keys);
+      if (direct.isNotEmpty) return direct;
+    }
+    return _pickText(item, keys);
+  }
+
   List<Map<String, dynamic>> _pickList(
     Map<String, dynamic>? map,
     List<String> keys,
@@ -3595,28 +3689,491 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   bool get _signeeLockedByReceiveGroup => _selectedReceiveGroup != null;
 
   String _jt28Label(Map<String, dynamic>? item) {
-    return _pickText(item, [
-      'jt28DisplayText',
+    return _pickFromItem(item, [
       'faultDescription',
       'faultInformation',
       'faultDesc',
       'faultPhenomenon',
+      'jt28DisplayText',
+      'faultComponentName',
+      'faultPartName',
+      'componentName',
     ]);
   }
 
   String _processingMethodLabel(Map<String, dynamic>? item) {
-    return _pickText(item, [
+    return _pickFromItem(item, [
+      'processMethodName',
+      'requiredProcessingMethodName',
+      'processMainNode',
       'dictName',
       'jtDictName',
       'processingMethodName',
-      'requiredProcessingMethodName',
       'processingMethod',
       'requiredProcessingMethod',
+      'methodName',
+      'processingMethodDictName',
+      'techProcessingMethod',
+      'processType',
+      'machineSystemName',
     ]);
   }
 
   String _riskLevelLabel(Map<String, dynamic>? item) {
-    return _pickText(item, ['riskLevel', 'riskLevelName', 'name', 'dictLabel']);
+    return _pickFromItem(item, [
+      'riskLevelName',
+      'riskLevel',
+      'name',
+      'dictLabel',
+      'riskCode',
+      'riskLevelCode',
+      'techRiskLevel',
+      'riskGrade',
+    ]);
+  }
+
+  String _suggestedRepairSchemeLabel(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    return _pickFromItem(item, [
+      'repairScheme',
+      'suggestRepairScheme',
+      'suggestScheme',
+      'proposedScheme',
+      'repairSchemeShort',
+      'repairSchemeCode',
+      'repairProcName',
+      'shortRepairScheme',
+      'repairSuggestion',
+      'suggestSchemeCode',
+      'suggestRepairSchemeCode',
+      'repairPlanCode',
+      'recommendedScheme',
+      'proposalCode',
+    ]);
+  }
+
+  String _reporterLabel(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final namePrimary = _pickFromItem(item, [
+      'reporterName',
+      'createName',
+      'reportPersonName',
+      'reportUserName',
+      'createBy',
+      'discoverName',
+      'submitter',
+      'submitName',
+      'workerName',
+      'findUserName',
+      'finderName',
+      'submitterName',
+    ]);
+    if (namePrimary.isNotEmpty) return namePrimary;
+    final codeOnly = _pickFromItem(item, ['reporter']);
+    if (codeOnly.isEmpty) return '';
+    if (_looksLikeCode(codeOnly)) {
+      return '提报人$codeOnly';
+    }
+    return codeOnly;
+  }
+
+  String _reportTimeLabel(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final raw = _pickFromItem(item, [
+      'reportDate',
+      'createTime',
+      'reportTime',
+      'reportShowDate',
+      'createDate',
+      'submitTime',
+      'discoverTime',
+      'reportingTime',
+      'findTime',
+      'submitDate',
+      'faultReportTime',
+    ]);
+    if (raw.isEmpty) return '';
+    if (raw.length > 16) return raw.substring(0, 16);
+    return raw;
+  }
+
+  String _repairPictureGroupId(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    return _pickFromItem(item, [
+      'repairPicture',
+      'repairEndPicture',
+      'mutualInspectionPicture',
+      'reportPicture',
+      'reportPicGroupId',
+      'pictureGroupId',
+      'imgGroupId',
+      'picGroupId',
+      'imageGroupId',
+      'attachment',
+      'attachGroupId',
+      'faultPicGroupId',
+      'faultImageGroupId',
+      'mediaGroupId',
+    ]);
+  }
+
+  String _longRepairSchemeLabel(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    return _pickFromItem(item, [
+      'maintenanceNotice',
+      'repairContent',
+      'repairProcContent',
+      'repairPlan',
+      'repairProgram',
+      'repairPlanContent',
+      'workContent',
+      'repairScheme',
+      'faultInformation',
+      'repairContentDetail',
+      'repairLongContent',
+      'disposalScheme',
+      'disposalContent',
+      'repairPlanDetail',
+      'maintenanceScheme',
+      'repairMeasure',
+    ]);
+  }
+
+  String _workpieceCoefficientLabel(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    return _pickFromItem(item, [
+      'workpieceCoeffcient',
+      'workpieceCoefficient',
+      'workPieceCoeffcient',
+      'workPieceCoefficient',
+      'workCoeffcient',
+      'workCoefficient',
+      'coefficient',
+      'workpieceFactor',
+      'workPieceFactor',
+      'partsCoefficient',
+      'componentsCoefficient',
+    ]);
+  }
+
+  String _resolveCodeFromOptions(
+    List<Map<String, dynamic>> options,
+    String? codeOrName,
+    List<String> codeKeys,
+    List<String> nameKeys,
+  ) {
+    if (codeOrName == null || codeOrName.trim().isEmpty) return '';
+    final key = codeOrName.trim();
+    final byName = _findOptionByIdOrName(
+      options,
+      id: key,
+      idKeys: codeKeys,
+      name: key,
+      nameKeys: nameKeys,
+    );
+    if (byName != null) {
+      final n = _pickText(byName, nameKeys);
+      if (n.isNotEmpty) return n;
+    }
+    return key;
+  }
+
+  String _processingMethodByCode(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final rawName = _pickFromItem(item, [
+      'processMethodName',
+      'requiredProcessingMethodName',
+      'processMainNode',
+      'processingMethodName',
+      'dictName',
+      'jtDictName',
+    ]);
+    if (rawName.isNotEmpty && !_looksLikeCode(rawName)) return rawName;
+    final rawCode = _pickFromItem(item, [
+      'processingMethod',
+      'requiredProcessingMethod',
+      'jtDictCode',
+      'jtDictName',
+      'processMethodCode',
+      'processingMethodCode',
+      'processingMethodDictCode',
+      'machineSystemCode',
+    ]);
+    if (rawCode.isEmpty) return rawName;
+    final resolved = _resolveCodeFromOptions(
+      _processingMethodOptions,
+      rawCode,
+      [
+        'code',
+        'dictCode',
+        'jtDictCode',
+        'processingMethodCode',
+      ],
+      [
+        'dictName',
+        'jtDictName',
+        'name',
+        'displayText',
+        'processingMethodName',
+      ],
+    );
+    return resolved.isEmpty ? rawName : resolved;
+  }
+
+  String _faultConfigByCode(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final directName = _pickFromItem(item, [
+      'jcNodeName',
+      'configNodeName',
+      'faultyComponent',
+      'faultComponentName',
+      'mutualName',
+      'componentName',
+      'structureName',
+      'partName',
+    ]);
+    if (directName.isNotEmpty && !_looksLikeCode(directName)) {
+      return directName;
+    }
+    final rawCode = _pickFromItem(item, [
+      'jcNodeCode',
+      'configCode',
+      'configNodeCode',
+      'nodeCode',
+      'configId',
+      'faultComponentCode',
+      'faultPartCode',
+      'componentCode',
+      'partCode',
+      'structureCode',
+      'faultConfigCode',
+    ]);
+    if (rawCode.isEmpty) return directName;
+    final resolved = _resolveCodeFromOptions(
+      _configOptions,
+      rawCode,
+      [
+        'jcNodeCode',
+        'configCode',
+        'configNodeCode',
+        'code',
+        'nodeCode',
+        'configId',
+        'id',
+      ],
+      [
+        'jcNodeName',
+        'displayText',
+        'nodeName',
+        'configNodeName',
+        'configName',
+        'structure',
+        'componentName',
+        'name',
+      ],
+    );
+    return resolved.isEmpty ? directName : resolved;
+  }
+
+  String _responsibleDeptByCode(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final rawName = _pickFromItem(item, [
+      'deptName',
+      'teamName',
+      'disposeDeptName',
+      'responsibleDeptName',
+      'responsibleDept',
+      'dutyDeptName',
+      'handleDeptName',
+      'assignDeptName',
+    ]);
+    if (rawName.isNotEmpty && !_looksLikeCode(rawName)) return rawName;
+    final rawCode = _pickFromItem(item, [
+      'deptId',
+      'deptCode',
+      'team',
+      'teamId',
+      'teamCode',
+      'disposeDeptId',
+      'disposeDepartId',
+      'responsibleDeptCode',
+      'responsibleDept',
+      'deptNameCode',
+      'dutyDeptCode',
+      'dutyDept',
+      'handleDeptCode',
+      'handleDept',
+      'assignDeptCode',
+      'assignDept',
+    ]);
+    if (rawCode.isEmpty) return rawName;
+    final resolved = _resolveCodeFromOptions(
+      _deptList,
+      rawCode,
+      [
+        'deptCode',
+        'code',
+        'deptId',
+        'id',
+        'teamId',
+        'teamCode',
+      ],
+      [
+        'deptName',
+        'name',
+        'teamName',
+        'displayText',
+        'fullName',
+        'label',
+      ],
+    );
+    return resolved.isEmpty ? rawName : resolved;
+  }
+
+  String _completeProcessByCode(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final rawName = _pickFromItem(item, [
+      'processMainNode',
+      'repairMainNodeName',
+      'originalRepairMainNodeName',
+      'completeProcessName',
+      'completedProcessName',
+      'finishProcessName',
+      'repairProcessName',
+      'processName',
+      'repairProcName',
+      'currentProcessName',
+      'processingNodeName',
+    ]);
+    if (rawName.isNotEmpty && !_looksLikeCode(rawName)) return rawName;
+    final rawCode = _pickFromItem(item, [
+      'processMainNodeCode',
+      'mainProcessPoint',
+      'repairMainNodeCode',
+      'originalRepairMainNodeCode',
+      'completeProcessCode',
+      'completedProcessCode',
+      'finishProcessCode',
+      'repairProcCode',
+      'processCode',
+      'repairProcessCode',
+      'currentProcessCode',
+    ]);
+    if (rawCode.isEmpty) return rawName;
+    final resolved = _resolveCodeFromOptions(
+      _repairMainNodeOptions,
+      rawCode,
+      [
+        'processMainNodeCode',
+        'repairMainNodeCode',
+        'repairProcCode',
+        'procCode',
+        'processCode',
+        'code',
+        'id',
+      ],
+      [
+        'processMainNode',
+        'repairMainNodeName',
+        'repairProcName',
+        'repairProcessName',
+        'processName',
+        'name',
+        'displayText',
+        'nodeName',
+      ],
+    );
+    return resolved.isEmpty ? rawName : resolved;
+  }
+
+  String _scheduleNodeByCode(Map<String, dynamic>? item) {
+    if (item == null) return '';
+    final rawName = _pickFromItem(item, [
+      'scheduleNodeName',
+      'originalScheduleNodeName',
+      'schedNodeName',
+      'planNodeName',
+      'arrangeNodeName',
+      'scheduleName',
+    ]);
+    if (rawName.isNotEmpty && !_looksLikeCode(rawName)) return rawName;
+    final rawCode = _pickFromItem(item, [
+      'scheduleNodeCode',
+      'originalScheduleNodeCode',
+      'schedNodeCode',
+      'planNodeCode',
+      'arrangeNodeCode',
+      'scheduleCode',
+    ]);
+    if (rawCode.isEmpty) return rawName;
+    final resolved = _resolveCodeFromOptions(
+      _scheduleNodeOptions,
+      rawCode,
+      [
+        'scheduleNodeCode',
+        'code',
+        'nodeCode',
+        'id',
+      ],
+      [
+        'scheduleNodeName',
+        'name',
+        'displayText',
+        'nodeName',
+        'planNodeName',
+      ],
+    );
+    return resolved.isEmpty ? rawName : resolved;
+  }
+
+  bool _looksLikeCode(String text) {
+    final t = text.trim();
+    if (t.isEmpty) return true;
+    if (t.length > 40) return false;
+    final hasChinese = t.contains(RegExp(r'[\u4e00-\u9fa5]'));
+    if (hasChinese) return false;
+    if (RegExp(r'^[0-9A-Fa-f\-]{8,}$').hasMatch(t)) return true;
+    if (RegExp(r'^[A-Z]{2,}\d{2,}$').hasMatch(t)) return true;
+    if (RegExp(r'^\d{8,}$').hasMatch(t)) return true;
+    return false;
+  }
+
+  Color _riskChipColor(String riskText) {
+    final t = riskText.trim().toUpperCase();
+    if (t.isEmpty) return const Color(0xFFE5E7EB);
+    if (t.startsWith('A')) return const Color(0xFFFEE2E2);
+    if (t.startsWith('B')) return const Color(0xFFFFEDD5);
+    if (t.startsWith('C')) return const Color(0xFFDBEAFE);
+    if (t.startsWith('D') || t == '低') return const Color(0xFFDCFCE7);
+    return const Color(0xFFF3E8FF);
+  }
+
+  Color _riskChipTextColor(String riskText) {
+    final t = riskText.trim().toUpperCase();
+    if (t.isEmpty) return const Color(0xFF6B7280);
+    if (t.startsWith('A')) return const Color(0xFFB91C1C);
+    if (t.startsWith('B')) return const Color(0xFFC2410C);
+    if (t.startsWith('C')) return const Color(0xFF1D4ED8);
+    if (t.startsWith('D') || t == '低') return const Color(0xFF047857);
+    return const Color(0xFF6D28D9);
+  }
+
+  Color _processingChipColor(String pText) {
+    if (pText.trim().isEmpty) return const Color(0xFFE0F2FE);
+    final t = pText.trim();
+    if (t.contains('清洁') || t.contains('保养')) return const Color(0xFFDCFCE7);
+    if (t.contains('紧固')) return const Color(0xFFFFF3CD);
+    if (t.contains('更换') || t.contains('更换')) return const Color(0xFFDBEAFE);
+    return const Color(0xFFF3E8FF);
+  }
+
+  Color _processingChipTextColor(String pText) {
+    final t = pText.trim();
+    if (t.isEmpty) return const Color(0xFF0369A1);
+    if (t.contains('清洁') || t.contains('保养')) return const Color(0xFF065F46);
+    if (t.contains('紧固')) return const Color(0xFF92400E);
+    if (t.contains('更换') || t.contains('更换')) return const Color(0xFF1E3A8A);
+    return const Color(0xFF5B21B6);
   }
 
   String _configLabel(Map<String, dynamic>? item) {
@@ -3837,35 +4394,45 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
   bool _validateBeforeSubmit({required bool showError}) {
     String? error;
-    if (_jt28Options.isNotEmpty && _jt28Label(_selectedJt28).isEmpty) {
-      error = '请选择一条机统28';
-    } else if (_currentProcessNodeName.isEmpty) {
-      error = '工序节点未回写完成，请稍后';
-    } else if (_stopLocationDisplay.trim().isEmpty) {
-      error = '停留位置未回写完成，请稍后';
+    if (widget.noticeType == 22) {
+      if (_jt28Options.isEmpty) {
+        error = '暂无故障明细，无法下发';
+      } else if (_currentProcessNodeName.isEmpty) {
+        error = '工序节点未回写完成，请稍后';
+      } else if (_stopLocationDisplay.trim().isEmpty) {
+        error = '停留位置未回写完成，请稍后';
+      }
     } else {
-      for (var i = 0; i < _workBlocks.length; i++) {
-        final block = _workBlocks[i];
-        final prefix = '工艺块 ${i + 1}: ';
-        if (block.processingMethodText.trim().isEmpty) {
-          error = '${prefix}请选择加工方法';
-          break;
-        }
-        if (block.riskLevelText.trim().isEmpty) {
-          error = '${prefix}请选择风险等级';
-          break;
-        }
-        if (block.configText.trim().isEmpty) {
-          error = '${prefix}请选择关联构型';
-          break;
-        }
-        if (block.outsourceFactoryController.text.trim().isEmpty) {
-          error = '${prefix}请输入外包厂家';
-          break;
-        }
-        if (block.repairPlanController.text.trim().isEmpty) {
-          error = '${prefix}请输入施修方案';
-          break;
+      if (_jt28Options.isNotEmpty && _jt28Label(_selectedJt28).isEmpty) {
+        error = '请选择一条机统28';
+      } else if (_currentProcessNodeName.isEmpty) {
+        error = '工序节点未回写完成，请稍后';
+      } else if (_stopLocationDisplay.trim().isEmpty) {
+        error = '停留位置未回写完成，请稍后';
+      } else {
+        for (var i = 0; i < _workBlocks.length; i++) {
+          final block = _workBlocks[i];
+          final prefix = '工艺块 ${i + 1}: ';
+          if (block.processingMethodText.trim().isEmpty) {
+            error = '$prefix请选择加工方法';
+            break;
+          }
+          if (block.riskLevelText.trim().isEmpty) {
+            error = '$prefix请选择风险等级';
+            break;
+          }
+          if (block.configText.trim().isEmpty) {
+            error = '$prefix请选择关联构型';
+            break;
+          }
+          if (block.outsourceFactoryController.text.trim().isEmpty) {
+            error = '$prefix请输入外包厂家';
+            break;
+          }
+          if (block.repairPlanController.text.trim().isEmpty) {
+            error = '$prefix请输入施修方案';
+            break;
+          }
         }
       }
     }
@@ -4071,7 +4638,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
           'auditUserName': auditUserName,
           if (groupCode.isNotEmpty) 'receiveGroupCode': groupCode,
           if (groupName.isNotEmpty) 'receiveGroupName': groupName,
-          'shuntingType': 13,
+          if (widget.noticeType == 22)
+            'shuntingType': 22
+          else
+            'shuntingType': 13,
           'status': 0,
         });
       }
@@ -4083,7 +4653,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     required dynamic user,
     required List<Map<String, dynamic>> workListPayload,
   }) {
-    final activeStateDetail = _activeStateDetail;
+    // final activeStateDetail = _activeStateDetail;
     final reportUserId = _selectedNotice['reportUserId'] ?? user.userId;
     final reportUserName =
         _pickText(_selectedNotice, ['reportUserName']).isNotEmpty
@@ -4252,7 +4822,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       if (repairProc.isNotEmpty) repairProc,
     ];
     final prefix = parts.join('-');
-    return prefix.isEmpty ? '下发修程通知单' : '$prefix-下发修程通知单';
+    final suffix = widget.noticeType == 22
+        ? '下发检修过程故障处置单'
+        : '下发修程通知单';
+    return prefix.isEmpty ? suffix : '$prefix-$suffix';
   }
 
   Future<String> _resolveStopLocationDisplay() async {
@@ -4319,43 +4892,94 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       _logger.w('[修程通知单JT28] 进入页面未取到 trainEntryCode');
       return;
     }
-    _logger.i('[修程通知单JT28] 进入修程通知单，开始查询 trainEntryCode=$trainEntryCode');
     if (mounted) {
       setState(() => _loadingJt28 = true);
     }
     try {
-      final res = await ProductApi().getJt28SelectAll(
-        queryParametrs: {
-          'trainEntryCode': trainEntryCode,
-          'derived': false,
-          'pageNum': 0,
-          'pageSize': 0,
-          'status': 0,
-        },
-      );
-      final list = <Map<String, dynamic>>[];
-      dynamic rows = res;
-      if (res is Map) {
-        rows = res['rows'] ?? res['data'] ?? res['list'];
-      }
-      if (rows is List) {
-        for (final e in rows) {
-          if (e is Map) {
-            final row = Map<String, dynamic>.from(e);
-            row['jt28DisplayText'] = _jt28Label(row);
-            list.add(row);
+      dynamic res;
+      List<Map<String, dynamic>> list;
+      if (widget.noticeType == 22) {
+        _logger.i(
+            '[检修过程故障处置单JT28] 开始查询故障明细 trainEntryCode=$trainEntryCode');
+        res = await ProductApi()
+            .queryRepairProcessFaultDetailsForManualDispatch(
+          queryParametrs: {
+            'trainEntryCode': trainEntryCode,
+          },
+        );
+        list = <Map<String, dynamic>>[];
+        dynamic rows = res;
+        if (res is Map) {
+          final outer = res['data'];
+          final inner = outer is Map ? outer['data'] : null;
+          final d1 = inner is Map ? inner['detailList'] : null;
+          final d2 = outer is Map ? outer['detailList'] : null;
+          final d3 = res['detailList'];
+          final candidate = d1 ?? d2 ?? d3;
+          rows = candidate ??
+              (res['rows'] ??
+                  (inner is List
+                      ? inner
+                      : (outer is List ? outer : res['list'])));
+        }
+        if (rows is List) {
+          for (final e in rows) {
+            if (e is Map) {
+              final row = Map<String, dynamic>.from(e);
+              row['jt28DisplayText'] = _jt28Label(row);
+              list.add(row);
+            }
           }
         }
+        if (!mounted) return;
+        setState(() {
+          _jt28Options = list;
+          _selectedJt28 = null;
+          _loadingJt28 = false;
+        });
+        _logger.i(
+            '[检修过程故障处置单JT28] 页面收到故障明细 rows=${list.length}');
+        _loadRepairProcDictForFault();
+      } else {
+        _logger.i(
+            '[修程通知单JT28] 进入修程通知单，开始查询 trainEntryCode=$trainEntryCode');
+        res = await ProductApi().getJt28SelectAll(
+          queryParametrs: {
+            'trainEntryCode': trainEntryCode,
+            'derived': false,
+            'pageNum': 0,
+            'pageSize': 0,
+            'status': 0,
+          },
+        );
+        list = <Map<String, dynamic>>[];
+        dynamic rows = res;
+        if (res is Map) {
+          rows = res['rows'] ?? res['data'] ?? res['list'];
+        }
+        if (rows is List) {
+          for (final e in rows) {
+            if (e is Map) {
+              final row = Map<String, dynamic>.from(e);
+              row['jt28DisplayText'] = _jt28Label(row);
+              list.add(row);
+            }
+          }
+        }
+        if (!mounted) return;
+        setState(() {
+          _jt28Options = list;
+          _selectedJt28 = null;
+          _loadingJt28 = false;
+        });
+        _logger.i('[修程通知单JT28] 页面收到机统28 rows=${list.length}');
       }
-      if (!mounted) return;
-      setState(() {
-        _jt28Options = list;
-        _selectedJt28 = null;
-        _loadingJt28 = false;
-      });
-      _logger.i('[修程通知单JT28] 页面收到机统28 rows=${list.length}');
     } catch (e) {
-      _logger.e('[修程通知单JT28] 加载机统28故障现象失败: $e');
+      if (widget.noticeType == 22) {
+        _logger.e('[检修过程故障处置单JT28] 加载故障明细失败: $e');
+      } else {
+        _logger.e('[修程通知单JT28] 加载机统28故障现象失败: $e');
+      }
       if (!mounted) return;
       setState(() {
         _jt28Options = [];
@@ -4502,6 +5126,187 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         _loadingConfig = false;
       });
     }
+  }
+
+  Future<void> _loadRepairProcDictForFault() async {
+    if (!mounted) return;
+    final repairProcCode =
+        (widget.item.repairProcCode ?? '').toString().trim();
+    final repairMainNodeCode = _pickTextFromSources([
+      {
+        'repairMainNodeCode':
+            widget.item.trainRepairScheduleReal?.repairMainNodeCode ??
+                '',
+      },
+      {
+        'repairMainNodeCode': widget.item.repairMainNodeCode ?? '',
+      },
+    ], [
+      'repairMainNodeCode',
+    ]);
+    final permissions = Global.profile.permissions;
+    final userDept = permissions?.user.dept;
+    final allDeptParentId = userDept?.parentId ?? 0;
+
+    await Future.wait(<Future<void>>[
+      () async {
+        if (_deptList.isNotEmpty || _loadingDept) return;
+        if (!mounted) return;
+        setState(() => _loadingDept = true);
+        try {
+          final r = await ProductApi().getDeptTreeByParentIdList(
+            queryParametrs: {
+              'parentIdList': allDeptParentId,
+            },
+          );
+          final flat = <Map<String, dynamic>>[];
+          void walk(dynamic node) {
+            if (node is! Map) return;
+            flat.add(Map<String, dynamic>.from(node));
+            final children = node['children'];
+            if (children is List) {
+              for (final c in children) {
+                walk(c);
+              }
+            }
+          }
+
+          if (r is List) {
+            for (final e in r) {
+              walk(e);
+            }
+          } else if (r is Map) {
+            final rows = r['rows'] ?? r['data'] ?? r['list'];
+            if (rows is List) {
+              for (final e in rows) {
+                walk(e);
+              }
+            } else {
+              walk(r);
+            }
+          }
+          if (!mounted) return;
+          setState(() {
+            _deptList = flat;
+            _loadingDept = false;
+          });
+        } catch (e) {
+          _logger.e('[检修过程故障处置单] 加载责任部门字典失败: $e');
+          if (!mounted) return;
+          setState(() {
+            _deptList = [];
+            _loadingDept = false;
+          });
+        }
+      }(),
+      () async {
+        if (_repairMainNodeOptions.isNotEmpty || _loadingRepairMainNode) {
+          return;
+        }
+        if (!mounted) return;
+        setState(() => _loadingRepairMainNode = true);
+        try {
+          final r = await ProductApi().getRepairMainNodeAll(
+            queryParametrs: repairProcCode.isEmpty
+                ? const {
+                    'pageNum': 0,
+                    'pageSize': 0,
+                  }
+                : {
+                    'pageNum': 0,
+                    'pageSize': 0,
+                    'repairProcCode': repairProcCode,
+                  },
+          );
+          var rawList = r.toMapList();
+          if (repairProcCode.isNotEmpty) {
+            rawList = rawList.where((e) {
+              final v = (e['repairProcCode'] ?? '').toString().trim();
+              return v.isEmpty || v == repairProcCode;
+            }).toList();
+          }
+          final list = <Map<String, dynamic>>[];
+          for (final e in rawList) {
+            list.add(Map<String, dynamic>.from(e));
+          }
+          if (!mounted) return;
+          setState(() {
+            _repairMainNodeOptions = list;
+            _loadingRepairMainNode = false;
+          });
+        } catch (e) {
+          _logger.e('[检修过程故障处置单] 加载完成工序字典失败: $e');
+          if (!mounted) return;
+          setState(() {
+            _repairMainNodeOptions = [];
+            _loadingRepairMainNode = false;
+          });
+        }
+      }(),
+      () async {
+        if (_scheduleNodeOptions.isNotEmpty || _loadingScheduleNode) return;
+        if (!mounted) return;
+        setState(() => _loadingScheduleNode = true);
+        try {
+          final q = <String, dynamic>{
+            'pageNum': 0,
+            'pageSize': 0,
+          };
+          if (repairProcCode.isNotEmpty) {
+            q['procCode'] = repairProcCode;
+            q['repairProcCode'] = repairProcCode;
+          }
+          if (repairMainNodeCode.isNotEmpty) {
+            q['repairMainNodeCode'] = repairMainNodeCode;
+          }
+          final r1 = await ProductApi()
+              .getTemplateNodeByProcCodeAndMainNodeCode(
+            queryParametrs: q,
+          );
+          final list = <Map<String, dynamic>>[];
+          for (final e in r1) {
+            list.add(Map<String, dynamic>.from(e));
+          }
+          if (list.isEmpty && repairProcCode.isNotEmpty) {
+            try {
+              final r2 =
+                  await ProductApi().getMainNodeSchedleNodeAll(
+                queryParametrs: {
+                  'pageNum': 0,
+                  'pageSize': 0,
+                  'repairProcCode': repairProcCode,
+                  if (repairMainNodeCode.isNotEmpty)
+                    'repairMainNodeCode': repairMainNodeCode,
+                },
+              );
+              dynamic rows2 = r2;
+              if (r2 is Map) {
+                rows2 = r2['rows'] ?? r2['data'] ?? r2['list'];
+              }
+              if (rows2 is List) {
+                for (final e in rows2) {
+                  if (e is Map) {
+                    list.add(Map<String, dynamic>.from(e));
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+          if (!mounted) return;
+          setState(() {
+            _scheduleNodeOptions = list;
+            _loadingScheduleNode = false;
+          });
+        } catch (e) {
+          _logger.e('[检修过程故障处置单] 加载排程节点字典失败: $e');
+          if (!mounted) return;
+          setState(() {
+            _scheduleNodeOptions = [];
+            _loadingScheduleNode = false;
+          });
+        }
+      }(),
+    ]);
   }
 
   Future<void> _loadTeamsForDept(int deptId) async {
@@ -4849,29 +5654,70 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       setState(() => _loadingReceiveGroup = true);
     }
     try {
-      _logger.i('[修程通知单签收组] 开始查询签收组 shuntingType=13');
-      final res = await ProductApi().getShuntingReceiveGroup(
-        queryParametrs: {
+      Map<String, dynamic> receiveGroupQuery;
+      if (widget.noticeType == 22) {
+        _logger.i('[检修过程故障处置单签收组] 开始查询签收组 shuntingType=25');
+        receiveGroupQuery = const {
+          'pageNum': 0,
+          'pageSize': 0,
+          'shuntingType': 25,
+        };
+      } else {
+        _logger.i('[修程通知单签收组] 开始查询签收组 shuntingType=13');
+        receiveGroupQuery = const {
           'pageNum': 0,
           'pageSize': 0,
           'shuntingType': 13,
-        },
+        };
+      }
+      final res = await ProductApi().getShuntingReceiveGroup(
+        queryParametrs: receiveGroupQuery,
       );
       final rows = <Map<String, dynamic>>[];
+      void acceptRow(Map<String, dynamic> row) {
+        final name = _pickText(row, [
+          'name',
+          'displayText',
+          'groupName',
+          'receiveGroupName',
+          'shuntingGroupName',
+        ]);
+        final displayName = name;
+        row['displayText'] = displayName;
+        rows.add(row);
+      }
+
       if (res is List) {
         for (final item in res) {
           if (item is Map) {
-            final row = Map<String, dynamic>.from(item);
-            row['displayText'] = _pickText(row, ['name']);
-            rows.add(row);
+            acceptRow(Map<String, dynamic>.from(item));
           }
         }
-      } else if (res is Map && res['rows'] is List) {
-        for (final item in res['rows']) {
-          if (item is Map) {
-            final row = Map<String, dynamic>.from(item);
-            row['displayText'] = _pickText(row, ['name']);
-            rows.add(row);
+      } else if (res is Map) {
+        final resMap = Map<String, dynamic>.from(res);
+        final innerRows = _pickList(
+          resMap,
+          ['rows', 'list', 'dataList', 'items', 'records'],
+        );
+        for (final item in innerRows) {
+          acceptRow(Map<String, dynamic>.from(item));
+        }
+        if (rows.isEmpty && resMap['code'] == 200) {
+          // 极端情况：返回 {code:200,data:{code:"S_F_S000",data:{rows:[...]}}} 已经被 API 层拆成最内层 rows 了
+          // 但如果这里收到外层 Map，再兜底找一次
+          final outer = res;
+          final d1 = outer['data'];
+          final d2 = d1 is Map ? d1['data'] : null;
+          final d3 = d2 is Map ? d2['data'] : null;
+          for (final candidate in [d3, d2, d1]) {
+            if (candidate is Map && candidate['rows'] is List) {
+              for (final item in candidate['rows']) {
+                if (item is Map) {
+                  acceptRow(Map<String, dynamic>.from(item));
+                }
+              }
+              break;
+            }
           }
         }
       }
@@ -5095,6 +5941,583 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     );
   }
 
+  Widget _buildFaultDisposalCard(Map<String, dynamic> item, int index) {
+    final seq = index + 1;
+    final faultPhenomenon = _jt28Label(item);
+    final suggestScheme = _suggestedRepairSchemeLabel(item);
+    final reporter = _reporterLabel(item);
+    final reportTime = _reportTimeLabel(item);
+    final repairPicGroup = _repairPictureGroupId(item);
+    final longRepairScheme = _longRepairSchemeLabel(item);
+    final riskLevel = _riskLevelLabel(item);
+    final processingByDict = _processingMethodByCode(item);
+    final configByDict = _faultConfigByCode(item);
+    final deptByDict = _responsibleDeptByCode(item);
+    final completeProcByDict = _completeProcessByCode(item);
+    final scheduleByDict = _scheduleNodeByCode(item);
+
+    final hasPic = repairPicGroup.trim().isNotEmpty;
+    final hasLongScheme = longRepairScheme.trim().isNotEmpty;
+    final isExpanded = _faultCardExpanded.contains(index);
+
+    Widget kvChip({
+      required String label,
+      required String value,
+      required Color bg,
+      required Color fg,
+      IconData? icon,
+    }) {
+      if (value.isEmpty) return const SizedBox.shrink();
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 5,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: fg),
+              const SizedBox(width: 4),
+            ],
+            Flexible(
+              child: Text(
+                '$label：$value',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                softWrap: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget kvRow({
+      required String label,
+      required String value,
+      IconData? icon,
+      Color? labelColor,
+    }) {
+      if (value.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon,
+                        size: 12,
+                        color: labelColor ?? const Color(0xFF64748B)),
+                    const SizedBox(width: 3),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: labelColor ?? const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF0F172A),
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+                softWrap: true,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget mainCell({
+      required String label,
+      required String value,
+      required Color labelBg,
+      required Color labelFg,
+    }) {
+      return Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 7,
+                vertical: 2,
+              ),
+              decoration: BoxDecoration(
+                color: labelBg,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: labelFg,
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              value.isEmpty ? '—' : value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: value.isEmpty
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF0F172A),
+                height: 1.3,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isExpanded
+              ? const Color(0xFF93C5FD)
+              : const Color(0xFFE5E7EB),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isExpanded
+                ? const Color(0xFF3B82F6).withOpacity(0.10)
+                : const Color(0xFF0F172A).withOpacity(0.04),
+            blurRadius: isExpanded ? 12 : 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              setState(() {
+                if (isExpanded) {
+                  _faultCardExpanded.remove(index);
+                } else {
+                  _faultCardExpanded.add(index);
+                }
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF1D4ED8),
+                              Color(0xFF2563EB),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1D4ED8)
+                                  .withOpacity(0.28),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$seq',
+                          style: const TextStyle(
+                            fontSize: 19,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              faultPhenomenon.isEmpty
+                                  ? '（未填写故障现象）'
+                                  : faultPhenomenon,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                                height: 1.35,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                mainCell(
+                                  label: '处置车间',
+                                  value: deptByDict,
+                                  labelBg: const Color(0xFFDBEAFE),
+                                  labelFg: const Color(0xFF1D4ED8),
+                                ),
+                                const SizedBox(width: 10),
+                                mainCell(
+                                  label: '完成节点',
+                                  value: completeProcByDict,
+                                  labelBg: const Color(0xFFFFEDD5),
+                                  labelFg: const Color(0xFF9A3412),
+                                ),
+                                Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.start,
+                                  children: [
+                                    AnimatedRotation(
+                                      turns: isExpanded ? 0.5 : 0,
+                                      duration: const Duration(
+                                          milliseconds: 220),
+                                      curve: Curves.easeOut,
+                                      child: Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: isExpanded
+                                              ? const Color(0xFFEFF6FF)
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: const Color(0xFFE2E8F0),
+                                            width: 1,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Icon(
+                                          Icons.keyboard_arrow_up_rounded,
+                                          size: 20,
+                                          color: isExpanded
+                                              ? const Color(0xFF1D4ED8)
+                                              : const Color(0xFF94A3B8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          AnimatedCrossFade(
+            firstChild: const SizedBox.shrink(),
+            secondChild: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 1,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        reporter.isEmpty ? '匿名' : reporter,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
+                        color: Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          reportTime.isEmpty ? '—' : reportTime,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (suggestScheme.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEDD5),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFFBD38D),
+                          width: 1,
+                        ),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          text: '建议施修方案：',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF9A3412),
+                          ),
+                          children: [
+                            TextSpan(
+                              text: suggestScheme,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF7C2D12),
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (hasLongScheme) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(0xFFE2E8F0),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '施修方案',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            longRepairScheme,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              color: Color(0xFF0F172A),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: hasPic
+                            ? () {
+                                PhotoPreviewDialog.show(
+                                  context,
+                                  repairPicGroup,
+                                  ProductApi().getFaultVideoAndImage,
+                                );
+                              }
+                            : null,
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: hasPic
+                                ? const Color(0xFF2563EB)
+                                : Colors.grey.shade300,
+                            width: 1,
+                          ),
+                          foregroundColor: hasPic
+                              ? const Color(0xFF2563EB)
+                              : Colors.grey.shade400,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(Icons.image_outlined, size: 15),
+                        label: Text(
+                          hasPic ? '查看报修图片' : '暂无报修图片',
+                          style: const TextStyle(fontSize: 12.5),
+                        ),
+                      ),
+                      if (riskLevel.isNotEmpty)
+                        kvChip(
+                          label: '风险等级',
+                          value: riskLevel,
+                          bg: _riskChipColor(riskLevel),
+                          fg: _riskChipTextColor(riskLevel),
+                        ),
+                      if (processingByDict.isNotEmpty)
+                        kvChip(
+                          label: '加工方法',
+                          value: processingByDict,
+                          bg: _processingChipColor(processingByDict),
+                          fg: _processingChipTextColor(processingByDict),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAFAFA),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFF1F5F9),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        kvRow(
+                          label: '提报人',
+                          value: reporter,
+                          icon: Icons.person_rounded,
+                          labelColor: const Color(0xFF7C3AED),
+                        ),
+                        kvRow(
+                          label: '提报时间',
+                          value: reportTime,
+                          icon: Icons.access_time_rounded,
+                          labelColor: const Color(0xFF7C3AED),
+                        ),
+                        kvRow(
+                          label: '加工方法',
+                          value: processingByDict,
+                          icon: Icons.build_circle_outlined,
+                        ),
+                        kvRow(
+                          label: '故障构型',
+                          value: configByDict,
+                          icon: Icons.settings_input_component_outlined,
+                        ),
+                        kvRow(
+                          label: '责任部门',
+                          value: deptByDict,
+                          icon: Icons.account_tree_outlined,
+                        ),
+                        kvRow(
+                          label: '完成工序',
+                          value: completeProcByDict,
+                          icon: Icons.rule_outlined,
+                        ),
+                        kvRow(
+                          label: '完成节点',
+                          value: scheduleByDict,
+                          icon: Icons.schedule_outlined,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
+            sizeCurve: Curves.easeOut,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _fieldLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -5232,6 +6655,272 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       return;
     }
 
+    if (widget.noticeType == 22) {
+      final groupCode = _selectedReceiveGroup == null
+          ? ''
+          : _receiveGroupCode(_selectedReceiveGroup);
+      final groupName = _selectedReceiveGroup == null
+          ? ''
+          : _receiveGroupLabel(_selectedReceiveGroup);
+      final trainEntryCode =
+          (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '')
+              .toString()
+              .trim();
+      final noticeCode = _pickTextFromSources([
+        _selectedNotice,
+        {
+          'code': widget.item.code ?? '',
+          'masSaleInformationCode':
+              widget.item.masSaleInformationCode ?? '',
+        },
+      ], [
+        'code',
+        'masSaleInformationCode',
+      ]);
+
+      final faultList = <Map<String, dynamic>>[];
+      for (int i = 0; i < _jt28Options.length; i++) {
+        final row = _jt28Options[i];
+        final faultPhenomenon = _jt28Label(row);
+        final suggestScheme = _suggestedRepairSchemeLabel(row);
+        final reporter = _reporterLabel(row);
+        final reportTime = _reportTimeLabel(row);
+        final repairPicGroup = _repairPictureGroupId(row);
+        final longRepairScheme = _longRepairSchemeLabel(row);
+        final riskLevel = _riskLevelLabel(row);
+        final processing = _processingMethodLabel(row);
+        final rowCode = _pickTextFromSources([row], [
+          'code',
+          'jt28Code',
+          'masSaleInformationCode',
+        ]);
+        final processingMethodCode = _pickFromItem(row, [
+          'processingMethod',
+          'requiredProcessingMethod',
+          'jtDictCode',
+          'processMethodCode',
+          'processingMethodCode',
+          'processingMethodDictCode',
+          'machineSystemCode',
+        ]);
+        final processingMethodName = _processingMethodByCode(row);
+        final configCode = _pickFromItem(row, [
+          'jcNodeCode',
+          'configCode',
+          'configNodeCode',
+          'nodeCode',
+          'configId',
+          'faultComponentCode',
+          'faultPartCode',
+          'componentCode',
+          'partCode',
+          'structureCode',
+          'faultConfigCode',
+        ]);
+        final configNodeName = _faultConfigByCode(row);
+        final responsibleDeptCode = _pickFromItem(row, [
+          'deptId',
+          'deptCode',
+          'team',
+          'teamId',
+          'teamCode',
+          'disposeDeptId',
+          'disposeDepartId',
+          'responsibleDeptCode',
+          'responsibleDept',
+          'deptNameCode',
+          'dutyDeptCode',
+          'dutyDept',
+          'handleDeptCode',
+          'handleDept',
+          'assignDeptCode',
+          'assignDept',
+        ]);
+        final responsibleDeptName = _responsibleDeptByCode(row);
+        final completeProcessCode = _pickFromItem(row, [
+          'processMainNodeCode',
+          'mainProcessPoint',
+          'completeProcessCode',
+          'completedProcessCode',
+          'finishProcessCode',
+          'repairProcCode',
+          'processCode',
+          'repairProcessCode',
+          'currentProcessCode',
+          'repairMainNodeCode',
+          'originalRepairMainNodeCode',
+        ]);
+        final completeProcessName = _completeProcessByCode(row);
+        final scheduleNodeCode = _pickFromItem(row, [
+          'scheduleNodeCode',
+          'originalScheduleNodeCode',
+          'schedNodeCode',
+          'planNodeCode',
+          'arrangeNodeCode',
+          'scheduleCode',
+        ]);
+        final scheduleNodeName = _scheduleNodeByCode(row);
+        final workpieceCoeff = _workpieceCoefficientLabel(row);
+        faultList.add({
+          'serialNo': i + 1,
+          if (rowCode.isNotEmpty) 'code': rowCode,
+          if (faultPhenomenon.isNotEmpty)
+            'faultPhenomenon': faultPhenomenon,
+          if (faultPhenomenon.isNotEmpty) 'faultDescription': faultPhenomenon,
+          if (faultPhenomenon.isNotEmpty) 'faultInformation': faultPhenomenon,
+          if (suggestScheme.isNotEmpty)
+            'suggestedRepairScheme': suggestScheme,
+          if (suggestScheme.isNotEmpty) 'suggestRepairScheme': suggestScheme,
+          if (suggestScheme.isNotEmpty) 'repairSchemeShort': suggestScheme,
+          if (reporter.isNotEmpty) 'reporter': reporter,
+          if (reporter.isNotEmpty) 'createName': reporter,
+          if (reporter.isNotEmpty) 'reportPerson': reporter,
+          if (reportTime.isNotEmpty) 'reportTime': reportTime,
+          if (reportTime.isNotEmpty) 'createTime': reportTime,
+          if (repairPicGroup.isNotEmpty) 'repairPicture': repairPicGroup,
+          if (repairPicGroup.isNotEmpty) 'picGroupId': repairPicGroup,
+          if (repairPicGroup.isNotEmpty) 'imgGroupId': repairPicGroup,
+          if (longRepairScheme.isNotEmpty)
+            'longRepairScheme': longRepairScheme,
+          if (longRepairScheme.isNotEmpty)
+            'maintenanceNotice': longRepairScheme,
+          if (longRepairScheme.isNotEmpty)
+            'repairProcContent': longRepairScheme,
+          if (riskLevel.isNotEmpty) 'riskLevel': riskLevel,
+          if (riskLevel.isNotEmpty) 'riskLevelName': riskLevel,
+          if (processing.isNotEmpty) 'processingMethod': processing,
+          if (processing.isNotEmpty) 'jtDictName': processing,
+          if (processingMethodCode.isNotEmpty)
+            'processingMethodCode': processingMethodCode,
+          if (processingMethodCode.isNotEmpty) 'jtDictCode': processingMethodCode,
+          if (processingMethodCode.isNotEmpty)
+            'processMethodCode': processingMethodCode,
+          if (processingMethodName.isNotEmpty)
+            'processingMethodName': processingMethodName,
+          if (processingMethodName.isNotEmpty)
+            'processMethodName': processingMethodName,
+          if (configCode.isNotEmpty) 'jcNodeCode': configCode,
+          if (configCode.isNotEmpty) 'configCode': configCode,
+          if (configCode.isNotEmpty) 'configNodeCode': configCode,
+          if (configCode.isNotEmpty) 'nodeCode': configCode,
+          if (configCode.isNotEmpty) 'faultConfigCode': configCode,
+          if (configCode.isNotEmpty) 'faultComponentCode': configCode,
+          if (configNodeName.isNotEmpty) 'jcNodeName': configNodeName,
+          if (configNodeName.isNotEmpty) 'configNodeName': configNodeName,
+          if (configNodeName.isNotEmpty) 'configName': configNodeName,
+          if (configNodeName.isNotEmpty) 'faultConfigName': configNodeName,
+          if (configNodeName.isNotEmpty) 'structureName': configNodeName,
+          if (configNodeName.isNotEmpty) 'componentName': configNodeName,
+          if (responsibleDeptCode.isNotEmpty)
+            'responsibleDeptCode': responsibleDeptCode,
+          if (responsibleDeptCode.isNotEmpty) 'deptCode': responsibleDeptCode,
+          if (responsibleDeptCode.isNotEmpty) 'dutyDeptCode': responsibleDeptCode,
+          if (responsibleDeptCode.isNotEmpty)
+            'handleDeptCode': responsibleDeptCode,
+          if (responsibleDeptCode.isNotEmpty)
+            'assignDeptCode': responsibleDeptCode,
+          if (responsibleDeptName.isNotEmpty)
+            'responsibleDeptName': responsibleDeptName,
+          if (responsibleDeptName.isNotEmpty) 'deptName': responsibleDeptName,
+          if (responsibleDeptName.isNotEmpty) 'dutyDeptName': responsibleDeptName,
+          if (responsibleDeptName.isNotEmpty)
+            'handleDeptName': responsibleDeptName,
+          if (responsibleDeptName.isNotEmpty)
+            'assignDeptName': responsibleDeptName,
+          if (completeProcessCode.isNotEmpty)
+            'processMainNodeCode': completeProcessCode,
+          if (completeProcessCode.isNotEmpty)
+            'completeProcessCode': completeProcessCode,
+          if (completeProcessCode.isNotEmpty)
+            'repairProcCode': completeProcessCode,
+          if (completeProcessCode.isNotEmpty) 'processCode': completeProcessCode,
+          if (completeProcessCode.isNotEmpty)
+            'finishProcessCode': completeProcessCode,
+          if (completeProcessCode.isNotEmpty)
+            'repairMainNodeCode': completeProcessCode,
+          if (completeProcessName.isNotEmpty)
+            'processMainNode': completeProcessName,
+          if (completeProcessName.isNotEmpty)
+            'completeProcessName': completeProcessName,
+          if (completeProcessName.isNotEmpty)
+            'completedProcessName': completeProcessName,
+          if (completeProcessName.isNotEmpty)
+            'repairProcName': completeProcessName,
+          if (completeProcessName.isNotEmpty) 'processName': completeProcessName,
+          if (completeProcessName.isNotEmpty)
+            'finishProcessName': completeProcessName,
+          if (completeProcessName.isNotEmpty)
+            'repairMainNodeName': completeProcessName,
+          if (scheduleNodeCode.isNotEmpty)
+            'scheduleNodeCode': scheduleNodeCode,
+          if (scheduleNodeCode.isNotEmpty)
+            'originalScheduleNodeCode': scheduleNodeCode,
+          if (scheduleNodeCode.isNotEmpty) 'schedNodeCode': scheduleNodeCode,
+          if (scheduleNodeCode.isNotEmpty) 'planNodeCode': scheduleNodeCode,
+          if (scheduleNodeCode.isNotEmpty) 'scheduleCode': scheduleNodeCode,
+          if (scheduleNodeName.isNotEmpty)
+            'scheduleNodeName': scheduleNodeName,
+          if (scheduleNodeName.isNotEmpty)
+            'originalScheduleNodeName': scheduleNodeName,
+          if (scheduleNodeName.isNotEmpty) 'schedNodeName': scheduleNodeName,
+          if (scheduleNodeName.isNotEmpty) 'planNodeName': scheduleNodeName,
+          if (scheduleNodeName.isNotEmpty) 'scheduleName': scheduleNodeName,
+          if (scheduleNodeName.isNotEmpty) 'completeNodeName': scheduleNodeName,
+          if (workpieceCoeff.isNotEmpty)
+            'workpieceCoeffcient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty)
+            'workpieceCoefficient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty)
+            'workPieceCoeffcient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty)
+            'workPieceCoefficient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty) 'workCoeffcient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty) 'workCoefficient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty) 'coefficient': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty) 'workpieceFactor': workpieceCoeff,
+          if (workpieceCoeff.isNotEmpty) 'workPieceFactor': workpieceCoeff,
+        });
+      }
+
+      final masNoticeDeptList = _buildRepairProcessNoticeList(
+        user: user,
+      );
+
+      final faultPayload = <String, dynamic>{
+        if (noticeCode.isNotEmpty) 'code': noticeCode,
+        if (trainEntryCode.isNotEmpty) 'trainEntryCode': trainEntryCode,
+        'shuntingType': 22,
+        if (groupCode.isNotEmpty) 'receiveGroupCode': groupCode,
+        if (groupName.isNotEmpty) 'receiveGroupName': groupName,
+        'masNoticeDeptList': masNoticeDeptList,
+        'faultList': faultList,
+      };
+
+      setState(() => _submitting = true);
+      try {
+        final res = await ProductApi()
+            .saveFaultDisposalNotice(data: faultPayload);
+        final success =
+            res != null && (res['code'] == 200 || res['code'] == 'S_T_S003');
+        if (!mounted) return;
+        if (success) {
+          _showRepairProcessSuccessDialog();
+        } else {
+          showToast(
+              '故障处置单下发失败: ${res?['msg'] ?? '未知错误'}');
+        }
+      } catch (e) {
+        _logger.e('检修过程故障处置单下发失败: $e');
+        if (!mounted) return;
+        showToast('下发失败，请稍后重试');
+      } finally {
+        if (mounted) {
+          setState(() => _submitting = false);
+        }
+      }
+      return;
+    }
+
     final noticeCode = _asText(_selectedNotice['code']);
     final workListPayload = <Map<String, dynamic>>[];
     for (final block in _workBlocks) {
@@ -5241,7 +6930,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       final configText = block.configText.trim();
       final outsourceFactoryText = block.outsourceFactoryController.text.trim();
       final repairPlanText = block.repairPlanController.text.trim();
-      final techGuideText = block.techGuideController.text.trim();
+      // final techGuideText = block.techGuideController.text.trim();
 
       if (block.selectedProcessingMethod != null) {
         final selected = block.selectedProcessingMethod!;
@@ -5317,17 +7006,30 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
     setState(() => _submitting = true);
     try {
-      final res = await ProductApi().saveMasNotice(data: payload);
+      dynamic res;
+      if (widget.noticeType == 22) {
+        res = await ProductApi()
+            .saveFaultDisposalNotice(data: payload);
+      } else {
+        res = await ProductApi().saveMasNotice(data: payload);
+      }
       final success =
           res != null && (res['code'] == 200 || res['code'] == 'S_T_S003');
       if (!mounted) return;
       if (success) {
         _showRepairProcessSuccessDialog();
       } else {
-        showToast('下发失败: ${res?['msg'] ?? '未知错误'}');
+        final errorMsg = widget.noticeType == 22
+            ? '故障处置单下发失败: ${res?['msg'] ?? '未知错误'}'
+            : '下发失败: ${res?['msg'] ?? '未知错误'}';
+        showToast(errorMsg);
       }
     } catch (e) {
-      _logger.e('修程通知单下发失败: $e');
+      if (widget.noticeType == 22) {
+        _logger.e('检修过程故障处置单下发失败: $e');
+      } else {
+        _logger.e('修程通知单下发失败: $e');
+      }
       if (!mounted) return;
       showToast('下发失败，请稍后重试');
     } finally {
@@ -5353,9 +7055,11 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              const Text(
-                '修程通知单提报成功',
-                style: TextStyle(fontSize: 18),
+              Text(
+                widget.noticeType == 22
+                    ? '检修过程故障处置单提报成功'
+                    : '修程通知单提报成功',
+                style: const TextStyle(fontSize: 18),
               ),
               ConstrainedBox(
                 constraints:
@@ -5379,12 +7083,929 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.noticeType == 22) {
+      const thColW = 70.0;
+      const seqW = 56.0;
+      const pheW = 1.3;
+      const schW = 1.1;
+      const depW = 1.0;
+      const nodW = 1.0;
+      Widget th(String title, {double flex = 1.0, double? width}) {
+        const style = TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        );
+        if (width != null) {
+          return SizedBox(
+            width: width,
+            child: Text(title,
+                style: style,
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis),
+          );
+        }
+        return Expanded(
+          flex: (flex * 10).round(),
+          child: Text(title,
+              style: style,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis),
+        );
+      }
+
+      Widget tdCell(Widget child,
+          {double flex = 1.0, double? width, AlignmentGeometry align = Alignment.center}) {
+        Widget c = align == Alignment.center
+            ? Center(child: child)
+            : Align(alignment: align, child: child);
+        if (width != null) return SizedBox(width: width, child: c);
+        return Expanded(flex: (flex * 10).round(), child: c);
+      }
+
+      Widget tdText(String s,
+          {double flex = 1.0,
+          double? width,
+          AlignmentGeometry align = Alignment.center,
+          int maxLines = 2,
+          Color color = const Color(0xFF0F172A),
+          FontWeight fontWeight = FontWeight.w500}) {
+        return tdCell(
+            Text(
+              s,
+              textAlign: align == Alignment.center
+                  ? TextAlign.center
+                  : TextAlign.left,
+              style: TextStyle(
+                fontSize: 13,
+                color: color,
+                fontWeight: fontWeight,
+                height: 1.35,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: maxLines,
+            ),
+            flex: flex,
+            width: width,
+            align: align);
+      }
+
+      final header = Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 0),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+          ),
+          border: Border.all(
+            color: const Color(0xFFBFDBFE),
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              th('序号', width: seqW),
+              th('故障现象', flex: pheW),
+              th('施修方案', flex: schW),
+              th('责任车间', flex: depW),
+              th('完成节点', flex: nodW),
+              const SizedBox(width: thColW - 16),
+            ],
+          ),
+        ),
+      );
+
+      final rows = <Widget>[];
+      for (int i = 0; i < _jt28Options.length; i++) {
+        final item = _jt28Options[i];
+        final seq = i + 1;
+        final fault = _jt28Label(item);
+        final scheme = _suggestedRepairSchemeLabel(item);
+        final dept = _responsibleDeptByCode(item);
+        final completeProc = _completeProcessByCode(item);
+        final node = _scheduleNodeByCode(item);
+        final isExpand = _faultCardExpanded.contains(i);
+
+        final rowHeader = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            setState(() {
+              if (isExpand) {
+                _faultCardExpanded.remove(i);
+              } else {
+                _faultCardExpanded.add(i);
+              }
+            });
+          },
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(
+                color: isExpand
+                    ? const Color(0xFF93C5FD)
+                    : const Color(0xFFE5E7EB),
+                width: 1,
+              ),
+              borderRadius: isExpand
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: isExpand
+                      ? const Color(0xFF3B82F6).withOpacity(0.10)
+                      : const Color(0xFF0F172A).withOpacity(0.03),
+                  blurRadius: isExpand ? 12 : 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: seqW,
+                    child: Center(
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF1D4ED8),
+                              Color(0xFF2563EB),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1D4ED8)
+                                  .withOpacity(0.24),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          '$seq',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  tdText(fault.isEmpty ? '—' : fault,
+                      flex: pheW,
+                      align: Alignment.centerLeft,
+                      maxLines: 3,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF0F172A)),
+                  tdText(scheme.isEmpty ? '—' : scheme,
+                      flex: schW,
+                      align: Alignment.centerLeft,
+                      maxLines: 3,
+                      color: const Color(0xFF1D4ED8),
+                      fontWeight: FontWeight.w600),
+                  tdText(dept.isEmpty ? '—' : dept,
+                      flex: depW,
+                      align: Alignment.center,
+                      maxLines: 2,
+                      color: dept.isEmpty
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF1D4ED8),
+                      fontWeight: FontWeight.w600),
+                  tdText(node.isEmpty ? '—' : node,
+                      flex: nodW,
+                      align: Alignment.center,
+                      maxLines: 2,
+                      color: node.isEmpty
+                          ? const Color(0xFF94A3B8)
+                          : const Color(0xFF9A3412),
+                      fontWeight: FontWeight.w600),
+                  SizedBox(
+                    width: thColW - 16,
+                    child: Center(
+                      child: AnimatedRotation(
+                        turns: isExpand ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 220),
+                        curve: Curves.easeOut,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: isExpand
+                                ? const Color(0xFFEFF6FF)
+                                : Colors.transparent,
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            size: 20,
+                            color: isExpand
+                                ? const Color(0xFF1D4ED8)
+                                : const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+
+        Widget expandBody = const SizedBox.shrink();
+        if (isExpand) {
+          final reporter = _reporterLabel(item);
+          final reportTime = _reportTimeLabel(item);
+          final repairPicGroup = _repairPictureGroupId(item);
+          final longRepairScheme = _longRepairSchemeLabel(item);
+          final riskLevel = _riskLevelLabel(item);
+          final processing = _processingMethodByCode(item);
+          final config = _faultConfigByCode(item);
+          final workpieceCoeff = _workpieceCoefficientLabel(item);
+          final hasPic = repairPicGroup.trim().isNotEmpty;
+          final hasLong = longRepairScheme.trim().isNotEmpty;
+
+          Widget kvRowL({
+            required String label,
+            required String value,
+            IconData? icon,
+            Color? labelColor,
+          }) {
+            if (value.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(6, 3, 6, 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (icon != null) ...[
+                          Icon(icon,
+                              size: 12,
+                              color: labelColor ??
+                                  const Color(0xFF64748B)),
+                          const SizedBox(width: 3),
+                        ],
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: labelColor ??
+                                const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          Widget chip({
+            required String label,
+            required String value,
+            required Color bg,
+            required Color fg,
+            IconData? icon,
+          }) {
+            if (value.isEmpty) return const SizedBox.shrink();
+            return Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 13, color: fg),
+                    const SizedBox(width: 4),
+                  ],
+                  Flexible(
+                    child: Text(
+                      '$label：$value',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: fg,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      softWrap: true,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          expandBody = Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFAFBFC),
+              border: Border.all(
+                color: const Color(0xFF93C5FD),
+                width: 1,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(12),
+                bottomRight: Radius.circular(12),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Icon(Icons.person_outline,
+                        size: 14, color: Colors.grey.shade500),
+                    Text(
+                      reporter.isEmpty ? '匿名' : reporter,
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.access_time_rounded,
+                        size: 14, color: Colors.grey.shade500),
+                    Text(
+                      reportTime.isEmpty ? '—' : reportTime,
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(width: 4),
+                    OutlinedButton.icon(
+                      onPressed: hasPic
+                          ? () {
+                              PhotoPreviewDialog.show(
+                                context,
+                                repairPicGroup,
+                                ProductApi().getFaultVideoAndImage,
+                              );
+                            }
+                          : null,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: hasPic
+                              ? const Color(0xFF2563EB)
+                              : Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        foregroundColor: hasPic
+                            ? const Color(0xFF2563EB)
+                            : Colors.grey.shade400,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      icon: const Icon(Icons.image_outlined, size: 15),
+                      label: Text(
+                        hasPic ? '查看报修图片' : '暂无报修图片',
+                        style: const TextStyle(fontSize: 12.5),
+                      ),
+                    ),
+                    if (riskLevel.isNotEmpty)
+                      chip(
+                        label: '风险等级',
+                        value: riskLevel,
+                        bg: _riskChipColor(riskLevel),
+                        fg: _riskChipTextColor(riskLevel),
+                      ),
+                    if (processing.isNotEmpty)
+                      chip(
+                        label: '加工方法',
+                        value: processing,
+                        bg: _processingChipColor(processing),
+                        fg: _processingChipTextColor(processing),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (hasLong) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '施修方案长文本',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          longRepairScheme,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            color: Color(0xFF0F172A),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFF1F5F9),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      kvRowL(
+                        label: '提报人',
+                        value: reporter,
+                        icon: Icons.person_rounded,
+                        labelColor: const Color(0xFF7C3AED),
+                      ),
+                      kvRowL(
+                        label: '提报时间',
+                        value: reportTime,
+                        icon: Icons.access_time_rounded,
+                        labelColor: const Color(0xFF7C3AED),
+                      ),
+                      kvRowL(
+                        label: '加工方法',
+                        value: processing,
+                        icon: Icons.build_circle_outlined,
+                      ),
+                      kvRowL(
+                        label: '故障构型',
+                        value: config,
+                        icon: Icons
+                            .settings_input_component_outlined,
+                      ),
+                      kvRowL(
+                        label: '责任部门',
+                        value: dept,
+                        icon: Icons.account_tree_outlined,
+                      ),
+                      kvRowL(
+                        label: '完成工序',
+                        value: completeProc,
+                        icon: Icons.rule_outlined,
+                      ),
+                      kvRowL(
+                        label: '完成节点',
+                        value: node,
+                        icon: Icons.schedule_outlined,
+                      ),
+                      kvRowL(
+                        label: '活检系数',
+                        value: workpieceCoeff,
+                        icon: Icons.straighten_rounded,
+                        labelColor: const Color(0xFF0F766E),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        rows.add(Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              rowHeader,
+              expandBody,
+            ],
+          ),
+        ));
+      }
+
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('检修过程故障处置单'),
+          backgroundColor: Colors.white,
+          elevation: 1,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            _sectionCard(
+              children: [
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      _pageTitle,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const SizedBox(width: 4),
+                    Container(
+                      width: 4,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '故障明细',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '共 ${_jt28Options.length} 条',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            if (_loadingJt28)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 36),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_jt28Options.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 36),
+                child: Center(
+                  child: Text(
+                    '暂无故障数据',
+                    style:
+                        TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                  ),
+                ),
+              )
+            else ...[
+              header,
+              ...rows,
+            ],
+            _sectionCard(
+              children: [
+                _selectField(
+                  label: '签收组',
+                  value: _selectedReceiveGroup == null
+                      ? ''
+                      : _receiveGroupLabel(_selectedReceiveGroup),
+                  hintText: _loadingReceiveGroup
+                      ? '签收组加载中...'
+                      : '请选择签收组',
+                  onTap: () async {
+                    if (_loadingReceiveGroup) {
+                      showToast('签收组加载中，请稍后');
+                      return;
+                    }
+                    if (_receiveGroupOptions.isEmpty) {
+                      showToast('暂无签收组可选');
+                      return;
+                    }
+                    final selected = await _showSearchableListDialog(
+                      title: '选择签收组',
+                      items: _receiveGroupOptions,
+                      labelKey: 'displayText',
+                      valueKey: 'code',
+                      selectedValue: _selectedReceiveGroup?['code'],
+                    );
+                    if (selected == null || !mounted) return;
+                    setState(() {
+                      _selectedReceiveGroup =
+                          Map<String, dynamic>.from(selected);
+                    });
+                    await _applyReceiveGroupToSignees(
+                      Map<String, dynamic>.from(selected),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Text(
+                      '签收人',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    if (_signeeLockedByReceiveGroup) ...[
+                      const SizedBox(width: 8),
+                      const Text(
+                        '已由签收组自动回写',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {
+                        if (_signeeLockedByReceiveGroup) {
+                          showToast('已按签收组自动回写签收人，不能手动新增');
+                          return;
+                        }
+                        setState(() {
+                          _signeeList.add({
+                            'signDept': null,
+                            'signTeam': null,
+                            'signUsers': <Map<String, dynamic>>[],
+                          });
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ..._signeeList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final signee = entry.value;
+                  final dept = signee['signDept'];
+                  final team = signee['signTeam'];
+                  final deptId =
+                      dept is Map ? _parseId(dept['deptId']) : null;
+                  final teamId =
+                      team is Map ? _parseId(team['deptId']) : null;
+                  final users = (signee['signUsers'] as List?)
+                          ?.whereType<Map>()
+                          .map((e) => Map<String, dynamic>.from(e))
+                          .toList() ??
+                      <Map<String, dynamic>>[];
+                  final teamOptions = deptId != null
+                      ? (_teamsByDeptId[deptId] ?? [])
+                      : <Map<String, dynamic>>[];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _selectField(
+                            label: '部门',
+                            value: dept is Map
+                                ? _pickText(
+                                    Map<String, dynamic>.from(dept),
+                                    ['deptName'],
+                                  )
+                                : '',
+                            maxLines: 2,
+                            onTap: () async {
+                              if (_signeeLockedByReceiveGroup) {
+                                showToast(
+                                  '签收人已按签收组自动回写，不能手动修改',
+                                );
+                                return;
+                              }
+                              final selected = await _showSearchableListDialog(
+                                title: '选择部门',
+                                items: _deptList,
+                                labelKey: 'deptName',
+                              );
+                              if (selected == null || !mounted) return;
+                              setState(() {
+                                signee['signDept'] = selected;
+                                signee['signTeam'] = null;
+                                signee['signUsers'] =
+                                    <Map<String, dynamic>>[];
+                              });
+                              final nextDeptId = _parseId(selected['deptId']);
+                              if (nextDeptId != null) {
+                                await _loadTeamsForDept(nextDeptId);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _selectField(
+                            label: '班组',
+                            value: team is Map
+                                ? _pickText(
+                                    Map<String, dynamic>.from(team),
+                                    ['deptName'],
+                                  )
+                                : '',
+                            maxLines: 2,
+                            onTap: () async {
+                              if (_signeeLockedByReceiveGroup) {
+                                showToast(
+                                  '签收人已按签收组自动回写，不能手动修改',
+                                );
+                                return;
+                              }
+                              if (deptId == null) {
+                                showToast('请先选择部门');
+                                return;
+                              }
+                              final selected = await _showSearchableListDialog(
+                                title: '选择班组',
+                                items: teamOptions,
+                                labelKey: 'deptName',
+                              );
+                              if (selected == null || !mounted) return;
+                              setState(() {
+                                signee['signTeam'] = selected;
+                                signee['signUsers'] =
+                                    <Map<String, dynamic>>[];
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _selectField(
+                            label: '签收人',
+                            value: _signeeUserText(users),
+                            hintText: '请选择',
+                            maxLines: 6,
+                            onTap: () async {
+                              if (_signeeLockedByReceiveGroup) {
+                                showToast(
+                                  '签收人已按签收组自动回写，不能手动修改',
+                                );
+                                return;
+                              }
+                              final targetDeptId = teamId ?? deptId;
+                              if (targetDeptId == null) {
+                                showToast('请先选择部门或班组');
+                                return;
+                              }
+                              await _loadUsersForDept(targetDeptId);
+                              final userOptions =
+                                  _usersByDeptId[targetDeptId] ??
+                                      <Map<String, dynamic>>[];
+                              final selected = await _showMultiUserDialog(
+                                users: userOptions,
+                                initialSelectedIds: users
+                                    .map((e) => e['userId'])
+                                    .toList(),
+                              );
+                              if (selected == null || !mounted) return;
+                              setState(() {
+                                signee['signUsers'] = selected;
+                              });
+                            },
+                          ),
+                        ),
+                        if (_signeeList.length > 1) ...[
+                          const SizedBox(width: 4),
+                          IconButton(
+                            onPressed: () {
+                              if (_signeeLockedByReceiveGroup) {
+                                showToast(
+                                  '已按签收组自动回写签收人，不能手动删除',
+                                );
+                                return;
+                              }
+                              setState(() {
+                                _signeeList.removeAt(index);
+                              });
+                            },
+                            icon: const Icon(
+                              Icons.remove_circle_outline,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _submitting ? null : () => Navigator.pop(context),
+                    child: const Text('取消'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _canConfirm ? _submit : null,
+                    child: Text(_submitting ? '提报中...' : '提报'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final faultValue = _jt28Label(_selectedJt28);
-    final processNode = _currentProcessNodeName;
+    final oldProcessNode = _currentProcessNodeName;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('修程通知单'),
+        title: Text(
+          widget.noticeType == 22 ? '检修过程故障处置单' : '修程通知单',
+        ),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -5447,7 +8068,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                   Expanded(
                     child: _readOnlyField(
                       label: '工序节点',
-                      value: processNode,
+                      value: oldProcessNode,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -5699,7 +8320,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                   ),
                   if (_signeeLockedByReceiveGroup) ...[
                     const SizedBox(width: 8),
-                    Text(
+                    const Text(
                       '已由签收组自动回写',
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),

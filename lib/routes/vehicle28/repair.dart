@@ -14,24 +14,24 @@ class Repair extends StatefulWidget {
 
 class _RepairState extends State<Repair> {
   // 施修情况
-  String repairStatus = "";
+  String repairStatus = '';
   // 报修时间
   DateTime? actualRepairStartDate;
   // 故障零部件
-  Map<dynamic, dynamic> componentName = {"nodeName": "", "configCode": ""};
+  Map<dynamic, dynamic> componentName = {'nodeName': '', 'configCode': ''};
   // 零部件
   List<dynamic> configTree = [];
   // 互检人员
   Map<dynamic, dynamic> mutualInspectionPersonnel = {
-    "userId": 0,
-    "nickName": ""
+    'userId': 0,
+    'nickName': ''
   };
   // 互检列表
   List<dynamic> mutualList = [];
   // 专检人员
   Map<dynamic, dynamic> specialInspectionPersonnel = {
-    "userId": 0,
-    "nickName": ""
+    'userId': 0,
+    'nickName': ''
   };
   // 专检列表
   List<dynamic> specialList = [];
@@ -56,11 +56,11 @@ class _RepairState extends State<Repair> {
           configTree = r['data'];
         });
       } else {
-        showToast("获取零部件表失败");
+        showToast('获取零部件表失败');
       }
     } catch (e) {
-      log("$e");
-      showToast("获取零部件表失败");
+      log('$e');
+      showToast('获取零部件表失败');
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -77,8 +77,8 @@ class _RepairState extends State<Repair> {
         specialList = r['专检'];
       });
     } catch (e) {
-      log("$e");
-      showToast("获取专互检人员表失败");
+      log('$e');
+      showToast('获取专互检人员表失败');
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -92,7 +92,7 @@ class _RepairState extends State<Repair> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text("施修"),
+        title: const Text('施修'),
       ),
       body: _buildBody(),
       // bottomNavigationBar:_footer(),
@@ -122,7 +122,7 @@ class _RepairState extends State<Repair> {
             const SizedBox(
               height: 20.0,
             ),
-            Text("正在请求零部件列表",
+            Text('正在请求零部件列表',
               style: TextStyle(color: Colors.blue[700]),
             ),
           ],
@@ -140,30 +140,30 @@ class _RepairState extends State<Repair> {
                   ListTile(
                     // dense: true,
                     leading: Text(
-                      "${jtMes?.trainType}-${jtMes?.trainNum}",
+                      '${jtMes?.trainType}-${jtMes?.trainNum}',
                       style: const TextStyle(fontSize: 18.0),
                     ),
                     // title: Text("${jtMes?.trainType}-${jtMes?.trainNum}",style: TextStyle(fontSize: 18.0),),
-                    trailing: Text("加工方法：${jtMes?.processMethodName}"),
+                    trailing: Text('加工方法：${jtMes?.processMethodName}'),
                   ),
                   ListTile(
                     dense: true,
                     title: Text(
-                      "检修作业来源:${jtMes?.repairResourceName}",
+                      '检修作业来源:${jtMes?.repairResourceName}',
                       style: const TextStyle(fontSize: 18.0),
                     ),
-                    subtitle: Text("报修人：${jtMes?.reporterName}"),
-                    trailing: Text("风险等级：${jtMes?.riskLevel}"),
+                    subtitle: Text('报修人：${jtMes?.reporterName}'),
+                    trailing: Text('风险等级：${jtMes?.riskLevel}'),
                   ),
                   ZjcFormInputCell(
-                    title: "故障现象",
+                    title: '故障现象',
                     text: jtMes?.faultDescription,
                     maxLines: 3,
                     maxLength: 200,
                     enabled: false,
                   ),
                   ZjcFormInputCell(
-                    title: "施修情况",
+                    title: '施修情况',
                     text: repairStatus,
                     maxLines: 5,
                     maxLength: 200,
@@ -173,10 +173,10 @@ class _RepairState extends State<Repair> {
                     },
                   ),
                   ZjcFormInputCell(
-                    title: "实际开始修理日期",
+                    title: '实际开始修理日期',
                     text: formatDate(actualRepairStartDate!,
                         [yyyy, '-', mm, '-', dd, ' ']),
-                    hintText: "请选择",
+                    hintText: '请选择',
                     showRedStar: true,
                     enabled: false,
                     // clickCallBack: () async {
@@ -190,9 +190,9 @@ class _RepairState extends State<Repair> {
                     // },
                   ),
                   ZjcFormSelectCell(
-                    title: "故障零部件",
+                    title: '故障零部件',
                     text: componentName['nodeName'],
-                    hintText: "请选择",
+                    hintText: '请选择',
                     showRedStar: true,
                     clickCallBack: () {
                       ZjcCascadeTreePicker.show(
@@ -200,53 +200,53 @@ class _RepairState extends State<Repair> {
                         data: configTree,
                         labelKey: 'nodeName',
                         valueKey: 'configCode',
-                        title: "选择故障零部件",
+                        title: '选择故障零部件',
                         clickCallBack: (selectItem, selectArr) {
                         
                           setState(() {
-                            componentName['nodeName'] = selectItem["nodeName"];
+                            componentName['nodeName'] = selectItem['nodeName'];
                             componentName['configCode'] =
-                                selectItem["configCode"];
+                                selectItem['configCode'];
                           });
                         },
                       );
                     },
                   ),
                   ZjcFormSelectCell(
-                      title: "互检人员",
+                      title: '互检人员',
                       text: mutualInspectionPersonnel['nickName'],
-                      hintText: "请选择",
+                      hintText: '请选择',
                       clickCallBack: () {
                         ZjcCascadeTreePicker.show(context,
                           data: mutualList,
                           labelKey: 'nickName',
                           valueKey: 'userId',
-                          title: "选择互检人员",
+                          title: '选择互检人员',
                           clickCallBack: (selectItem, selectArr) {
                             // print(selectArr);
                             setState((){
-                              mutualInspectionPersonnel['nickName'] = selectItem["nickName"];
-                              mutualInspectionPersonnel['userId'] = selectItem["userId"];
+                              mutualInspectionPersonnel['nickName'] = selectItem['nickName'];
+                              mutualInspectionPersonnel['userId'] = selectItem['userId'];
                             });
                           },
                         );
                       }),
                   if(jtMes!.riskLevel!.contains('A')||jtMes!.riskLevel!.contains('B'))
                   ZjcFormSelectCell(
-                      title: "专检人员",
+                      title: '专检人员',
                       text: specialInspectionPersonnel['nickName'],
-                      hintText: "请选择",
+                      hintText: '请选择',
                       clickCallBack: () {
                         ZjcCascadeTreePicker.show(context,
                           data: specialList,
                           labelKey: 'nickName',
                           valueKey: 'userId',
-                          title: "选择专检人员",
+                          title: '选择专检人员',
                           clickCallBack: (selectItem, selectArr) {
                             // print(selectArr);
                             setState((){
-                              specialInspectionPersonnel['nickName'] = selectItem["nickName"];
-                              specialInspectionPersonnel['userId'] = selectItem["userId"];
+                              specialInspectionPersonnel['nickName'] = selectItem['nickName'];
+                              specialInspectionPersonnel['userId'] = selectItem['userId'];
                             });
                           },
                         );
@@ -295,28 +295,28 @@ class _RepairState extends State<Repair> {
         SmartDialog.showLoading();
         List<Map<String,dynamic>> queryParameters = [];
         queryParameters.insert(0, {
-          "code":jtMes?.code,
-          "repairStatus":repairStatus,
-          "completeStatus":2,
-          "actualRepairStartDate":actualRepairStartDate?.toIso8601String(),
-          "faultyComponent":componentName['configCode'],
-          "mutualInspectionPersonnel":mutualInspectionPersonnel['userId'],
+          'code':jtMes?.code,
+          'repairStatus':repairStatus,
+          'completeStatus':2,
+          'actualRepairStartDate':actualRepairStartDate?.toIso8601String(),
+          'faultyComponent':componentName['configCode'],
+          'mutualInspectionPersonnel':mutualInspectionPersonnel['userId'],
         });
-        if(specialInspectionPersonnel['userId'] != ""){
+        if(specialInspectionPersonnel['userId'] != ''){
           queryParameters[0]['specialInspectionPersonnel'] = specialInspectionPersonnel['userId'];
         }
         if(repairPics.isNotEmpty){
           var upload = await JtApi().uploadMixJt(imagedata: repairPics);
           queryParameters[0]['repairEndPicture'] = upload['data'];
         }
-        log("$queryParameters");
+        log('$queryParameters');
         await JtApi().uploadJt28(queryParametrs: queryParameters).then((value) async => {
           message = value,
           SmartDialog.dismiss(status: SmartStatus.loading)
         });
-        log("$message");
+        log('$message');
 
-        if(message['code'] == "S_T_S003"){
+        if(message['code'] == 'S_T_S003'){
           SmartDialog.show(
             clickMaskDismiss: false,
             builder: (con){
@@ -332,7 +332,7 @@ class _RepairState extends State<Repair> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    const Text("施修提报成功",style: TextStyle(fontSize: 18),),
+                    const Text('施修提报成功',style: TextStyle(fontSize: 18),),
                     ConstrainedBox(
                       constraints: const BoxConstraints.expand(height: 30,width: 160),
                       child: ElevatedButton.icon(
@@ -351,7 +351,7 @@ class _RepairState extends State<Repair> {
       }
       }, 
       icon: const Icon(Icons.handyman_outlined), 
-      label: const Text("施修"),
+      label: const Text('施修'),
       style: ElevatedButton.styleFrom(
         minimumSize: Size(MediaQuery.of(context).size.width, 40),
       ),

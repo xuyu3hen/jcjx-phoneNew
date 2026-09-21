@@ -49,7 +49,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 获取用户信息
   late Permissions permissions;
 
-  late PackageUserDTOList? selectedPackage = null;
+  PackageUserDTOList? selectedPackage;
 
   @override
   void initState() {
@@ -66,7 +66,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void getDept() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'parentIdList': "231,232,233,234,235,236,237,230",
+        'parentIdList': '231,232,233,234,235,236,237,230',
       };
       var r = await ProductApi()
           .getDeptTreeByParentIdList(queryParametrs: queryParameters);
@@ -114,7 +114,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -134,9 +134,9 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   // 获取修制信息
   Future<void> getRepairSys() async {
     try {
-      logger.i(dynamicTypeSelected["code"]);
+      logger.i(dynamicTypeSelected['code']);
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -155,7 +155,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void getRepairProc() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'repairSysCode': repairSysSelected["code"],
+        'repairSysCode': repairSysSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -177,7 +177,7 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void getRepairTimes() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'repairProcCode': repairSelected["code"],
+        'repairProcCode': repairSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -201,10 +201,10 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
     try {
       //对工序节点进行查询
       Map<String, dynamic> queryParameters = {
-        'repairProcCode': repairSelected["code"],
+        'repairProcCode': repairSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
-        'deptIds': deptSelected["deptId"]
+        'deptIds': deptSelected['deptId']
       };
       var r = await ProductApi()
           .getRepairMainNodeAll(queryParametrs: queryParameters);
@@ -225,10 +225,10 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void syncWorkPackageToPackageUser() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
-        'deptId': deptSelected["deptId"],
-        'repairTimes': repairTimesSelected["name"],
-        'repairMainNodeCode': procNodeSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
+        'deptId': deptSelected['deptId'],
+        'repairTimes': repairTimesSelected['name'],
+        'repairMainNodeCode': procNodeSelected['code'],
       };
       logger.i(queryParameters);
       await ProductApi()
@@ -242,10 +242,10 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
   void getWorkPackage() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
-        'deptId': groupSelected["deptId"],
-        'repairTimes': repairTimesSelected["name"],
-        'repairMainNodeCode': procNodeSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
+        'deptId': groupSelected['deptId'],
+        'repairTimes': repairTimesSelected['name'],
+        'repairMainNodeCode': procNodeSelected['code'],
       };
       logger.i(queryParameters);
       var r =
@@ -288,13 +288,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 ZjcFormSelectCell(
-                  title: "动力类型",
-                  text: dynamicTypeSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '动力类型',
+                  text: dynamicTypeSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (dynamicTypeList.isEmpty) {
-                      showToast("无动力类型选择");
+                      showToast('无动力类型选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -302,13 +302,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择动力类型",
+                        title: '选择动力类型',
                         clickCallBack: (selectItem, selectArr) {
                           logger.i(selectArr);
                           if (mounted) {
                             setState(() {
-                              dynamicTypeSelected["code"] = selectItem["code"];
-                              dynamicTypeSelected["name"] = selectItem["name"];
+                              dynamicTypeSelected['code'] = selectItem['code'];
+                              dynamicTypeSelected['name'] = selectItem['name'];
                               getJcType();
                             });
                           }
@@ -318,13 +318,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                   },
                 ),
                 ZjcFormSelectCell(
-                  title: "机型",
-                  text: jcTypeListSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '机型',
+                  text: jcTypeListSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (jcTypeList.isEmpty) {
-                      showToast("无机型可以选择");
+                      showToast('无机型可以选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -332,13 +332,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择机型",
+                        title: '选择机型',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              jcTypeListSelected["name"] = selectItem["name"];
-                              jcTypeListSelected["code"] = selectItem["code"];
+                              jcTypeListSelected['name'] = selectItem['name'];
+                              jcTypeListSelected['code'] = selectItem['code'];
                               // 在这里添加获取车号等后续逻辑，如果有的话
                             });
                           }
@@ -349,13 +349,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 // 修制筛选
                 ZjcFormSelectCell(
-                  title: "修制",
-                  text: repairSysSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '修制',
+                  text: repairSysSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (repairSysList.isEmpty) {
-                      showToast("无修制信息");
+                      showToast('无修制信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -363,14 +363,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择修制",
+                        title: '选择修制',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              repairSysSelected["name"] = selectItem["name"];
+                              repairSysSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              repairSysSelected["code"] = selectItem["code"];
+                              repairSysSelected['code'] = selectItem['code'];
                               //获取修程信息
                               getRepairProc();
                             });
@@ -382,13 +382,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 //修程筛选框
                 ZjcFormSelectCell(
-                  title: "修程",
-                  text: repairSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '修程',
+                  text: repairSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (repairList.isEmpty) {
-                      showToast("无修程信息");
+                      showToast('无修程信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -396,14 +396,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择修程",
+                        title: '选择修程',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              repairSelected["name"] = selectItem["name"];
+                              repairSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              repairSelected["code"] = selectItem["code"];
+                              repairSelected['code'] = selectItem['code'];
                               getRepairTimes();
                             });
                           }
@@ -414,13 +414,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 //修次筛选框
                 ZjcFormSelectCell(
-                  title: "修次",
-                  text: repairTimesSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '修次',
+                  text: repairTimesSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (repairTImesList.isEmpty) {
-                      showToast("无修次信息");
+                      showToast('无修次信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -428,14 +428,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择修次",
+                        title: '选择修次',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              repairTimesSelected["name"] = selectItem["name"];
+                              repairTimesSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              repairTimesSelected["code"] = selectItem["code"];
+                              repairTimesSelected['code'] = selectItem['code'];
                             });
                           }
                         },
@@ -445,31 +445,31 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 // 对科室车间进行筛选
                 ZjcFormSelectCell(
-                  title: "科室车间",
-                  text: deptSelected["deptName"] ?? '',
-                  hintText: "请选择",
+                  title: '科室车间',
+                  text: deptSelected['deptName'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (deptList.isEmpty) {
-                      showToast("无科室车间");
+                      showToast('无科室车间');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
                         data: deptList,
                         labelKey: 'deptName',
                         valueKey: 'deptId',
-                        title: "选择科室车间",
+                        title: '选择科室车间',
                         childrenKey: 'children1',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              deptSelected["deptName"] = selectItem["deptName"];
-                              deptSelected["deptId"] = selectItem["deptId"];
+                              deptSelected['deptName'] = selectItem['deptName'];
+                              deptSelected['deptId'] = selectItem['deptId'];
 
-                              if (selectItem["children"] != null &&
-                                  selectItem["children"] is List) {
-                                groupList = (selectItem["children"] as List)
+                              if (selectItem['children'] != null &&
+                                  selectItem['children'] is List) {
+                                groupList = (selectItem['children'] as List)
                                     .map((item) => item is Map<String, dynamic>
                                         ? item
                                         : Map<String, dynamic>.from(
@@ -488,13 +488,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 // 对班组进行筛选
                 ZjcFormSelectCell(
-                  title: "班组",
-                  text: groupSelected["deptName"] ?? '',
-                  hintText: "请选择",
+                  title: '班组',
+                  text: groupSelected['deptName'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (groupList.isEmpty) {
-                      showToast("无班组信息");
+                      showToast('无班组信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -502,14 +502,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'deptName',
                         valueKey: 'deptId',
                         childrenKey: 'children',
-                        title: "选择班组",
+                        title: '选择班组',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              groupSelected["deptName"] =
-                                  selectItem["deptName"];
-                              groupSelected["deptId"] = selectItem["deptId"];
+                              groupSelected['deptName'] =
+                                  selectItem['deptName'];
+                              groupSelected['deptId'] = selectItem['deptId'];
                             });
                           }
                         },
@@ -519,13 +519,13 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                 ),
                 //对工序节点进行查询
                 ZjcFormSelectCell(
-                  title: "工序节点",
-                  text: procNodeSelected["name"] ?? '',
-                  hintText: "请选择",
+                  title: '工序节点',
+                  text: procNodeSelected['name'] ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (procNodeList.isEmpty) {
-                      showToast("无工序节点信息");
+                      showToast('无工序节点信息');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -533,14 +533,14 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择工序节点",
+                        title: '选择工序节点',
                         clickCallBack: (selectItem, selectArr) {
                           if (mounted) {
                             setState(() {
                               logger.i(selectArr);
-                              procNodeSelected["name"] = selectItem["name"];
+                              procNodeSelected['name'] = selectItem['name'];
                               //将主键进行选取
-                              procNodeSelected["code"] = selectItem["code"];
+                              procNodeSelected['code'] = selectItem['code'];
                               getWorkPackage();
                             });
                           }
@@ -558,19 +558,19 @@ class _PreDispatchWorkState extends State<PreDispatchWork> {
                     ElevatedButton(
                       onPressed: () {
                         // 检查必要条件是否已选择
-                        if (jcTypeListSelected["code"] == null || 
-                            jcTypeListSelected["code"] == '') {
-                          showToast("请选择机型");
+                        if (jcTypeListSelected['code'] == null || 
+                            jcTypeListSelected['code'] == '') {
+                          showToast('请选择机型');
                           return;
                         }
-                        if (repairTimesSelected["code"] == null || 
-                            repairTimesSelected["code"] == '') {
-                          showToast("请选择修次");
+                        if (repairTimesSelected['code'] == null || 
+                            repairTimesSelected['code'] == '') {
+                          showToast('请选择修次');
                           return;
                         }
-                        if (procNodeSelected["code"] == null || 
-                            procNodeSelected["code"] == '') {
-                          showToast("请选择工序节点");
+                        if (procNodeSelected['code'] == null || 
+                            procNodeSelected['code'] == '') {
+                          showToast('请选择工序节点');
                           return;
                         }
                         
@@ -854,7 +854,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
       ),
       body: Column(
         children: [
-          const Text("主修"),
+          const Text('主修'),
           Expanded(
             child: userList.isNotEmpty
                 ? ListView.builder(
@@ -883,7 +883,7 @@ class _SetRepairPersonScreenState extends State<SetRepairPersonScreen> {
                   )
                 : const CircularProgressIndicator(), // 显示加载指示器
           ),
-          const Text("辅修"),
+          const Text('辅修'),
           Expanded(
             child: userList.isNotEmpty
                 ? ListView.builder(

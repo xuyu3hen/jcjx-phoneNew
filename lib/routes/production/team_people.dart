@@ -43,9 +43,9 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
 
   void getUserList() async {
     Map<String, dynamic> params = {
-      "deptId": Global.profile.permissions?.user.dept?.deptId,
-      "pageNum": 0,
-      "pageSize": 0,
+      'deptId': Global.profile.permissions?.user.dept?.deptId,
+      'pageNum': 0,
+      'pageSize': 0,
     };
     try {
       var response = await ProductApi().getTeamUser(queryParametrs: params);
@@ -118,13 +118,13 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
     try {
       // 必须至少选择一个主修或辅修人员
       if (_mainRepairMember == null && _assistantMember == null) {
-        showToast("请至少选择一名主修或辅修人员");
+        showToast('请至少选择一名主修或辅修人员');
         return;
       }
 
       // 构建参数
       Map<String, dynamic> params = {
-        "code": widget.jtCode,
+        'code': widget.jtCode,
         'completeStatus': 0
       };
 
@@ -145,12 +145,12 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
       // 调用API更新用户信息
       var response = await ProductApi().updateUserId(params);
 
-      if (response['code'] == "S_T_S003") {
-        showToast("分配成功");
+      if (response['code'] == 'S_T_S003') {
+        showToast('分配成功');
       } 
     } catch (e) {
       print('分配人员失败: $e');
-      showToast("分配失败，请重试");
+      showToast('分配失败，请重试');
     }
   }
 
@@ -265,7 +265,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${member.name}',
+                                  member.name,
                                   style: TextStyle(
                                     color: isSelected ? Colors.blue : Colors.black,
                                     fontSize: 16,
@@ -379,7 +379,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                         Expanded(
                           child: Text(
                             _mainRepairMember != null
-                                ? '${_mainRepairMember!.name}'
+                                ? _mainRepairMember!.name
                                 : '未选择',
                           ),
                         ),
@@ -404,7 +404,7 @@ class _JtAssignPeopleState extends State<JtAssignPeople> {
                         Expanded(
                           child: Text(
                             _assistantMember != null
-                                ? '${_assistantMember!.name}'
+                                ? _assistantMember!.name
                                 : '未选择',
                           ),
                         ),

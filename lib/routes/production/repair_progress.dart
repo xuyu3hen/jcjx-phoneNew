@@ -47,7 +47,7 @@ class _RepairProgressState extends State<RepairProgress> {
   Future<void> getRepairSys() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamicTypeSelected["code"],
+        'dynamicCode': dynamicTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -74,7 +74,7 @@ class _RepairProgressState extends State<RepairProgress> {
   void getRepairProc() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'repairSysCode': repairSysSelected["code"],
+        'repairSysCode': repairSysSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -152,7 +152,7 @@ class _RepairProgressState extends State<RepairProgress> {
       }
       Map<String, dynamic> initRepairSysSelected = r1.toMapList()[0];
       Map<String, dynamic> queryParameters1 = {
-        'repairSysCode': initRepairSysSelected["code"],
+        'repairSysCode': initRepairSysSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -268,7 +268,7 @@ class _RepairProgressState extends State<RepairProgress> {
                   ),
                 );
               } else {
-                showToast("进度图数据为空");
+                showToast('进度图数据为空');
               }
             },
             child: const Text(
@@ -289,13 +289,13 @@ class _RepairProgressState extends State<RepairProgress> {
       child: Column(
         children: [
           ZjcFormSelectCell(
-            title: "动力类型",
-            text: dynamicTypeSelected["name"] ?? '',
-            hintText: "请选择",
+            title: '动力类型',
+            text: dynamicTypeSelected['name'] ?? '',
+            hintText: '请选择',
             showRedStar: true,
             clickCallBack: () {
               if (dynamicTypeList.isEmpty) {
-                showToast("无动力类型选择");
+                showToast('无动力类型选择');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -303,13 +303,13 @@ class _RepairProgressState extends State<RepairProgress> {
                   labelKey: 'name',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择动力类型",
+                  title: '选择动力类型',
                   clickCallBack: (selectItem, selectArr) {
                     logger.i(selectArr);
                     if (mounted) {
                       setState(() {
-                        dynamicTypeSelected["code"] = selectItem["code"];
-                        dynamicTypeSelected["name"] = selectItem["name"];
+                        dynamicTypeSelected['code'] = selectItem['code'];
+                        dynamicTypeSelected['name'] = selectItem['name'];
                         getRepairSys();
                       });
                     }
@@ -319,13 +319,13 @@ class _RepairProgressState extends State<RepairProgress> {
             },
           ),
           ZjcFormSelectCell(
-            title: "修制",
-            text: repairSysSelected["name"] ?? '',
-            hintText: "请选择",
+            title: '修制',
+            text: repairSysSelected['name'] ?? '',
+            hintText: '请选择',
             showRedStar: true,
             clickCallBack: () {
               if (repairSysList.isEmpty) {
-                showToast("无修制信息");
+                showToast('无修制信息');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -333,13 +333,13 @@ class _RepairProgressState extends State<RepairProgress> {
                   labelKey: 'name',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择修制",
+                  title: '选择修制',
                   clickCallBack: (selectItem, selectArr) {
                     if (mounted) {
                       setState(() {
                         logger.i(selectArr);
-                        repairSysSelected["name"] = selectItem["name"];
-                        repairSysSelected["code"] = selectItem["code"];
+                        repairSysSelected['name'] = selectItem['name'];
+                        repairSysSelected['code'] = selectItem['code'];
                         getRepairProc();
                       });
                     }
@@ -349,13 +349,13 @@ class _RepairProgressState extends State<RepairProgress> {
             },
           ),
           ZjcFormSelectCell(
-            title: "修程",
-            text: repairSelected["name"] ?? '',
-            hintText: "请选择",
+            title: '修程',
+            text: repairSelected['name'] ?? '',
+            hintText: '请选择',
             showRedStar: true,
             clickCallBack: () {
               if (repairList.isEmpty) {
-                showToast("无修程信息");
+                showToast('无修程信息');
               } else {
                 ZjcCascadeTreePicker.show(
                   context,
@@ -363,13 +363,13 @@ class _RepairProgressState extends State<RepairProgress> {
                   labelKey: 'name',
                   valueKey: 'code',
                   childrenKey: 'children',
-                  title: "选择修程",
+                  title: '选择修程',
                   clickCallBack: (selectItem, selectArr) {
                     if (mounted) {
                       setState(() {
                         logger.i(selectArr);
-                        repairSelected["name"] = selectItem["name"];
-                        repairSelected["code"] = selectItem["code"];
+                        repairSelected['name'] = selectItem['name'];
+                        repairSelected['code'] = selectItem['code'];
                         getTrainEntry();
                       });
                     }

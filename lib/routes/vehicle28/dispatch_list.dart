@@ -21,7 +21,7 @@ class _DispatchListState extends State<DispatchList> {
   // 选中派工项参数
   List<String?> selectDispath = [];
   // 搜索栏数据
-  String searchBarText = "";
+  String searchBarText = '';
   // 班组人员数据
   List<dynamic> userList = [];
   // var _scaffoldkey = new GlobalKey<ScaffoldState>();
@@ -72,7 +72,7 @@ class _DispatchListState extends State<DispatchList> {
           userList = r['rows'];
         });
       }else{
-        showToast("未能获取班组人员");
+        showToast('未能获取班组人员');
       }
     }catch(e){
       logger.e(e);
@@ -90,16 +90,16 @@ class _DispatchListState extends State<DispatchList> {
     return Scaffold(
       // key: _scaffoldkey,
       appBar: AppBar(
-        title: const Text("工长派工"),
+        title: const Text('工长派工'),
       ),
       body: _buildBody(),
       endDrawer: _repairDrawer(),
       persistentFooterButtons: [
-        Text("已选中 ${selectDispath.length} 项",style: tileText(18.0),),
+        Text('已选中 ${selectDispath.length} 项',style: tileText(18.0),),
         Builder(builder: (context){
           return ElevatedButton.icon(onPressed: (){
             if(selectDispath.isEmpty){
-              showToast("至少选择一项作业进行分配");
+              showToast('至少选择一项作业进行分配');
             }else{
               Scaffold.of(context).openEndDrawer();
             }
@@ -116,7 +116,7 @@ class _DispatchListState extends State<DispatchList> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
           ZjcSearchBar(
-            hintText: "请输入车号",
+            hintText: '请输入车号',
             inputCompletionCallBack:(value, isSubmitted) {
               searchBarText = value;
               search();
@@ -146,7 +146,7 @@ class _DispatchListState extends State<DispatchList> {
                     return Container(
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(16),
-                      child: Text("这个账号下已经没有待分配作业项了",
+                      child: Text('这个账号下已经没有待分配作业项了',
                         style: TextStyle(color: Colors.blue[700]),
                       ),
                     );
@@ -214,32 +214,32 @@ class _DispatchListState extends State<DispatchList> {
                   }
                 });
               }, value: item.selected,),
-              title: Text("${item.trainType}-${item.trainNum}",style: const TextStyle(fontSize: 18.0),),
-              subtitle: Text("报修人：${item.reporterName}"),
+              title: Text('${item.trainType}-${item.trainNum}',style: const TextStyle(fontSize: 18.0),),
+              subtitle: Text('报修人：${item.reporterName}'),
               trailing:ElevatedButton(onPressed: (){
                 Navigator.of(context).pushNamed('vehimageviewer',arguments: item);
               }, child: const Icon(Icons.image)),
             ),
             ZjcFormInputCell(
-              title: "故障现象",
+              title: '故障现象',
               text: item.faultDescription,
-              hintText: "无数据",
+              hintText: '无数据',
               maxLines: 2,
               maxLength: 200,
               enabled: false,
               titleStyle: tileText(16.0),
             ),
             ZjcFormInputCell(
-              title: "加工方法",
+              title: '加工方法',
               text: item.processMethodName,
-              hintText: "无数据",
+              hintText: '无数据',
               enabled: false,
               titleStyle: tileText(16.0),
             ),
             ZjcFormInputCell(
-              title: "检修作业来源",
+              title: '检修作业来源',
               text: item.repairResourceName,
-              hintText: "无数据",
+              hintText: '无数据',
               enabled: false,
               titleStyle: tileText(16.0),
             ),
@@ -285,9 +285,9 @@ class _DispatchListState extends State<DispatchList> {
           width: MediaQuery.of(context).size.width,
           child: Image(
             image: NetworkImage(
-              "http://10.102.72.103:8080/fileserver/FileOperation/previewImage?url=$url",
+              'http://10.102.72.103:8080/fileserver/FileOperation/previewImage?url=$url',
               headers: {
-                "Authorization":Global.profile.data!.accessToken!,
+                'Authorization':Global.profile.data!.accessToken!,
               }
           ),)
         );
@@ -396,9 +396,9 @@ class _DispatchListState extends State<DispatchList> {
             List<Map<String,dynamic>> queryParameters = [];
             for (var element in selectDispath) {
               queryParameters.insert(0, {
-                "code":element,
-                "completeStatus":0,
-                "repairPersonnel":repairPersonnel
+                'code':element,
+                'completeStatus':0,
+                'repairPersonnel':repairPersonnel
               });
             }
             if(assistant != null){
@@ -412,7 +412,7 @@ class _DispatchListState extends State<DispatchList> {
               var submit = await JtApi().dispatchJt28(
                 queryParametrs: queryParameters
               );
-              if(submit['code'] != "S_T_S003"){
+              if(submit['code'] != 'S_T_S003'){
                 showToast("${submit['data']}");
               }
             }on DioException catch(e){

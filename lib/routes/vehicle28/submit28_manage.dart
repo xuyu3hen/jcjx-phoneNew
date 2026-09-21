@@ -1,11 +1,8 @@
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
-import '../../config/filter_data.dart';
 import '../../index.dart';
-import 'package:intl/intl.dart';
 import 'package:jcjx_phone/zjc_common/widgets/zjc_asset_picker.dart' as APC;
 
 class Vehicle28FormManage extends StatefulWidget {
@@ -21,19 +18,19 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   String? dynamicCode;
   String? dynamicName;
   // 机型
-  Map<dynamic, dynamic> jcTypeListSelected = {"name": "", "code": ""};
+  Map<dynamic, dynamic> jcTypeListSelected = {'name': '', 'code': ''};
   List<Map<String, dynamic>> jcTypeList = [];
   // 车号
-  Map<dynamic, dynamic> trainNumSelected = {"trainNum": "", "code": ""};
+  Map<dynamic, dynamic> trainNumSelected = {'trainNum': '', 'code': ''};
   List<Map<String, dynamic>> trainNumCodeList = [];
   String? trainNum;
   String? trainCode;
   // 检修作业来源
-  Map<dynamic, dynamic> repairWorkResource = {"name": "", "code": ""};
+  Map<dynamic, dynamic> repairWorkResource = {'name': '', 'code': ''};
   // 风险等级
   String? riskLevel;
   // 加工方法
-  Map<dynamic, dynamic> requiredProcessingMethod = {"dictName": "", "code": ""};
+  Map<dynamic, dynamic> requiredProcessingMethod = {'dictName': '', 'code': ''};
   // 故障现象
   String? faultDesc;
   // 施修方案
@@ -41,7 +38,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   // 故障假设
   String? faultAssumption;
   // 故障零部件
-  Map<dynamic, dynamic> componentName = {"nodeName": "", "configCode": ""};
+  Map<dynamic, dynamic> componentName = {'nodeName': '', 'configCode': ''};
   // 报修时间
   DateTime? reportDate;
   // 故障图片
@@ -86,7 +83,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   String selectedAssumeType = '正常';
   // 自动派活
   bool isAssigned = false;
-  String completeLabel = "自检自修";
+  String completeLabel = '自检自修';
   int completeStatus = 0;
 
   // 完成节点（工序主节点）
@@ -140,8 +137,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
         setState(() => workshopList = []);
       }
     } catch (e, stackTrace) {
-      log("_loadAllWorkshops error: $e");
-      logger.e("_loadAllWorkshops", e, stackTrace);
+      log('_loadAllWorkshops error: $e');
+      logger.e('_loadAllWorkshops', e, stackTrace);
       if (mounted) setState(() => workshopList = []);
     }
   }
@@ -161,9 +158,9 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
           'queryParams=${jsonEncode(q)}  '
           '(key=repairProcCode，严格按照后端文档传修程编码)');
       final r = await ProductApi().getRepairMainNodeAll(queryParametrs: q);
-      if (r != null && r.rows != null) {
+      if (r.rows != null) {
         if (mounted) {
-          Map<String, dynamic> _toMap(dynamic item) {
+          Map<String, dynamic> toMap(dynamic item) {
             if (item is Map) return Map<String, dynamic>.from(item);
             // 类实例兜底：只要带 toJson() 方法就调用（不管是哪个 Rows 类 / Dept 类 / 其他 Model 类）
             try {
@@ -175,13 +172,13 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             } catch (_) {}
             return <String, dynamic>{};
           }
-          Map<String, dynamic> _map(dynamic e) {
-            final m = _toMap(e);
+          Map<String, dynamic> map(dynamic e) {
+            final m = toMap(e);
             // children 字段归一化：children/childList/rows 任一存在就挂到 m['children']
             final rawChildren = m['children'] ?? m['childList'] ?? m['rows'];
             if (rawChildren is List) {
               m['children'] = rawChildren
-                  .map<Map<String, dynamic>>((sub) => _map(sub))
+                  .map<Map<String, dynamic>>((sub) => map(sub))
                   .toList();
             } else {
               m['children'] ??= [];
@@ -189,7 +186,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             return m;
           }
           final rowsList = r.rows!
-              .map<Map<String, dynamic>>((dynamic item) => _map(item))
+              .map<Map<String, dynamic>>((dynamic item) => map(item))
               .toList();
           logger.i(
               '[工序节点查询][RES] repairProcCode=${q['repairProcCode'] ?? '未传⚠️'}  '
@@ -200,8 +197,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
         }
       }
     } catch (e, stackTrace) {
-      log("getRepairMainNodeAll error: $e");
-      logger.e("getRepairMainNodeAll", e, stackTrace);
+      log('getRepairMainNodeAll error: $e');
+      logger.e('getRepairMainNodeAll', e, stackTrace);
     }
   }
 
@@ -241,8 +238,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
         });
       }
     } catch (e, stackTrace) {
-      log("_loadScheduleNodeBy error: $e");
-      logger.e("_loadScheduleNodeBy", e, stackTrace);
+      log('_loadScheduleNodeBy error: $e');
+      logger.e('_loadScheduleNodeBy', e, stackTrace);
       if (mounted) {
         setState(() => scheduleNodeList = []);
       }
@@ -358,7 +355,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const Text(
-                "机统28提报成功",
+                '机统28提报成功',
                 style: TextStyle(fontSize: 18),
               ),
               ConstrainedBox(
@@ -399,7 +396,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       
       // 构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': pageNum,
         'pageSize': pageSize,
         'complete': 0,
@@ -459,7 +456,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
         if (isLoadMore) {
           pageNum--; // 恢复页码
         }
-        showToast("获取车号失败，请重试");
+        showToast('获取车号失败，请重试');
       }
     } finally {
       isLoading = false;
@@ -478,10 +475,10 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
           });
         }
       } else {
-        showToast("获取零部件表失败,请检查网络");
+        showToast('获取零部件表失败,请检查网络');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     } finally {
       SmartDialog.dismiss(status: SmartStatus.loading);
     }
@@ -499,10 +496,10 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
           });
         }
       } else {
-        showToast("未能获取班组人员");
+        showToast('未能获取班组人员');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -517,10 +514,10 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
           });
         }
       } else {
-        showToast("未能获取作业来源");
+        showToast('未能获取作业来源');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -535,10 +532,10 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
           });
         }
       } else {
-        showToast("未能获取加工方法");
+        showToast('未能获取加工方法');
       }
     } catch (e) {
-      log("$e");
+      log('$e');
     }
   }
 
@@ -546,7 +543,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28-提报（管理）"),
+        title: const Text('机统28-提报（管理）'),
       ),
       // resizeToAvoidBottomInset: false,
       body: _buildBody(),
@@ -599,12 +596,12 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                       Expanded(
                         flex: 1,
                         child: ZjcFormSelectCell(
-                          title: "机型",
-                          text: jcTypeListSelected["name"],
-                          hintText: "请选择",
+                          title: '机型',
+                          text: jcTypeListSelected['name'],
+                          hintText: '请选择',
                           clickCallBack: () {
                             if (jcTypeList.isEmpty) {
-                              showToast("无机型可以选择");
+                              showToast('无机型可以选择');
                             } else {
                               ZjcCascadeTreePicker.show(
                                 context,
@@ -612,14 +609,14 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                                 labelKey: 'name',
                                 valueKey: 'code',
                                 childrenKey: 'children',
-                                title: "选择机型",
+                                title: '选择机型',
                                 clickCallBack: (selectItem, selectArr) {
                                   setState(() {
                                     logger.i(selectArr);
-                                    jcTypeListSelected["name"] =
-                                        selectItem["name"];
-                                    jcTypeListSelected["code"] =
-                                        selectItem["code"];
+                                    jcTypeListSelected['name'] =
+                                        selectItem['name'];
+                                    jcTypeListSelected['code'] =
+                                        selectItem['code'];
                                     getTrainNumCodeList();
                                   });
                                 },
@@ -631,12 +628,12 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                       Expanded(
                         flex: 1,
                         child: ZjcFormSelectCell(
-                          title: "车号",
-                          text: trainNumSelected["trainNum"],
-                          hintText: "请选择",
+                          title: '车号',
+                          text: trainNumSelected['trainNum'],
+                          hintText: '请选择',
                           clickCallBack: () {
                             if (trainNumCodeList.isEmpty) {
-                              showToast("无车号可以选择");
+                              showToast('无车号可以选择');
                             } else {
                               ZjcCascadeTreePicker.show(
                                 context,
@@ -644,32 +641,32 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                                 labelKey: 'displayTrainNum',
                                 valueKey: 'code',
                                 childrenKey: 'children',
-                                title: "选择车号",
+                                title: '选择车号',
                                 clickCallBack: (selectItem, selectArr) {
                                   logger.i('[机统28车号][管理][SELECTED_ITEM] ${jsonEncode(selectItem)}');
                                   setState(() {
                                     logger.i(selectArr);
-                                    trainNumSelected["trainNum"] =
-                                        selectItem["displayTrainNum"] ??
-                                            selectItem["trainNum"];
-                                    trainNumSelected["code"] =
-                                        selectItem["code"];
+                                    trainNumSelected['trainNum'] =
+                                        selectItem['displayTrainNum'] ??
+                                            selectItem['trainNum'];
+                                    trainNumSelected['code'] =
+                                        selectItem['code'];
                                     // 多 fallback 取修程编码，并记录命中了哪个 key，方便日志查
                                     String? pickProcCode;
                                     String hitKey = 'N/A';
-                                    if (selectItem["repairProcCode"] !=
+                                    if (selectItem['repairProcCode'] !=
                                         null) {
                                       pickProcCode =
-                                          selectItem["repairProcCode"].toString();
+                                          selectItem['repairProcCode'].toString();
                                       hitKey = 'repairProcCode';
-                                    } else if (selectItem["repair_procode"] !=
+                                    } else if (selectItem['repair_procode'] !=
                                         null) {
                                       pickProcCode =
-                                          selectItem["repair_procode"].toString();
+                                          selectItem['repair_procode'].toString();
                                       hitKey = 'repair_procode';
-                                    } else if (selectItem["procCode"] != null) {
+                                    } else if (selectItem['procCode'] != null) {
                                       pickProcCode =
-                                          selectItem["procCode"].toString();
+                                          selectItem['procCode'].toString();
                                       hitKey = 'procCode';
                                     }
                                     repairProcCode = pickProcCode;
@@ -750,7 +747,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                   //   },
                   // ),
                   ZjcFormInputCell(
-                    title: "故障现象",
+                    title: '故障现象',
                     text: faultDesc,
                     maxLines: 7,
                     maxLength: 300,
@@ -760,7 +757,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                     },
                   ),
                   ZjcFormInputCell(
-                    title: "建议施修方案",
+                    title: '建议施修方案',
                     text: maintenanceNotice,
                     maxLines: 7,
                     maxLength: 300,
@@ -773,7 +770,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "派工方式",
+                        '派工方式',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -830,7 +827,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        "假设类别",
+                        '假设类别',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -949,12 +946,12 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
         child: InkWell(
       onTap: () async {
         if (_submitting) {
-          showToast("正在提报中，请勿重复提交");
+          showToast('正在提报中，请勿重复提交');
           return;
         }
-        if (false) {
-          showToast("内容未填写完");
-        } else {
+        // if (false) {
+        //   showToast('内容未填写完');
+        // } else {
           var submit;
           List<Map<String, dynamic>> l = [];
           try {
@@ -964,28 +961,28 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
             SmartDialog.showLoading();
             Map<String, dynamic> queryParameters = {
               // "faultAssumption": faultAssumption,
-              "faultDescription": faultDesc,
+              'faultDescription': faultDesc,
               // "faultyComponent": componentName['configCode'],
-              "machineModel": jcTypeListSelected['code'],
+              'machineModel': jcTypeListSelected['code'],
               
-              "trainEntryCode": trainNumSelected["code"],
-              "repairWorkResource": repairWorkResource["code"],
-              "riskLevel": riskLevel,
-              "requiredProcessingMethod": requiredProcessingMethod["code"],
-              "completeStatus": completeStatus,
-              "repairScheme": maintenanceNotice,
-              "faultAssumption": selectedAssumeType, 
-              "status": 0
+              'trainEntryCode': trainNumSelected['code'],
+              'repairWorkResource': repairWorkResource['code'],
+              'riskLevel': riskLevel,
+              'requiredProcessingMethod': requiredProcessingMethod['code'],
+              'completeStatus': completeStatus,
+              'repairScheme': maintenanceNotice,
+              'faultAssumption': selectedAssumeType, 
+              'status': 0
             };
             if (completeStatus == 0) {
-              queryParameters["repairPersonnel"] =
+              queryParameters['repairPersonnel'] =
                   Global.profile.permissions?.user.userId;
             }
             if (faultPics.isNotEmpty) {
               await JtApi().uploadMixJt(imagedata: faultPics).then(
                     (value) async {
-                      if (value['data'] != null && value['data'] != "") {
-                        queryParameters["repairPicture"] = value['data'];
+                      if (value['data'] != null && value['data'] != '') {
+                        queryParameters['repairPicture'] = value['data'];
                         l.insert(0, queryParameters);
                         submit = await JtApi().uploadJt28(queryParametrs: l);
                         if (!_isSubmitSuccess(submit) && submit['data'] != null) {
@@ -993,22 +990,22 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
                           // SmartDialog.dismiss(status: SmartStatus.loading)
                         }
                       } else {
-                        showToast("图片上传失败，请检查网络连接");
+                        showToast('图片上传失败，请检查网络连接');
                         // SmartDialog.dismiss(status: SmartStatus.loading)
                       }
                     },
                   );
             } else {
-              log("$queryParameters");
+              log('$queryParameters');
               l.insert(0, queryParameters);
               submit = await JtApi().uploadJt28(queryParametrs: l);
               if (!_isSubmitSuccess(submit)) {
-                showToast("机统28提报失败，请检查网络连接");
+                showToast('机统28提报失败，请检查网络连接');
                 // SmartDialog.dismiss(status: SmartStatus.loading);
               }
             }
           } on DioException catch (e) {
-            showToast("故障提报失败");
+            showToast('故障提报失败');
             logger.i(e.toString());
           } finally {
             SmartDialog.dismiss(status: SmartStatus.loading);
@@ -1019,7 +1016,7 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
               _showSubmitSuccessDialog();
             }
           }
-          }
+        // }
         }
       ,
       child: Container(
@@ -1034,9 +1031,9 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
 
   Future<String> selectDate(str) async {
     DateTimePickerType dt;
-    if (str == "datetime") {
+    if (str == 'datetime') {
       dt = DateTimePickerType.datetime;
-    } else if (str == "date") {
+    } else if (str == 'date') {
       dt = DateTimePickerType.date;
     } else {
       dt = DateTimePickerType.time;
@@ -1046,16 +1043,16 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       context: context,
       pickerType: dt,
     );
-    if (val != null && str == "datetime") {
+    if (val != null && str == 'datetime') {
       String str =
           formatDate(val, [yyyy, '-', mm, '-', dd, ' ', HH, ':', nn, ':', ss]);
       logger.i(str);
       return str;
-    } else if (val != null && str == "date") {
+    } else if (val != null && str == 'date') {
       String str = formatDate(val, [yyyy, '-', mm, '-', dd]);
       return str;
     } else {
-      return "";
+      return '';
     }
   }
 }

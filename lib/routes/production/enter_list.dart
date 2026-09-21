@@ -50,7 +50,7 @@ class _EnterList extends State<EnterList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("检修状态"),
+        title: const Text('检修状态'),
       ),
       body: _buildBody(),
     );
@@ -120,7 +120,7 @@ class _EnterList extends State<EnterList> {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    "已经到头了",
+                    '已经到头了',
                     style: TextStyle(color: Colors.blue[700]),
                   ),
                 );

@@ -24,7 +24,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
         'repairMainNodeCode':repairMainNodeCode
       }
     );
-    if(r['code'] == "S_F_S000"){
+    if(r['code'] == 'S_F_S000'){
       setState(() {
         trainList =  r['data'].map<TrainEntryByNodeCode>((e) => TrainEntryByNodeCode.fromJson(e)).toList();
         // log("${r['data']}");
@@ -42,7 +42,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text("车号列表"),
+        title: const Text('车号列表'),
       ),
       // 打开侧边栏需要传递更低一级context
       body: _body()
@@ -51,14 +51,14 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
 
   Widget _body(){
     if(trainList.isEmpty){
-      return const ZjcEmptyView(text: "暂无列车",);
+      return const ZjcEmptyView(text: '暂无列车',);
     }else{
       return SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             ZjcSearchBar(
-              hintText: "请输入车号",
+              hintText: '请输入车号',
               inputCompletionCallBack:(value, isSubmitted) {
               },
             ),
@@ -117,7 +117,7 @@ class _TrainEntryListByNodeCodeState extends State<TrainEntryListByNodeCode>{
               },
               child:Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [Text("${item.trainNum}",style: const TextStyle(fontSize: 20.0),)],
+                children: [Text('${item.trainNum}',style: const TextStyle(fontSize: 20.0),)],
               )
             )
           ),

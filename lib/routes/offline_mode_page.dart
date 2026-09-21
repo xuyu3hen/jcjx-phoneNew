@@ -1,6 +1,5 @@
 import '../index.dart';
 import '../services/after_sale_local_service.dart';
-import '../widgets/feature_container.dart';
 import 'production/after_sale_temp_repair_register_page.dart';
 
 class OfflineModePage extends StatefulWidget {
@@ -68,7 +67,9 @@ class _OfflineModePageState extends State<OfflineModePage> {
     final rows = <Widget>[];
     for (var i = 0; i < items.length; i += 3) {
       final rowChildren = items.skip(i).take(3).toList();
-      while (rowChildren.length < 3) rowChildren.add(_buildFeaturePlaceholder());
+      while (rowChildren.length < 3) {
+        rowChildren.add(_buildFeaturePlaceholder());
+      }
       rows.add(Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceAround,

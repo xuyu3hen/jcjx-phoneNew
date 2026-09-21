@@ -302,13 +302,11 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
           .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
 
       if (!mounted) return;
-      final data = response is List
-          ? response
+      final data = response
               .map((e) => e is Map<String, dynamic>
                   ? e
                   : Map<String, dynamic>.from(e as Map))
-              .toList()
-          : <Map<String, dynamic>>[];
+              .toList();
       _logTagged(
         '[机车派工][RES]',
         'repairMainNode=$repairMainNode rawType=${response.runtimeType} procCount=${data.length}',
@@ -384,7 +382,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
         onPressed: () => Navigator.pop(context),
       ),
       title: const Text(
-        "机车派工",
+        '机车派工',
         style: TextStyle(color: Colors.black),
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
@@ -430,7 +428,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                       children: [
                         Center(
                           child: Text(
-                            "C4",
+                            'C4',
                             style: TextStyle(
                               fontSize: 18,
                               color:
@@ -453,7 +451,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count1",
+                              '$count1',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -489,7 +487,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                       children: [
                         Center(
                           child: Text(
-                            "C5",
+                            'C5',
                             style: TextStyle(
                               fontSize: 18,
                               color:
@@ -512,7 +510,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count2",
+                              '$count2',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -547,7 +545,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                       children: [
                         Center(
                           child: Text(
-                            "临修",
+                            '临修',
                             style: TextStyle(
                               fontSize: 18,
                               color: _currentTab == 2
@@ -571,7 +569,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              "$count3",
+                              '$count3',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 12,
@@ -882,16 +880,16 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
   }
 
   void _showTrainSearchDialog() {
-    TextEditingController _controller = TextEditingController();
+    TextEditingController controller = TextEditingController();
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('车号查询'),
           content: TextField(
-            controller: _controller,
+            controller: controller,
             decoration: const InputDecoration(
-              hintText: "请输入车号",
+              hintText: '请输入车号',
             ),
           ),
           actions: [
@@ -903,7 +901,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
             ),
             TextButton(
               onPressed: () {
-                String trainNum = _controller.text.trim();
+                String trainNum = controller.text.trim();
                 if (trainNum.isNotEmpty) {
                   _searchTrainByNum(trainNum);
                   Navigator.of(context).pop();
@@ -961,7 +959,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
     }
     if (repairTrainInfo.isEmpty) {
       return const Center(
-        child: Text("暂无机车数据", style: TextStyle(color: Colors.grey)),
+        child: Text('暂无机车数据', style: TextStyle(color: Colors.grey)),
       );
     }
     return ListView.builder(
@@ -969,7 +967,7 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
         final loco = repairTrainInfo[index];
-        final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+        final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
         return GestureDetector(
           onTap: () {
             if (repairTrainInfo.isNotEmpty && index < repairTrainInfo.length) {
@@ -1075,17 +1073,17 @@ class _TrainRepairPageManageState extends State<TrainRepairPageManage> {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildInspectionItem("自检",
+                        child: _buildInspectionItem('自检',
                             loco['taskCertainPackageCount']?.toString() ?? '0'),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildInspectionItem("互检",
+                        child: _buildInspectionItem('互检',
                             loco['mutualInspectionCount']?.toString() ?? '0'),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildInspectionItem("专检",
+                        child: _buildInspectionItem('专检',
                             loco['specialInspectionCount']?.toString() ?? '0'),
                       ),
                     ],
@@ -1227,8 +1225,8 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   //获取待作业数量
   void getNumber() async {
     Map<String, dynamic> params = {
-      "trainEntryCode": widget.locoInfo?['code'],
-      "userId": Global.profile.permissions?.user.userId
+      'trainEntryCode': widget.locoInfo?['code'],
+      'userId': Global.profile.permissions?.user.userId
     };
     try {
       var r =
@@ -1340,7 +1338,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
                     List<String>? roles = Global.profile.permissions?.roles;
-                    if (roles != null && roles.contains("chejianzhuren")) {
+                    if (roles != null && roles.contains('chejianzhuren')) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -1378,7 +1376,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       '${numberInfo['hasDispatchedJt28Count'] ?? 0}/${numberInfo['totalJt28Count'] ?? 0}',
                   locoInfo: widget.locoInfo, // 将locoInfo传递给TaskCard
                   onTap: () {
-                    List<String>? roles = Global.profile.permissions?.roles;
+                    // List<String>? roles = Global.profile.permissions?.roles;
                     // 在这里处理待作业的点击事件
                     Navigator.push(
                       context,
@@ -1447,7 +1445,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
   }
 
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1477,7 +1475,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
@@ -1518,7 +1516,7 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
 
 // ... existing code ...
   Widget _buildActionButtons() {
-    return Row(
+    return const Row(
       children: [
         // Expanded(
         //   child: ElevatedButton(
@@ -1705,7 +1703,7 @@ class _PackageArrangeInfoState extends State<PackageArrangeInfo> {
   }
 
   void getPackageManage() async {
-    Map<String, dynamic> params = {"trainEntryCode": widget.locoInfo?['code']};
+    Map<String, dynamic> params = {'trainEntryCode': widget.locoInfo?['code']};
     logger.i(params);
     var r = await ProductApi().getAssignPackage(params);
     if (mounted) {
@@ -1778,22 +1776,22 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   List<Map<String, dynamic>> packageList = [];
   var logger = AppLogger.logger;
   // 模拟机车数据
-  final Locomotive _locomotive = Locomotive(
-    id: "HXD3C 0016",
-    inTime: DateTime(2023, 2, 24, 14, 58, 15),
-    track: "J2道机",
-    planTrain: "无",
-    planOut: "无",
-    status: "整备中",
-  );
+  // final Locomotive _locomotive = Locomotive(
+  //   id: 'HXD3C 0016',
+  //   inTime: DateTime(2023, 2, 24, 14, 58, 15),
+  //   track: 'J2道机',
+  //   planTrain: '无',
+  //   planOut: '无',
+  //   status: '整备中',
+  // );
 
   // 模拟作业项数据
-  final List<TaskItem> _tasks = [
-    TaskItem(name: "车内2", completed: 0, total: 16, userStatus: "未申领"),
-    TaskItem(name: "车底", completed: 0, total: 8, userStatus: "未申领"),
-    TaskItem(name: "车外", completed: 0, total: 15, userStatus: "未申领"),
-    TaskItem(name: "车顶", completed: 0, total: 12, userStatus: "未申领"),
-  ];
+  // final List<TaskItem> _tasks = [
+  //   TaskItem(name: '车内2', completed: 0, total: 16, userStatus: '未申领'),
+  //   TaskItem(name: '车底', completed: 0, total: 8, userStatus: '未申领'),
+  //   TaskItem(name: '车外', completed: 0, total: 15, userStatus: '未申领'),
+  //   TaskItem(name: '车顶', completed: 0, total: 12, userStatus: '未申领'),
+  // ];
 
   @override
   void initState() {
@@ -1802,7 +1800,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
   }
 
   void getPackageManage() async {
-    Map<String, dynamic> params = {"trainEntryCode": widget.locoInfo?['code']};
+    Map<String, dynamic> params = {'trainEntryCode': widget.locoInfo?['code']};
     logger.i(params);
     var r = await ProductApi().getAssignPackage(params);
     if (mounted) {
@@ -1819,7 +1817,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   @override
   Widget build(BuildContext context) {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
+    // final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss'); // 时间格式化
     // ... existing code ...
     return Scaffold(
       appBar: AppBar(
@@ -1835,7 +1833,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             }
           },
         ),
-        title: const Text("检修作业-作业包(派工)"),
+        title: const Text('检修作业-作业包(派工)'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -1859,7 +1857,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   /// 构建机车基本信息区域
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1889,7 +1887,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
@@ -2119,8 +2117,8 @@ class _RollCallPageState extends State<RollCallPage> {
   late Member _selectedMember;
 
   // 机型选项（模拟下拉）
-  final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
-  String _selectedModel = 'HXD3CA';
+  // final List<String> _modelOptions = ['HXD3CA', 'HXD3C', 'HXD1D'];
+  // final String _selectedModel = 'HXD3CA';
 
   // 检修项列表（模拟状态）
   final List<InspectionItem> _inspectionItems = [
@@ -2136,9 +2134,9 @@ class _RollCallPageState extends State<RollCallPage> {
 
   void getUserList() async {
     Map<String, dynamic> params = {
-      "deptId": Global.profile.permissions?.user.dept?.deptId,
-      "pageNum": 0,
-      "pageSize": 0,
+      'deptId': Global.profile.permissions?.user.dept?.deptId,
+      'pageNum': 0,
+      'pageSize': 0,
     };
     try {
       var response = await ProductApi().getTeamUser(queryParametrs: params);
@@ -2209,7 +2207,7 @@ class _RollCallPageState extends State<RollCallPage> {
 
   void setRepairInfo() async {
     Map<String, dynamic> params = {
-      "code": widget.packageCode,
+      'code': widget.packageCode,
     };
     if (!_inspectionItems[0].isChecked && !_inspectionItems[1].isChecked) {
       SmartDialog.showToast('请选择主修或辅修');
@@ -2329,7 +2327,7 @@ class _RollCallPageState extends State<RollCallPage> {
                             ),
                             color: isSelected ? Colors.green : Colors.white,
                             child: Text(
-                              '${member.name}',
+                              member.name,
                               style: TextStyle(
                                 color: isSelected ? Colors.white : Colors.black,
                                 fontSize: 16, // 增大字体

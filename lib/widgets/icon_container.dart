@@ -4,8 +4,8 @@ class IconContainer extends StatefulWidget{
   final String _image;
   final Function pressFun;
   final String text;
-  double? width;
-  double? height;
+  final double? width;
+  final double? height;
 
   IconContainer(this._image,this.pressFun,this.text,{this.width,this.height}) :super(key: ValueKey(text));
 
@@ -34,7 +34,7 @@ class _IconContainer extends State<IconContainer>{
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset("assets/${widget._image}"),
+            Image.asset('assets/${widget._image}'),
             Text(widget.text,style: TextStyle(fontSize: widget.height!/50),),
           ],
         ),

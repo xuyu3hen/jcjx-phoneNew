@@ -72,7 +72,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
   // 上传信息
   Future<void> submitRepairInfo() async {
     try {
-      var r = await ProductApi().uploadImgJt28(imagedata: faultPics[0]);
+      // var r = await ProductApi().uploadImgJt28(imagedata: faultPics[0]);
       Map<String, dynamic> queryParameters = faultInfo;
       queryParameters['repairStatus'] = repairDetailsController.text;
       queryParameters['actualStartDate'] = actualStartDateController.text;
@@ -173,7 +173,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
         // 使用传入的 context 显示 SnackBar，并确保 widget 仍然挂载
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("未查询到零部件信息")),
+            const SnackBar(content: Text('未查询到零部件信息')),
           );
         }
       }
@@ -290,7 +290,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text("施修"),
+          title: const Text('施修'),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -302,13 +302,13 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: repairDetailsController,
-                    decoration: const InputDecoration(labelText: "施修情况"),
+                    decoration: const InputDecoration(labelText: '施修情况'),
                   ),
                   const SizedBox(height: 10),
                   TextField(
                     controller: actualStartDateController,
                     decoration: const InputDecoration(
-                      labelText: "实际开始修理日期",
+                      labelText: '实际开始修理日期',
                       suffixIcon: Icon(Icons.calendar_today),
                     ),
                     readOnly: true,
@@ -346,27 +346,27 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   const SizedBox(height: 10),
                   TextField(
                     controller: faultyPartController,
-                    decoration: const InputDecoration(labelText: "故障零部件"),
+                    decoration: const InputDecoration(labelText: '故障零部件'),
                   ),
                   const SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: () {
                       _showFaultPartList(dialogContext);
                     },
-                    child: const Text("查询零部件信息"),
+                    child: const Text('查询零部件信息'),
                   ),
 
                   const SizedBox(height: 10),
                   // 互检人员选择
                   ZjcFormSelectCell(
-                    title: "互检人员",
+                    title: '互检人员',
                     text: selectedMutualCheck['nickName'],
-                    hintText: "请选择",
+                    hintText: '请选择',
                     clickCallBack: () {
                       if (mutualCheckList.isEmpty) {
                         // 使用 dialogContext 显示 Toast
                         ScaffoldMessenger.of(dialogContext).showSnackBar(
-                          const SnackBar(content: Text("无互检人员信息")),
+                          const SnackBar(content: Text('无互检人员信息')),
                         );
                       } else {
                         ZjcCascadeTreePicker.show(
@@ -374,7 +374,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
                           data: mutualCheckList,
                           labelKey: 'nickName',
                           valueKey: 'userId',
-                          title: "选择互检人员",
+                          title: '选择互检人员',
                           clickCallBack: (selectItem, selectArr) {
                             setState(() {
                               selectedMutualCheck = {
@@ -390,14 +390,14 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   const SizedBox(height: 10),
                   // 专检人员选择
                   ZjcFormSelectCell(
-                      title: "专检人员",
+                      title: '专检人员',
                       text: selectedSpecialCheck['nickName'],
-                      hintText: "请选择",
+                      hintText: '请选择',
                       clickCallBack: () {
                         if (specialCheckList.isEmpty) {
                           // 使用 dialogContext 显示 Toast
                           ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            const SnackBar(content: Text("无专检人员信息")),
+                            const SnackBar(content: Text('无专检人员信息')),
                           );
                         } else {
                           ZjcCascadeTreePicker.show(
@@ -405,12 +405,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                             data: specialCheckList,
                             labelKey: 'nickName',
                             valueKey: 'userId',
-                            title: "选择专检人员",
+                            title: '选择专检人员',
                             clickCallBack: (selectItem, selectArr) {
                               setState(() {
-                                selectedSpecialCheck?['nickName'] =
+                                selectedSpecialCheck['nickName'] =
                                     selectItem['nickName'] ?? '';
-                                selectedSpecialCheck?['userId'] =
+                                selectedSpecialCheck['userId'] =
                                     selectItem['userId'] ?? '';
                               });
                             },
@@ -469,7 +469,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text("取消"),
+              child: const Text('取消'),
             ),
             TextButton(
               onPressed: () async {
@@ -482,7 +482,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("提交成功")),
+                        const SnackBar(content: Text('提交成功')),
                       );
                     }
                   });
@@ -491,14 +491,14 @@ class _JtRepairPageState extends State<JtRepairPage> {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("提交失败")),
+                        const SnackBar(content: Text('提交失败')),
                       );
                     }
                   });
                   logger.e('提交失败: $e');
                 }
               },
-              child: const Text("提交"),
+              child: const Text('提交'),
             ),
           ],
         );
@@ -550,7 +550,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -567,7 +567,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
   Future<void> getFaultPart() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'typeCode': jcTypeListSelected["code"],
+        'typeCode': jcTypeListSelected['code'],
         'pageNum': 0,
         'pageSize': 0,
         'name': faultyPartController.text,
@@ -591,7 +591,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -612,9 +612,9 @@ class _JtRepairPageState extends State<JtRepairPage> {
   void getUserList() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'configNodeCode': jcTypeListSelected["code"],
-        'riskLevel': faultInfo["riskLevel"],
-        'team': faultInfo["team"]
+        'configNodeCode': jcTypeListSelected['code'],
+        'riskLevel': faultInfo['riskLevel'],
+        'team': faultInfo['team']
       };
       logger.i(queryParameters);
       var r = await ProductApi().getCheckPerson(queryParameters);
@@ -638,7 +638,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("机统28施修"),
+        title: const Text('机统28施修'),
       ),
       body: _buildBody(),
     );
@@ -655,13 +655,13 @@ class _JtRepairPageState extends State<JtRepairPage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               ZjcFormSelectCell(
-                title: "动力类型",
-                text: dynamciTypeSelected["name"],
-                hintText: "请选择",
+                title: '动力类型',
+                text: dynamciTypeSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (dynamicTypeList.isEmpty) {
-                    showToast("无动力类型选择");
+                    showToast('无动力类型选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -669,12 +669,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择动力类型",
+                      title: '选择动力类型',
                       clickCallBack: (selectItem, selectArr) {
                         logger.i(selectArr);
                         setState(() {
-                          dynamciTypeSelected["code"] = selectItem["code"];
-                          dynamciTypeSelected["name"] = selectItem["name"];
+                          dynamciTypeSelected['code'] = selectItem['code'];
+                          dynamciTypeSelected['name'] = selectItem['name'];
                           getJcType();
                         });
                       },
@@ -683,13 +683,13 @@ class _JtRepairPageState extends State<JtRepairPage> {
                 },
               ),
               ZjcFormSelectCell(
-                title: "机型",
-                text: jcTypeListSelected["name"],
-                hintText: "请选择",
+                title: '机型',
+                text: jcTypeListSelected['name'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (jcTypeList.isEmpty) {
-                    showToast("无机型可以选择");
+                    showToast('无机型可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -697,12 +697,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                       labelKey: 'name',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择机型",
+                      title: '选择机型',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          jcTypeListSelected["name"] = selectItem["name"];
-                          jcTypeListSelected["code"] = selectItem["code"];
+                          jcTypeListSelected['name'] = selectItem['name'];
+                          jcTypeListSelected['code'] = selectItem['code'];
                           getTrainNumCodeList();
                         });
                       },
@@ -711,13 +711,13 @@ class _JtRepairPageState extends State<JtRepairPage> {
                 },
               ),
               ZjcFormSelectCell(
-                title: "车号",
-                text: trainNumSelected["trainNum"],
-                hintText: "请选择",
+                title: '车号',
+                text: trainNumSelected['trainNum'],
+                hintText: '请选择',
                 showRedStar: true,
                 clickCallBack: () {
                   if (trainNumCodeList.isEmpty) {
-                    showToast("无车号可以选择");
+                    showToast('无车号可以选择');
                   } else {
                     ZjcCascadeTreePicker.show(
                       context,
@@ -725,12 +725,12 @@ class _JtRepairPageState extends State<JtRepairPage> {
                       labelKey: 'trainNum',
                       valueKey: 'code',
                       childrenKey: 'children',
-                      title: "选择车号",
+                      title: '选择车号',
                       clickCallBack: (selectItem, selectArr) {
                         setState(() {
                           logger.i(selectArr);
-                          trainNumSelected["trainNum"] = selectItem["trainNum"];
-                          trainNumSelected["code"] = selectItem["code"];
+                          trainNumSelected['trainNum'] = selectItem['trainNum'];
+                          trainNumSelected['code'] = selectItem['code'];
                         });
                       },
                     );
@@ -785,7 +785,7 @@ class _JtRepairPageState extends State<JtRepairPage> {
                                   backgroundColor: Colors.blue, // 按钮背景颜色
                                   foregroundColor: Colors.white, // 按钮文字颜色
                                 ),
-                                child: const Text("施修"),
+                                child: const Text('施修'),
                               )
                             : null,
                       ),

@@ -35,7 +35,7 @@ class PhotoPreviewDialog {
         context: nav.context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text("故障视频及图片"),
+            title: const Text('故障视频及图片'),
             content: SingleChildScrollView(
               child: SizedBox(
                 width: double.maxFinite,
@@ -89,7 +89,7 @@ class PhotoPreviewDialog {
   static void show2(
     BuildContext context,
     List<dynamic> repairList,
-    {String title = "故障视频及图片"}
+    {String title = '故障视频及图片'}
   ) async {
     final nav = Navigator.of(context);
     SmartDialog.showLoading(msg: '加载中...');

@@ -6,7 +6,7 @@ import 'package:video_player/video_player.dart';
 class PlanListPage extends StatefulWidget {
   final RepairItem repairItem;
   final Map<String, dynamic>? shuntingItem;
-  PlanListPage({required this.repairItem, this.shuntingItem});
+  const PlanListPage({super.key, required this.repairItem, this.shuntingItem});
   @override
   _PlanListPageState createState() => _PlanListPageState();
 }
@@ -86,34 +86,34 @@ class _PlanListPageState extends State<PlanListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('调查清单'),
+        title: const Text('调查清单'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.wifi),
+            icon: const Icon(Icons.wifi),
             onPressed: () {},
           ),
         ],
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: ListView.builder(
           itemCount: investigateList.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
               // 第一项显示车号标题
               return Card(
-                margin: EdgeInsets.only(bottom: 16.0),
+                margin: const EdgeInsets.only(bottom: 16.0),
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Text(
                     '${widget.repairItem.typeName}-${widget.repairItem.repairProcName ?? ''}-${widget.repairItem.trainNum ?? ''}',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -121,9 +121,9 @@ class _PlanListPageState extends State<PlanListPage> {
             }
             final item = investigateList[index - 1];
             return Card(
-              margin: EdgeInsets.only(bottom: 16.0),
+              margin: const EdgeInsets.only(bottom: 16.0),
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -131,45 +131,45 @@ class _PlanListPageState extends State<PlanListPage> {
                     Text(
                       '编号: ${item['encode'] ?? ''}',
                       style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
                     // 故障现象
                     Text(
                       '故障现象: ${item['faultInformation'] ?? ''}',
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     // 故障类别
                     Text(
                       '故障类别: ${item['failureCategory'] ?? ''}',
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     // 故障时间
                     Text(
                       '故障时间: ${item['faultDate'] ?? ''}',
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     // 停留地点
                     Text(
                       '停留地点: ${item['trainLocation'] ?? ''}',
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     // 停留地点
                     Text(
                       '填报人: ${item['reportUserName'] ?? ''}',
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
                     // 填报时间
                     Text(
                       '填报时间: ${item['createdTime'] ?? ''}',
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
                     // 操作按钮区域：仅填报人（调查人）可编辑
                     Builder(
@@ -188,16 +188,16 @@ class _PlanListPageState extends State<PlanListPage> {
                               onPressed: () {
                                 _showDetailView(context, item);
                               },
-                              icon: Icon(Icons.visibility),
-                              label: Text('查看'),
+                              icon: const Icon(Icons.visibility),
+                              label: const Text('查看'),
                             ),
                             if (canEdit)
                               ElevatedButton.icon(
                                 onPressed: () {
                                   _showEditInvestigateDialog(context, item);
                                 },
-                                icon: Icon(Icons.edit),
-                                label: Text('编辑'),
+                                icon: const Icon(Icons.edit),
+                                label: const Text('编辑'),
                               ),
                           ],
                         );
@@ -221,7 +221,7 @@ class _PlanListPageState extends State<PlanListPage> {
     // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
     if (masInvestigateList is List) {
       mappedList = masInvestigateList
-          .where((item) => item is Map)
+          .whereType<Map>()
           .map((item) => item as Map<String, dynamic>)
           .toList();
     }
@@ -231,7 +231,7 @@ class _PlanListPageState extends State<PlanListPage> {
       isScrollControlled: true,
       builder: (BuildContext context) {
         return Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           height: MediaQuery.of(context).size.height * 0.9,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,42 +239,42 @@ class _PlanListPageState extends State<PlanListPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     '编辑调查内容',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close),
+                    icon: const Icon(Icons.close),
                     onPressed: () {
                       Navigator.pop(context);
                     },
                   ),
                 ],
               ),
-              Divider(),
+              const Divider(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       // 基本信息展示
                       Text('编号: ${item['encode'] ?? ''}'),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text('故障现象: ${item['faultInformation'] ?? ''}'),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // 修程公里数表格
                       _buildRepairKilometerTable(item),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // 调查内容列表
-                      Text(
+                      const Text(
                         '其他作业项点',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       if (mappedList.isEmpty)
-                        Center(
+                        const Center(
                           child: Padding(
                             padding: EdgeInsets.all(20.0),
                             child: Text(
@@ -308,7 +308,7 @@ class _PlanListPageState extends State<PlanListPage> {
     // 安全地将List<dynamic>转换为List<Map<String, dynamic>>
     if (masInvestigateList is List) {
       mappedList = masInvestigateList
-          .where((item) => item is Map)
+          .whereType<Map>()
           .map((item) => item as Map<String, dynamic>)
           .toList();
     }
@@ -317,7 +317,7 @@ class _PlanListPageState extends State<PlanListPage> {
       isScrollControlled: true,
       builder: (BuildContext context) {
         return Container(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           height: MediaQuery.of(context).size.height * 0.9,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,56 +325,56 @@ class _PlanListPageState extends State<PlanListPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     '编辑调查内容',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close),
+                    icon: const Icon(Icons.close),
                     onPressed: () {
                       Navigator.pop(context);
                     },
                   ),
                 ],
               ),
-              Divider(),
+              const Divider(),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       // 基本信息展示
                       Text('编号: ${item['encode'] ?? ''}'),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text('故障现象: ${item['faultInformation'] ?? ''}'),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // 修程公里数表格
                       _buildRepairKilometerTable(item),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // 保存修程公里数按钮
                       Center(
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             await _saveRepairKilometer(context, item);
                           },
-                          icon: Icon(Icons.save),
-                          label: Text('保存修程公里数'),
+                          icon: const Icon(Icons.save),
+                          label: const Text('保存修程公里数'),
                           style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // 调查内容列表
-                      Text(
+                      const Text(
                         '其他作业项点',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       if (mappedList.isEmpty)
-                        Center(
+                        const Center(
                           child: Padding(
                             padding: EdgeInsets.all(20.0),
                             child: Text(
@@ -516,7 +516,7 @@ class _PlanListPageState extends State<PlanListPage> {
       // 如果有新选择的媒体文件，先上传
       if (selectedMedia.isNotEmpty) {
         Map<String, dynamic> queryParametrs = {
-          "code": masItem['code'],
+          'code': masItem['code'],
         };
         logger.i('上传媒体参数：$queryParametrs');
 
@@ -720,7 +720,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
     }
 
     // 查询修次列表（repairProcCode）并默认回填第一条；若有多条则由用户点击修次单元格手动选
-    Future<void> _queryAndFillFirstRepairTimes(
+    Future<void> queryAndFillFirstRepairTimes(
       int index,
       String procCode,
     ) async {
@@ -785,8 +785,8 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
       final selected = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('选择修程'),
-          content: Container(
+          title: const Text('选择修程'),
+          content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
               shrinkWrap: true,
@@ -826,7 +826,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
           }
         });
         if (procCode.isNotEmpty) {
-          await _queryAndFillFirstRepairTimes(index, procCode);
+          await queryAndFillFirstRepairTimes(index, procCode);
         }
       }
     }
@@ -962,11 +962,11 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           '修程公里数',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Table(
           border: TableBorder.all(),
           columnWidths: const {
@@ -1018,7 +1018,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                     child: InkWell(
                       onTap: () => selectRepairProc(index),
                       child: Container(
-                        padding: EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.blue),
                           borderRadius: BorderRadius.circular(4),
@@ -1026,7 +1026,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                         child: Text(
                           proc['repairProcName']?.toString() ?? '点击选择',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.blue),
+                          style: const TextStyle(color: Colors.blue),
                         ),
                       ),
                     ),
@@ -1058,8 +1058,8 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                     child: TextField(
                       controller: getKilometerController(index),
                       textAlign: TextAlign.center,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       ),
@@ -1079,7 +1079,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                     child: InkWell(
                       onTap: () => selectDate(index),
                       child: Container(
-                        padding: EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(8.0),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.blue),
                           borderRadius: BorderRadius.circular(4),
@@ -1089,7 +1089,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                               ? formatDateDynamic(proc['repairDate'])
                               : '点击选择',
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.blue),
+                          style: const TextStyle(color: Colors.blue),
                         ),
                       ),
                     ),
@@ -1098,7 +1098,7 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
                   Padding(
                     padding: const EdgeInsets.all(4.0),
                     child: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => _deleteRepairProcRow(index),
                       tooltip: '删除',
                     ),
@@ -1108,14 +1108,14 @@ class _RepairKilometerTableWidgetState extends State<_RepairKilometerTableWidget
             }).toList(),
           ],
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         // 新增按钮
         ElevatedButton.icon(
           onPressed: _addRepairProcRow,
-          icon: Icon(Icons.add),
-          label: Text('新增修程公里数'),
+          icon: const Icon(Icons.add),
+          label: const Text('新增修程公里数'),
           style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ],
@@ -1141,7 +1141,7 @@ class _InvestigateItemCardWidget extends StatefulWidget {
 class _InvestigateItemCardWidgetState
     extends State<_InvestigateItemCardWidget> {
   late TextEditingController resultController;
-  List<XFile> _selectedMedia = [];
+  final List<XFile> _selectedMedia = [];
   List<String> _uploadedMedia = [];
 
   /// 仅当调查人为当前用户时可填写
@@ -1199,11 +1199,11 @@ class _InvestigateItemCardWidgetState
 
   // 选择媒体文件
   Future<void> _pickMedia(ImageSource source, bool isVideo) async {
-    final ImagePicker _picker = ImagePicker();
+    final ImagePicker picker = ImagePicker();
     try {
       if (source == ImageSource.camera) {
         if (isVideo) {
-          final XFile? video = await _picker.pickVideo(source: source);
+          final XFile? video = await picker.pickVideo(source: source);
           if (video != null) {
             setState(() {
               _selectedMedia.add(video);
@@ -1211,7 +1211,7 @@ class _InvestigateItemCardWidgetState
           }
         } else {
           final XFile? photo =
-              await _picker.pickImage(source: source, imageQuality: 80);
+              await picker.pickImage(source: source, imageQuality: 80);
           if (photo != null) {
             setState(() {
               _selectedMedia.add(photo);
@@ -1220,7 +1220,7 @@ class _InvestigateItemCardWidgetState
         }
       } else {
         if (isVideo) {
-          final XFile? video = await _picker.pickVideo(source: source);
+          final XFile? video = await picker.pickVideo(source: source);
           if (video != null) {
             setState(() {
               _selectedMedia.add(video);
@@ -1228,7 +1228,7 @@ class _InvestigateItemCardWidgetState
           }
         } else {
           final List<XFile> images =
-              await _picker.pickMultiImage(imageQuality: 80);
+              await picker.pickMultiImage(imageQuality: 80);
           if (images.isNotEmpty) {
             setState(() {
               _selectedMedia.addAll(images);
@@ -1244,22 +1244,22 @@ class _InvestigateItemCardWidgetState
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('排序: ${widget.masItem['sort'] ?? ''}'),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text('作业项点: ${widget.masItem['investigateTitle'] ?? ''}'),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text('二级作业项点: ${widget.masItem['investigateContent'] ?? ''}'),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text('调查部门: ${widget.masItem['deptName'] ?? ''}'),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text('指派调查班组: ${widget.masItem['teamName'] ?? ''}'),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text('调查人: ${widget.masItem['reportUserName'] ?? ''}'),
             if (!_isCurrentUserInvestigator)
               Padding(
@@ -1269,31 +1269,31 @@ class _InvestigateItemCardWidgetState
                   style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
                 ),
               ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             // 调查结果输入框 - 增加行数（仅调查人可编辑）
             TextField(
               controller: resultController,
               readOnly: !_isCurrentUserInvestigator,
               decoration: InputDecoration(
                 labelText: '调查结果',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
                 hintText: _isCurrentUserInvestigator ? '请输入调查结果' : '仅调查人可填写',
               ),
               maxLines: 10,
               minLines: 5,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             // 上传附件区域（仅调查人可见）
             if (_isCurrentUserInvestigator) ...[
-            Text(
+            const Text(
               '上传附件',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             // 显示已上传的媒体
             if (_uploadedMedia.isNotEmpty) ...[
-              Text('已上传附件:', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 8),
+              const Text('已上传附件:', style: TextStyle(fontSize: 14)),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -1317,7 +1317,7 @@ class _InvestigateItemCardWidgetState
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: _isVideoUrl(_uploadedMedia[index])
-                                  ? Icon(Icons.video_library,
+                                  ? const Icon(Icons.video_library,
                                       size: 60, color: Colors.blue)
                                   : Image.network(
                                       _uploadedMedia[index],
@@ -1335,12 +1335,12 @@ class _InvestigateItemCardWidgetState
                   },
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
             ],
             // 显示新选择的媒体
             if (_selectedMedia.isNotEmpty) ...[
-              Text('待上传附件:', style: TextStyle(fontSize: 14)),
-              SizedBox(height: 8),
+              const Text('待上传附件:', style: TextStyle(fontSize: 14)),
+              const SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: ListView.builder(
@@ -1367,7 +1367,7 @@ class _InvestigateItemCardWidgetState
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: isVideo
-                                  ? Icon(Icons.videocam,
+                                  ? const Icon(Icons.videocam,
                                       size: 60, color: Colors.blue)
                                   : FutureBuilder<Uint8List?>(
                                       future: media.readAsBytes(),
@@ -1414,7 +1414,7 @@ class _InvestigateItemCardWidgetState
                   },
                 ),
               ),
-              SizedBox(height: 15),
+              const SizedBox(height: 15),
             ],
             // 添加媒体按钮
             Row(
@@ -1452,14 +1452,14 @@ class _InvestigateItemCardWidgetState
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () async {
                   await widget.onSave(resultController.text, _selectedMedia);
                 },
-                child: Text('保存'),
+                child: const Text('保存'),
               ),
             ),
             ],

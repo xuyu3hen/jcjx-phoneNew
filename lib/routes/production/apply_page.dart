@@ -1,10 +1,6 @@
-import 'dart:math';
 
-import 'package:jcjx_phone/routes/production/mutual_startwork.dart';
-import 'package:jcjx_phone/routes/production/package_mutual_deal.dart';
 
 import '../../index.dart';
-import 'jt_startwork.dart';
 
 //范围作业互检
 class ApplyList extends StatefulWidget {
@@ -39,8 +35,8 @@ class _JtShowPageState extends State<ApplyList> {
 
   void getTrainShunting() async {
     Map<String, dynamic> queryParameters = {
-      "typeCode": widget.typeCode,
-      "trainEntryCode": widget.trainEntryCode,
+      'typeCode': widget.typeCode,
+      'trainEntryCode': widget.trainEntryCode,
     };
     var r =
         await ProductApi().getTrainShunting(queryParametrs: queryParameters);
@@ -91,7 +87,7 @@ class _JtShowPageState extends State<ApplyList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("调车申请单"),
+        title: const Text('调车申请单'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -105,20 +101,20 @@ class _JtShowPageState extends State<ApplyList> {
 
   // 添加状态筛选相关变量
   late List<Map<String, dynamic>> statusFilterList = [
-    {"name": "待互检", "value": 1},
-    {"name": "已开工", "value": 6},
+    {'name': '待互检', 'value': 1},
+    {'name': '已开工', 'value': 6},
   ];
 
   
   // 添加状态筛选相关变量
   late List<Map<String, dynamic>> statusList = [
-    {"name": 2, "value": '已完成'},
-    {"name": 0, "value": '未发布 '},
+    {'name': 2, 'value': '已完成'},
+    {'name': 0, 'value': '未发布 '},
   ];
 
   
 
-  late Map<String, dynamic> statusFilterSelected = {"name": "待互检", "value": 1};
+  late Map<String, dynamic> statusFilterSelected = {'name': '待互检', 'value': 1};
 
   
 
@@ -176,18 +172,18 @@ class _JtShowPageState extends State<ApplyList> {
                 children: [
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "机型",
+                      title: '机型',
                       text: widget.typeName,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
                   ),
                   Expanded(
                     child: ZjcFormSelectCell(
-                      title: "车号",
+                      title: '车号',
                       text: widget.trainNum,
-                      hintText: "请选择",
+                      hintText: '请选择',
                       showRedStar: true,
                       clickCallBack: null,
                     ),
@@ -214,7 +210,7 @@ class _JtShowPageState extends State<ApplyList> {
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       child: ListTile(
                         title: Text(
-                          '车号:' + item['trainNum'] ?? '',
+                          '车号:' + item['trainNum'],
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Column(
@@ -284,7 +280,7 @@ class _JtShowPageState extends State<ApplyList> {
       //获取动力类型
       var r = await ProductApi().getDynamicType();
       //获取用户信息
-      var permissionResponse = await LoginApi().getpermissions();
+      // var permissionResponse = await LoginApi().getpermissions();
       setState(() {
         dynamicTypeList = r.toMapList();
         // permissions = permissionResponse;
@@ -298,7 +294,7 @@ class _JtShowPageState extends State<ApplyList> {
   void getJcType() async {
     try {
       Map<String, dynamic> queryParameters = {
-        'dynamicCode': dynamciTypeSelected["code"],
+        'dynamicCode': dynamciTypeSelected['code'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -316,7 +312,7 @@ class _JtShowPageState extends State<ApplyList> {
     try {
       //构建查询车号参数
       Map<String, dynamic> queryParameters = {
-        'typeName': jcTypeListSelected["name"],
+        'typeName': jcTypeListSelected['name'],
         'pageNum': 0,
         'pageSize': 0
       };
@@ -334,8 +330,8 @@ class _JtShowPageState extends State<ApplyList> {
   // 显示添加机车调令对话框
   void _showAddLocomotiveDialog(BuildContext context) {
     final TextEditingController sortController = TextEditingController();
-    final TextEditingController trainTypeController = TextEditingController();
-    final TextEditingController trainNumController = TextEditingController();
+    // final TextEditingController trainTypeController = TextEditingController();
+    // final TextEditingController trainNumController = TextEditingController();
     final TextEditingController endController = TextEditingController();
     final TextEditingController startPositionController = TextEditingController();
     final TextEditingController endPositionController = TextEditingController();
@@ -359,13 +355,13 @@ class _JtShowPageState extends State<ApplyList> {
                 ),
                 // 机型车号展示
                 ZjcFormSelectCell(
-                  title: "动力类型",
-                  text: dynamciTypeSelected["name"]?.toString() ?? "",
-                  hintText: "请选择",
+                  title: '动力类型',
+                  text: dynamciTypeSelected['name']?.toString() ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (dynamicTypeList.isEmpty) {
-                      showToast("无动力类型选择");
+                      showToast('无动力类型选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -373,12 +369,12 @@ class _JtShowPageState extends State<ApplyList> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择动力类型",
+                        title: '选择动力类型',
                         clickCallBack: (selectItem, selectArr) {
                           logger.i(selectArr);
                           setState(() {
-                            dynamciTypeSelected["code"] = selectItem["code"];
-                            dynamciTypeSelected["name"] = selectItem["name"];
+                            dynamciTypeSelected['code'] = selectItem['code'];
+                            dynamciTypeSelected['name'] = selectItem['name'];
                             getJcType();
                           });
                         },
@@ -387,13 +383,13 @@ class _JtShowPageState extends State<ApplyList> {
                   },
                 ),
                 ZjcFormSelectCell(
-                  title: "机型",
-                  text: jcTypeListSelected["name"]?.toString() ?? "",
-                  hintText: "请选择",
+                  title: '机型',
+                  text: jcTypeListSelected['name']?.toString() ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (jcTypeList.isEmpty) {
-                      showToast("无机型可以选择");
+                      showToast('无机型可以选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -401,11 +397,11 @@ class _JtShowPageState extends State<ApplyList> {
                         labelKey: 'name',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择机型",
+                        title: '选择机型',
                         clickCallBack: (selectItem, selectArr) {
                           setState(() {
                             logger.i(selectArr);
-                            jcTypeListSelected["name"] = selectItem["name"];
+                            jcTypeListSelected['name'] = selectItem['name'];
                             getTrainNumCodeList();
                           });
                         },
@@ -414,13 +410,13 @@ class _JtShowPageState extends State<ApplyList> {
                   },
                 ),
                 ZjcFormSelectCell(
-                  title: "车号",
-                  text: trainNumSelected["trainNum"]?.toString() ?? "",
-                  hintText: "请选择",
+                  title: '车号',
+                  text: trainNumSelected['trainNum']?.toString() ?? '',
+                  hintText: '请选择',
                   showRedStar: true,
                   clickCallBack: () {
                     if (trainNumCodeList.isEmpty) {
-                      showToast("无车号可以选择");
+                      showToast('无车号可以选择');
                     } else {
                       ZjcCascadeTreePicker.show(
                         context,
@@ -428,12 +424,12 @@ class _JtShowPageState extends State<ApplyList> {
                         labelKey: 'trainNum',
                         valueKey: 'code',
                         childrenKey: 'children',
-                        title: "选择车号",
+                        title: '选择车号',
                         clickCallBack: (selectItem, selectArr) {
                           setState(() {
                             logger.i(selectArr);
-                            trainNumSelected["trainNum"] = selectItem["trainNum"];
-                            trainNumSelected["code"] = selectItem["code"];
+                            trainNumSelected['trainNum'] = selectItem['trainNum'];
+                            trainNumSelected['code'] = selectItem['code'];
                           });
                         },
                       );

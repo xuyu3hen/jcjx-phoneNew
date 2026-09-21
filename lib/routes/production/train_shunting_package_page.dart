@@ -2,7 +2,6 @@ import '../../index.dart';
 import 'package:camera/camera.dart';
 import 'package:intl/intl.dart';
 import 'dart:typed_data';
-import 'dart:convert';
 
 class TrainShuntingPackagePage extends StatefulWidget {
   final bool readOnly;
@@ -1020,9 +1019,9 @@ class _TrainShuntingPlanListPageState extends State<TrainShuntingPlanListPage> {
       if (list.isEmpty) return false;
       final r = await ProductApi().upShuntingImg(
         queryParametrs: {
-          "trainEntryCode": plan['trainEntryCode'],
-          "shuntingPlanCode": plan['code'],
-          "antiSlipType": antiSlipType,
+          'trainEntryCode': plan['trainEntryCode'],
+          'shuntingPlanCode': plan['code'],
+          'antiSlipType': antiSlipType,
         },
         imagedataList: list.map((e) => File(e.path)).toList(),
       );
@@ -2144,10 +2143,10 @@ class _TrainShuntingPlanDetailPageState extends State<_TrainShuntingPlanDetailPa
             children: [
               // Image preview
               if (!hasRemote && !hasLocal)
-                SizedBox(
+                const SizedBox(
                   width: 96,
                   height: 96,
-                  child: const DecoratedBox(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Color(0xFFF0F0F0),
                       borderRadius: BorderRadius.all(Radius.circular(8)),

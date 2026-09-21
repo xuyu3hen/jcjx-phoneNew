@@ -1,6 +1,4 @@
 import 'package:intl/intl.dart';
-import 'package:jcjx_phone/routes/production/repair_train.dart';
-import 'package:jcjx_phone/routes/vehicle28/submit_28.dart';
 
 import '../../index.dart';
 
@@ -97,7 +95,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   Future<void> getCertainPackage() async {
     Map<String, dynamic> params = {
-      "packageCode": widget.packageList[0]['packageCode'],
+      'packageCode': widget.packageList[0]['packageCode'],
       'pageSize': 0,
       'pageNum': 0
     };
@@ -107,8 +105,8 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
       setState(() {
         //将List<dynamic>转换为List<Map<String, dynamic>>
         packageListUse = (certainPackageList as List)
-            .where((item) => item is Map)
-            .map((item) => Map<String, dynamic>.from(item as Map))
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
             .toList();
         logger.i(packageListUse.length);
       });
@@ -117,7 +115,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   @override
   Widget build(BuildContext context) {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss"); // 时间格式化
+    // final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss'); // 时间格式化
 
     return Scaffold(
       appBar: AppBar(
@@ -132,7 +130,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
             }
           },
         ),
-        title: const Text("检修作业-作业包分包"),
+        title: const Text('检修作业-作业包分包'),
         backgroundColor: Colors.white,
         elevation: 1,
       ),
@@ -155,7 +153,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
 
   /// 构建机车基本信息区域
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -185,7 +183,7 @@ class _InspectionPackagePageState extends State<InspectionPackagePage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
@@ -397,8 +395,8 @@ class _InfoItem extends StatelessWidget {
 }
 
 class InspectionVertexOnePage extends StatefulWidget {
-  Map<String, dynamic>? packageInfo = {};
-  Map<String, dynamic>? locoInfo = {};
+  final Map<String, dynamic>? packageInfo;
+  final Map<String, dynamic>? locoInfo;
 
   InspectionVertexOnePage(
       {super.key, required this.packageInfo, required this.locoInfo});
@@ -412,7 +410,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
   // 模拟已采集的照片（可扩展为文件路径列表）
   var logger = AppLogger.logger;
 
-  final List<String> _photos = ["photo_1"]; // 示例：存储照片标识
+  final List<String> _photos = ['photo_1']; // 示例：存储照片标识
   //展示照片文件
   final List<XFile> _files = [];
   int _currentIndex = 0;
@@ -453,8 +451,8 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
           currentPackagePoint['taskInstructContentList'] is List) {
         taskInstructContentList =
             (currentPackagePoint['taskInstructContentList'] as List)
-                .where((item) => item is Map<String, dynamic>)
-                .map((item) => item as Map<String, dynamic>)
+                .whereType<Map<String, dynamic>>()
+                .map((item) => item)
                 .toList();
       }
 
@@ -462,8 +460,8 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
         if (item['taskContentItemList'] != null &&
             item['taskContentItemList'] is List) {
           taskContentItemList.addAll((item['taskContentItemList'] as List)
-              .where((item) => item is Map<String, dynamic>)
-              .map((item) => item as Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => item)
               .toList());
         }
       }
@@ -486,7 +484,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
           icon: const Icon(Icons.chevron_left),
           onPressed: () => Navigator.pop(context, true),
         ),
-        title: const Text("检修作业-项点"),
+        title: const Text('检修作业-项点'),
         backgroundColor: Colors.white,
         actions: [
           Container(
@@ -499,7 +497,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                 size: 18,
               ),
               label: const Text(
-                "报机统28",
+                '报机统28',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -558,7 +556,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                 TextButton(
                   onPressed: () => _gotoSecondStation(taskInstructContentList),
                   child: const Text(
-                    "作业内容",
+                    '作业内容',
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
@@ -600,7 +598,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                   Row(
                     children: [
                       const Text(
-                        "必须采集",
+                        '必须采集',
                         style: TextStyle(
                           color: Colors.red,
                           fontWeight: FontWeight.bold,
@@ -675,25 +673,25 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                         title: Text.rich(
                           TextSpan(
                             children: [
-                              TextSpan(text: '数据名称:'),
+                              const TextSpan(text: '数据名称:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['name'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '最小值可等于:'),
+                              const TextSpan(text: '最小值可等于:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitMin'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '最大值可等于:'),
+                              const TextSpan(text: '最大值可等于:'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitMax'] ?? ''}',
                                 style: const TextStyle(color: Colors.blue),
                               ),
-                              TextSpan(text: '单位'),
+                              const TextSpan(text: '单位'),
                               TextSpan(
                                 text:
                                     '${taskContentItemList[index]['limitUnit'] ?? ''}',
@@ -735,20 +733,19 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
                               await completePackage();
                               // 将图片清空
                               _files.clear();
-                              if (packagePoints != null &&
-                                  _currentIndex < packagePoints!.length - 1) {
+                              if (_currentIndex < packagePoints.length - 1) {
                                 // 如果还有下一项，则更新索引以显示下一项
                                 setState(() {
                                   _currentIndex++;
                                 });
                               } else {
-                                debugPrint("已完成所有项");
+                                debugPrint('已完成所有项');
                                 Navigator.pop(context, true);
                               }
                             }, // 当没有图片时禁用按钮
                       child: _currentIndex < (packagePoints.length) - 1
-                          ? const Text("进入下一项")
-                          : const Text("完成"),
+                          ? const Text('进入下一项')
+                          : const Text('完成'),
                     ),
                   ),
                 ],
@@ -823,10 +820,10 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
   void _takePhoto() async {
     // 调用相机采集照片（可结合image_picker库实现）
-    debugPrint("拍照功能触发");
+    debugPrint('拍照功能触发');
 
-    final ImagePicker _picker = ImagePicker();
-    final XFile? photo = await _picker.pickImage(
+    final ImagePicker picker = ImagePicker();
+    final XFile? photo = await picker.pickImage(
       source: ImageSource.camera,
       imageQuality: 80,
     );
@@ -841,7 +838,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
 
   void _deletePhoto(XFile photo) {
     // 删除照片逻辑
-    debugPrint("删除照片：$photo");
+    debugPrint('删除照片：$photo');
     setState(() {
       _files.remove(photo);
     });
@@ -861,13 +858,13 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
     completePackage();
     // 将图片清空
     _files.clear();
-    if (packagePoints != null && _currentIndex < packagePoints!.length - 1) {
+    if (_currentIndex < packagePoints.length - 1) {
       // 如果还有下一项，则更新索引以显示下一项
       setState(() {
         _currentIndex++;
       });
     } else {
-      debugPrint("已完成所有项");
+      debugPrint('已完成所有项');
       Navigator.pop(context, true);
     }
   }
@@ -876,7 +873,8 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
     try {
       List<File> files = _files.map((xFile) => File(xFile.path)).toList();
       logger.i(currentPackagePoint['code']);
-      var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      // var r = await ProductApi().uploadCertainPackageImg(queryParametrs: {
+      await ProductApi().uploadCertainPackageImg(queryParametrs: {
         'certainPackageCodeList': currentPackagePoint['code'],
       }, imagedatas: files);
     } catch (e) {
@@ -914,7 +912,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
   // ---------------------- 辅助方法：机车信息展示 ----------------------
   /// 构建机车基本信息区域
   Widget _buildTrainInfo() {
-    final timeFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    final timeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -944,7 +942,7 @@ class _InspectionVertexOnePageState extends State<InspectionVertexOnePage> {
         // 每一项单独一行显示
         _InfoItem(
             label: '停留地点',
-            value: widget.locoInfo?['stopPlace'] != "null-null"
+            value: widget.locoInfo?['stopPlace'] != 'null-null'
                 ? (widget.locoInfo?['stopPlace'] ?? '无')
                 : '无'),
         const SizedBox(height: 8),
