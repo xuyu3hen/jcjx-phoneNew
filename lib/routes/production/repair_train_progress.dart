@@ -87,6 +87,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
 
   // 用于追踪每个组的展开状态
   final Map<int, bool> _groupExpansionStates = {};
+  // 分组结果缓存：按 RepairGroup 在 repairGroups 中的 index 缓存
+  // _groupItemsByProcAndSchedule 的结果。setState rebuild 时折叠的卡片不重算、
+  // 展开的卡片直接复用缓存，避免机车数量多时点开一张卡片拖慢整页
+  final Map<int, List<Map<String, dynamic>>> _procGroupsCache = {};
+  // 工序节点分组的展开状态：key = "${groupIndex}_${procIndex}"
+  final Map<String, bool> _procExpansionStates = {};
+  // 排程节点分组的展开状态：key = "${groupIndex}_${procIndex}_${schedIndex}"
+  final Map<String, bool> _schedExpansionStates = {};
 
   // 搜索文本
   String _searchText = '';
@@ -233,35 +241,21 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             ),
             autofocus: true,
             onSubmitted: (_) {
-              final kw = controller.text.trim();
-              setState(() {
-                _searchText = kw;
-              });
-              if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
-                SmartDialog.showToast('车号查询为空');
-              }
+              _applySearch(controller.text.trim());
               Navigator.of(context).pop();
             },
           ),
           actions: [
             TextButton(
               onPressed: () {
-                setState(() {
-                  _searchText = '';
-                });
+                _applySearch('');
                 Navigator.of(context).pop();
               },
               child: const Text('清空'),
             ),
             TextButton(
               onPressed: () {
-                final kw = controller.text.trim();
-                setState(() {
-                  _searchText = kw;
-                });
-                if (kw.isNotEmpty && !_hasTrainNumMatch(kw)) {
-                  SmartDialog.showToast('车号查询为空');
-                }
+                _applySearch(controller.text.trim());
                 Navigator.of(context).pop();
               },
               child: const Text('查询'),
@@ -270,6 +264,63 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         );
       },
     );
+  }
+
+  /// 应用搜索关键字：清空旧的缓存/展开状态（避免 index 错位），
+  /// 过滤数据后逐级展开到匹配机车所在的最底层
+  /// （修程卡片 → 工序节点 → 排程节点 → 机车卡片）
+  void _applySearch(String kw) {
+    // 清空旧分组缓存和展开状态：搜索后 filteredGroups 顺序会变，
+    // 旧的 index 缓存会错位导致"下拉内容没改变"
+    _procGroupsCache.clear();
+    _procExpansionStates.clear();
+    _schedExpansionStates.clear();
+    _groupExpansionStates.clear();
+    setState(() {
+      _searchText = kw;
+    });
+    if (kw.isEmpty) return;
+
+    // 用与 _buildRepairList 完全一致的方式构造过滤后的 group
+    final filtered = <RepairGroup>[];
+    for (final g in repairGroups) {
+      final hitChildren = (g.children ?? const <RepairItem>[])
+          .where((it) => _itemMatchesKeyword(it, kw))
+          .toList();
+      if (hitChildren.isEmpty) continue;
+      filtered.add(RepairGroup(
+        children: hitChildren,
+        repairProcCode: g.repairProcCode,
+        repairProcName: g.repairProcName,
+        sort: g.sort,
+      ));
+    }
+    if (filtered.isEmpty) {
+      SmartDialog.showToast('车号查询为空');
+      return;
+    }
+
+    // 逐级展开：只展开真正包含匹配机车的工序/排程节点
+    for (int gi = 0; gi < filtered.length; gi++) {
+      final children = filtered[gi].children ?? const <RepairItem>[];
+      _groupExpansionStates[gi] = true;
+      // 算好分组写入缓存，build 时复用不重算
+      final procGroups = _groupItemsByProcAndSchedule(children);
+      _procGroupsCache[gi] = procGroups;
+      for (int pi = 0; pi < procGroups.length; pi++) {
+        final pItems = procGroups[pi]['_items'] as List<RepairItem>;
+        if (!pItems.any((it) => _itemMatchesKeyword(it, kw))) continue;
+        _procExpansionStates['${gi}_$pi'] = true;
+        final schedGroups =
+            procGroups[pi]['_scheduleGroups'] as List<Map<String, dynamic>>;
+        for (int si = 0; si < schedGroups.length; si++) {
+          final sItems = schedGroups[si]['_items'] as List<RepairItem>;
+          if (sItems.any((it) => _itemMatchesKeyword(it, kw))) {
+            _schedExpansionStates['${gi}_${pi}_$si'] = true;
+          }
+        }
+      }
+    }
   }
 
   Map<int, dynamic> noticeMap = {
@@ -297,6 +348,9 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     22: '检修过程故障处置单',
   };
 
+  // 首次数据加载后是否需要按 initialSearchText 逐级展开
+  bool _initialExpandDone = false;
+
   @override
   void initState() {
     super.initState();
@@ -306,24 +360,38 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     _loadRepairProgressData();
   }
 
+  /// 数据加载完成后，若有初始搜索文本（从机车详情页"检修调令"跳入），
+  /// 执行一次逐级展开，定位到对应车号+端位的机车
+  void _applyInitialExpandIfNeeded() {
+    if (_initialExpandDone) return;
+    if (_searchText.isEmpty) {
+      _initialExpandDone = true;
+      return;
+    }
+    _initialExpandDone = true;
+    _applySearch(_searchText);
+  }
+
   // 加载检修进度数据
   Future<void> _loadRepairProgressData({bool forceRefresh = false}) async {
     try {
+      // 只要缓存里有数据就直接用，退出再进入不重新查询；
+      // 需要最新数据时由用户下拉刷新（forceRefresh=true）主动触发
       final cacheValid = !forceRefresh &&
           Global.isRepairProgressDataLoaded &&
-          Global.repairProgressDataLoadTime != null &&
-          DateTime.now()
-                  .difference(Global.repairProgressDataLoadTime!)
-                  .inMinutes <
-              5 &&
           Global.cachedRepairProgressData.isNotEmpty;
 
       if (!mounted) return;
       if (cacheValid) {
         setState(() {
           repairGroups = Global.cachedRepairProgressData;
+          _procGroupsCache.clear();
+          _procExpansionStates.clear();
+          _schedExpansionStates.clear();
           _isLoading = false;
         });
+        // 从机车详情"检修调令"跳入：数据就绪后逐级展开到对应车号
+        _applyInitialExpandIfNeeded();
         return;
       }
 
@@ -331,10 +399,24 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
         _isLoading = true;
       });
 
-      // 如果没有缓存或缓存过期，则重新加载
-      Map<String, dynamic> queryParametrs = {};
-      List<RepairGroup> r =
-          await ProductApi().getTrainEntryAndDynamics(queryParametrs);
+      // 优先复用登录后正在进行的预加载 Future，避免页面进入时重复请求
+      // forceRefresh 时不复用，强制重新拉取最新数据
+      List<RepairGroup> r;
+      final preloadFuture =
+          forceRefresh ? null : Global.awaitRepairProgressPreload();
+      if (preloadFuture != null) {
+        // 预加载正在进行中，await 同一个 Future，登录时已发的请求结果直接复用
+        r = await preloadFuture;
+        // 预加载失败（isRepairProgressDataLoaded 仍为 false）时回退到主动请求
+        if (!Global.isRepairProgressDataLoaded) {
+          Map<String, dynamic> queryParametrs = {};
+          r = await ProductApi().getTrainEntryAndDynamics(queryParametrs);
+        }
+      } else {
+        // 没有正在进行的预加载，主动请求
+        Map<String, dynamic> queryParametrs = {};
+        r = await ProductApi().getTrainEntryAndDynamics(queryParametrs);
+      }
 
       // 更新缓存
       Global.cachedRepairProgressData = r;
@@ -344,11 +426,16 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
       if (!mounted) return;
       setState(() {
         repairGroups = r;
+        _procGroupsCache.clear();
+        _procExpansionStates.clear();
+        _schedExpansionStates.clear();
         if (r.isNotEmpty) {
           logger.i(r[0].repairProcCode);
         }
         _isLoading = false;
       });
+      // 数据就绪后逐级展开到对应车号
+      _applyInitialExpandIfNeeded();
     } catch (e) {
       logger.e('加载检修进度数据失败: $e');
       if (mounted) {
@@ -408,7 +495,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     } else {
       for (var group in repairGroups) {
         final filteredChildren = group.children
-            ?.where((item) => (item.trainNum ?? '').contains(_searchText))
+            ?.where((item) => _itemMatchesKeyword(item, _searchText))
             .toList();
 
         if (filteredChildren != null && filteredChildren.isNotEmpty) {
@@ -436,10 +523,26 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
     for (final g in repairGroups) {
       final children = g.children ?? const <RepairItem>[];
       for (final it in children) {
-        final tn = (it.trainNum ?? '').toString();
-        if (tn.contains(kw)) return true;
+        if (_itemMatchesKeyword(it, kw)) return true;
       }
     }
+    return false;
+  }
+
+  /// 判断某台机车是否匹配搜索关键字（同时支持车号与端位）。
+  /// - 搜 "5068"：车号匹配，5068A/5068B 都显示
+  /// - 搜 "5068A"：按车号+端位匹配，只显示 5068A，不再串出 5068B
+  bool _itemMatchesKeyword(RepairItem item, String keyword) {
+    final kw = keyword.trim().toUpperCase();
+    if (kw.isEmpty) return true;
+    final tn = (item.trainNum ?? '').toString().trim();
+    if (tn.isEmpty) return false;
+    final suffix = formatEndsSuffix(item.ends);
+    final fullLabel = suffix.isEmpty ? tn : '$tn$suffix';
+    // 完整标签（车号+端位）匹配：处理 5068A 这种带端位的搜索
+    if (fullLabel.toUpperCase().contains(kw)) return true;
+    // 纯车号匹配：搜索内容不带端位时，A/B 两端都显示
+    if (tn.toUpperCase().contains(kw)) return true;
     return false;
   }
 
@@ -448,7 +551,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
   Widget _buildRepairGroupCard(RepairGroup group, int index) {
     bool isExpanded = _groupExpansionStates[index] ?? false;
     final children = group.children ?? const <RepairItem>[];
-    final procGroups = _groupItemsByProcAndSchedule(children);
+    // 懒计算 + 缓存：折叠时不分组（不展示也用不到），展开时算一次后复用
+    final procGroups = isExpanded
+        ? (_procGroupsCache[index] ??= _groupItemsByProcAndSchedule(children))
+        : const <Map<String, dynamic>>[];
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -489,13 +595,20 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
             ),
           ),
           // 子项列表：按 工序节点 → 排程节点 → 机车 层级展示
+          // 工序节点和排程节点都支持点击下拉展开/折叠，默认折叠，
+          // 避免一次渲染全部机车卡片导致展开卡顿
           if (isExpanded)
-            ...procGroups.map((proc) {
+            ...procGroups.asMap().entries.map((procEntry) {
+              final procIndex = procEntry.key;
+              final proc = procEntry.value;
               final procName = (proc['repairMainNodeName'] ?? '').toString();
               final procCount = proc['count'] is int ? proc['count'] as int : 0;
               final sGroups =
                   (proc['_scheduleGroups'] as List<Map<String, dynamic>>?) ??
                       [];
+              final procKey = '${index}_$procIndex';
+              final procExpanded =
+                  _procExpansionStates[procKey] ?? false;
               return Container(
                 margin: const EdgeInsets.only(top: 8),
                 decoration: BoxDecoration(
@@ -506,140 +619,178 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 工序节点标题
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.05),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.list_alt,
-                            size: 16,
-                            color: Colors.blue.shade700,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              procName,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue.shade900,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                    // 工序节点标题（可点击展开/折叠）
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        setState(() {
+                          _procExpansionStates[procKey] = !procExpanded;
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.05),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              procExpanded
+                                  ? Icons.arrow_drop_down
+                                  : Icons.arrow_right,
+                              size: 18,
+                              color: Colors.blue.shade700,
                             ),
-                          ),
-                          if (procCount != 0) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              constraints: const BoxConstraints(
-                                  minWidth: 20, minHeight: 20),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade200,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                            Icon(
+                              Icons.list_alt,
+                              size: 16,
+                              color: Colors.blue.shade700,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
                               child: Text(
-                                '$procCount',
+                                procName,
                                 style: TextStyle(
-                                  color: Colors.blue.shade900,
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade900,
                                 ),
-                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
                             ),
+                            if (procCount != 0) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                constraints: const BoxConstraints(
+                                    minWidth: 20, minHeight: 20),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade200,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$procCount',
+                                  style: TextStyle(
+                                    color: Colors.blue.shade900,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                    // 排程节点组
-                    ...sGroups.map((sched) {
-                      final sName =
-                          (sched['scheduleNodeName'] ?? '').toString();
-                      final sCount =
-                          sched['count'] is int ? sched['count'] as int : 0;
-                      final sItems =
-                          (sched['_items'] as List<RepairItem>?) ?? [];
-                      return Container(
-                        margin: const EdgeInsets.only(left: 12),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(
-                                color: Colors.amber.shade400, width: 2),
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // 排程节点标题
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.withOpacity(0.08),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.schedule,
-                                    size: 14,
-                                    color: Colors.amber.shade800,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      sName,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.amber.shade900,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                  ),
-                                  if (sCount != 0) ...[
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      constraints: const BoxConstraints(
-                                          minWidth: 18, minHeight: 18),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 5, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.shade700,
-                                        borderRadius:
-                                            BorderRadius.circular(9),
-                                      ),
-                                      child: Text(
-                                        '$sCount',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                    // 排程节点组（只在工序节点展开时渲染）
+                    if (procExpanded)
+                      ...sGroups.asMap().entries.map((schedEntry) {
+                        final schedIndex = schedEntry.key;
+                        final sched = schedEntry.value;
+                        final sName =
+                            (sched['scheduleNodeName'] ?? '').toString();
+                        final sCount =
+                            sched['count'] is int ? sched['count'] as int : 0;
+                        final sItems =
+                            (sched['_items'] as List<RepairItem>?) ?? [];
+                        final schedKey = '${index}_${procIndex}_$schedIndex';
+                        final schedExpanded =
+                            _schedExpansionStates[schedKey] ?? false;
+                        return Container(
+                          margin: const EdgeInsets.only(left: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              left: BorderSide(
+                                  color: Colors.amber.shade400, width: 2),
                             ),
-                            // 机车卡片列表
-                            ...sItems
-                                .map((item) => _buildRepairItem(item))
-                                .toList(),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // 排程节点标题（可点击展开/折叠）
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  setState(() {
+                                    _schedExpansionStates[schedKey] =
+                                        !schedExpanded;
+                                  });
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withOpacity(0.08),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        schedExpanded
+                                            ? Icons.arrow_drop_down
+                                            : Icons.arrow_right,
+                                        size: 16,
+                                        color: Colors.amber.shade800,
+                                      ),
+                                      Icon(
+                                        Icons.schedule,
+                                        size: 14,
+                                        color: Colors.amber.shade800,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Flexible(
+                                        child: Text(
+                                          sName,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.amber.shade900,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                        ),
+                                      ),
+                                      if (sCount != 0) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          constraints: const BoxConstraints(
+                                              minWidth: 18, minHeight: 18),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 5, vertical: 1),
+                                          decoration: BoxDecoration(
+                                            color: Colors.amber.shade700,
+                                            borderRadius:
+                                                BorderRadius.circular(9),
+                                          ),
+                                          child: Text(
+                                            '$sCount',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // 机车卡片列表（只在排程节点展开时渲染）
+                              if (schedExpanded)
+                                ...sItems
+                                    .map((item) => _buildRepairItem(item))
+                                    .toList(),
+                            ],
+                          ),
+                        );
+                      }).toList(),
                   ],
                 ),
               );
@@ -1338,6 +1489,16 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                               );
                               break;
                             case 6: // 检修过程故障处置单
+                              // 权限以登录时的预查结果为准
+                              // （getInfo 与 shuntingRole/selectAll?shuntingType=25 比对）。
+                              // 预查未完成则 await 同一个请求，不重复发请求
+                              if (!Global.faultHandlePermissionChecked) {
+                                await Global.preloadFaultHandlePermission();
+                              }
+                              if (!Global.hasFaultHandlePermission) {
+                                showToast('当前账号无检修过程故障处置单操作权限');
+                                return;
+                              }
                               await getMasSale(item);
                               if (!mounted) return;
                               final faultCandidates = masSaleList.isNotEmpty
@@ -1361,9 +1522,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                                             item.assignSegmentName ?? '',
                                       }
                                     ];
-                              if (masSaleList.isEmpty) {
-                                showToast('未查询到现成故障数据，已打开填写界面');
-                              }
+                              // 故障明细通过 _loadJt28Options 里的
+                              // queryRepairProcessFaultDetailsForManualDispatch
+                              // 接口异步加载，masSaleList 是否为空不影响明细展示，
+                              // 不应在这里提示"未查询到"，会误导用户
                               await Navigator.push(
                                 rootContext,
                                 MaterialPageRoute(
@@ -2903,7 +3065,14 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                             .isEmpty) {
                           setState(() {
                             fd.trainNumSelected =
-                                Map<String, dynamic>.from(trainMatch);
+                                Map<String,dynamic>.from(trainMatch);
+                            // 该表单由检修进度里选中的机车带入（车号+端位），
+                            // 车号列表只保留对应的那一台，点车号时不再
+                            // 看到另一端（如选 5068A 不会再看到 5068B）。
+                            // "+" 新增的独立表单不经过这里，仍可选全部车号
+                            fd.trainNumList = [
+                              Map<String, dynamic>.from(trainMatch)
+                            ];
                           });
                         }
                       }
@@ -3841,19 +4010,12 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
   String _workpieceCoefficientLabel(Map<String, dynamic>? item) {
     if (item == null) return '';
-    return _pickFromItem(item, [
-      'workpieceCoeffcient',
-      'workpieceCoefficient',
-      'workPieceCoeffcient',
-      'workPieceCoefficient',
-      'workCoeffcient',
-      'workCoefficient',
-      'coefficient',
-      'workpieceFactor',
-      'workPieceFactor',
-      'partsCoefficient',
-      'componentsCoefficient',
-    ]);
+    // 后端明细里 workpieceCoefficient 字段当前返回 null（字段在 vjtWebSearch 里，
+    // 与 reporterName、deptName 同层级）。实际有数值的是同层级的 workHourFactor。
+    // 优先 workpieceCoefficient，为空则回退 workHourFactor，保证 UI 能展示数值。
+    final primary = _pickFromItem(item, ['workpieceCoefficient']);
+    if (primary.isNotEmpty) return primary;
+    return _pickFromItem(item, ['workHourFactor']);
   }
 
   String _resolveCodeFromOptions(
@@ -4397,11 +4559,9 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     if (widget.noticeType == 22) {
       if (_jt28Options.isEmpty) {
         error = '暂无故障明细，无法下发';
-      } else if (_currentProcessNodeName.isEmpty) {
-        error = '工序节点未回写完成，请稍后';
-      } else if (_stopLocationDisplay.trim().isEmpty) {
-        error = '停留位置未回写完成，请稍后';
       }
+      // 故障处置单不需要全局工序节点/停留位置校验，
+      // 每条 detailList 自带 repairMainNodeName/scheduleNodeName
     } else {
       if (_jt28Options.isNotEmpty && _jt28Label(_selectedJt28).isEmpty) {
         error = '请选择一条机统28';
@@ -5955,6 +6115,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     final deptByDict = _responsibleDeptByCode(item);
     final completeProcByDict = _completeProcessByCode(item);
     final scheduleByDict = _scheduleNodeByCode(item);
+    final workpieceCoeff = _workpieceCoefficientLabel(item);
 
     final hasPic = repairPicGroup.trim().isNotEmpty;
     final hasLongScheme = longRepairScheme.trim().isNotEmpty;
@@ -6007,8 +6168,11 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       required String value,
       IconData? icon,
       Color? labelColor,
+      bool alwaysShow = false,
     }) {
-      if (value.isEmpty) return const SizedBox.shrink();
+      // alwaysShow=true 时即使值为空也展示一行，显示 "-"（用于活检系数等必显字段）
+      final displayValue = value.isEmpty && alwaysShow ? '-' : value;
+      if (displayValue.isEmpty) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(
@@ -6043,7 +6207,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                value,
+                displayValue,
                 style: const TextStyle(
                   fontSize: 13.5,
                   color: Color(0xFF0F172A),
@@ -6492,6 +6656,13 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
                           icon: Icons.account_tree_outlined,
                         ),
                         kvRow(
+                          label: '活检系数',
+                          value: workpieceCoeff,
+                          icon: Icons.straighten_rounded,
+                          labelColor: const Color(0xFF0F766E),
+                          alwaysShow: true,
+                        ),
+                        kvRow(
                           label: '完成工序',
                           value: completeProcByDict,
                           icon: Icons.rule_outlined,
@@ -6656,258 +6827,73 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     }
 
     if (widget.noticeType == 22) {
-      final groupCode = _selectedReceiveGroup == null
-          ? ''
-          : _receiveGroupCode(_selectedReceiveGroup);
-      final groupName = _selectedReceiveGroup == null
-          ? ''
-          : _receiveGroupLabel(_selectedReceiveGroup);
       final trainEntryCode =
           (widget.item.code ?? widget.item.c4c5ledger?.trainEntryCode ?? '')
               .toString()
               .trim();
-      final noticeCode = _pickTextFromSources([
-        _selectedNotice,
-        {
-          'code': widget.item.code ?? '',
-          'masSaleInformationCode':
-              widget.item.masSaleInformationCode ?? '',
-        },
-      ], [
-        'code',
-        'masSaleInformationCode',
-      ]);
 
-      final faultList = <Map<String, dynamic>>[];
-      for (int i = 0; i < _jt28Options.length; i++) {
-        final row = _jt28Options[i];
-        final faultPhenomenon = _jt28Label(row);
-        final suggestScheme = _suggestedRepairSchemeLabel(row);
-        final reporter = _reporterLabel(row);
-        final reportTime = _reportTimeLabel(row);
-        final repairPicGroup = _repairPictureGroupId(row);
-        final longRepairScheme = _longRepairSchemeLabel(row);
-        final riskLevel = _riskLevelLabel(row);
-        final processing = _processingMethodLabel(row);
-        final rowCode = _pickTextFromSources([row], [
-          'code',
-          'jt28Code',
-          'masSaleInformationCode',
-        ]);
-        final processingMethodCode = _pickFromItem(row, [
-          'processingMethod',
-          'requiredProcessingMethod',
-          'jtDictCode',
-          'processMethodCode',
-          'processingMethodCode',
-          'processingMethodDictCode',
-          'machineSystemCode',
-        ]);
-        final processingMethodName = _processingMethodByCode(row);
-        final configCode = _pickFromItem(row, [
-          'jcNodeCode',
-          'configCode',
-          'configNodeCode',
-          'nodeCode',
-          'configId',
-          'faultComponentCode',
-          'faultPartCode',
-          'componentCode',
-          'partCode',
-          'structureCode',
-          'faultConfigCode',
-        ]);
-        final configNodeName = _faultConfigByCode(row);
-        final responsibleDeptCode = _pickFromItem(row, [
-          'deptId',
-          'deptCode',
-          'team',
-          'teamId',
-          'teamCode',
-          'disposeDeptId',
-          'disposeDepartId',
-          'responsibleDeptCode',
-          'responsibleDept',
-          'deptNameCode',
-          'dutyDeptCode',
-          'dutyDept',
-          'handleDeptCode',
-          'handleDept',
-          'assignDeptCode',
-          'assignDept',
-        ]);
-        final responsibleDeptName = _responsibleDeptByCode(row);
-        final completeProcessCode = _pickFromItem(row, [
-          'processMainNodeCode',
-          'mainProcessPoint',
-          'completeProcessCode',
-          'completedProcessCode',
-          'finishProcessCode',
-          'repairProcCode',
-          'processCode',
-          'repairProcessCode',
-          'currentProcessCode',
-          'repairMainNodeCode',
-          'originalRepairMainNodeCode',
-        ]);
-        final completeProcessName = _completeProcessByCode(row);
-        final scheduleNodeCode = _pickFromItem(row, [
-          'scheduleNodeCode',
-          'originalScheduleNodeCode',
-          'schedNodeCode',
-          'planNodeCode',
-          'arrangeNodeCode',
-          'scheduleCode',
-        ]);
-        final scheduleNodeName = _scheduleNodeByCode(row);
-        final workpieceCoeff = _workpieceCoefficientLabel(row);
-        faultList.add({
-          'serialNo': i + 1,
-          if (rowCode.isNotEmpty) 'code': rowCode,
-          if (faultPhenomenon.isNotEmpty)
-            'faultPhenomenon': faultPhenomenon,
-          if (faultPhenomenon.isNotEmpty) 'faultDescription': faultPhenomenon,
-          if (faultPhenomenon.isNotEmpty) 'faultInformation': faultPhenomenon,
-          if (suggestScheme.isNotEmpty)
-            'suggestedRepairScheme': suggestScheme,
-          if (suggestScheme.isNotEmpty) 'suggestRepairScheme': suggestScheme,
-          if (suggestScheme.isNotEmpty) 'repairSchemeShort': suggestScheme,
-          if (reporter.isNotEmpty) 'reporter': reporter,
-          if (reporter.isNotEmpty) 'createName': reporter,
-          if (reporter.isNotEmpty) 'reportPerson': reporter,
-          if (reportTime.isNotEmpty) 'reportTime': reportTime,
-          if (reportTime.isNotEmpty) 'createTime': reportTime,
-          if (repairPicGroup.isNotEmpty) 'repairPicture': repairPicGroup,
-          if (repairPicGroup.isNotEmpty) 'picGroupId': repairPicGroup,
-          if (repairPicGroup.isNotEmpty) 'imgGroupId': repairPicGroup,
-          if (longRepairScheme.isNotEmpty)
-            'longRepairScheme': longRepairScheme,
-          if (longRepairScheme.isNotEmpty)
-            'maintenanceNotice': longRepairScheme,
-          if (longRepairScheme.isNotEmpty)
-            'repairProcContent': longRepairScheme,
-          if (riskLevel.isNotEmpty) 'riskLevel': riskLevel,
-          if (riskLevel.isNotEmpty) 'riskLevelName': riskLevel,
-          if (processing.isNotEmpty) 'processingMethod': processing,
-          if (processing.isNotEmpty) 'jtDictName': processing,
-          if (processingMethodCode.isNotEmpty)
-            'processingMethodCode': processingMethodCode,
-          if (processingMethodCode.isNotEmpty) 'jtDictCode': processingMethodCode,
-          if (processingMethodCode.isNotEmpty)
-            'processMethodCode': processingMethodCode,
-          if (processingMethodName.isNotEmpty)
-            'processingMethodName': processingMethodName,
-          if (processingMethodName.isNotEmpty)
-            'processMethodName': processingMethodName,
-          if (configCode.isNotEmpty) 'jcNodeCode': configCode,
-          if (configCode.isNotEmpty) 'configCode': configCode,
-          if (configCode.isNotEmpty) 'configNodeCode': configCode,
-          if (configCode.isNotEmpty) 'nodeCode': configCode,
-          if (configCode.isNotEmpty) 'faultConfigCode': configCode,
-          if (configCode.isNotEmpty) 'faultComponentCode': configCode,
-          if (configNodeName.isNotEmpty) 'jcNodeName': configNodeName,
-          if (configNodeName.isNotEmpty) 'configNodeName': configNodeName,
-          if (configNodeName.isNotEmpty) 'configName': configNodeName,
-          if (configNodeName.isNotEmpty) 'faultConfigName': configNodeName,
-          if (configNodeName.isNotEmpty) 'structureName': configNodeName,
-          if (configNodeName.isNotEmpty) 'componentName': configNodeName,
-          if (responsibleDeptCode.isNotEmpty)
-            'responsibleDeptCode': responsibleDeptCode,
-          if (responsibleDeptCode.isNotEmpty) 'deptCode': responsibleDeptCode,
-          if (responsibleDeptCode.isNotEmpty) 'dutyDeptCode': responsibleDeptCode,
-          if (responsibleDeptCode.isNotEmpty)
-            'handleDeptCode': responsibleDeptCode,
-          if (responsibleDeptCode.isNotEmpty)
-            'assignDeptCode': responsibleDeptCode,
-          if (responsibleDeptName.isNotEmpty)
-            'responsibleDeptName': responsibleDeptName,
-          if (responsibleDeptName.isNotEmpty) 'deptName': responsibleDeptName,
-          if (responsibleDeptName.isNotEmpty) 'dutyDeptName': responsibleDeptName,
-          if (responsibleDeptName.isNotEmpty)
-            'handleDeptName': responsibleDeptName,
-          if (responsibleDeptName.isNotEmpty)
-            'assignDeptName': responsibleDeptName,
-          if (completeProcessCode.isNotEmpty)
-            'processMainNodeCode': completeProcessCode,
-          if (completeProcessCode.isNotEmpty)
-            'completeProcessCode': completeProcessCode,
-          if (completeProcessCode.isNotEmpty)
-            'repairProcCode': completeProcessCode,
-          if (completeProcessCode.isNotEmpty) 'processCode': completeProcessCode,
-          if (completeProcessCode.isNotEmpty)
-            'finishProcessCode': completeProcessCode,
-          if (completeProcessCode.isNotEmpty)
-            'repairMainNodeCode': completeProcessCode,
-          if (completeProcessName.isNotEmpty)
-            'processMainNode': completeProcessName,
-          if (completeProcessName.isNotEmpty)
-            'completeProcessName': completeProcessName,
-          if (completeProcessName.isNotEmpty)
-            'completedProcessName': completeProcessName,
-          if (completeProcessName.isNotEmpty)
-            'repairProcName': completeProcessName,
-          if (completeProcessName.isNotEmpty) 'processName': completeProcessName,
-          if (completeProcessName.isNotEmpty)
-            'finishProcessName': completeProcessName,
-          if (completeProcessName.isNotEmpty)
-            'repairMainNodeName': completeProcessName,
-          if (scheduleNodeCode.isNotEmpty)
-            'scheduleNodeCode': scheduleNodeCode,
-          if (scheduleNodeCode.isNotEmpty)
-            'originalScheduleNodeCode': scheduleNodeCode,
-          if (scheduleNodeCode.isNotEmpty) 'schedNodeCode': scheduleNodeCode,
-          if (scheduleNodeCode.isNotEmpty) 'planNodeCode': scheduleNodeCode,
-          if (scheduleNodeCode.isNotEmpty) 'scheduleCode': scheduleNodeCode,
-          if (scheduleNodeName.isNotEmpty)
-            'scheduleNodeName': scheduleNodeName,
-          if (scheduleNodeName.isNotEmpty)
-            'originalScheduleNodeName': scheduleNodeName,
-          if (scheduleNodeName.isNotEmpty) 'schedNodeName': scheduleNodeName,
-          if (scheduleNodeName.isNotEmpty) 'planNodeName': scheduleNodeName,
-          if (scheduleNodeName.isNotEmpty) 'scheduleName': scheduleNodeName,
-          if (scheduleNodeName.isNotEmpty) 'completeNodeName': scheduleNodeName,
-          if (workpieceCoeff.isNotEmpty)
-            'workpieceCoeffcient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty)
-            'workpieceCoefficient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty)
-            'workPieceCoeffcient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty)
-            'workPieceCoefficient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty) 'workCoeffcient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty) 'workCoefficient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty) 'coefficient': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty) 'workpieceFactor': workpieceCoeff,
-          if (workpieceCoeff.isNotEmpty) 'workPieceFactor': workpieceCoeff,
-        });
+      // detailList：直接使用 _jt28Options 原始数据（含 vjtWebSearch 嵌套），
+      // 只移除 Flutter 端临时字段
+      final detailList = <Map<String, dynamic>>[];
+      for (final row in _jt28Options) {
+        final cleaned = Map<String, dynamic>.from(row);
+        cleaned.remove('jt28DisplayText');
+        detailList.add(cleaned);
       }
 
-      final masNoticeDeptList = _buildRepairProcessNoticeList(
-        user: user,
-      );
+      // shuntingNoticeList：签收人列表，shuntingType=25
+      final shuntingNoticeList = <Map<String, dynamic>>[];
+      for (final signee in _signeeList) {
+        final dept = signee['signDept'];
+        final users = signee['signUsers'];
+        final deptMap = dept is Map ? Map<String, dynamic>.from(dept) : null;
+        final deptId = deptMap?['deptId'];
+        final deptName = _pickText(deptMap, ['deptName']);
+        if (users is! List) continue;
+        for (final u in users) {
+          if (u is! Map) continue;
+          final userMap = Map<String, dynamic>.from(u);
+          final auditUserId = userMap['userId'];
+          final auditUserName =
+              _pickText(userMap, ['nickName', 'userName', 'name']);
+          if (auditUserId == null || _asText(auditUserId).isEmpty) continue;
+          shuntingNoticeList.add({
+            'applyUserId': user.userId,
+            'applyUserName':
+                ((user.nickName ?? user.userName) ?? '').toString(),
+            'auditDeptId': deptId,
+            'auditDeptName': deptName,
+            'auditUserId': auditUserId,
+            'auditUserName': auditUserName,
+            'shuntingType': 25,
+            'status': 0,
+            if (trainEntryCode.isNotEmpty) 'trainEntryCode': trainEntryCode,
+          });
+        }
+      }
 
       final faultPayload = <String, dynamic>{
-        if (noticeCode.isNotEmpty) 'code': noticeCode,
+        'detailList': detailList,
+        'shuntingNoticeList': shuntingNoticeList,
+        'fillStatus': 0,
+        'formCode': null,
         if (trainEntryCode.isNotEmpty) 'trainEntryCode': trainEntryCode,
-        'shuntingType': 22,
-        if (groupCode.isNotEmpty) 'receiveGroupCode': groupCode,
-        if (groupName.isNotEmpty) 'receiveGroupName': groupName,
-        'masNoticeDeptList': masNoticeDeptList,
-        'faultList': faultList,
       };
 
       setState(() => _submitting = true);
       try {
         final res = await ProductApi()
-            .saveFaultDisposalNotice(data: faultPayload);
-        final success =
-            res != null && (res['code'] == 200 || res['code'] == 'S_T_S003');
+            .publishRepairProcessFaultShunting(data: faultPayload);
+        final code = res is Map ? res['code'] : null;
+        final innerCode = res is Map && res['data'] is Map ? res['data']['code'] : null;
+        final success = code == 200 || code == 'S_T_S003' || innerCode == 200 || innerCode == 'S_T_S003';
         if (!mounted) return;
         if (success) {
-          _showRepairProcessSuccessDialog();
+          showToast('提报成功');
+          Navigator.of(context).pop();
         } else {
           showToast(
-              '故障处置单下发失败: ${res?['msg'] ?? '未知错误'}');
+              '故障处置单下发失败: ${res?['message'] ?? res?['msg'] ?? '未知错误'}');
         }
       } catch (e) {
         _logger.e('检修过程故障处置单下发失败: $e');

@@ -9,6 +9,23 @@ class NormalMainPage extends StatefulWidget {
   State createState() => _NormalMainPageState();
 }
 
+// 首页功能项的声明：权限标题、显示标题、图标、跳转路由或自定义点击
+class _FeatureEntry {
+  final String permTitle; // 用于 _canShowByRouterTitle 判断
+  final String title; // 图标下方文字
+  final Icon icon;
+  final String? route; // 命名路由
+  final VoidCallback? onTap; // 自定义点击（优先级高于 route）
+
+  const _FeatureEntry({
+    required this.permTitle,
+    required this.title,
+    required this.icon,
+    this.route,
+    this.onTap,
+  });
+}
+
 class _NormalMainPageState extends State<NormalMainPage> {
   // String _message = '';
   Timer? _timer;
@@ -251,6 +268,89 @@ class _NormalMainPageState extends State<NormalMainPage> {
   }
 
   Widget _buildSectionNew() {
+    // 所有功能项统一声明，顺序即展示顺序
+    final allFeatures = <_FeatureEntry>[
+      _FeatureEntry(
+        permTitle: '开工点名',
+        title: '开工点名',
+        icon: Icon(Icons.people, color: Colors.blue[200]),
+        route: 'repairTrainManage',
+      ),
+      _FeatureEntry(
+        permTitle: '机车入段',
+        title: '机车入段',
+        icon: Icon(Icons.train, color: Colors.blue[200]),
+        route: 'sec_enter_modify',
+      ),
+      _FeatureEntry(
+        permTitle: '检修作业',
+        title: '检修作业',
+        icon: Icon(Icons.build, color: Colors.blue[200]),
+        route: 'trainRepairInfo',
+      ),
+      _FeatureEntry(
+        permTitle: '报机统28（管理）',
+        title: '报机统28（管理）',
+        icon: Icon(Icons.post_add, color: Colors.blue[200]),
+        route: 'jt28submitManage',
+      ),
+      _FeatureEntry(
+        permTitle: '检修调令',
+        title: '检修调令',
+        icon: Icon(Icons.next_plan, color: Colors.blue[200]),
+        route: 'repairTrainProgress',
+      ),
+      _FeatureEntry(
+        permTitle: '检修进度',
+        title: '检修进度',
+        icon: Icon(Icons.manage_search, color: Colors.blue[200]),
+        route: 'repairTrainTempManage',
+      ),
+      _FeatureEntry(
+        permTitle: '调车',
+        title: '调车',
+        icon: Icon(Icons.assignment, color: Colors.blue[200]),
+        route: 'trainShuntingPackage',
+      ),
+      _FeatureEntry(
+        permTitle: '调车计划查询',
+        title: '调车计划查询',
+        icon: Icon(Icons.search, color: Colors.blue[200]),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) =>
+                  const TrainShuntingPackagePage(readOnly: true),
+            ),
+          );
+        },
+      ),
+      _FeatureEntry(
+        permTitle: '离段确认',
+        title: '离段确认',
+        icon: Icon(Icons.photo_camera_back, color: Colors.blue[200]),
+        route: 'trainDepartureConfirm',
+      ),
+      _FeatureEntry(
+        permTitle: '售后登记',
+        title: '售后登记',
+        icon: Icon(Icons.assignment_outlined, color: Colors.blue[200]),
+        route: 'afterSaleTempRepairRegister',
+      ),
+    ];
+
+    // 先按权限过滤掉无权限项，剩下的是连续的；
+    // 再统一每 3 个一行布局，后面的自动向前补齐，中间不会留空位
+    final visibleWidgets = allFeatures
+        .where((f) => _canShowByRouterTitle(f.permTitle))
+        .map((f) => _buildFeatureItem(
+              f.icon,
+              f.onTap ??
+                  () => Navigator.pushNamed(context, f.route!),
+              f.title,
+            ))
+        .toList();
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -259,101 +359,7 @@ class _NormalMainPageState extends State<NormalMainPage> {
             title: Text('检修进度',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-          _buildFeatureRows([
-            if (_canShowByRouterTitle('开工点名'))
-              _buildFeatureItem(
-                Icon(Icons.people, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainManage'),
-                '开工点名',
-              ),
-            if (_canShowByRouterTitle('机车入段'))
-              _buildFeatureItem(
-                Icon(Icons.train, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'sec_enter_modify'),
-                '机车入段',
-              ),
-            if (_canShowByRouterTitle('检修作业'))
-              _buildFeatureItem(
-                Icon(Icons.build, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'trainRepairInfo'),
-                '检修作业',
-              ),
-          ]),
-          const SizedBox(height: 15),
-          _buildFeatureRows([
-            if (_canShowByRouterTitle('报机统28（管理）'))
-              _buildFeatureItem(
-                Icon(Icons.post_add, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'jt28submitManage'),
-                '报机统28（管理）',
-              ),
-            if (_canShowByRouterTitle('检修调令'))
-              _buildFeatureItem(
-                Icon(Icons.next_plan, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainProgress'),
-                '检修调令',
-              ),
-            if (_canShowByRouterTitle('检修进度'))
-              _buildFeatureItem(
-                Icon(Icons.manage_search, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'repairTrainTempManage'),
-                '检修进度',
-              ),
-          ]),
-          // const SizedBox(height: 15),
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.start,
-          //   children: <Widget>[
-          //     _buildFeatureItem(
-          //       Icon(Icons.alarm, color: Colors.blue[200]),
-          //       () => Navigator.pushNamed(context, 'repairProgress'),
-          //       '检修进度',
-          //     ),
-          //     _buildFeatureItem(
-          //       Icon(Icons.edit_document, color: Colors.blue[200]),
-          //       () => Navigator.pushNamed(context, 'repairProgress'),
-          //       '检修调令',
-          //     ),
-          //   ],
-          // ),
-
-          const SizedBox(height: 15),
-          _buildFeatureRows([
-            if (_canShowByRouterTitle('调车'))
-              _buildFeatureItem(
-                Icon(Icons.assignment, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'trainShuntingPackage'),
-                '调车',
-              ),
-            if (_canShowByRouterTitle('调车计划查询'))
-              _buildFeatureItem(
-                Icon(Icons.search, color: Colors.blue[200]),
-                () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) =>
-                          const TrainShuntingPackagePage(readOnly: true),
-                    ),
-                  );
-                },
-                '调车计划查询',
-              ),
-            if (_canShowByRouterTitle('离段确认'))
-              _buildFeatureItem(
-                Icon(Icons.photo_camera_back, color: Colors.blue[200]),
-                () => Navigator.pushNamed(context, 'trainDepartureConfirm'),
-                '离段确认',
-              ),
-            if (_canShowByRouterTitle('售后登记'))
-              _buildFeatureItem(
-                Icon(Icons.assignment_outlined, color: Colors.blue[200]),
-                () => Navigator.pushNamed(
-                  context,
-                  'afterSaleTempRepairRegister',
-                ),
-                '售后登记',
-              ),
-          ]),
+          _buildFeatureRows(visibleWidgets),
           const Divider(height: 10, indent: 10, endIndent: 10),
         ],
       ),

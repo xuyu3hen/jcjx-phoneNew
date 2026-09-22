@@ -1277,6 +1277,73 @@ class ProductApi extends AppApi {
     }
   }
 
+  Future<dynamic> publishRepairProcessFaultShunting({
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      debugPrintSynchronously('[检修过程故障处置单提报] 请求开始');
+      _logLargeTagged('[检修过程故障处置单提报][QUERY]', data);
+      final r = await AppApi.dio.post(
+        '/dispatch/repairProcessFaultShunting/manualPublish',
+        data: data,
+      );
+      _logLargeTagged('[检修过程故障处置单提报][RAW_RESPONSE]', r.data);
+      final code = r.data is Map ? r.data['code'] : null;
+      debugPrintSynchronously('[检修过程故障处置单提报] 请求完成 code=$code');
+      return r.data;
+    } catch (e) {
+      debugPrintSynchronously('[检修过程故障处置单提报] 请求失败 error=$e');
+      _handleException(e);
+    }
+  }
+
+  /// 查询指定调车类型下可发布的角色列表
+  /// 接口：GET /dispatch/shuntingRole/selectAll?shuntingType=25
+  /// 返回 rows（每项含 roleId、roleName、shuntingType 等），
+  /// 用于判断当前用户角色是否有权发布检修过程故障处置单
+  Future<List<Map<String, dynamic>>> getShuntingRoleList({
+    int shuntingType = 25,
+  }) async {
+    try {
+      debugPrintSynchronously(
+          '[调车角色查询] 请求开始 shuntingType=$shuntingType');
+      final r = await AppApi.dio.get(
+        '/dispatch/shuntingRole/selectAll',
+        queryParameters: {
+          'shuntingType': shuntingType,
+          'pageNum': 1,
+          'pageSize': 100,
+        },
+      );
+      _logLargeTagged('[调车角色查询][RAW_RESPONSE]', r.data);
+      // 返回结构：data.data.rows（三层嵌套）
+      dynamic root = r.data;
+      final outer = root is Map ? root['data'] : null;
+      final inner = outer is Map ? outer['data'] : null;
+      dynamic rows;
+      if (inner is Map) {
+        rows = inner['rows'] ?? inner['data'];
+      } else if (outer is Map) {
+        rows = outer['rows'];
+      } else if (root is Map) {
+        rows = root['rows'];
+      }
+      final result = <Map<String, dynamic>>[];
+      if (rows is List) {
+        for (final e in rows) {
+          if (e is Map) result.add(Map<String, dynamic>.from(e));
+        }
+      }
+      debugPrintSynchronously(
+          '[调车角色查询] 请求完成 rows=${result.length}');
+      return result;
+    } catch (e) {
+      debugPrintSynchronously('[调车角色查询] 请求失败 error=$e');
+      _handleException(e);
+      return <Map<String, dynamic>>[];
+    }
+  }
+
   Future<dynamic> queryRepairProcessFaultDetailsForManualDispatch({
     Map<String, dynamic>? queryParametrs,
   }) async {
@@ -1682,21 +1749,20 @@ class ProductApi extends AppApi {
         '/dispatch/trainEntry/getTrainEntryAndDynamics',
         queryParameters: queryParametrs,
       );
-      logger.i((r.data['data'])['data']);
-      List<RepairGroup> repairGroups = [];
-
-      for (var item in (r.data['data'])['data']) {
-        logger.i(item.toString());
-        repairGroups.add(RepairGroup.fromJson(item));
+      final rawData = (r.data['data'])['data'];
+      if (rawData is! List) {
+        return [];
       }
-      logger.i(repairGroups.toString());
+      final repairGroups = <RepairGroup>[];
+      for (final item in rawData) {
+        if (item is Map<String, dynamic>) {
+          repairGroups.add(RepairGroup.fromJson(item));
+        }
+      }
       return repairGroups;
     } catch (e) {
       _handleException(e);
-      return [
-        RepairGroup(
-            children: [], repairProcCode: '', repairProcName: '', sort: 0)
-      ];
+      return const [];
     }
   }
 

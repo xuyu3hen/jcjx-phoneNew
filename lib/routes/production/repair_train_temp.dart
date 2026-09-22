@@ -1225,8 +1225,12 @@ class _PreparationDetailPageState extends State<PreparationDetailPage> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => TrainRepairProgressPage(
-                                initialSearchText:
-                                    widget.locoInfo?['trainNum']?.toString(),
+                                // 带端位的完整车号（5068A/5068B），
+                                // 进度页才能只定位到对应的那一台
+                                initialSearchText: formatTrainNumWithEnds(
+                                  widget.locoInfo?['trainNum'],
+                                  extractEnds(widget.locoInfo),
+                                ),
                               )),
                     );
                   },

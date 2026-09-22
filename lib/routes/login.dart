@@ -455,8 +455,15 @@ class _LoginRouteState extends State<LoginRoute> {
             }
 
             // 登录成功后，后台预加载数据（不阻塞UI）
+            // 检修进度单独先行：用 startRepairProgressPreload() 返回同一个 Future，
+            // 用户点进「检修作业进度」时直接复用，不重复请求。
+            Global.startRepairProgressPreload().ignore();
             Global.preloadRepairData().catchError((e) {
               logger.e('预加载数据失败: $e');
+            });
+            // 故障处置单发布权限：登录时后台预查，点击进入时直接读结果
+            Global.preloadFaultHandlePermission().catchError((e) {
+              logger.e('预查故障处置单权限失败: $e');
             });
 
             // 同步离线售后登记（后台静默，成功/失败各 Toast 一次）

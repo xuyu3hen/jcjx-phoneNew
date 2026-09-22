@@ -1,6 +1,7 @@
 
 
 
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:jcjx_phone/routes/production/jt_repair.dart';
 import 'package:jcjx_phone/routes/production/repair_train.dart';
 
@@ -42,6 +43,11 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  // 通知本地缓存是否已损坏（旧版本残留的定时通知无法反序列化）。
+  // 首次 cancel 抛 Missing type parameter 后置 true，后续跳过 cancel，
+  // 避免每 15 秒刷一次错误日志
+  bool _notificationCacheCorrupt = false;
+
   Timer? _pollingTimer;
 
   @override
@@ -64,6 +70,14 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     //   'app_flavor': F.appFlavor.toString(),
     // };
     logger.i('当前环境: ${F.appFlavor}');
+    // 覆盖 token 有效、重启后直接进主页（不走登录页）的场景：
+    // 未预查过故障处置单权限则补查一次；登录页已查过则不重复请求
+    if (!Global.faultHandlePermissionChecked &&
+        Global.profile.data != null) {
+      Global.preloadFaultHandlePermission().catchError((e) {
+        logger.e('预查故障处置单权限失败: $e');
+      });
+    }
     // ProductApi().getLatestOne(env: 'release');
     _initLocalNotifications();
     // 初始化更新组件
@@ -105,6 +119,31 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  /// 安全取消通知。
+  /// flutter_local_notifications 17.x 的 cancel/cancelAll 内部会
+  /// 调用 loadScheduledNotifications 反序列化本地缓存的定时通知，
+  /// 旧版本/旧格式残留会抛 PlatformException(Missing type parameter)。
+  /// 使用 .catchError 兜底 + try/catch 双重保护，确保异常被吞掉。
+  Future<void> _safeCancelNotification(int id) async {
+    if (_notificationCacheCorrupt) return;
+    try {
+      // 用 .catchError 在 Future 层先吞一道，避免 await 抛出后
+      // 被框架当作 unhandled exception 打到 E/flutter
+      await flutterLocalNotificationsPlugin
+          .cancel(id)
+          .catchError((Object e) {
+        AppLogger.logger.w('cancel catchError: $e');
+        _notificationCacheCorrupt = true;
+      });
+    } on PlatformException catch (e) {
+      AppLogger.logger.w('取消通知失败，缓存可能损坏: $e');
+      _notificationCacheCorrupt = true;
+    } catch (e) {
+      AppLogger.logger.w('取消通知未知异常: $e');
+      _notificationCacheCorrupt = true;
+    }
   }
 
   // 更新组件初始化
@@ -263,7 +302,9 @@ class _MainPage extends State<MainPage> with SingleTickerProviderStateMixin {
           }
         } else {
           FlutterAppBadger.removeBadge();
-          flutterLocalNotificationsPlugin.cancel(888);
+          // cancel 内部会反序列化本地缓存的定时通知，旧格式残留会抛
+          // PlatformException(Missing type parameter)，用安全方法取消
+          await _safeCancelNotification(888);
           _lastNotificationCount = 0;
         }
       }
