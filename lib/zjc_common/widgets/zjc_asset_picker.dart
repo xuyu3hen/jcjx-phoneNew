@@ -1,4 +1,7 @@
 
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
@@ -158,7 +161,57 @@ class _ZjcAssetPickerState extends State<ZjcAssetPicker> {
   }
 
   Widget _loadAsset(AssetEntity asset) {
-    return Image(image: AssetEntityImageProvider(asset), fit: BoxFit.cover);
+    // 视频：取缩略数据 + 播放角标（无法直接用 Image.file 显示视频帧）
+    if (asset.type == AssetType.video) {
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          FutureBuilder<Uint8List?>(
+            future: asset.thumbnailDataWithSize(
+                const ThumbnailSize(300, 300)),
+            builder: (context, snap) {
+              final bytes = snap.data;
+              if (bytes != null) {
+                return Image.memory(bytes, fit: BoxFit.cover);
+              }
+              return Container(color: Colors.black87);
+            },
+          ),
+          const Center(
+            child: Icon(Icons.play_circle_fill,
+                color: Colors.white70, size: 40),
+          ),
+        ],
+      );
+    }
+    // 图片：直接读 asset.file 显示，与最终上传的文件是同一个字节内容，
+    // 不会出现“缩略图空白但实际有文件”的不一致；
+    // 取不到文件时回退到缩略数据
+    return FutureBuilder<File?>(
+      future: asset.file,
+      builder: (context, snap) {
+        final file = snap.data;
+        if (file != null) {
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            cacheWidth: 300,
+            gaplessPlayback: true,
+          );
+        }
+        return FutureBuilder<Uint8List?>(
+          future: asset.thumbnailDataWithSize(
+              const ThumbnailSize(300, 300)),
+          builder: (context, s2) {
+            final bytes = s2.data;
+            if (bytes != null) {
+              return Image.memory(bytes, fit: BoxFit.cover);
+            }
+            return Container(color: Colors.grey[200]);
+          },
+        );
+      },
+    );
   }
 
   void _deleteAsset(index) {

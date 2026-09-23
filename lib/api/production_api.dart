@@ -2833,18 +2833,55 @@ class ProductApi extends AppApi {
   }
 
   // 获取dispatch/trainEntry/getRepairingTrainEntryByUserId
-  Future<dynamic> getRepairingTrainEntryByUserIdAndRepairProcCode(
-      {Map<String, dynamic>? queryParametrs}) async {
-    try {
-      var r = await AppApi.dio.get(
-        '/dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCode',
-        queryParameters: queryParametrs,
-      );
-      // logger.i((r.data["data"])["data"]);
-      return (r.data['data'])['data'];
-    } catch (e) {
-      return [];
+  Future<List<Map<String, dynamic>>>
+      getRepairingTrainEntryByUserIdAndRepairProcCode(
+          {Map<String, dynamic>? queryParametrs}) async {
+    logger.i('[检修作业机车][QUERY] ${(queryParametrs ?? {}).toString()}');
+    final r = await AppApi.dio.get(
+      '/dispatch/trainEntry/getRepairingTrainEntryByUserIdAndRepairProcCode',
+      queryParameters: queryParametrs,
+    );
+    final body = r.data;
+
+    // 逐层解包出 List：兼容 data.data / data.rows / data 直接为 List
+    // 最多解包 3 层，避免响应结构小差异就整体失败
+    dynamic node = body;
+    for (var i = 0; i < 3; i++) {
+      if (node is List) break;
+      if (node is Map) {
+        // 外层业务码非 200 视为业务失败，抛出让调用方走错误处理
+        if (i == 0 &&
+            node['code'] != null &&
+            '${node['code']}' != '200' &&
+            '${node['code']}' != 'S_F_S000') {
+          throw Exception(
+              node['msg'] ?? node['message'] ?? '查询检修作业机车失败');
+        }
+        if (node['data'] != null) {
+          node = node['data'];
+        } else if (node['rows'] != null) {
+          node = node['rows'];
+        } else {
+          break;
+        }
+      } else {
+        break;
+      }
     }
+
+    if (node is! List) {
+      // 响应结构异常，抛出而不是返回空数组（空数组会被误当成“真的没数据”并缓存）
+      throw const FormatException('检修作业机车响应结构异常');
+    }
+    if (kDebugMode && node.isNotEmpty) {
+      _logLargeTagged('[检修作业机车][RAW_FIRST_ITEM]',
+          node.first is Map ? jsonEncode(node.first) : node.first);
+    }
+    return node
+        .map((e) => e is Map<String, dynamic>
+            ? e
+            : Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
   // 获取dispatch/trainEntry/getRepairingAllTrainEntryByRepairProcCode

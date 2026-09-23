@@ -96,6 +96,30 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+
+    // 输出 APK 文件名带版本号，便于归档和现场分发：
+    // jcjx-phone-<flavor>-<buildType>-v<versionName>.apk
+    // 例：jcjx-phone-env_release-release-v1.2.3.apk
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName = "jcjx-phone-${variant.flavorName}-${variant.buildType.name}-v${variant.versionName}.apk"
+        }
+        // Flutter 构建工具在 Gradle 结束后会再复制一份到 outputs/flutter-apk
+        // 并改回 app-<flavor>-<buildType>.apk，这里同步把带版本号的包也复制过去
+        variant.assembleProvider.get().doLast {
+            variant.outputs.each { output ->
+                def srcFile = output.outputFile
+                if (srcFile != null && srcFile.exists()) {
+                    def targetDir = file("${buildDir}/outputs/flutter-apk")
+                    targetDir.mkdirs()
+                    def targetFile = new File(targetDir, output.outputFileName)
+                    if (!targetFile.exists() || targetFile.length() != srcFile.length()) {
+                        targetFile.bytes = srcFile.bytes
+                    }
+                }
+            }
+        }
+    }
 }
 
 flutter {

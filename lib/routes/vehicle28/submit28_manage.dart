@@ -83,8 +83,8 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
   String selectedAssumeType = '正常';
   // 自动派活
   bool isAssigned = false;
-  String completeLabel = '自检自修';
-  int completeStatus = 0;
+  String completeLabel = '工长派工';
+  int completeStatus = 1;
 
   // 完成节点（工序主节点）
   List<dynamic> repairMainNodeList = [];
@@ -947,6 +947,35 @@ class _Vehicle28FormManageState extends State<Vehicle28FormManage> {
       onTap: () async {
         if (_submitting) {
           showToast('正在提报中，请勿重复提交');
+          return;
+        }
+        // 逐项校验必填内容，全部填完才允许上传提报
+        if ((jcTypeListSelected['code'] ?? '').toString().isEmpty) {
+          showToast('请选择机型');
+          return;
+        }
+        if ((trainNumSelected['code'] ?? '').toString().isEmpty) {
+          showToast('请选择车号');
+          return;
+        }
+        if (faultDesc == null || faultDesc!.trim().isEmpty) {
+          showToast('请填写故障现象');
+          return;
+        }
+        if (maintenanceNotice == null ||
+            maintenanceNotice!.trim().isEmpty) {
+          showToast('请填写建议施修方案');
+          return;
+        }
+        // 故障图片/视频为必填项，且文件必须真实存在，防止空内容提报
+        if (assestPics.isEmpty || faultPics.isEmpty) {
+          showToast('请上传故障图片或视频');
+          return;
+        }
+        final validPics =
+            faultPics.where((f) => f.existsSync()).toList();
+        if (validPics.isEmpty) {
+          showToast('故障图片已失效，请重新选择');
           return;
         }
         // if (false) {

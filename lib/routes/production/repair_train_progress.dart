@@ -1277,7 +1277,10 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
               title: const Text('选择通知单类型'),
               content: SizedBox(
                 width: double.maxFinite,
-                child: Column(
+                // 选项较多时可上下滚动，避免在小屏手持机上内容溢出，
+                // 所有通知单类型都能完整展示并选择
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1409,6 +1412,7 @@ class _TrainRepairProgressPageState extends State<TrainRepairProgressPage> {
                     ),
 // ... existing code ...
                   ],
+                  ),
                 ),
               ),
               actions: [

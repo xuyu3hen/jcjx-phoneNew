@@ -96,8 +96,8 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
 
   // 自动派活
   bool isAssigned = false;
-  String completeLabel = '自检自修';
-  int completeStatus = 0;
+  String completeLabel = '工长派工';
+  int completeStatus = 1;
 
   Map<dynamic, dynamic> dynamciTypeSelected = {};
 
@@ -1014,6 +1014,17 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           showToast('请填写故障现象');
           return;
         }
+        // 故障图片/视频为必填项，且文件必须真实存在，防止空内容提报
+        if (assestPics.isEmpty || faultPics.isEmpty) {
+          showToast('请上传故障图片或视频');
+          return;
+        }
+        final validPics =
+            faultPics.where((f) => f.existsSync()).toList();
+        if (validPics.isEmpty) {
+          showToast('故障图片已失效，请重新选择');
+          return;
+        }
         if (widget.locoInfo?['code'] == null || 
             widget.locoInfo?['code'] == '') {
           showToast('机车信息不完整，请重新进入');
@@ -1023,11 +1034,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
           showToast('检修作业来源未获取到，请稍后重试');
           return;
         }
-        if ((requiredProcessingMethod['code'] ?? '').toString().isEmpty) {
-          showToast('加工方法未获取到，请稍后重试');
-          return;
-        }
-        
         // 所有必填字段验证通过，继续提报
         var submit;
         List<Map<String, dynamic>> l = [];
@@ -1045,9 +1051,6 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               'trainEntryCode': widget.locoInfo?['code'],
               'repairWorkResource': repairWorkResource['code'],
               'riskLevel': riskLevel,
-              'deptId': Global.profile.permissions?.user.deptId,
-              'deptName': Global.profile.permissions?.user.dept?.deptName ,
-              'requiredProcessingMethod': requiredProcessingMethod['code'],
               'completeStatus': completeStatus,
               'status': 0
             };
@@ -1057,8 +1060,13 @@ class _Vehicle28FormState extends State<Vehicle28Form> {
               return false;
             });
             if (completeStatus == 0) {
+              // 自检自修：检修人、所属部门一并提交；工长派工不提交这些字段
               queryParameters['repairPersonnel'] =
                   Global.profile.permissions?.user.userId;
+              queryParameters['deptId'] =
+                  Global.profile.permissions?.user.deptId;
+              queryParameters['deptName'] =
+                  Global.profile.permissions?.user.dept?.deptName;
             }
             if (faultPics.isNotEmpty) {
               await JtApi().uploadMixJt(imagedata: faultPics).then(

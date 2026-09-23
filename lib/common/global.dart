@@ -64,6 +64,8 @@ class Global {
   static List<Map<String, dynamic>> cachedRepairMainNodeInfoLinXiu = [];
   static bool isRepairTrainDataLoaded = false;
   static DateTime? repairTrainDataLoadTime;
+  // 全部机车派工预加载 Future：开工点名/检修进度页复用，避免重复请求
+  static Future<void>? _repairTrainLoadingFuture;
 
   // 检修进度数据缓存
   static List<RepairGroup> cachedRepairProgressData = [];
@@ -76,6 +78,8 @@ class Global {
   static List<Map<String, dynamic>> cachedUserRepairMainNodeInfoLinXiu = [];
   static bool isUserRepairTrainDataLoaded = false;
   static DateTime? userRepairTrainDataLoadTime;
+  // 用户机车作业预加载 Future：登录/首页触发的在途查询，页面进入时 await 复用，避免重复请求
+  static Future<void>? _userRepairTrainLoadingFuture;
 
   // 检修进度预加载 Future：登录成功后台触发的正在进行中的查询，页面进入时 await 复用
   static Future<List<RepairGroup>>? _repairProgressLoadingFuture;
@@ -164,7 +168,7 @@ class Global {
 
       // 并行加载所有数据以提高速度（用户个人数据需要权限信息，可能稍后加载）
       await Future.wait([
-        _preloadRepairTrainData(),
+        startRepairTrainPreload(),
         _preloadRepairProgressData(),
         preloadUserRepairTrainData(),
       ]);
@@ -196,77 +200,91 @@ class Global {
     }
   }
 
-  // 预加载机车派工数据
-  static Future<void> _preloadRepairTrainData() async {
-    var logger = AppLogger.logger;
-    try {
-      // 获取修程信息
-      if (Global.repairProcInfo.isEmpty) {
-        logger.w('修程信息为空，无法预加载机车派工数据');
-        return;
-      }
-
-      // 查找 C4, C5, 临修 的修程代码
-      String? c4Code, c5Code, linXiuCode;
-      for (var element in Global.repairProcInfo) {
-        if (element['name'] == 'C4') {
-          c4Code = element['code'];
-        } else if (element['name'] == 'C5') {
-          c5Code = element['code'];
-        } else if (element['name'] == '临修') {
-          linXiuCode = element['code'];
-        }
-      }
-
-      // 并行查询三个修程的数据
-      List<Future> futures = [];
-      if (c4Code != null) {
-        futures.add(_loadRepairTrainDataByCode('C4', c4Code, (data) {
-          cachedRepairMainNodeInfoC4 = data;
-        }));
-      }
-      if (c5Code != null) {
-        futures.add(_loadRepairTrainDataByCode('C5', c5Code, (data) {
-          cachedRepairMainNodeInfoC5 = data;
-        }));
-      }
-      if (linXiuCode != null) {
-        futures.add(_loadRepairTrainDataByCode('临修', linXiuCode, (data) {
-          cachedRepairMainNodeInfoLinXiu = data;
-        }));
-      }
-
-      if (futures.isNotEmpty) {
-        await Future.wait(futures);
-        isRepairTrainDataLoaded = true;
-        repairTrainDataLoadTime = DateTime.now();
-        logger.i('机车派工数据预加载完成');
-      }
-    } catch (e) {
-      logger.e('预加载机车派工数据失败: $e');
-    }
+  // 启动全部机车派工数据预加载：多次调用复用同一个 Future
+  static Future<void> startRepairTrainPreload() {
+    _repairTrainLoadingFuture ??=
+        _preloadRepairTrainDataInternal().whenComplete(() {
+      _repairTrainLoadingFuture = null;
+    });
+    return _repairTrainLoadingFuture!;
   }
 
-  // 加载指定修程的机车派工数据
-  static Future<void> _loadRepairTrainDataByCode(
+  // 页面进入时 await：在途则复用，未启动返回 null
+  static Future<void>? awaitRepairTrainPreload() =>
+      _repairTrainLoadingFuture;
+
+  static Future<bool> _preloadRepairTrainDataInternal() async {
+    final logger = AppLogger.logger;
+    await Global.ensureRepairProcInfoLoaded();
+    if (Global.repairProcInfo.isEmpty) {
+      logger.w('修程信息为空，无法预加载机车派工数据');
+      return false;
+    }
+
+    // C4 / C5 / 临修 并行查询，分项记录成功与否
+    const targets = ['C4', 'C5', '临修'];
+    final tasks = <Future<bool>>[];
+    for (final target in targets) {
+      String? procCode;
+      for (final element in Global.repairProcInfo) {
+        final nm = (element['name'] ??
+                element['repairMainNode'] ??
+                element['repairProcName'] ??
+                '')
+            .toString();
+        if (_matchesRepairProcName(nm, target)) {
+          procCode = (element['code'] ?? '').toString();
+          break;
+        }
+      }
+      if (procCode == null || procCode.isEmpty) {
+        logger.w('未匹配到修程 code: $target');
+        tasks.add(Future<bool>.value(false));
+      } else {
+        tasks.add(_loadRepairTrainDataByCode(target, procCode));
+      }
+    }
+
+    final results = await Future.wait(tasks);
+    // 三项都成功才标记整体加载完成；部分失败保留旧缓存，下次进入继续重试，
+    // 避免一次网络抖动被当成“没有机车”缓存起来
+    final allOk = results.every((ok) => ok);
+    if (allOk) {
+      isRepairTrainDataLoaded = true;
+      repairTrainDataLoadTime = DateTime.now();
+      logger.i('机车派工数据预加载完成');
+    } else {
+      isRepairTrainDataLoaded = false;
+      logger.w('机车派工数据部分加载失败，保留旧缓存并在下次进入时重试');
+    }
+    return allOk;
+  }
+
+  // 加载指定修程的全部机车派工数据：成功才写缓存并返回 true，失败保留旧数据
+  static Future<bool> _loadRepairTrainDataByCode(
     String name,
     String code,
-    Function(List<Map<String, dynamic>>) onSuccess,
   ) async {
     try {
-      Map<String, dynamic> params = {'repairProcCode': code};
-      var response = await ProductApi()
-          .getRepairingAllTrainEntryByRepairProcCode(queryParametrs: params);
-
-      // response 已经是 List 类型
-      List<Map<String, dynamic>> data = (response)
+      final data = await ProductApi()
+          .getRepairingAllTrainEntryByRepairProcCode(
+              queryParametrs: {'repairProcCode': code});
+      final mapped = data
           .map((e) => e is Map<String, dynamic>
               ? e
-              : Map<String, dynamic>.from(e as Map))
+              : Map<String,dynamic>.from(e as Map))
           .toList();
-      onSuccess(data);
+      if (name == 'C4') {
+        cachedRepairMainNodeInfoC4 = mapped;
+      } else if (name == 'C5') {
+        cachedRepairMainNodeInfoC5 = mapped;
+      } else {
+        cachedRepairMainNodeInfoLinXiu = mapped;
+      }
+      return true;
     } catch (e) {
       AppLogger.logger.e('加载 $name 数据失败: $e');
+      return false;
     }
   }
 
@@ -391,96 +409,117 @@ class Global {
     }
   }
 
-  // 预加载用户个人机车作业数据（公共方法，可在权限加载后调用）
-  static Future<void> preloadUserRepairTrainData() async {
-    var logger = AppLogger.logger;
-    try {
-      // 等待权限信息加载（最多等待3秒）
-      int? userId = Global.profile.permissions?.user.userId;
-      int retryCount = 0;
-      while (userId == null && retryCount < 6) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        userId = Global.profile.permissions?.user.userId;
-        retryCount++;
-      }
-
-      if (userId == null) {
-        logger.w('用户ID为空，无法预加载用户个人机车作业数据（权限信息可能尚未加载）');
-        return;
-      }
-
-      // 获取修程信息
-      if (Global.repairProcInfo.isEmpty) {
-        logger.w('修程信息为空，无法预加载用户个人机车作业数据');
-        return;
-      }
-
-      // 查找 C4, C5, 临修 的修程代码
-      String? c4Code, c5Code, linXiuCode;
-      for (var element in Global.repairProcInfo) {
-        if (element['name'] == 'C4') {
-          c4Code = element['code'];
-        } else if (element['name'] == 'C5') {
-          c5Code = element['code'];
-        } else if (element['name'] == '临修') {
-          linXiuCode = element['code'];
-        }
-      }
-
-      // 并行查询三个修程的数据
-      List<Future> futures = [];
-      if (c4Code != null) {
-        futures
-            .add(_loadUserRepairTrainDataByCode('C4', c4Code, userId, (data) {
-          cachedUserRepairMainNodeInfoC4 = data;
-        }));
-      }
-      if (c5Code != null) {
-        futures
-            .add(_loadUserRepairTrainDataByCode('C5', c5Code, userId, (data) {
-          cachedUserRepairMainNodeInfoC5 = data;
-        }));
-      }
-      if (linXiuCode != null) {
-        futures.add(
-            _loadUserRepairTrainDataByCode('临修', linXiuCode, userId, (data) {
-          cachedUserRepairMainNodeInfoLinXiu = data;
-        }));
-      }
-
-      if (futures.isNotEmpty) {
-        await Future.wait(futures);
-        isUserRepairTrainDataLoaded = true;
-        userRepairTrainDataLoadTime = DateTime.now();
-        logger.i('用户个人机车作业数据预加载完成');
-      }
-    } catch (e) {
-      logger.e('预加载用户个人机车作业数据失败: $e');
+  // 修程名匹配：与 repair_train.dart 页面保持一致，
+  // 兼容 "C4修"/"C4-xx"、"售后临修" 等命名，避免精确匹配导致漏加载
+  static bool _matchesRepairProcName(String name, String target) {
+    final n = name.trim();
+    if (n == target) return true;
+    if ((target == 'C4' || target == 'C5') && n.startsWith(target)) {
+      return true;
     }
+    if (target == '临修' && n.contains('临修')) return true;
+    return false;
   }
 
-  // 加载指定修程的用户个人机车作业数据
-  static Future<void> _loadUserRepairTrainDataByCode(
+  // 预加载用户个人机车作业数据（公共方法，复用在途 Future，不重复请求）
+  static Future<void> preloadUserRepairTrainData() =>
+      startUserRepairTrainPreload();
+
+  // 启动预加载：多次调用复用同一个 Future
+  static Future<void> startUserRepairTrainPreload() {
+    _userRepairTrainLoadingFuture ??=
+        _preloadUserRepairTrainDataInternal().whenComplete(() {
+      _userRepairTrainLoadingFuture = null;
+    });
+    return _userRepairTrainLoadingFuture!;
+  }
+
+  // 页面进入时 await：在途则复用，未启动返回 null 让页面自己加载
+  static Future<void>? awaitUserRepairTrainPreload() =>
+      _userRepairTrainLoadingFuture;
+
+  static Future<bool> _preloadUserRepairTrainDataInternal() async {
+    final logger = AppLogger.logger;
+    // 等待权限信息加载（最多等待 3 秒）
+    int? userId = Global.profile.permissions?.user.userId;
+    var retryCount = 0;
+    while (userId == null && retryCount < 6) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      userId = Global.profile.permissions?.user.userId;
+      retryCount++;
+    }
+
+    if (userId == null) {
+      logger.w('用户ID为空，无法预加载用户机车作业数据（权限信息可能尚未加载）');
+      return false;
+    }
+
+    await Global.ensureRepairProcInfoLoaded();
+    if (Global.repairProcInfo.isEmpty) {
+      logger.w('修程信息为空，无法预加载用户机车作业数据');
+      return false;
+    }
+
+    // C4 / C5 / 临修 并行查询，分项记录成功与否
+    const targets = ['C4', 'C5', '临修'];
+    final tasks = <Future<bool>>[];
+    for (final target in targets) {
+      String? procCode;
+      for (final element in Global.repairProcInfo) {
+        final nm = (element['name'] ??
+                element['repairMainNode'] ??
+                element['repairProcName'] ??
+                '')
+            .toString();
+        if (_matchesRepairProcName(nm, target)) {
+          procCode = (element['code'] ?? '').toString();
+          break;
+        }
+      }
+      if (procCode == null || procCode.isEmpty) {
+        logger.w('未匹配到修程 code: $target');
+        tasks.add(Future<bool>.value(false));
+      } else {
+        tasks.add(_loadUserRepairTrainDataByCode(target, procCode, userId));
+      }
+    }
+
+    final results = await Future.wait(tasks);
+    // 三项都成功才标记整体加载完成；部分失败保留旧缓存并保持 loaded=false，
+    // 下次进入页面会继续重试，不会把“一次网络抖动”当成“没有机车”缓存起来
+    final allOk = results.every((ok) => ok);
+    if (allOk) {
+      isUserRepairTrainDataLoaded = true;
+      userRepairTrainDataLoadTime = DateTime.now();
+      logger.i('用户机车作业数据预加载完成');
+    } else {
+      isUserRepairTrainDataLoaded = false;
+      logger.w('用户机车作业数据部分加载失败，保留旧缓存并在下次进入时重试');
+    }
+    return allOk;
+  }
+
+  // 加载指定修程的用户机车作业数据：成功才写缓存并返回 true，失败保留旧数据
+  static Future<bool> _loadUserRepairTrainDataByCode(
     String name,
     String code,
     int userId,
-    Function(List<Map<String, dynamic>>) onSuccess,
   ) async {
     try {
-      Map<String, dynamic> params = {'userId': userId, 'repairProcCode': code};
-      var response = await ProductApi()
+      final data = await ProductApi()
           .getRepairingTrainEntryByUserIdAndRepairProcCode(
-              queryParametrs: params);
-
-      // response 已经是 List 类型
-      List<Map<String, dynamic>> data = (response as List)
-          .map((e) => e is Map<String, dynamic>
-              ? e
-              : Map<String, dynamic>.from(e as Map))
-          .toList();
-      onSuccess(data);
+              queryParametrs: {'userId': userId, 'repairProcCode': code});
+      if (name == 'C4') {
+        cachedUserRepairMainNodeInfoC4 = data;
+      } else if (name == 'C5') {
+        cachedUserRepairMainNodeInfoC5 = data;
+      } else {
+        cachedUserRepairMainNodeInfoLinXiu = data;
+      }
+      return true;
     } catch (e) {
       AppLogger.logger.e('加载用户 $name 数据失败: $e');
+      return false;
     }
   }
 }

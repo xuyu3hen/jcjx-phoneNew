@@ -40,83 +40,97 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     _loadInitialData();
   }
 
-  // 初始化数据加载，使用异步并行加载提高速度
+  // 初始化数据加载
   Future<void> _loadInitialData() async {
-    try {
-      // 优先使用缓存数据
-      if (Global.isUserRepairTrainDataLoaded &&
-          Global.userRepairTrainDataLoadTime != null &&
-          DateTime.now()
-                  .difference(Global.userRepairTrainDataLoadTime!)
-                  .inMinutes <
-              5) {
-        // 使用缓存数据（5分钟内有效）
-        setState(() {
-          repairMainNodeInfo = Global.cachedUserRepairMainNodeInfoC4;
-          repairMainNodeInfo1 = Global.cachedUserRepairMainNodeInfoC5;
-          repairMainNodeInfo2 = Global.cachedUserRepairMainNodeInfoLinXiu;
+    // 1. 登录/首页触发的预加载正在进行 → 复用同一个 Future，不发第二次请求
+    final inFlight = Global.awaitUserRepairTrainPreload();
+    if (inFlight != null) {
+      await inFlight;
+    } else if (Global.isUserRepairTrainDataLoaded) {
+      // 2. 已有成功缓存（不受时间限制）→ 立即展示，后台静默刷新，退出重进不重新转圈
+      _adoptGlobalCache();
+      Global.startUserRepairTrainPreload();
+      return;
+    } else {
+      // 3. 没有缓存也没有在途请求 → 主动加载
+      await Global.startUserRepairTrainPreload();
+    }
 
-          // 重新计算计数
-          count1 = 0;
-          count2 = 0;
-          count3 = 0;
-          for (Map<String, dynamic> element in repairMainNodeInfo) {
-            count1 = count1 + (element['count'] as int? ?? 0);
-          }
-          for (Map<String, dynamic> element in repairMainNodeInfo1) {
-            count2 = count2 + (element['count'] as int? ?? 0);
-          }
-          for (Map<String, dynamic> element in repairMainNodeInfo2) {
-            count3 = count3 + (element['count'] as int? ?? 0);
-          }
-
-          _isLoading = false;
-        });
-
-        // 数据加载完成后，自动加载第一个标签的第一个工序节点
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
-          }
-        });
-
-        // 后台刷新数据
-        _refreshDataInBackground();
-        return;
-      }
-
-      // 如果没有缓存或缓存过期，则重新加载
-      await Future.wait([
-        getRepairingTrainInfo('C4'),
-        getRepairingTrainInfo('C5'),
-        getRepairingTrainInfo('临修'),
-      ]);
-
-      // 数据加载完成后，自动加载第一个标签的第一个工序节点
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _loadFirstProcessNode(0); // 默认加载C4的第一个工序节点
-        }
+    if (!mounted) return;
+    if (Global.isUserRepairTrainDataLoaded) {
+      _adoptGlobalCache();
+    } else if (_globalCacheHasAnyData()) {
+      // 加载失败但有历史缓存：展示旧数据，让用户仍可作业，同时提示
+      _adoptGlobalCache();
+      showToast('数据刷新失败，当前为上次缓存数据');
+    } else {
+      // 既没加载成功也没有任何历史数据：显示错误态，可点击重试
+      setState(() {
+        _isLoading = false;
+        _loadError = true;
       });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
     }
   }
 
-  // 后台刷新数据（不阻塞UI）
-  void _refreshDataInBackground() async {
-    try {
-      await Future.wait([
-        getRepairingTrainInfo('C4'),
-        getRepairingTrainInfo('C5'),
-        getRepairingTrainInfo('临修'),
-      ]);
-    } catch (e) {
-      logger.e('后台刷新数据失败: $e');
+  // Global 缓存里是否有任意可用数据
+  bool _globalCacheHasAnyData() =>
+      Global.cachedUserRepairMainNodeInfoC4.isNotEmpty ||
+      Global.cachedUserRepairMainNodeInfoC5.isNotEmpty ||
+      Global.cachedUserRepairMainNodeInfoLinXiu.isNotEmpty;
+
+  // 采用 Global 缓存并刷新本页状态
+  void _adoptGlobalCache() {
+    setState(() {
+      repairMainNodeInfo = Global.cachedUserRepairMainNodeInfoC4;
+      repairMainNodeInfo1 = Global.cachedUserRepairMainNodeInfoC5;
+      repairMainNodeInfo2 = Global.cachedUserRepairMainNodeInfoLinXiu;
+      count1 = 0;
+      count2 = 0;
+      count3 = 0;
+      for (final element in repairMainNodeInfo) {
+        count1 += (element['count'] as int? ?? 0);
+      }
+      for (final element in repairMainNodeInfo1) {
+        count2 += (element['count'] as int? ?? 0);
+      }
+      for (final element in repairMainNodeInfo2) {
+        count3 += (element['count'] as int? ?? 0);
+      }
+      _isLoading = false;
+      _loadError = false;
+    });
+    // 默认选中当前标签第一个工序节点（在 build 后刷新一次确保右侧展示）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadFirstProcessNode(_currentTab);
+    });
+  }
+
+  // 点击错误态“重新加载”
+  Future<void> _retryLoad() async {
+    setState(() {
+      _isLoading = true;
+      _loadError = false;
+    });
+    await Global.startUserRepairTrainPreload();
+    if (!mounted) return;
+    if (Global.isUserRepairTrainDataLoaded || _globalCacheHasAnyData()) {
+      _adoptGlobalCache();
+    } else {
+      setState(() {
+        _isLoading = false;
+        _loadError = true;
+      });
+    }
+  }
+
+  // 下拉强制刷新
+  Future<void> _onPullRefresh() async {
+    await Global.startUserRepairTrainPreload();
+    if (!mounted) return;
+    if (Global.isUserRepairTrainDataLoaded) {
+      _adoptGlobalCache();
+    } else {
+      showToast('刷新失败，请稍后重试');
     }
   }
 
@@ -182,97 +196,42 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
     return list;
   }
 
-  Future<void> getRepairingTrainInfo(String repairMainNode) async {
-    try {
-      String repairProcCode1 = '';
-      await Global.ensureRepairProcInfoLoaded();
-      for (final element in Global.repairProcInfo) {
-        final name = (element['name'] ??
-                element['repairMainNode'] ??
-                element['repairProcName'] ??
-                '')
-            .toString()
-            .trim();
-        final matched = name == repairMainNode ||
-            ((repairMainNode == 'C4' || repairMainNode == 'C5') &&
-                name.startsWith(repairMainNode)) ||
-            (repairMainNode == '临修' && name.contains('临修'));
-        if (matched) {
-          repairProcCode1 = (element['code'] ?? '').toString();
-          break;
-        }
-      }
-      if (repairProcCode1.trim().isEmpty) {
-        logger.w('[机车派工] 未匹配到修程code repairMainNode=$repairMainNode');
-        return;
-      }
-      Map<String, dynamic> params = {
-        'userId': Global.profile.permissions?.user.userId,
-        'repairProcCode': repairProcCode1
-      };
-      logger.i('params: $params');
-      var response = await ProductApi()
-          .getRepairingTrainEntryByUserIdAndRepairProcCode(
-              queryParametrs: params);
-      logger.i('response: $response');
-      if (mounted) {
-        setState(() {
-          if (response is List) {
-            List<Map<String, dynamic>> data = response
-                .map((e) => e is Map<String, dynamic>
-                    ? e
-                    : Map<String, dynamic>.from(e as Map))
-                .toList();
-
-            if (repairMainNode == 'C4') {
-              repairMainNodeInfo = data;
-              Global.cachedUserRepairMainNodeInfoC4 = data;
-              count1 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo) {
-                count1 = count1 + (element['count'] as int? ?? 0);
-              }
-              logger.i('count1: $count1');
-            }
-            if (repairMainNode == 'C5') {
-              repairMainNodeInfo1 = data;
-              Global.cachedUserRepairMainNodeInfoC5 = data;
-              count2 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo1) {
-                logger.i(element);
-                count2 = count2 + (element['count'] as int? ?? 0);
-              }
-              logger.i('count2: $count2');
-            }
-            if (repairMainNode == '临修') {
-              repairMainNodeInfo2 = data;
-              Global.cachedUserRepairMainNodeInfoLinXiu = data;
-              count3 = 0;
-              for (Map<String, dynamic> element in repairMainNodeInfo2) {
-                count3 = count3 + (element['count'] as int? ?? 0);
-              }
-              logger.i('count3: $count3');
-            }
-            Global.isUserRepairTrainDataLoaded = true;
-            Global.userRepairTrainDataLoadTime = DateTime.now();
-          } else {
-            repairMainNodeInfo = [];
-          }
-          logger.i('repairMainNodeInfo: $repairMainNodeInfo');
-        });
-      }
-    } catch (e) {
-      logger.i(e);
-    }
-  }
-
-  bool _isLoading = true; // 添加加载状态标识
+  bool _isLoading = true; // 加载状态标识
+  bool _loadError = false; // 加载失败且无任何缓存时为 true
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildLocomotiveList(repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+          : _loadError
+              ? _buildErrorView()
+              : RefreshIndicator(
+                  onRefresh: _onPullRefresh,
+                  child: _buildLocomotiveList(
+                      repairMainNodeInfo), // 使用实际的机车数据而不是空数组
+                ),
+    );
+  }
+
+  // 加载失败视图：给出重试入口，不再是让用户对着空页面
+  Widget _buildErrorView() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 12),
+          const Text('数据加载失败，请检查网络后重试',
+              style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _retryLoad,
+            icon: const Icon(Icons.refresh),
+            label: const Text('重新加载'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -563,6 +522,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       _currentScheduleTag = null;
       repairTrainInfo = [];
     }
+    // postframe 调用时需要主动触发一次重建，右侧机车列表才能立即显示
+    if (mounted) setState(() {});
   }
 
   List<Map<String, dynamic>> repairMainNodePage = [];
@@ -578,6 +539,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       repairMainNodePage = repairMainNodeInfo2;
     }
     return ListView.builder(
+      // 内容不满一屏也可滚动，配合外层下拉刷新
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: repairMainNodePage.length,
       itemBuilder: (context, index) {
         final proc = repairMainNodePage[index];
@@ -856,6 +819,8 @@ class _TrainRepairPageState extends State<TrainRepairPage> {
       );
     }
     return ListView.builder(
+      // 内容不满一屏也可滚动，配合外层下拉刷新
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: repairTrainInfo.length,
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemBuilder: (context, index) {
