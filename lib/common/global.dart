@@ -4,6 +4,9 @@ import '../models/progress.dart';
 // #region agent log
 void _agentLog(String location, String message, Map<String, dynamic> data,
     String hypothesisId) {
+  // 仅 Windows 调试机写本地日志文件；Android 手持机上该路径不存在，
+  // 此前每次调用都抛异常再被 catch，纯属启动期浪费。
+  if (!Platform.isWindows) return;
   try {
     const path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
     final m = {
@@ -100,27 +103,12 @@ class Global {
     // #endregion
     WidgetsFlutterBinding.ensureInitialized();
 
-    _prefs = await SharedPreferences.getInstance();
-    // var _profile = _prefs.getString("profile");
-
-    // if(_profile != null) {
-    //   try {
-    //     // 校验token有效性
-    //     var data = await LoginApi().getuserInfo();
-
-    //     if(data == 200){
-    //       profile = Profile.fromJson(jsonDecode(_profile));
-    //     }else{
-    //       _prefs.remove("profile");
-    //       profile = Profile(theme: 4);
-    //     }
-    //   }catch(e){
-    //     print(e);
-    //   }
-    // }else{
-    //   //写法变更，实现效果存疑
-    //   profile = Profile(theme: 4);
-    // }
+    // 并行化：SharedPreferences 与版本号读取互不依赖，此前是串行 await，
+    // 二者合计两次平台通道往返，改为同时发起可省掉一次等待时间。
+    await Future.wait(<Future<void>>[
+      SharedPreferences.getInstance().then((v) => _prefs = v),
+      F.initVersion(),
+    ]);
 
     //缓存策略 A??B表示 A为null则取值为B
     // ..为Flutter语法糖，等同于 CacheConfig.enable = true,Dart中的setter与getter方法为隐式
@@ -129,8 +117,6 @@ class Global {
       ..maxAge = 3600
       ..maxCount = 100;
 
-    // 初始化版本号（从 pubspec.yaml 统一读取）
-    await F.initVersion();
     // #region agent log
     _agentLog('global.dart:before AppApi.init', 'about to call AppApi.init', {},
         'H3');

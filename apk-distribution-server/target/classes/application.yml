@@ -1,0 +1,58 @@
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    key-alias: apk-server
+  # HTTP 重定向到 HTTPS
+  http:
+    port: 8080
+
+spring:
+  application:
+    name: apk-distribution-server
+  
+  # 数据库配置 (H2 内嵌数据库)
+  datasource:
+    url: jdbc:h2:file:./data/apk-distribution;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  
+  # 文件上传配置
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+# APK 存储配置
+apk:
+  storage:
+    # APK 文件存储目录
+    path: ./apk-files
+    # 允许的环境
+    allowed-envs: dev,test,release
+
+# 日志配置
+logging:
+  level:
+    com.jcjx: DEBUG
+    org.springframework.web: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

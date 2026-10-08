@@ -7,6 +7,8 @@ export 'package:dio/dio.dart' show DioException;
 
 // #region agent log
 void _agentLog(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+  // 仅 Windows 调试机写日志；Android 上路径不存在，此前每次都抛异常再被 catch
+  if (!Platform.isWindows) return;
   try {
     const path = r'd:\jcjx\jcjx-phone\.cursor\debug.log';
     final m = {'location': location, 'message': message, 'data': data, 'timestamp': DateTime.now().millisecondsSinceEpoch, 'sessionId': 'debug-session', 'hypothesisId': hypothesisId};

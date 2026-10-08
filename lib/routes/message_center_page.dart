@@ -637,7 +637,35 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     final isAfterSaleFault = st == 21 || st == '21';
     final isChangeMainNode = st == 8 || st == '8';
     final isRepairProc = st == 13 || st == '13';
+    final isFaultHandle = st == 25 || st == '25';
     final shuntingCode = itemMap['shuntingCode']?.toString() ?? itemMap['code']?.toString();
+
+    if (isFaultHandle && shuntingCode?.isNotEmpty == true) {
+      // 机车检修过程故障处置单：用消息自带 code 回查完整单据，复用调令页的
+      // 故障处置单展示与填写能力（只读详情，页内可点「填写」进入编辑）
+      final changed = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (context) => RepairProcessNoticePage(
+            item: RepairItem(code: itemMap['trainEntryCode']?.toString()),
+            noticeCandidates: [itemMap],
+            noticeType: 22,
+            fillNoticeCode: shuntingCode,
+            fillReadOnly: true,
+          ),
+        ),
+      );
+      if (changed == true) {
+        await _loadShuntingNotice();
+        await _loadShuntingCounts();
+        if (mounted) {
+          final state = context.findAncestorStateOfType<_MessageCenterPageState>();
+          if (state != null) {
+            state._fetchMessageData();
+          }
+        }
+      }
+      return;
+    }
 
     if (isRepairProc && shuntingCode?.isNotEmpty == true) {
       final changed = await Navigator.of(context).push<bool>(
@@ -807,7 +835,7 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     'reportTime', // 将新增的提报时间也加入时间格式化列表
   };
 
-  /// 调车类型数字与中文对应（与后台通知单类型一致）
+  /// 调车类型数字与中文对应（与后台Web端通知单类型一致）
   static const Map<String, String> _shuntingTypeLabels = {
     '0': '调车通知单',
     '1': '检修计划',
@@ -820,18 +848,21 @@ class _MessageDetailPageState extends State<MessageDetailPage> {
     '8': '转序通知单',
     '9': '轮径修改通知单',
     '10': '轮径尺寸通知单',
-    '11': '轮径能通知单',
+    '11': '轮径镟削通知单',
     '12': '修改派工通知单',
     '13': '修程通知单',
-    '14': '旅行通知单',
-    '15': '旅行申请单',
+    '14': '放行通知单',
+    '15': '放行申请单',
     '16': '计划排产通知单',
     '17': '售后服务通知单',
     '18': '人员变更',
     '19': '物料变更',
     '20': '机统28提报',
-    '21': '售后故障录入通知',
-    '22': '检修过程故障处置单',
+    '21': '售后故障录入',
+    '22': '机车入段通知书',
+    '23': '填写质量登记簿提醒',
+    '24': '机车入段质量信息通知单',
+    '25': '机车检修过程故障处置单',
   };
 
   String _formatShuntingValue(String key, dynamic v) {

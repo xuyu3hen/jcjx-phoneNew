@@ -1297,6 +1297,28 @@ class ProductApi extends AppApi {
     }
   }
 
+  /// 接口：POST /dispatch/repairProcessFaultShunting/update
+  /// 保存故障处置单明细（仅更新 detailList，不发送签收）。
+  Future<dynamic> updateRepairProcessFaultShunting({
+    required Map<String, dynamic> data,
+  }) async {
+    try {
+      debugPrintSynchronously('[检修过程故障处置单保存] 请求开始');
+      _logLargeTagged('[检修过程故障处置单保存][QUERY]', data);
+      final r = await AppApi.dio.post(
+        '/dispatch/repairProcessFaultShunting/update',
+        data: data,
+      );
+      _logLargeTagged('[检修过程故障处置单保存][RAW_RESPONSE]', r.data);
+      final code = r.data is Map ? r.data['code'] : null;
+      debugPrintSynchronously('[检修过程故障处置单保存] 请求完成 code=$code');
+      return r.data;
+    } catch (e) {
+      debugPrintSynchronously('[检修过程故障处置单保存] 请求失败 error=$e');
+      _handleException(e);
+    }
+  }
+
   /// 查询指定调车类型下可发布的角色列表
   /// 接口：GET /dispatch/shuntingRole/selectAll?shuntingType=25
   /// 返回 rows（每项含 roleId、roleName、shuntingType 等），
@@ -1399,6 +1421,35 @@ class ProductApi extends AppApi {
       return inner ?? outer ?? data;
     } catch (e) {
       debugPrintSynchronously('[修程通知单回写] 请求失败 error=$e');
+      _handleException(e);
+    }
+  }
+
+  /// 接口：GET /dispatch/repairProcessFaultShunting/selectAll?code=xxx
+  /// 按处置单主表 code 回查整张故障处置单（表头+detailList故障明细+
+  /// shuntingNoticeList签收人）。响应为三层嵌套，业务数据在 data.data.rows。
+  Future<dynamic> getRepairProcessFaultShuntingSelectAll({
+    Map<String, dynamic>? queryParametrs,
+  }) async {
+    try {
+      debugPrintSynchronously('[机车检修过程故障处置单] 请求开始 query=$queryParametrs');
+      _logLargeTagged('[机车检修过程故障处置单][QUERY]', queryParametrs ?? {});
+      final r = await AppApi.dio.get(
+        '/dispatch/repairProcessFaultShunting/selectAll',
+        queryParameters: queryParametrs,
+      );
+      _logLargeTagged('[机车检修过程故障处置单][RAW_RESPONSE]', r.data);
+      final data = r.data is Map ? r.data as Map : <String, dynamic>{};
+      final outer = data['data'];
+      final inner = outer is Map ? outer['data'] : null;
+      final rows = inner is Map
+          ? inner['rows']
+          : (outer is Map ? outer['rows'] : (data['rows'] ?? inner ?? outer));
+      final rowsCount = rows is List ? rows.length : 0;
+      debugPrintSynchronously('[机车检修过程故障处置单] 请求完成 rows=$rowsCount');
+      return inner ?? outer ?? data;
+    } catch (e) {
+      debugPrintSynchronously('[机车检修过程故障处置单] 请求失败 error=$e');
       _handleException(e);
     }
   }

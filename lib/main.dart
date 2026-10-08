@@ -1,11 +1,17 @@
-import 'dart:async';
 import 'dart:ui' show PlatformDispatcher;
 import 'package:flutter/foundation.dart' show FlutterError, FlutterErrorDetails;
+import 'package:flutter/services.dart';
 import 'package:scan_gun/binding/scan_input_binding.dart';
 import 'index.dart';
 
-FutureOr<void> main() async {
+Future<void> main() async {
+    // TextInputBinding 继承自 WidgetsFlutterBinding，创建即完成 binding 初始化
     TextInputBinding();
+
+    // 锁定竖屏（从上至下），禁止屏幕左转/右转
+    await SystemChrome.setPreferredOrientations(
+      <DeviceOrientation>[DeviceOrientation.portraitUp],
+    );
 
     // 全局兜底：捕获 flutter_local_notifications 的未处理异常。
     // 该插件 17.x 的 cancel/cancelAll 会反序列化本地缓存的定时通知，
