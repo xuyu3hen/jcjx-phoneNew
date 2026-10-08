@@ -3748,6 +3748,10 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
   /// 当前填写阶段：0=填写建议施修方案（fillStatus=0），1=填写施修方案（fillStatus=1）
   int _activeFillStage = 0;
 
+  /// 只读详情页底部动作按钮名称：fillStatus=2（安全生产指挥中心）为「派工」，其余为「填写」
+  String get _fillActionButtonLabel =>
+      _asText(_fillHeader['fillStatus']) == '2' ? '派工' : '填写';
+
   /// fillStatus=0或1时显示填写按钮
   bool _showFillButton = true;
   bool get _fillReadOnly => widget.fillReadOnly && !_fillEditable;
@@ -4306,39 +4310,37 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
 
   String _scheduleNodeByCode(Map<String, dynamic>? item) {
     if (item == null) return '';
-    final rawName = _pickFromItem(item, [
+    // 完成排程节点只认 scheduleNodeName（vjtWebSearch 优先），
+    // 不用 originalScheduleNodeName——那是来源节点（如"入段"），不是完成节点
+    final rawName = _pickFromItem(item, const [
       'scheduleNodeName',
-      'originalScheduleNodeName',
-      'schedNodeName',
-      'planNodeName',
-      'arrangeNodeName',
-      'scheduleName',
+      'schedleNodeName',
     ]);
     if (rawName.isNotEmpty && !_looksLikeCode(rawName)) return rawName;
-    final rawCode = _pickFromItem(item, [
+    final rawCode = _pickFromItem(item, const [
       'scheduleNodeCode',
-      'originalScheduleNodeCode',
-      'schedNodeCode',
-      'planNodeCode',
-      'arrangeNodeCode',
-      'scheduleCode',
+      'schedleNodeCode',
     ]);
     if (rawCode.isEmpty) return rawName;
+    // 反查选项：发布模式选项 + 阶段2按工序缓存的排程选项合并查找
+    final allOptions = <Map<String, dynamic>>[
+      ..._scheduleNodeOptions,
+      for (final l in _schedNodeCacheByMain.values) ...l,
+    ];
     final resolved = _resolveCodeFromOptions(
-      _scheduleNodeOptions,
+      allOptions,
       rawCode,
-      [
+      const [
         'scheduleNodeCode',
         'code',
         'nodeCode',
         'id',
       ],
-      [
+      const [
         'scheduleNodeName',
         'name',
         'displayText',
         'nodeName',
-        'planNodeName',
       ],
     );
     return resolved.isEmpty ? rawName : resolved;
@@ -5296,6 +5298,8 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
       setState(() {
         _showFillButton = fs == '0' || fs == '1' || fs == '2' || fs.isEmpty;
       });
+      // 只有 code 没有 name 时，按工序节点反查排程名称补全（异步，不阻塞详情展示）
+      await _backfillStage2SchedNames();
     } catch (e) {
       _logger.e('[故障处置单回填] 回查失败: $e');
       if (!mounted) return;
@@ -5379,6 +5383,49 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         'schedNodeName': _pickFromItem(row, const ['scheduleNodeName']),
       };
     }
+  }
+
+  /// 阶段2详情回查后，若某行 vjtWebSearch 只有 scheduleNodeCode 没有
+  /// scheduleNodeName（后端偶发不回写名称），按该行工序节点拉取排程选项，
+  /// 用 code 反查出名称并回填 vjtWebSearch 与选中值，保证展示的是名称
+  Future<void> _backfillStage2SchedNames() async {
+    final pending = <int>[];
+    for (int i = 0; i < _jt28Options.length; i++) {
+      final vjt = _jt28Options[i]['vjtWebSearch'];
+      if (vjt is! Map) continue;
+      final code = _asText(vjt['scheduleNodeCode']);
+      final name = _asText(vjt['scheduleNodeName']);
+      if (code.isNotEmpty && (name.isEmpty || _looksLikeCode(name))) {
+        pending.add(i);
+      }
+    }
+    if (pending.isEmpty) return;
+    final trainEntryCode = _pickText(_fillHeader, ['trainEntryCode']);
+    bool changed = false;
+    for (final i in pending) {
+      final vjt = _jt28Options[i]['vjtWebSearch'] as Map;
+      final mainCode = _asText(vjt['mainProcessPoint']);
+      final schedCode = _asText(vjt['scheduleNodeCode']);
+      if (mainCode.isEmpty) continue;
+      var list = _schedNodeCacheByMain[mainCode];
+      list ??= await _fetchSchedNodeOptions(mainCode, trainEntryCode);
+      _schedNodeCacheByMain[mainCode] = list;
+      String hit = '';
+      for (final e in list) {
+        if (_asText(e['code']) == schedCode) {
+          hit = _asText(e['displayName']);
+          break;
+        }
+      }
+      if (hit.isNotEmpty) {
+        vjt['scheduleNodeName'] = hit;
+        _fillStage2Sel[i]?['schedNodeName'] = hit;
+        changed = true;
+        _logger.i(
+            '[故障处置单排程反查] 行: ${i + 1} scheduleNodeCode: $schedCode → scheduleNodeName: $hit');
+      }
+    }
+    if (changed && mounted) setState(() {});
   }
 
   /// 阶段2进入时确保选项就绪：部门 + 工序节点（修程编码取自 header），并行加载
@@ -5497,6 +5544,78 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     }
   }
 
+  /// 拉取某工序节点下的排程节点选项并归一化为 displayName/code。
+  /// GET /dispatch/mainNodeScheduleNode/selectAll
+  Future<List<Map<String, dynamic>>> _fetchSchedNodeOptions(
+    String mainCode,
+    String trainEntryCode,
+  ) async {
+    final r = await ProductApi().getMainNodeSchedleNodeAll(
+      queryParametrs: {
+        'pageNum': 0,
+        'pageSize': 0,
+        'repairMainNodeCode': mainCode,
+        if (trainEntryCode.isNotEmpty) 'trainEntryCode': trainEntryCode,
+      },
+    );
+    // 返回为分页对象，剥出 rows
+    dynamic raw = r;
+    if (raw is Map) {
+      raw = raw['rows'] ?? raw['records'] ?? raw['data'] ?? raw['list'] ?? raw;
+      if (raw is Map) {
+        final lists = raw.values.whereType<List>().toList();
+        if (lists.length == 1) raw = lists.first;
+      }
+    }
+    final rows =
+        raw is List ? raw.whereType<Map>().toList(growable: false) : const [];
+    final list = <Map<String, dynamic>>[];
+    for (final e in rows) {
+      final m = Map<String, dynamic>.from(e);
+      // 排程名称/编码严格以接口字段 scheduleNodeName/scheduleNodeCode 为准
+      String findByKeys(List<String> keys) {
+        var s = _firstText(m, keys);
+        if (s.isNotEmpty) return s;
+        // 兼容一层嵌套：个别后端把节点属性包在子对象内
+        for (final v in m.values) {
+          if (v is Map) {
+            s = _firstText(Map<String, dynamic>.from(v), keys);
+            if (s.isNotEmpty) return s;
+          }
+        }
+        return '';
+      }
+
+      final name = findByKeys(const [
+        'scheduleNodeName',
+        'schedleNodeName',
+        'mainNodeSchedleNodeName',
+        'nodeName',
+        'name',
+        'displayText',
+      ]);
+      final code = findByKeys(const [
+        'scheduleNodeCode',
+        'mainNodeSchedleNodeCode',
+        'mainNodeScheduleNodeCode',
+        'schedleNodeCode',
+        'code',
+        'id',
+      ]);
+      // 名称与编码都为空的行丢弃，避免选中后只提交了 code/空值
+      if (name.isEmpty && code.isEmpty) continue;
+      m['displayName'] = name;
+      m['code'] = code;
+      list.add(m);
+    }
+    _logger.i('[故障处置单排程选项] scheduleMainCode: $mainCode rows: ${list.length}');
+    for (final e in list) {
+      _logger.i(
+          '  scheduleNodeCode: ${e['code']} | scheduleNodeName: ${e['displayName']}');
+    }
+    return list;
+  }
+
   /// 阶段2：选择排程节点（按该行工序节点联动，结果按工序节点code缓存）。
   /// 与 Web 端一致：GET /dispatch/mainNodeScheduleNode/selectAll，
   /// 参数 pageNum/pageSize/repairMainNodeCode/trainEntryCode
@@ -5510,48 +5629,7 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     var list = _schedNodeCacheByMain[mainCode];
     if (list == null) {
       final trainEntryCode = _pickText(_fillHeader, ['trainEntryCode']);
-      final r = await ProductApi().getMainNodeSchedleNodeAll(
-        queryParametrs: {
-          'pageNum': 0,
-          'pageSize': 0,
-          'repairMainNodeCode': mainCode,
-          if (trainEntryCode.isNotEmpty) 'trainEntryCode': trainEntryCode,
-        },
-      );
-      // 返回为分页对象，剥出 rows
-      dynamic raw = r;
-      if (raw is Map) {
-        raw =
-            raw['rows'] ?? raw['records'] ?? raw['data'] ?? raw['list'] ?? raw;
-        if (raw is Map) {
-          final lists = raw.values.whereType<List>().toList();
-          if (lists.length == 1) raw = lists.first;
-        }
-      }
-      final rows =
-          raw is List ? raw.whereType<Map>().toList(growable: false) : const [];
-      list = <Map<String, dynamic>>[];
-      for (final e in rows) {
-        final m = Map<String, dynamic>.from(e);
-        // 字段名以 Web 截图为准，同时兼容后端拼写变体（schedle 少一个 u）
-        m['displayName'] = _firstText(m, const [
-          'scheduleNodeName',
-          'schedleNodeName',
-          'mainNodeSchedleNodeName',
-          'nodeName',
-          'name',
-          'displayText',
-        ]);
-        m['code'] = _firstText(m, const [
-          'code',
-          'mainNodeSchedleNodeCode',
-          'mainNodeScheduleNodeCode',
-          'scheduleNodeCode',
-          'schedleNodeCode',
-          'id',
-        ]);
-        list.add(m);
-      }
+      list = await _fetchSchedNodeOptions(mainCode, trainEntryCode);
       _schedNodeCacheByMain[mainCode] = list;
     }
     if (!mounted) return;
@@ -8154,6 +8232,44 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
               ),
             ),
             const Divider(height: 22, color: Color(0xFFE5E7EB)),
+            // 待填写区块标题：标明下面三项是本次需要填写的内容
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '待填写信息',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFB45309),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      '责任部门 / 工序节点 / 排程节点',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(
@@ -8207,21 +8323,25 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
     );
   }
 
-  /// 阶段2卡片里的选择行
+  /// 阶段2卡片里的选择行（右侧带状态徽标：未选=待填写，已选=已填写）
   Widget _stage2PickRow({
     required String label,
     required String value,
     required String hint,
     required VoidCallback onTap,
   }) {
+    final filled = value.isNotEmpty;
     return InkWell(
       onTap: _submitting ? null : onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+          border: Border.all(
+              color:
+                  filled ? const Color(0xFF86EFAC) : const Color(0xFFFCD34D)),
           borderRadius: BorderRadius.circular(8),
+          color: filled ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
         ),
         child: Row(
           children: [
@@ -8233,6 +8353,25 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
               ),
             ),
             const SizedBox(width: 8),
+            // 状态徽标：待填写 / 已填写
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color:
+                    filled ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                filled ? '已填写' : '待填写',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: filled
+                      ? const Color(0xFF15803D)
+                      : const Color(0xFFB45309),
+                ),
+              ),
+            ),
             Expanded(
               child: Text(
                 value.isEmpty ? hint : value,
@@ -8872,456 +9011,482 @@ class _RepairProcessNoticePageState extends State<RepairProcessNoticePage> {
         ));
       }
 
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(_isFillMode
-              ? (_fillReadOnly
-                  ? '故障处置单详情'
-                  : (_activeFillStage == 0
-                      ? '填写建议施修方案'
-                      : (_activeFillStage == 1 ? '填写施修方案' : '编辑责任部门/完成节点')))
-              : '检修过程故障处置单'),
-          backgroundColor: Colors.white,
-          elevation: 1,
-        ),
-        body: ListView(
-          padding: const EdgeInsets.all(12),
-          children: [
-            _sectionCard(
-              children: [
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      _isFillMode
-                          ? _pickText(_fillHeader, ['formName'])
-                          : _pageTitle,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+      return WillPopScope(
+        onWillPop: () async {
+          // 编辑模式（含阶段2编辑责任部门/完成节点）物理返回：
+          // 只退回故障处置单详情（只读），恢复签收组为查询结果，不退出页面
+          if (_isFillMode && !_fillReadOnly) {
+            setState(() {
+              _fillEditable = false;
+              _selectedReceiveGroup = null;
+              _applyFillNoticeSignees(_fillHeader);
+            });
+            return false;
+          }
+          return true;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_isFillMode
+                ? (_fillReadOnly
+                    ? '故障处置单详情'
+                    : (_activeFillStage == 0
+                        ? '填写建议施修方案'
+                        : (_activeFillStage == 1 ? '填写施修方案' : '编辑责任部门/完成节点')))
+                : '检修过程故障处置单'),
+            backgroundColor: Colors.white,
+            elevation: 1,
+          ),
+          body: ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _sectionCard(
+                children: [
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        _isFillMode
+                            ? _pickText(_fillHeader, ['formName'])
+                            : _pageTitle,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const SizedBox(width: 4),
-                    Container(
-                      width: 4,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2563EB),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      '故障明细',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        '共 ${_jt28Options.length} 条',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF1D4ED8),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Container(
+                        width: 4,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            // 机型/车号等信息卡仅只读详情展示；填写页直接显示故障现象表格
-            if (_isFillMode && _fillReadOnly) _buildFillHeaderInfoCard(),
-            if (_loadingJt28 || _loadingFillNotice)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 36),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              )
-            else if (_jt28Options.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 36),
-                child: Center(
-                  child: Text(
-                    '暂无故障数据',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
-                  ),
-                ),
-              )
-            else if (_isFillMode &&
-                !_fillReadOnly &&
-                _activeFillStage == 2) ...[
-              // 阶段2：卡片式逐条编辑责任部门/工序节点/排程节点
-              ..._buildStage2Cards(),
-            ] else ...[
-              header,
-              ...rows,
-            ],
-            // 签收组/签收人：提报模式与回填模式都显示；回填只读时禁用编辑
-            _sectionCard(
-              children: [
-                _selectField(
-                  label: '签收组',
-                  value: _isFillMode && _fillReadOnly
-                      ? _fillSignDeptText()
-                      : (_selectedReceiveGroup == null
-                          ? ''
-                          : _receiveGroupLabel(_selectedReceiveGroup)),
-                  hintText: _loadingReceiveGroup ? '签收组加载中...' : '请选择签收组',
-                  onTap: () async {
-                    if (_isFillMode && _fillReadOnly) {
-                      showToast('请点「填写」后再选择签收组');
-                      return;
-                    }
-                    if (_loadingReceiveGroup) {
-                      showToast('签收组加载中，请稍后');
-                      return;
-                    }
-                    // 懒加载：填写页初始未加载签收组，首次点击时拉取
-                    if (_receiveGroupOptions.isEmpty) {
-                      await _loadReceiveGroupOptions();
-                      if (!mounted) return;
-                    }
-                    if (_receiveGroupOptions.isEmpty) {
-                      showToast('暂无签收组可选');
-                      return;
-                    }
-                    final selected = await _showSearchableListDialog(
-                      title: '选择签收组',
-                      items: _receiveGroupOptions,
-                      labelKey: 'displayText',
-                      valueKey: 'code',
-                      selectedValue: _selectedReceiveGroup?['code'],
-                    );
-                    if (selected == null || !mounted) return;
-                    setState(() {
-                      _selectedReceiveGroup =
-                          Map<String, dynamic>.from(selected);
-                    });
-                    await _applyReceiveGroupToSignees(
-                      Map<String, dynamic>.from(selected),
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Text(
-                      '签收人',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    if (_signeeLockedByReceiveGroup) ...[
                       const SizedBox(width: 8),
                       const Text(
-                        '已由签收组自动回写',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        '故障明细',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '共 ${_jt28Options.length} 条',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1D4ED8),
+                          ),
+                        ),
                       ),
                     ],
-                    const SizedBox(width: 8),
-                    if (!(_isFillMode && _fillReadOnly))
-                      IconButton(
-                        onPressed: () {
-                          if (_signeeLockedByReceiveGroup) {
-                            showToast('已按签收组自动回写签收人，不能手动新增');
-                            return;
-                          }
-                          setState(() {
-                            _signeeList.add({
-                              'signDept': null,
-                              'signTeam': null,
-                              'signUsers': <Map<String, dynamic>>[],
-                            });
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.add_circle_outline,
-                          color: Colors.blue,
-                        ),
+                  ),
+                ],
+              ),
+              // 机型/车号等信息卡仅只读详情展示；填写页直接显示故障现象表格
+              if (_isFillMode && _fillReadOnly) _buildFillHeaderInfoCard(),
+              if (_loadingJt28 || _loadingFillNotice)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 36),
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (_jt28Options.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 36),
+                  child: Center(
+                    child: Text(
+                      '暂无故障数据',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
+                    ),
+                  ),
+                )
+              else if (_isFillMode &&
+                  !_fillReadOnly &&
+                  _activeFillStage == 2) ...[
+                // 阶段2：卡片式逐条编辑责任部门/工序节点/排程节点
+                ..._buildStage2Cards(),
+              ] else ...[
+                header,
+                ...rows,
+              ],
+              // 签收组/签收人：提报模式与回填模式都显示；回填只读时禁用编辑
+              _sectionCard(
+                children: [
+                  _selectField(
+                    label: '签收组',
+                    value: _isFillMode && _fillReadOnly
+                        ? _fillSignDeptText()
+                        : (_selectedReceiveGroup == null
+                            ? ''
+                            : _receiveGroupLabel(_selectedReceiveGroup)),
+                    hintText: _loadingReceiveGroup ? '签收组加载中...' : '请选择签收组',
+                    onTap: () async {
+                      if (_isFillMode && _fillReadOnly) {
+                        showToast('请点「$_fillActionButtonLabel」后再选择签收组');
+                        return;
+                      }
+                      if (_loadingReceiveGroup) {
+                        showToast('签收组加载中，请稍后');
+                        return;
+                      }
+                      // 懒加载：填写页初始未加载签收组，首次点击时拉取
+                      if (_receiveGroupOptions.isEmpty) {
+                        await _loadReceiveGroupOptions();
+                        if (!mounted) return;
+                      }
+                      if (_receiveGroupOptions.isEmpty) {
+                        showToast('暂无签收组可选');
+                        return;
+                      }
+                      final selected = await _showSearchableListDialog(
+                        title: '选择签收组',
+                        items: _receiveGroupOptions,
+                        labelKey: 'displayText',
+                        valueKey: 'code',
+                        selectedValue: _selectedReceiveGroup?['code'],
+                      );
+                      if (selected == null || !mounted) return;
+                      setState(() {
+                        _selectedReceiveGroup =
+                            Map<String, dynamic>.from(selected);
+                      });
+                      await _applyReceiveGroupToSignees(
+                        Map<String, dynamic>.from(selected),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text(
+                        '签收人',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ..._signeeList.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final signee = entry.value;
-                  final dept = signee['signDept'];
-                  final team = signee['signTeam'];
-                  final deptId = dept is Map ? _parseId(dept['deptId']) : null;
-                  final teamId = team is Map ? _parseId(team['deptId']) : null;
-                  final users = (signee['signUsers'] as List?)
-                          ?.whereType<Map>()
-                          .map((e) => Map<String, dynamic>.from(e))
-                          .toList() ??
-                      <Map<String, dynamic>>[];
-                  final teamOptions = deptId != null
-                      ? (_teamsByDeptId[deptId] ?? [])
-                      : <Map<String, dynamic>>[];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _selectField(
-                            label: '部门',
-                            value: dept is Map
-                                ? _pickText(
-                                    Map<String, dynamic>.from(dept),
-                                    ['deptName'],
-                                  )
-                                : '',
-                            maxLines: 2,
-                            onTap: () async {
-                              if (_isFillMode && _fillReadOnly) {
-                                showToast('请点「填写」后再选择签收人');
-                                return;
-                              }
-                              if (_signeeLockedByReceiveGroup) {
-                                showToast(
-                                  '签收人已按签收组自动回写，不能手动修改',
-                                );
-                                return;
-                              }
-                              // 懒加载部门列表
-                              if (_deptList.isEmpty) {
-                                await _loadDepts();
-                                if (!mounted) return;
-                              }
-                              final selected = await _showSearchableListDialog(
-                                title: '选择部门',
-                                items: _deptList,
-                                labelKey: 'deptName',
-                              );
-                              if (selected == null || !mounted) return;
-                              setState(() {
-                                signee['signDept'] = selected;
-                                signee['signTeam'] = null;
-                                signee['signUsers'] = <Map<String, dynamic>>[];
+                      if (_signeeLockedByReceiveGroup) ...[
+                        const SizedBox(width: 8),
+                        const Text(
+                          '已由签收组自动回写',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      if (!(_isFillMode && _fillReadOnly))
+                        IconButton(
+                          onPressed: () {
+                            if (_signeeLockedByReceiveGroup) {
+                              showToast('已按签收组自动回写签收人，不能手动新增');
+                              return;
+                            }
+                            setState(() {
+                              _signeeList.add({
+                                'signDept': null,
+                                'signTeam': null,
+                                'signUsers': <Map<String, dynamic>>[],
                               });
-                              final nextDeptId = _parseId(selected['deptId']);
-                              if (nextDeptId != null) {
-                                await _loadTeamsForDept(nextDeptId);
-                              }
-                            },
+                            });
+                          },
+                          icon: const Icon(
+                            Icons.add_circle_outline,
+                            color: Colors.blue,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _selectField(
-                            label: '班组',
-                            value: team is Map
-                                ? _pickText(
-                                    Map<String, dynamic>.from(team),
-                                    ['deptName'],
-                                  )
-                                : '',
-                            maxLines: 2,
-                            onTap: () async {
-                              if (_isFillMode && _fillReadOnly) {
-                                showToast('请点「填写」后再选择签收人');
-                                return;
-                              }
-                              if (_signeeLockedByReceiveGroup) {
-                                showToast(
-                                  '签收人已按签收组自动回写，不能手动修改',
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  ..._signeeList.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final signee = entry.value;
+                    final dept = signee['signDept'];
+                    final team = signee['signTeam'];
+                    final deptId =
+                        dept is Map ? _parseId(dept['deptId']) : null;
+                    final teamId =
+                        team is Map ? _parseId(team['deptId']) : null;
+                    final users = (signee['signUsers'] as List?)
+                            ?.whereType<Map>()
+                            .map((e) => Map<String, dynamic>.from(e))
+                            .toList() ??
+                        <Map<String, dynamic>>[];
+                    final teamOptions = deptId != null
+                        ? (_teamsByDeptId[deptId] ?? [])
+                        : <Map<String, dynamic>>[];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _selectField(
+                              label: '部门',
+                              value: dept is Map
+                                  ? _pickText(
+                                      Map<String, dynamic>.from(dept),
+                                      ['deptName'],
+                                    )
+                                  : '',
+                              maxLines: 2,
+                              onTap: () async {
+                                if (_isFillMode && _fillReadOnly) {
+                                  showToast(
+                                      '请点「$_fillActionButtonLabel」后再选择签收人');
+                                  return;
+                                }
+                                if (_signeeLockedByReceiveGroup) {
+                                  showToast(
+                                    '签收人已按签收组自动回写，不能手动修改',
+                                  );
+                                  return;
+                                }
+                                // 懒加载部门列表
+                                if (_deptList.isEmpty) {
+                                  await _loadDepts();
+                                  if (!mounted) return;
+                                }
+                                final selected =
+                                    await _showSearchableListDialog(
+                                  title: '选择部门',
+                                  items: _deptList,
+                                  labelKey: 'deptName',
                                 );
-                                return;
-                              }
-                              if (deptId == null) {
-                                showToast('请先选择部门');
-                                return;
-                              }
-                              final selected = await _showSearchableListDialog(
-                                title: '选择班组',
-                                items: teamOptions,
-                                labelKey: 'deptName',
-                              );
-                              if (selected == null || !mounted) return;
-                              setState(() {
-                                signee['signTeam'] = selected;
-                                signee['signUsers'] = <Map<String, dynamic>>[];
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _selectField(
-                            label: '签收人',
-                            value: _signeeUserText(users),
-                            hintText: '请选择',
-                            maxLines: 6,
-                            onTap: () async {
-                              if (_isFillMode && _fillReadOnly) {
-                                showToast('请点「填写」后再选择签收人');
-                                return;
-                              }
-                              if (_signeeLockedByReceiveGroup) {
-                                showToast(
-                                  '签收人已按签收组自动回写，不能手动修改',
-                                );
-                                return;
-                              }
-                              final targetDeptId = teamId ?? deptId;
-                              if (targetDeptId == null) {
-                                showToast('请先选择部门或班组');
-                                return;
-                              }
-                              await _loadUsersForDept(targetDeptId);
-                              final userOptions =
-                                  _usersByDeptId[targetDeptId] ??
+                                if (selected == null || !mounted) return;
+                                setState(() {
+                                  signee['signDept'] = selected;
+                                  signee['signTeam'] = null;
+                                  signee['signUsers'] =
                                       <Map<String, dynamic>>[];
-                              final selected = await _showMultiUserDialog(
-                                users: userOptions,
-                                initialSelectedIds:
-                                    users.map((e) => e['userId']).toList(),
-                              );
-                              if (selected == null || !mounted) return;
-                              setState(() {
-                                signee['signUsers'] = selected;
-                              });
-                            },
-                          ),
-                        ),
-                        if (_signeeList.length > 1 &&
-                            !(_isFillMode && _fillReadOnly)) ...[
-                          const SizedBox(width: 4),
-                          IconButton(
-                            onPressed: () {
-                              if (_signeeLockedByReceiveGroup) {
-                                showToast(
-                                  '已按签收组自动回写签收人，不能手动删除',
-                                );
-                                return;
-                              }
-                              setState(() {
-                                _signeeList.removeAt(index);
-                              });
-                            },
-                            icon: const Icon(
-                              Icons.remove_circle_outline,
-                              color: Colors.red,
+                                });
+                                final nextDeptId = _parseId(selected['deptId']);
+                                if (nextDeptId != null) {
+                                  await _loadTeamsForDept(nextDeptId);
+                                }
+                              },
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: _isFillMode
-                ? (_fillReadOnly
-                    ? Row(
-                        children: [
-                          if (_showFillButton) ...[
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _submitting
-                                    ? null
-                                    : () {
-                                        // 按当前处理状态进入对应填写阶段：
-                                        // 0=建议施修方案 1=施修方案
-                                        // 2=责任部门/完成节点
-                                        final fs =
-                                            _asText(_fillHeader['fillStatus']);
-                                        _gotoFillEditable(fs == '2'
-                                            ? 2
-                                            : (fs == '1' ? 1 : 0));
-                                      },
-                                child: const Text('填写'),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _selectField(
+                              label: '班组',
+                              value: team is Map
+                                  ? _pickText(
+                                      Map<String, dynamic>.from(team),
+                                      ['deptName'],
+                                    )
+                                  : '',
+                              maxLines: 2,
+                              onTap: () async {
+                                if (_isFillMode && _fillReadOnly) {
+                                  showToast(
+                                      '请点「$_fillActionButtonLabel」后再选择签收人');
+                                  return;
+                                }
+                                if (_signeeLockedByReceiveGroup) {
+                                  showToast(
+                                    '签收人已按签收组自动回写，不能手动修改',
+                                  );
+                                  return;
+                                }
+                                if (deptId == null) {
+                                  showToast('请先选择部门');
+                                  return;
+                                }
+                                final selected =
+                                    await _showSearchableListDialog(
+                                  title: '选择班组',
+                                  items: teamOptions,
+                                  labelKey: 'deptName',
+                                );
+                                if (selected == null || !mounted) return;
+                                setState(() {
+                                  signee['signTeam'] = selected;
+                                  signee['signUsers'] =
+                                      <Map<String, dynamic>>[];
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _selectField(
+                              label: '签收人',
+                              value: _signeeUserText(users),
+                              hintText: '请选择',
+                              maxLines: 6,
+                              onTap: () async {
+                                if (_isFillMode && _fillReadOnly) {
+                                  showToast(
+                                      '请点「$_fillActionButtonLabel」后再选择签收人');
+                                  return;
+                                }
+                                if (_signeeLockedByReceiveGroup) {
+                                  showToast(
+                                    '签收人已按签收组自动回写，不能手动修改',
+                                  );
+                                  return;
+                                }
+                                final targetDeptId = teamId ?? deptId;
+                                if (targetDeptId == null) {
+                                  showToast('请先选择部门或班组');
+                                  return;
+                                }
+                                await _loadUsersForDept(targetDeptId);
+                                final userOptions =
+                                    _usersByDeptId[targetDeptId] ??
+                                        <Map<String, dynamic>>[];
+                                final selected = await _showMultiUserDialog(
+                                  users: userOptions,
+                                  initialSelectedIds:
+                                      users.map((e) => e['userId']).toList(),
+                                );
+                                if (selected == null || !mounted) return;
+                                setState(() {
+                                  signee['signUsers'] = selected;
+                                });
+                              },
+                            ),
+                          ),
+                          if (_signeeList.length > 1 &&
+                              !(_isFillMode && _fillReadOnly)) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () {
+                                if (_signeeLockedByReceiveGroup) {
+                                  showToast(
+                                    '已按签收组自动回写签收人，不能手动删除',
+                                  );
+                                  return;
+                                }
+                                setState(() {
+                                  _signeeList.removeAt(index);
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.red,
                               ),
                             ),
                           ],
                         ],
-                      )
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              onPressed: _submitting
-                                  ? null
-                                  : () {
-                                      // 取消填写：回到只读详情，不退出页面；
-                                      // 恢复签收组/签收人为查询结果
-                                      setState(() {
-                                        _fillEditable = false;
-                                        _selectedReceiveGroup = null;
-                                        _applyFillNoticeSignees(_fillHeader);
-                                      });
-                                    },
-                              child: const Text('取消'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                              ),
-                              onPressed: _submitting
-                                  ? null
-                                  : () => _submitFill(send: false),
-                              child: Text(_submitting ? '保存中...' : '保存'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _submitting
-                                  ? null
-                                  : () => _submitFill(send: true),
-                              child: Text(_submitting ? '发送中...' : '发送'),
-                            ),
-                          ),
-                        ],
-                      ))
-                : Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed:
-                              _submitting ? null : () => Navigator.pop(context),
-                          child: const Text('取消'),
-                        ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _canConfirm ? _submit : null,
-                          child: Text(_submitting ? '提报中...' : '提报'),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+          bottomNavigationBar: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: _isFillMode
+                  ? (_fillReadOnly
+                      ? Row(
+                          children: [
+                            if (_showFillButton) ...[
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: _submitting
+                                      ? null
+                                      : () {
+                                          // 按当前处理状态进入对应填写阶段：
+                                          // 0=建议施修方案 1=施修方案
+                                          // 2=责任部门/完成节点（安指派工）
+                                          final fs = _asText(
+                                              _fillHeader['fillStatus']);
+                                          _gotoFillEditable(fs == '2'
+                                              ? 2
+                                              : (fs == '1' ? 1 : 0));
+                                        },
+                                  // 安全生产指挥中心（fillStatus=2）按钮显示「派工」
+                                  child: Text(_fillActionButtonLabel),
+                                ),
+                              ),
+                            ],
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
+                                onPressed: _submitting
+                                    ? null
+                                    : () {
+                                        // 取消填写：回到只读详情，不退出页面；
+                                        // 恢复签收组/签收人为查询结果
+                                        setState(() {
+                                          _fillEditable = false;
+                                          _selectedReceiveGroup = null;
+                                          _applyFillNoticeSignees(_fillHeader);
+                                        });
+                                      },
+                                child: const Text('取消'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange,
+                                ),
+                                onPressed: _submitting
+                                    ? null
+                                    : () => _submitFill(send: false),
+                                child: Text(_submitting ? '保存中...' : '保存'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _submitting
+                                    ? null
+                                    : () => _submitFill(send: true),
+                                child: Text(_submitting ? '发送中...' : '发送'),
+                              ),
+                            ),
+                          ],
+                        ))
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => Navigator.pop(context),
+                            child: const Text('取消'),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _canConfirm ? _submit : null,
+                            child: Text(_submitting ? '提报中...' : '提报'),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ),
       );
